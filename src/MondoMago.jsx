@@ -3001,69 +3001,76 @@ export default function MondoMago() {
         {comp && (
           <div onClick={() => navigate("profile")}
             style={{textAlign:"center",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-            <CompanionAvatar c={comp} size={48} anim={compAnim} cosmetic={equippedForComp} />
-            <div style={{fontSize:10,opacity:.6}}>{comp.name}</div>
+            <div style={{
+              width:84, height:84, borderRadius:"50%",
+              background:`radial-gradient(circle at 35% 30%, ${comp.color}33, ${comp.color}aa)`,
+              border:`3px solid ${comp.color}`,
+              boxShadow:`0 0 28px ${comp.color}88, 0 6px 20px rgba(0,0,0,.5)`,
+              display:"flex", alignItems:"center", justifyContent:"center",
+              fontSize:46, animation:compAnim,
+            }}>{comp.emoji}</div>
+            <div style={{fontSize:11,fontWeight:800,color:comp.color,letterSpacing:.3}}>{comp.name}</div>
           </div>
         )}
       </div>
-      {/* [C4] Time-of-day greeting */}
+      {/* Time-of-day greeting */}
       {(() => {
         const h = new Date().getHours();
         const g = h < 10 ? "☀️ Buongiorno!" : h < 13 ? "🌤️ Buona mattina!" : h < 17 ? "🌤️ Buon pomeriggio!" : h < 21 ? "🌙 Buona sera!" : "🌟 Notte di avventura!";
-        return <div style={{fontSize:11,color:"rgba(255,255,255,.45)",marginBottom:8,textAlign:"right"}}>{g}</div>;
+        return <div style={{fontSize:12,color:"rgba(255,255,255,.4)",marginBottom:12,textAlign:"right",fontWeight:600}}>{g}</div>;
       })()}
-      <div style={{display:"flex",gap:8,marginBottom:10}}>
-        {[{i:"⭐",v:totalStars,l:"stelle"},{i:"🏆",v:items.length,l:"trofei"}].map((s,idx) => (
-          <div key={idx} style={{flex:1,background:"rgba(255,255,255,.07)",borderRadius:14,padding:"10px 6px",textAlign:"center"}}>
-            <div style={{fontSize:20}}>{s.i}</div>
-            <div style={{fontWeight:900,fontSize:18}}>{s.v}</div>
-            <div style={{fontSize:10,opacity:.5}}>{s.l}</div>
+      {/* ── STATS ROW ── */}
+      <div style={{display:"flex",gap:10,marginBottom:12}}>
+        {[{i:"⭐",v:totalStars,l:"stelle",c:"#FFD700"},{i:"🏆",v:items.length,l:"trofei",c:"#C084FC"}].map((s,idx) => (
+          <div key={idx} style={{flex:1,background:"rgba(255,255,255,.06)",borderRadius:20,padding:"14px 8px",textAlign:"center",border:"1px solid rgba(255,255,255,.08)"}}>
+            <div style={{fontSize:26}}>{s.i}</div>
+            <div style={{fontWeight:900,fontSize:22,color:s.c,lineHeight:1}}>{s.v}</div>
+            <div style={{fontSize:11,opacity:.5,marginTop:2}}>{s.l}</div>
           </div>
         ))}
-        {/* [A6] Streak flame visual */}
+        {/* Streak card */}
         {(() => {
-          const sz = streak >= 7 ? 28 : streak >= 3 ? 22 : 16;
           const flames = streak >= 7 ? "🔥🔥🔥" : streak >= 3 ? "🔥🔥" : "🔥";
           const today = new Date().toISOString().slice(0,10);
           const last7 = Array.from({length:7},(_,i) => { const d=new Date(); d.setDate(d.getDate()-6+i); return d.toISOString().slice(0,10); });
           const playedDates = new Set(sessionLog.map(s=>s.date));
-          playedDates.add(today.slice(0,10)); // today always counts if logged in
+          playedDates.add(today);
           return (
-            <div style={{flex:1,background:"rgba(255,255,255,.07)",borderRadius:14,padding:"10px 6px",textAlign:"center"}}>
-              <div style={{fontSize:sz,animation:streak>=3?"pulse 1.4s ease-in-out infinite":"none"}}>{flames}</div>
-              <div style={{fontWeight:900,fontSize:18}}>{streak}</div>
-              <div style={{display:"flex",gap:2,justifyContent:"center",marginTop:4}}>
+            <div style={{flex:1,background:"rgba(249,115,22,.1)",borderRadius:20,padding:"14px 8px",textAlign:"center",border:"1px solid rgba(249,115,22,.2)"}}>
+              <div style={{fontSize:22,animation:streak>=3?"pulse 1.4s ease-in-out infinite":"none"}}>{flames}</div>
+              <div style={{fontWeight:900,fontSize:22,color:"#FB923C",lineHeight:1}}>{streak}</div>
+              <div style={{display:"flex",gap:3,justifyContent:"center",marginTop:5}}>
                 {last7.map(d => (
-                  <div key={d} style={{width:6,height:6,borderRadius:"50%",background:playedDates.has(d)?"#F97316":"rgba(255,255,255,.15)"}} />
+                  <div key={d} style={{width:7,height:7,borderRadius:"50%",background:playedDates.has(d)?"#F97316":"rgba(255,255,255,.12)"}} />
                 ))}
               </div>
             </div>
           );
         })()}
       </div>
-      {/* Enhanced level badge with XP progress bar */}
+      {/* ── XP LEVEL BAR ── */}
       {(() => {
         return (
-          <div style={{background:"rgba(255,215,0,.07)",border:"1px solid rgba(255,215,0,.25)",borderRadius:14,padding:"10px 14px",marginBottom:14}}>
-            <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:mapToNext ? 8 : 0}}>
-              <span style={{fontSize:26}}>{mapLvl.emoji}</span>
+          <div style={{background:"rgba(255,215,0,.08)",border:"1px solid rgba(255,215,0,.2)",borderRadius:20,padding:"14px 16px",marginBottom:14}}>
+            <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:mapToNext ? 10 : 0}}>
+              <span style={{fontSize:30}}>{mapLvl.emoji}</span>
               <div style={{flex:1}}>
-                <div style={{fontWeight:900,fontSize:13,color:"#FFD95A"}}>{mapLvl.title}</div>
-                {mapToNext ? <div style={{fontSize:10,opacity:.5}}>{mapToNext} stelle per {mapNextTitle}</div>
-                           : <div style={{fontSize:10,color:"#FFD700",opacity:.8}}>Livello massimo! 🏆</div>}
+                <div style={{fontWeight:900,fontSize:15,color:"#FFD95A"}}>{mapLvl.title}</div>
+                {mapToNext ? <div style={{fontSize:11,opacity:.5}}>{mapToNext} stelle per <strong>{mapNextTitle}</strong></div>
+                           : <div style={{fontSize:11,color:"#FFD700",opacity:.8}}>Livello massimo! 🏆</div>}
               </div>
               {allProfiles.length > 1 && (
-                <button onClick={() => navigate('profile_select')} style={{background:"rgba(255,255,255,.1)",border:"none",color:"white",borderRadius:20,padding:"5px 12px",fontSize:11,cursor:"pointer",fontWeight:700}}>
+                <button onClick={() => navigate('profile_select')} style={{background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.2)",color:"white",borderRadius:20,padding:"6px 14px",fontSize:12,cursor:"pointer",fontWeight:700}}>
                   Cambia
                 </button>
               )}
             </div>
             {mapToNext > 0 && (
               <div>
-                <div style={{background:"rgba(255,255,255,.1)",borderRadius:6,height:8,overflow:"hidden"}}>
-                  <div style={{background:"linear-gradient(90deg,#FFB800,#FFD700)",height:"100%",borderRadius:6,width:`${mapPct}%`,transition:"width 1s cubic-bezier(.22,1,.36,1)"}} />
+                <div style={{background:"rgba(255,255,255,.08)",borderRadius:8,height:12,overflow:"hidden",border:"1px solid rgba(255,255,255,.06)"}}>
+                  <div style={{background:"linear-gradient(90deg,#F59E0B,#FFD700,#FFF08A)",height:"100%",borderRadius:8,width:`${mapPct}%`,transition:"width 1.2s cubic-bezier(.22,1,.36,1)",boxShadow:"0 0 8px #FFD70088"}} />
                 </div>
-                <div style={{fontSize:10,opacity:.4,marginTop:3,textAlign:"right"}}>{mapPct}%</div>
+                <div style={{fontSize:10,opacity:.35,marginTop:4,textAlign:"right"}}>{Math.round(mapPct)}%</div>
               </div>
             )}
           </div>
@@ -3077,50 +3084,69 @@ export default function MondoMago() {
           {schoolAssigned.length > 0 && <span style={{background:"#2563EB",color:"white",borderRadius:10,padding:"2px 8px",fontSize:10,fontWeight:900}}>{schoolAssigned.length} sfide</span>}
         </div>
       )}
-      {/* Daily challenge */}
+      {/* ── DAILY CHALLENGE ── */}
       {(() => {
         const today = new Date().toISOString().slice(0,10);
         const done  = dailyCompletedDate === today;
         return (
           <button onClick={done ? undefined : startDaily}
-            style={{width:"100%",marginBottom:14,background:done?"rgba(255,255,255,.04)":"linear-gradient(135deg,#FFD95A33,#FF7A0033)",
-              border:`2px solid ${done?"rgba(255,255,255,.1)":"#FFD95A66"}`,borderRadius:18,
-              padding:"14px 18px",color:"white",cursor:done?"default":"pointer",
-              display:"flex",alignItems:"center",gap:14,textAlign:"left",
-              opacity:done?.65:1}}>
-            <span style={{fontSize:36}}>{done?"✅":"🌟"}</span>
+            style={{width:"100%",marginBottom:12,
+              background:done
+                ? "rgba(255,255,255,.04)"
+                : "linear-gradient(135deg,rgba(255,217,90,.18),rgba(255,122,0,.12))",
+              border:`2px solid ${done?"rgba(255,255,255,.08)":"rgba(255,217,90,.5)"}`,
+              borderRadius:24,padding:"16px 20px",color:"white",
+              cursor:done?"default":"pointer",
+              display:"flex",alignItems:"center",gap:16,textAlign:"left",
+              boxShadow:done?"none":"0 4px 24px rgba(255,217,90,.15)",
+              opacity:done?.6:1}}>
+            <span style={{fontSize:42}}>{done?"✅":"🌟"}</span>
             <div style={{flex:1}}>
-              <div style={{fontWeight:900,fontSize:15,marginBottom:2}}>Sfida del Giorno</div>
-              <div style={{fontSize:12,opacity:.7}}>{done?"Completata! Torna domani ✨":"3 sfide speciali · +3 stelle bonus"}</div>
+              <div style={{fontWeight:900,fontSize:17,marginBottom:3}}>Sfida del Giorno</div>
+              <div style={{fontSize:13,opacity:.7}}>{done?"Completata! Torna domani ✨":"3 sfide speciali · +3 stelle bonus"}</div>
             </div>
-            {!done && <span style={{background:"#FFD95A",color:"#1a1a2e",borderRadius:20,padding:"4px 12px",fontSize:12,fontWeight:900}}>+3⭐</span>}
+            {!done && <div style={{background:"linear-gradient(135deg,#FFD95A,#FFB800)",color:"#1a1a2e",borderRadius:20,padding:"6px 14px",fontSize:13,fontWeight:900,whiteSpace:"nowrap"}}>+3 ⭐</div>}
           </button>
         );
       })()}
-      {/* [C1] Sfida Fulmine quick-launch */}
+      {/* ── SFIDA FULMINE ── */}
       <button onClick={() => {
         const pool = Object.values(ALL_CHALLENGES).flat().filter(c => c.format === "visual_tap" && c.ageMin <= (childAge||5) && c.ageMax >= (childAge||5));
         const shuffled = [...pool].sort(() => Math.random() - 0.5);
         setFulminoPool(shuffled); setFulminoCi(0); setFulminoScore(0); setFulminoTime(60); setFulminoRunning(false);
         navigate("fulmine");
       }} className="pulse"
-        style={{width:"100%",marginBottom:12,background:"linear-gradient(135deg,#FBBF24,#F59E0B)",border:"2px solid #FCD34D",borderRadius:18,padding:"13px 18px",color:"#1a1a2e",cursor:"pointer",display:"flex",alignItems:"center",gap:14,textAlign:"left",fontWeight:900}}>
-        <span style={{fontSize:32}}>⚡</span>
+        style={{width:"100%",marginBottom:16,
+          background:"linear-gradient(135deg,#F59E0B,#FBBF24)",
+          border:"none",borderRadius:24,padding:"16px 20px",
+          color:"#1a1a2e",cursor:"pointer",
+          display:"flex",alignItems:"center",gap:16,textAlign:"left",fontWeight:900,
+          boxShadow:"0 6px 28px rgba(251,191,36,.4)"}}>
+        <span style={{fontSize:40}}>⚡</span>
         <div style={{flex:1}}>
-          <div style={{fontSize:15}}>Sfida Fulmine!</div>
-          <div style={{fontSize:11,fontWeight:600,opacity:.6}}>60 secondi · rispondi più che puoi!</div>
+          <div style={{fontSize:17}}>Sfida Fulmine!</div>
+          <div style={{fontSize:12,fontWeight:700,opacity:.65}}>60 secondi · rispondi più che puoi!</div>
         </div>
-        <span style={{background:"#1a1a2e22",borderRadius:20,padding:"3px 10px",fontSize:11,fontWeight:900}}>+⭐</span>
+        <div style={{background:"rgba(0,0,0,.15)",borderRadius:20,padding:"5px 14px",fontSize:13,fontWeight:900}}>GO!</div>
       </button>
-      <div style={{display:"flex",gap:8,marginBottom:18}}>
+      {/* ── NAV TABS ── */}
+      <div style={{display:"flex",gap:8,marginBottom:20}}>
         {[["🗺️","Mondi"],["🌳","Skill"],["👨‍👩‍👧","Famiglia"],["✨","Look"]].map(([icon,label],i) => (
           <button key={i} onClick={() => {
             if(i===1) navigate("skills");
             else if(i===2) navigate("family");
             else if(i===3) navigate("cosmetics");
           }}
-            style={{flex:1,background:i===0?"rgba(255,255,255,.18)":"rgba(255,255,255,.05)",border:i===0?"1px solid rgba(255,255,255,.3)":"none",borderRadius:12,padding:"10px 4px",color:"white",fontSize:11,fontWeight:700,cursor:"pointer"}}>
-            {icon} {label}
+            style={{
+              flex:1,
+              background:i===0?"linear-gradient(135deg,rgba(255,255,255,.2),rgba(255,255,255,.1))":"rgba(255,255,255,.05)",
+              border:i===0?"1px solid rgba(255,255,255,.28)":"1px solid rgba(255,255,255,.07)",
+              borderRadius:16,padding:"12px 4px",
+              color:i===0?"white":"rgba(255,255,255,.55)",
+              fontSize:12,fontWeight:800,cursor:"pointer",
+            }}>
+            <div style={{fontSize:20,marginBottom:3}}>{icon}</div>
+            <div>{label}</div>
           </button>
         ))}
       </div>
@@ -3191,34 +3217,71 @@ export default function MondoMago() {
         // Just show all worlds as scrollable cards below the path
         return null;
       })()}
-      <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:4}}>
-        {unlockedWorlds.filter(w=>w.unlocked).map((w,i) => {
+      {/* ── WORLD CARDS ── */}
+      <div style={{fontSize:12,opacity:.5,fontWeight:800,letterSpacing:1.5,marginBottom:12,textTransform:"uppercase"}}>✦ I tuoi Mondi</div>
+      <div style={{display:"flex",flexDirection:"column",gap:14,marginBottom:8}}>
+        {unlockedWorlds.map((w,i) => {
           const a   = STORY_ARCS[w.id];
           const has = items.find(it => it.emoji === a?.reward_emoji);
+          const locked = !w.unlocked;
           return (
-            <button key={w.id} onClick={() => startWorld(w)}
+            <button key={w.id} onClick={() => locked ? null : startWorld(w)}
               className="slide-up"
-              style={{background:`linear-gradient(135deg,${w.color}1a,${w.color}0d)`,
-                border:`1.5px solid ${w.color}44`,borderRadius:16,padding:"12px 16px",
-                cursor:"pointer",color:"white",display:"flex",alignItems:"center",gap:12,textAlign:"left",
-                animationDelay:`${i*.05}s`}}>
-              <span style={{fontSize:28}}>{w.emoji}</span>
-              <div style={{flex:1}}>
-                <div style={{fontWeight:800,fontSize:14,display:"flex",alignItems:"center",gap:6}}>
-                  {w.name}
-                  {has && <span style={{background:"#22C55E44",color:"#4ade80",fontSize:9,fontWeight:900,borderRadius:20,padding:"2px 7px"}}>✓ FATTO</span>}
+              disabled={locked}
+              style={{
+                background:locked
+                  ? "rgba(255,255,255,.04)"
+                  : `linear-gradient(135deg,${w.color}28,${w.color}10,rgba(18,16,42,0))`,
+                border:`2px solid ${locked?"rgba(255,255,255,.08)":has?w.color:w.color+"66"}`,
+                borderRadius:28,padding:"18px 20px",
+                cursor:locked?"default":"pointer",
+                color:"white",
+                display:"flex",alignItems:"center",gap:18,textAlign:"left",
+                boxShadow:locked?"none":has
+                  ? `0 8px 32px ${w.color}55`
+                  : `0 6px 24px ${w.color}33`,
+                opacity:locked?.45:1,
+                animationDelay:`${i*.06}s`,
+                position:"relative",overflow:"hidden",
+              }}>
+              {/* Shimmer accent for completed */}
+              {has && !locked && <div style={{position:"absolute",top:0,right:0,width:80,height:"100%",background:`linear-gradient(90deg,transparent,${w.color}22)`,borderRadius:"0 26px 26px 0",pointerEvents:"none"}} />}
+              {/* World icon */}
+              <div style={{
+                width:64,height:64,borderRadius:20,flexShrink:0,
+                background:locked?"rgba(255,255,255,.06)":`linear-gradient(135deg,${w.color}55,${w.color}99)`,
+                display:"flex",alignItems:"center",justifyContent:"center",
+                fontSize:36,
+                boxShadow:locked?"none":`0 4px 16px ${w.color}44`,
+              }}>{locked?"🔒":w.emoji}</div>
+              {/* Content */}
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+                  <span style={{fontWeight:900,fontSize:16,color:locked?"rgba(255,255,255,.4)":"white"}}>{w.name}</span>
+                  {has && <span style={{background:`${w.color}33`,color:w.color,fontSize:10,fontWeight:900,borderRadius:20,padding:"2px 8px",border:`1px solid ${w.color}55`}}>✓ COMPLETO</span>}
                 </div>
-                {has
-                  ? <div style={{fontSize:10,marginTop:2,color:"#FFD95A",opacity:.8}}>🏆 {a.reward_name}</div>
-                  : <div style={{fontSize:10,opacity:.4,marginTop:2}}>🎯 ~6 sfide · {young?"visive":"testo"}</div>}
+                {locked
+                  ? <div style={{fontSize:12,color:w.color,opacity:.7,fontWeight:700}}>🔒 Servono {w.starsNeeded} ⭐ per sbloccare</div>
+                  : has
+                    ? <div style={{fontSize:12,color:"#FFD95A",opacity:.9,fontWeight:700}}>🏆 {a?.reward_name}</div>
+                    : <div style={{fontSize:12,opacity:.5}}>🎯 ~6 sfide · {young?"visive":"interattive"}</div>}
+                {/* Stars */}
+                {!locked && (
+                  <div style={{display:"flex",gap:4,marginTop:6}}>
+                    {[0,1,2].map(si => (
+                      <span key={si} style={{fontSize:14,opacity:si<(has?3:0)?1:.2,color:"#FFD700"}}>⭐</span>
+                    ))}
+                  </div>
+                )}
               </div>
-              <span style={{opacity:.4,fontSize:18}}>→</span>
+              {/* Arrow */}
+              {!locked && <div style={{color:w.color,fontSize:22,opacity:.8,flexShrink:0}}>›</div>}
             </button>
           );
         })}
       </div>
       <button onClick={() => navigate("parent")}
-        style={{width:"100%",marginTop:16,background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.1)",borderRadius:14,padding:"11px",color:"rgba(255,255,255,.4)",fontSize:12,cursor:"pointer",fontWeight:700}}>
+        style={{width:"100%",marginTop:10,background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.08)",borderRadius:18,padding:"13px",color:"rgba(255,255,255,.35)",fontSize:13,cursor:"pointer",fontWeight:700}}>
         🔐 Area Genitori
       </button>
       </div>{/* /relative z-1 */}
@@ -3414,7 +3477,7 @@ export default function MondoMago() {
     const youngBg = young && !ch.isBoss;
     const youngColors = ["#FF5252","#26C6DA","#66BB6A","#FFA726"];
     return (
-      <div key={`ch-${ci}`} className={screenAnim} style={{minHeight:"100dvh",background:youngBg?"linear-gradient(180deg,#FFF8EC,#F0EAFF)":ch.isBoss?`linear-gradient(135deg,#1a0808,#3a0808)`:`linear-gradient(180deg,#1a1a2e,${worldColor}1a)`,color:youngBg?"#1a1a2e":"white",padding:20,display:"flex",flexDirection:"column",position:"relative"}}>
+      <div key={`ch-${ci}`} className={screenAnim} style={{minHeight:"100dvh",background:youngBg?"linear-gradient(180deg,#FFF8EC,#F0EAFF)":ch.isBoss?`linear-gradient(135deg,#1a0808,#3a0808)`:`linear-gradient(180deg,#12102a,#1a1a2e)`,color:youngBg?"#1a1a2e":"white",padding:20,display:"flex",flexDirection:"column",position:"relative"}}>
         {G}
         <WorldBg worldId={world?.id} />
         {/* Session time limit overlay */}
@@ -3505,7 +3568,7 @@ export default function MondoMago() {
             }
             {combo >= 2 && <span style={{fontSize:12,color:"#F97316",fontWeight:900}}>🔥×{combo}</span>}
           </div>
-          {comp && <CompanionAvatar c={comp} size={40} anim={compAnim} talking={compTalking} mood={compMood} />}
+          {comp && <CompanionAvatar c={comp} size={56} anim={compAnim} talking={compTalking} mood={compMood} />}
         </div>
         {/* Progress bar — Duolingo style */}
         <div style={{position:"relative",zIndex:1,marginBottom:14,display:"flex",alignItems:"center",gap:10}}>
@@ -3620,7 +3683,7 @@ export default function MondoMago() {
               style={{fontSize:youngBg?60:52,letterSpacing:8,marginBottom:12,cursor:"pointer"}}>{ch.visual}</div>}
             {isStory
               ? <p style={{fontSize:youngBg?17:15,lineHeight:1.75,margin:0,color:youngBg?"#333":"inherit"}}>{ch.situation}</p>
-              : <p style={{fontSize:isVis?(youngBg?22:19):youngBg?19:15,lineHeight:1.65,margin:0,fontWeight:isVis?700:youngBg?700:500,whiteSpace:"pre-line",color:youngBg?"#222":"inherit"}}>{ch.prompt}</p>
+              : <p style={{fontSize:isVis?(youngBg?24:21):youngBg?21:17,lineHeight:1.7,margin:0,fontWeight:isVis?700:youngBg?700:500,whiteSpace:"pre-line",color:youngBg?"#222":"inherit"}}>{ch.prompt}</p>
             }
           </div>
         )}
@@ -3630,7 +3693,7 @@ export default function MondoMago() {
           <div style={{display:"flex",flexDirection:"column",gap:12,position:"relative",zIndex:1}}>
             {ch.choices.map((c,idx) => (
               <button key={idx} onClick={() => answerStory(c)}
-                style={{background:"rgba(255,255,255,.09)",border:"2px solid rgba(255,255,255,.15)",borderRadius:18,padding:"18px 20px",color:"white",fontSize:15,fontWeight:600,cursor:"pointer",textAlign:"left"}}>
+                style={{background:"rgba(255,255,255,.09)",border:"2px solid rgba(255,255,255,.18)",borderRadius:22,padding:"20px 22px",color:"white",fontSize:17,fontWeight:700,cursor:"pointer",textAlign:"left",lineHeight:1.45}}>
                 {c.text}
               </button>
             ))}
@@ -3757,8 +3820,8 @@ export default function MondoMago() {
                       color: youngBg ? (done && (correct||wrong) ? "white" : youngColors[idx%4]) : "white",
                       fontWeight: youngBg ? 800 : 600,
                       cursor:done?"default":"pointer",
-                      height: (isVis||isWordPic||isAlpha) ? 120 : (youngBg ? 96 : young ? 88 : 76),
-                      fontSize: (isVis||isWordPic||isAlpha) ? 52 : youngBg ? 19 : 17,
+                      height: (isVis||isWordPic||isAlpha) ? 120 : (youngBg ? 100 : young ? 92 : 82),
+                      fontSize: (isVis||isWordPic||isAlpha) ? 52 : youngBg ? 20 : 18,
                       display:"flex", alignItems:"center", justifyContent:"center",
                       padding: (isVis||isWordPic||isAlpha) ? 0 : "16px 12px",
                       transform: wrong ? "scale(0.97)" : correct ? "scale(1.04)" : "scale(1)",
