@@ -2993,21 +2993,21 @@ export default function MondoMago() {
           {season.banner}
         </div>
       )}
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:18}}>
-        <div>
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:18}}>
+        <div style={{flex:1,minWidth:0}}>
           <div style={{fontSize:12,opacity:.5}}>{isReturning ? `Bentornato, ${childName}!` : `Ciao, ${childName}!`} 👋</div>
           <h2 style={{margin:0,fontSize:20,fontWeight:900}}>🗺️ I Mondi Magici</h2>
         </div>
         {comp && (
           <div onClick={() => navigate("profile")}
-            style={{textAlign:"center",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+            style={{textAlign:"center",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,flexShrink:0}}>
             <div style={{
-              width:84, height:84, borderRadius:"50%",
+              width:72, height:72, borderRadius:"50%",
               background:`radial-gradient(circle at 35% 30%, ${comp.color}33, ${comp.color}aa)`,
               border:`3px solid ${comp.color}`,
-              boxShadow:`0 0 28px ${comp.color}88, 0 6px 20px rgba(0,0,0,.5)`,
+              boxShadow:`0 0 20px ${comp.color}88, 0 4px 16px rgba(0,0,0,.5)`,
               display:"flex", alignItems:"center", justifyContent:"center",
-              fontSize:46, animation:compAnim,
+              fontSize:40, animation:compAnim,
             }}>{comp.emoji}</div>
             <div style={{fontSize:11,fontWeight:800,color:comp.color,letterSpacing:.3}}>{comp.name}</div>
           </div>
