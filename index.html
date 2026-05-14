@@ -118,7 +118,21 @@
       });
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch(() => {});
+          navigator.serviceWorker.register('/sw.js').then(reg => {
+            reg.addEventListener('updatefound', () => {
+              const nw = reg.installing;
+              nw.addEventListener('statechange', () => {
+                if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+                  const b = document.createElement('div');
+                  b.id = 'mm-update-banner';
+                  b.style.cssText = 'position:fixed;bottom:env(safe-area-inset-bottom,0px);left:0;right:0;background:#6C63FF;color:white;text-align:center;padding:12px;font-family:Nunito,sans-serif;font-size:14px;font-weight:700;z-index:99999;cursor:pointer';
+                  b.textContent = '✨ Aggiornamento disponibile — tocca per ricaricare';
+                  b.onclick = () => { nw.postMessage({type:'SKIP_WAITING'}); location.reload(); };
+                  document.body.appendChild(b);
+                }
+              });
+            });
+          }).catch(() => {});
         });
       }
     </script>

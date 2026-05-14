@@ -45,5 +45,14 @@
   },
   "edge_side_panel": {
     "preferred_width": 400
-  }
+  },
+  "shortcuts": [
+    {
+      "name": "Sfida del Giorno",
+      "short_name": "Sfida",
+      "description": "Inizia la sfida del giorno e guadagna 3 stelle bonus",
+      "url": "/?action=daily",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
 }

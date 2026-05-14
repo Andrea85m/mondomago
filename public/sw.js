@@ -10,6 +10,10 @@ const PRECACHE_URLS = [
   '/icon-512.png',
 ];
 
+self.addEventListener('message', e => {
+  if (e.data?.type === 'SKIP_WAITING') self.skipWaiting();
+});
+
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE_CORE).then(cache =>

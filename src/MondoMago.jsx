@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import TTS_MAP from "./ttsMap.json";
 
 // ── CSS ANIMATIONS ────────────────────────────────────────────────────────────
@@ -331,11 +331,12 @@ function CompanionAvatar({ c, size = 64, anim = "", cosmetic = null, mood = "idl
 
   // Blink every 3-5s
   useEffect(() => {
+    let blinkTimeout;
     const interval = setInterval(() => {
       setBlink(true);
-      setTimeout(() => setBlink(false), 140);
+      blinkTimeout = setTimeout(() => setBlink(false), 140); // M5: track to clean up on unmount
     }, 3200 + Math.random() * 2000);
-    return () => clearInterval(interval);
+    return () => { clearInterval(interval); clearTimeout(blinkTimeout); };
   }, []);
 
   // Mouth animation when talking
@@ -963,7 +964,7 @@ const ALL_CHALLENGES = {
 
     { id:"m11", format:"story_choice",    type:"empatia",   ageMin:5, ageMax:6,
       emoji:"🛒",
-      situation:"Al mercato, una bambina anziana lascia cadere la spesa. Nessuno si ferma ad aiutarla. Cosa fai?",
+      situation:"Al mercato, una signora anziana lascia cadere la spesa. Nessuno si ferma ad aiutarla. Cosa fai?",
       choices:[
         { text:"🤲 Mi fermo e raccolgo tutto", outcome:"La signora ti ringrazia con un sorriso enorme. Hai fatto la cosa giusta!", correct:true },
         { text:"🚶 Continuo per la mia strada",  outcome:"La signora è rimasta sola... un piccolo gesto può cambiare la giornata di qualcuno.", correct:false },
@@ -1420,27 +1421,27 @@ ALL_CHALLENGES.biblioteca = [
 
   // ── Alfabeto (ages 3-6) ───────────────────────────────────────────────────
   // Each challenge: exactly ONE option starts with the target letter
-  { id:"ba_A", format:"visual_tap", type:"parole", ageMin:3, ageMax:6,
+  { id:"ba_A", format:"visual_tap", type:"parole", ageMin:5, ageMax:6,
     visual:"🦅🐬🐻🌺", prompt:"Quale inizia con la lettera A?\n(Aquila · Delfino · Orso · Fiore)", emoji:"🔤",
     options:["🦅","🐬","🐻","🌺"], correct:0 },
 
-  { id:"ba_B", format:"visual_tap", type:"parole", ageMin:3, ageMax:6,
+  { id:"ba_B", format:"visual_tap", type:"parole", ageMin:5, ageMax:6,
     visual:"🐬🐋🐻🐸", prompt:"Quale inizia con la lettera B?\n(Delfino · Balena · Orso · Rana)", emoji:"🔤",
     options:["🐬","🐋","🐻","🐸"], correct:1 },
 
-  { id:"ba_C", format:"visual_tap", type:"parole", ageMin:3, ageMax:6,
+  { id:"ba_C", format:"visual_tap", type:"parole", ageMin:5, ageMax:6,
     visual:"🐶🐻🐸🐬", prompt:"Quale inizia con la lettera C?\n(Cane · Orso · Rana · Delfino)", emoji:"🔤",
     options:["🐶","🐻","🐸","🐬"], correct:0 },
 
-  { id:"ba_E", format:"visual_tap", type:"parole", ageMin:3, ageMax:6,
+  { id:"ba_E", format:"visual_tap", type:"parole", ageMin:5, ageMax:6,
     visual:"🐻🐸🐘🐬", prompt:"Quale inizia con la lettera E?\n(Orso · Rana · Elefante · Delfino)", emoji:"🔤",
     options:["🐻","🐸","🐘","🐬"], correct:2 },
 
-  { id:"ba_F", format:"visual_tap", type:"parole", ageMin:3, ageMax:6,
+  { id:"ba_F", format:"visual_tap", type:"parole", ageMin:5, ageMax:6,
     visual:"🐬🐻🐸🦋", prompt:"Quale inizia con la lettera F?\n(Delfino · Orso · Rana · Farfalla)", emoji:"🔤",
     options:["🐬","🐻","🐸","🦋"], correct:3 },
 
-  { id:"ba_G", format:"visual_tap", type:"parole", ageMin:3, ageMax:6,
+  { id:"ba_G", format:"visual_tap", type:"parole", ageMin:5, ageMax:6,
     visual:"🐱🐬🐻🐸", prompt:"Quale inizia con la lettera G?\n(Gatto · Delfino · Orso · Rana)", emoji:"🔤",
     options:["🐱","🐬","🐻","🐸"], correct:0 },
 
@@ -1448,11 +1449,11 @@ ALL_CHALLENGES.biblioteca = [
     visual:"🐬🦁🐻🐸", prompt:"Quale inizia con la lettera L?\n(Delfino · Leone · Orso · Rana)", emoji:"🔤",
     options:["🐬","🦁","🐻","🐸"], correct:1 },
 
-  { id:"ba_M", format:"visual_tap", type:"parole", ageMin:3, ageMax:6,
+  { id:"ba_M", format:"visual_tap", type:"parole", ageMin:5, ageMax:6,
     visual:"🍎🐬🐻🐸", prompt:"Quale inizia con la lettera M?\n(Mela · Delfino · Orso · Rana)", emoji:"🔤",
     options:["🍎","🐬","🐻","🐸"], correct:0 },
 
-  { id:"ba_P", format:"visual_tap", type:"parole", ageMin:3, ageMax:6,
+  { id:"ba_P", format:"visual_tap", type:"parole", ageMin:5, ageMax:6,
     visual:"🐬🐻🐧🐸", prompt:"Quale inizia con la lettera P?\n(Delfino · Orso · Pinguino · Rana)", emoji:"🔤",
     options:["🐬","🐻","🐧","🐸"], correct:2 },
 
@@ -1460,11 +1461,11 @@ ALL_CHALLENGES.biblioteca = [
     visual:"🚀🐬🐻🌺", prompt:"Quale inizia con la lettera R?\n(Razzo · Delfino · Orso · Fiore)", emoji:"🔤",
     options:["🚀","🐬","🐻","🌺"], correct:0 },
 
-  { id:"ba_S", format:"visual_tap", type:"parole", ageMin:3, ageMax:6,
+  { id:"ba_S", format:"visual_tap", type:"parole", ageMin:5, ageMax:6,
     visual:"☀️🐬🐻🐸", prompt:"Quale inizia con la lettera S?\n(Sole · Delfino · Orso · Rana)", emoji:"🔤",
     options:["☀️","🐬","🐻","🐸"], correct:0 },
 
-  { id:"ba_T", format:"visual_tap", type:"parole", ageMin:3, ageMax:6,
+  { id:"ba_T", format:"visual_tap", type:"parole", ageMin:5, ageMax:6,
     visual:"🐬🐢🐻🐸", prompt:"Quale inizia con la lettera T?\n(Delfino · Tartaruga · Orso · Rana)", emoji:"🔤",
     options:["🐬","🐢","🐻","🐸"], correct:1 },
 
@@ -1523,6 +1524,15 @@ Object.assign(ALL_CHALLENGES, {
     { id:"va03", format:"multiple_choice", type:"logica", ageMin:7, ageMax:8, isBoss:true,
       prompt:"🌋 La Fenice chiede:\nUn vulcano è eruttato in: 1980, 1992, 2004, 2016... Quando erutta di nuovo?", emoji:"🐦",
       options:["2024","2026","2028","2030"], correct:2 },
+    { id:"va04", format:"multiple_choice", type:"numeri", ageMin:7, ageMax:8,
+      prompt:"Un'eruzione dura 2 giorni e 6 ore. Quante ore dura in totale?", emoji:"⏱️",
+      options:["48","50","54","60"], correct:2 },
+    { id:"va05", format:"multiple_choice", type:"logica", ageMin:7, ageMax:8,
+      prompt:"Le rocce che si formano dal raffreddamento della lava si chiamano...", emoji:"🪨",
+      options:["Rocce magmatiche","Rocce sedimentarie","Rocce metamorfiche","Cristalli"], correct:0 },
+    { id:"va06", format:"multiple_choice", type:"logica", ageMin:7, ageMax:8,
+      prompt:"Il gas più abbondante emesso dai vulcani è...", emoji:"💨",
+      options:["Vapore acqueo","Ossigeno","Anidride carbonica","Idrogeno"], correct:0 },
   ]),
   biblioteca: ALL_CHALLENGES.biblioteca.concat([
     { id:"ba01", format:"multiple_choice", type:"parole", ageMin:7, ageMax:8,
@@ -1534,6 +1544,15 @@ Object.assign(ALL_CHALLENGES, {
     { id:"ba03", format:"multiple_choice", type:"creativita", ageMin:7, ageMax:8, isBoss:true,
       prompt:"🦉 La Civetta chiede:\nUna fiaba inizia sempre con 'C'era una volta'. Come si chiama questa formula?", emoji:"🦉",
       options:["Formula magica","Incipit","Finale","Titolo"], correct:1 },
+    { id:"ba04", format:"multiple_choice", type:"parole", ageMin:7, ageMax:8,
+      prompt:"Cosa significa 'sinonimo'?", emoji:"📝",
+      options:["Parola con significato simile","Parola contraria","Parola straniera","Errore grammaticale"], correct:0 },
+    { id:"ba05", format:"multiple_choice", type:"numeri", ageMin:7, ageMax:8,
+      prompt:"Una biblioteca ha 5 scaffali con 40 libri ciascuno. Quanti libri ci sono in tutto?", emoji:"📚",
+      options:["150","180","200","220"], correct:2 },
+    { id:"ba06", format:"multiple_choice", type:"creativita", ageMin:7, ageMax:8,
+      prompt:"Quale figura retorica usa la parola 'come' per fare un paragone?", emoji:"✍️",
+      options:["Similitudine","Metafora","Allitterazione","Personificazione"], correct:0 },
   ]),
 });
 
@@ -1680,7 +1699,12 @@ function getSkill(type) {
 function _rnd(min, max) { return min + Math.floor(Math.random() * (max - min + 1)); }
 function _opts(correct, spread, count = 4) {
   const vals = new Set([correct]);
+  let guard = 0;
   while (vals.size < count) {
+    if (++guard > 200) { // C3: safety valve — fill remaining slots deterministically
+      for (let i = 1; vals.size < count; i++) vals.add(correct + spread + i);
+      break;
+    }
     const delta = _rnd(1, spread) * (Math.random() < 0.5 ? 1 : -1);
     const v = correct + delta;
     if (v > 0) vals.add(v);
@@ -1750,9 +1774,10 @@ function filterByAge(worldId, age) {
   const mixed = [...slice, proc].sort(() => Math.random() - 0.5);
   return boss ? [...mixed, boss] : mixed;
 }
-function getDailyChallenges(age) {
+function getDailyChallenges(age, profileId = '') {
   const d = new Date().toISOString().slice(0, 10);
-  const seed = d.split('-').reduce((a, v) => a * 1000 + parseInt(v), 0);
+  const pidHash = profileId.split('').reduce((a, c) => a * 31 + c.charCodeAt(0), 0);
+  const seed = d.split('-').reduce((a, v) => a * 1000 + parseInt(v), 0) + pidHash; // M6: per-profile seed
   const pool = Object.values(ALL_CHALLENGES).flat().filter(c => !c.isBoss && age >= c.ageMin && age <= c.ageMax);
   if (!pool.length) return [];
   const picks = []; const used = new Set();
@@ -1765,6 +1790,9 @@ function getDailyChallenges(age) {
 }
 function initSkills() { return { logica:1, numeri:1, creativita:1, empatia:1, parole:1 }; }
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+// C7: parse "YYYY-MM-DD" as local midnight to avoid UTC off-by-one in European timezones
+function parseDateLocal(s) { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); }
+function escapeHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function addSkill(skills, type) {
   const k = getSkill(type);
   return { ...skills, [k]: Math.min(10, +(skills[k] + 0.5).toFixed(1)) };
@@ -2125,6 +2153,8 @@ export default function MondoMago() {
   const [screen,       setScreen]       = useState("name");
   const [screenAnim,   setScreenAnim]   = useState("screen-enter");
   const prevScreenRef = useRef("");
+  const nextRef       = useRef(null);
+  const advancingRef  = useRef(false);
   const [childName,    setChildName]    = useState("");
   const [childAge,     setChildAge]     = useState(null);
   const [companion,    setCompanion]    = useState(null);
@@ -2157,6 +2187,8 @@ export default function MondoMago() {
   const [pinError,       setPinError]       = useState(false);
   const [timeLimit,      setTimeLimit]      = useState(0);   // 0=off, 15, 20, 30 min
   const [notifTime,      setNotifTime]      = useState("19:00"); // daily reminder time HH:MM
+  const [confirmPinReset, setConfirmPinReset] = useState(false);
+  const [consentChecked,  setConsentChecked]  = useState(false);
   const [sessionStart,   setSessionStart]   = useState(0);
   const [nowTick,        setNowTick]        = useState(0);
   const [dailyCompletedDate, setDailyCompletedDate] = useState("");
@@ -2209,10 +2241,10 @@ export default function MondoMago() {
   const done  = selected !== null;
 
   // Worlds unlocked dynamically based on totalStars
-  const unlockedWorlds = WORLDS.map(w => ({
+  const unlockedWorlds = useMemo(() => WORLDS.map(w => ({ // M8: memoize to avoid recreation every render
     ...w,
     unlocked: w.starsNeeded === 0 || totalStars >= w.starsNeeded,
-  }));
+  })), [totalStars]);
 
   function resetGame() {
     const remaining = allProfiles.filter(p => p.id !== activeProfileId);
@@ -2339,6 +2371,7 @@ export default function MondoMago() {
   }
   function answerSeq(idx) {
     if (seqError || done) return;
+    if (seqTaps.includes(idx)) return; // A2: guard double-tap on already-tapped item
     if (idx !== ch.correctOrder[seqTaps.length]) {
       setSeqError(true); triggerBAD();
       setWrongStreak(w => w + 1);
@@ -2370,6 +2403,7 @@ export default function MondoMago() {
 
   function answerDrag(zoneIdx, itemIdx) {
     if (done) return;
+    if (autoAdvancing) return; // O5: guard double-tap while advancing
     const pts = ch?.isBoss ? 3 : young ? 1 : 2;
     SFX.tap();
     if (dragPicked === null) {
@@ -2476,7 +2510,7 @@ export default function MondoMago() {
     navigate((childAge || 5) <= 4 ? "coplay_intro" : "world_intro");
   }
   function startDaily() {
-    const list = getDailyChallenges(childAge || 5);
+    const list = getDailyChallenges(childAge || 5, activeProfileId); // M6: per-profile daily
     if (!list.length) return;
     stopMusic();
     setWorld({ id:"daily", name:"Sfida del Giorno", emoji:"🌟", color:"#FFD95A", unlocked:true });
@@ -2487,7 +2521,7 @@ export default function MondoMago() {
     setCompMood("idle"); setCompTalking(false); setAutoAdvancing(false);
     setMysteryBox(null); setDoubleStar(false); setBurstPos(null); setGuidedTap(false); setBossHPAnimated(100);
     setSessionStart(Date.now());
-    navigate("world_intro");
+    navigate((childAge||5)<=4?"coplay_intro":"world_intro"); // A8
   }
 
   function applyProfile(p) {
@@ -2509,7 +2543,7 @@ export default function MondoMago() {
     if (p.schoolAssigned)                 setSchoolAssigned(p.schoolAssigned);
     const today = new Date().toISOString().slice(0,10);
     if (p.lastDate) {
-      const diff = Math.floor((new Date(today) - new Date(p.lastDate)) / 86400000);
+      const diff = Math.floor((parseDateLocal(today) - parseDateLocal(p.lastDate)) / 86400000);
       const newStreak = diff === 0 ? (p.streak||1) : diff === 1 ? (p.streak||0)+1 : 1;
       setStreak(newStreak);
       if (diff === 1 && newStreak >= 7 && newStreak % 7 === 0) {
@@ -2640,11 +2674,17 @@ export default function MondoMago() {
   // Seasonal theme — set once on mount
   useEffect(() => { setSeason(getCurrentSeason()); }, []);
 
-  // [A3] Auto-advance on correct answer
+  // Always keep nextRef current so the auto-advance closure never goes stale
+  nextRef.current = next;
+
+  // [C1+A1+A3] Auto-advance on correct answer — uses ref to avoid stale closure; youngBg gets longer delay
   useEffect(() => {
     if (screen !== "challenge" || !autoAdvancing) return;
-    const t = setTimeout(() => { setAutoAdvancing(false); next(); }, 1550);
-    return () => clearTimeout(t);
+    if (advancingRef.current) return;
+    advancingRef.current = true;
+    const delay = young ? 3000 : 1550;
+    const t = setTimeout(() => { advancingRef.current = false; setAutoAdvancing(false); nextRef.current?.(); }, delay); // eslint-disable-line
+    return () => { clearTimeout(t); advancingRef.current = false; };
   }, [autoAdvancing, screen]); // eslint-disable-line
 
   // [B1] Boss HP bar animation — animates to target value on entering boss challenge
@@ -2916,11 +2956,16 @@ export default function MondoMago() {
         <div style={{marginBottom:8}}>🚫 <strong>Nessuna pubblicità</strong> — zero acquisti in-app</div>
         <div>💾 I progressi sono salvati solo <strong>su questo dispositivo</strong></div>
       </div>
-      <button onClick={() => { warmUpAudio(); localStorage.setItem('mondomago_consent','1'); navigate('name'); }}
-        style={{background:"linear-gradient(135deg,#667eea,#764ba2)",border:"none",color:"white",borderRadius:50,padding:"16px 44px",fontWeight:900,fontSize:18,cursor:"pointer",marginBottom:14,boxShadow:"0 8px 32px rgba(102,126,234,.4)"}}>
-        Sono un adulto — Inizia! ✨
+      <label style={{display:"flex",alignItems:"center",gap:10,marginBottom:20,cursor:"pointer",fontSize:13,opacity:.85,maxWidth:340,textAlign:"left"}}>
+        <input type="checkbox" checked={consentChecked} onChange={e => setConsentChecked(e.target.checked)}
+          style={{width:18,height:18,accentColor:"#667eea",flexShrink:0}} />
+        Confermo di essere un adulto e di essere il responsabile dell'utilizzo di questa app da parte del bambino.
+      </label>
+      <button onClick={() => { if(!consentChecked) return; warmUpAudio(); localStorage.setItem('mondomago_consent','1'); navigate('name'); }}
+        style={{background:consentChecked?"linear-gradient(135deg,#667eea,#764ba2)":"rgba(255,255,255,.15)",border:"none",color:"white",borderRadius:50,padding:"16px 44px",fontWeight:900,fontSize:18,cursor:consentChecked?"pointer":"default",marginBottom:14,boxShadow:consentChecked?"0 8px 32px rgba(102,126,234,.4)":"none",transition:"all .3s",opacity:consentChecked?1:.5}}>
+        Inizia! ✨
       </button>
-      <p style={{fontSize:11,opacity:.35,maxWidth:320}}>Confermando accetti l'utilizzo del dispositivo per questo gioco.</p>
+      <p style={{fontSize:11,opacity:.35,maxWidth:320}}>Nessun dato personale viene raccolto — tutto rimane sul dispositivo.</p>
     </div>
   );
 
@@ -2947,11 +2992,13 @@ export default function MondoMago() {
             </button>
           );
         })}
-        <button onClick={startNewProfile} className="slide-up"
-          style={{background:"rgba(255,255,255,.1)",border:"2px dashed rgba(255,255,255,.45)",borderRadius:22,padding:"16px 20px",color:"white",cursor:"pointer",display:"flex",alignItems:"center",gap:14,animationDelay:`${allProfiles.length*.08}s`}}>
-          <div style={{fontSize:40}}>➕</div>
-          <div style={{fontWeight:700,fontSize:16}}>Nuovo giocatore</div>
-        </button>
+        {allProfiles.length < 4 && (
+          <button onClick={startNewProfile} className="slide-up"
+            style={{background:"rgba(255,255,255,.1)",border:"2px dashed rgba(255,255,255,.45)",borderRadius:22,padding:"16px 20px",color:"white",cursor:"pointer",display:"flex",alignItems:"center",gap:14,animationDelay:`${allProfiles.length*.08}s`}}>
+            <div style={{fontSize:40}}>➕</div>
+            <div style={{fontWeight:700,fontSize:16}}>Nuovo giocatore</div>
+          </button>
+        )}
       </div>
     </div>
   );
@@ -3311,7 +3358,7 @@ export default function MondoMago() {
           const has = items.find(it => it.emoji === a?.reward_emoji);
           const locked = !w.unlocked;
           return (
-            <button key={w.id} onClick={() => locked ? null : startWorld(w)}
+            <button key={w.id} onClick={() => locked ? speak(`Guadagna ancora ${w.starsNeeded - totalStars} stelle per aprire ${w.name}!`) : startWorld(w)}
               className="slide-up"
               disabled={locked}
               style={{
@@ -3630,7 +3677,7 @@ export default function MondoMago() {
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,position:"relative",zIndex:1}}>
           <div style={{display:"flex",gap:6}}>
             <button onClick={() => setExitConfirm(true)}
-              style={{background:youngBg?"rgba(0,0,0,.08)":"rgba(255,255,255,.1)",border:"none",color:youngBg?"#444":"white",borderRadius:12,padding:"8px 14px",cursor:"pointer",fontSize:14}}>
+              aria-label="Esci dalla sfida" style={{background:youngBg?"rgba(0,0,0,.08)":"rgba(255,255,255,.1)",border:"none",color:youngBg?"#444":"white",borderRadius:12,padding:"11px 16px",cursor:"pointer",fontSize:14}}>
               ← Esci
             </button>
             <button onClick={() => {
@@ -3641,8 +3688,8 @@ export default function MondoMago() {
                 : ch.prompt;
               speak(t);
             }}
-              style={{background:youngBg?"rgba(0,0,0,.08)":"rgba(255,255,255,.1)",border:"none",color:youngBg?"#444":"white",borderRadius:12,padding:"8px 12px",cursor:"pointer",fontSize:17}}
-              title="Rileggi la domanda">
+              style={{background:youngBg?"rgba(0,0,0,.08)":"rgba(255,255,255,.1)",border:"none",color:youngBg?"#444":"white",borderRadius:12,padding:"11px 14px",cursor:"pointer",fontSize:17}}
+              title="Rileggi la domanda" aria-label="Rileggi la domanda">
               🔊
             </button>
           </div>
@@ -3835,7 +3882,7 @@ export default function MondoMago() {
                       border:`3px dashed ${dragPicked !== null ? (world?.color || "#A78BFA") : "rgba(255,255,255,.25)"}`,
                       background: placedItem ? "rgba(255,255,255,.12)" : "rgba(255,255,255,.04)",
                       display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
-                      cursor:dragPicked!==null?"pointer":"default",
+                      cursor:"pointer", // C5: always pointer — Safari iOS won't fire click on cursor:default
                       gap:4, padding:"8px 4px",
                       transition:"border-color .2s, background .2s",
                       boxShadow: dragPicked !== null ? `0 0 12px ${(world?.color||"#A78BFA")}44` : "none",
@@ -4813,9 +4860,10 @@ export default function MondoMago() {
               const pct = acc.total > 0 ? Math.round((acc.correct/acc.total)*100) : null;
               return `<tr><td>${sk.emoji} ${sk.name}</td><td>Lv.${skills[sk.id]}/10</td><td>${pct !== null ? pct+'%' : '—'}</td><td>${acc.correct}/${acc.total}</td></tr>`;
             }).join('');
-            const html = `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><title>Report MondoMago — ${childName}</title>
+            const safeChildName = escapeHtml(childName);
+            const html = `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><title>Report MondoMago — ${safeChildName}</title>
 <style>body{font-family:system-ui,sans-serif;max-width:640px;margin:40px auto;padding:20px;background:#f9fafb}h1,h2{color:#764ba2}table{width:100%;border-collapse:collapse;margin:16px 0}th,td{border:1px solid #e5e7eb;padding:10px;text-align:center}th{background:#f3f4f6;font-weight:700}.stat{display:inline-block;background:#ede9fe;border-radius:12px;padding:12px 20px;margin:6px;text-align:center}.stat b{display:block;font-size:24px;color:#764ba2}.pct-good{color:#16a34a;font-weight:700}.pct-mid{color:#d97706;font-weight:700}.pct-low{color:#dc2626;font-weight:700}</style></head>
-<body><h1>📊 Report MondoMago — ${childName}</h1>
+<body><h1>📊 Report MondoMago — ${safeChildName}</h1>
 <p>Generato il ${new Date().toLocaleDateString('it-IT')} | Livello: ${lvl.emoji} ${lvl.title} | Stelle totali: ${totalStars} ⭐</p>
 <div>
   <span class="stat"><b>${weekStars}</b>Stelle (7gg)</span>
@@ -4832,8 +4880,10 @@ export default function MondoMago() {
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
             a.download = `mondomago_report_${childName.toLowerCase()}_${today.toISOString().slice(0,10)}.html`;
+            document.body.appendChild(a);
             a.click();
-            URL.revokeObjectURL(a.href);
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(a.href), 150); // C4: Safari needs async revoke
           }
           return (
             <div style={{background:"rgba(255,255,255,.07)",borderRadius:20,padding:"16px 18px",marginBottom:14}}>
@@ -4881,10 +4931,23 @@ export default function MondoMago() {
         </button>
 
         {/* Reset PIN */}
-        <button onClick={() => { setPinSaved(""); setParentUnlocked(false); }}
-          style={{width:"100%",background:"rgba(255,255,255,.06)",border:"1px solid rgba(255,255,255,.1)",color:"rgba(255,255,255,.4)",borderRadius:14,padding:12,cursor:"pointer",fontSize:12,marginBottom:8}}>
-          🔑 Cambia PIN
-        </button>
+        {!confirmPinReset ? (
+          <button onClick={() => setConfirmPinReset(true)}
+            style={{width:"100%",background:"rgba(255,255,255,.06)",border:"1px solid rgba(255,255,255,.1)",color:"rgba(255,255,255,.4)",borderRadius:14,padding:12,cursor:"pointer",fontSize:12,marginBottom:8}}>
+            🔑 Cambia PIN
+          </button>
+        ) : (
+          <div style={{marginBottom:8,display:"flex",gap:8}}>
+            <button onClick={() => { setPinSaved(""); setParentUnlocked(false); setConfirmPinReset(false); }}
+              style={{flex:1,background:"rgba(239,68,68,.2)",border:"1px solid rgba(239,68,68,.4)",color:"#ef4444",borderRadius:14,padding:12,cursor:"pointer",fontSize:12}}>
+              ⚠️ Conferma reset
+            </button>
+            <button onClick={() => setConfirmPinReset(false)}
+              style={{flex:1,background:"rgba(255,255,255,.06)",border:"none",color:"rgba(255,255,255,.4)",borderRadius:14,padding:12,cursor:"pointer",fontSize:12}}>
+              Annulla
+            </button>
+          </div>
+        )}
         <button onClick={() => setParentUnlocked(false)}
           style={{width:"100%",background:"rgba(255,255,255,.04)",border:"none",color:"rgba(255,255,255,.3)",borderRadius:14,padding:10,cursor:"pointer",fontSize:11}}>
           🔒 Blocca area genitori
@@ -4893,5 +4956,15 @@ export default function MondoMago() {
     );
   }
 
-  return null;
+  // C2: emergency recovery — unknown screen value, redirect to safe state
+  return (
+    <div style={{minHeight:"100dvh",background:"#1a1a2e",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",color:"white",gap:16}}>
+      <div style={{fontSize:48}}>🧙‍♂️</div>
+      <div style={{fontFamily:"'Fredoka One',cursive",fontSize:24}}>Ops, qualcosa è andato storto!</div>
+      <button onClick={() => navigate(childName ? "map" : "name")}
+        style={{background:"#6C63FF",border:"none",color:"white",borderRadius:16,padding:"14px 32px",fontSize:16,cursor:"pointer",fontFamily:"'Fredoka One',cursive"}}>
+        Torna all'inizio
+      </button>
+    </div>
+  );
 }
