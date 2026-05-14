@@ -14,8 +14,9 @@
     <title>MondoMago</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <style>
+      :root { --font-display: 'Fredoka One', cursive; }
       :root {
         --sat: env(safe-area-inset-top, 0px);
         --sar: env(safe-area-inset-right, 0px);
@@ -101,7 +102,7 @@
     <!-- Branded splash: shown until React mounts, removes itself -->
     <div id="mm-splash" style="position:fixed;inset:0;background:#1a1a2e;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .35s ease">
       <div style="font-size:80px;animation:bounce 1s ease-in-out infinite">🧙‍♂️</div>
-      <div style="font-family:'Nunito',system-ui,sans-serif;font-size:30px;font-weight:900;color:white;margin-top:14px;letter-spacing:-0.5px">MondoMago</div>
+      <div style="font-family:'Fredoka One',cursive;font-size:34px;color:white;margin-top:14px;letter-spacing:0.5px">MondoMago</div>
       <div style="font-family:'Nunito',system-ui,sans-serif;font-size:14px;color:rgba(255,255,255,.45);margin-top:6px">Il mondo magico ti aspetta ✨</div>
       <style>@keyframes bounce{0%,100%{transform:translateY(0)}40%{transform:translateY(-18px)}70%{transform:translateY(-8px)}}</style>
     </div>

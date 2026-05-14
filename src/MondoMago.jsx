@@ -105,6 +105,22 @@ function AnimationStyles() {
         0%,100% { transform: translateY(0) rotate(-20deg); }
         50%     { transform: translateY(-10px) rotate(-20deg); }
       }
+      @keyframes tapGesture {
+        0%,100% { transform: translateY(0) scale(1); }
+        20%     { transform: translateY(0) scale(1); }
+        40%     { transform: translateY(18px) scale(0.88); }
+        55%     { transform: translateY(18px) scale(0.85); }
+        75%     { transform: translateY(0) scale(1.08); }
+      }
+      @keyframes tapRipple {
+        0%   { transform: scale(0.4); opacity: 0.9; }
+        60%  { transform: scale(1.1); opacity: 0.35; }
+        100% { transform: scale(1.8); opacity: 0; }
+      }
+      @keyframes tapRipple2 {
+        0%   { transform: scale(0.4); opacity: 0.6; }
+        100% { transform: scale(2.2); opacity: 0; }
+      }
       @keyframes autoRing {
         from { stroke-dashoffset: 132; }
         to   { stroke-dashoffset: 0; }
@@ -2103,6 +2119,8 @@ const SCREEN_DEPTH = {
 };
 
 // ── MAIN COMPONENT ────────────────────────────────────────────────────────────
+const FF = "'Fredoka One', cursive";
+
 export default function MondoMago() {
   const [screen,       setScreen]       = useState("name");
   const [screenAnim,   setScreenAnim]   = useState("screen-enter");
@@ -2138,6 +2156,7 @@ export default function MondoMago() {
   const [pinSaved,       setPinSaved]       = useState("");
   const [pinError,       setPinError]       = useState(false);
   const [timeLimit,      setTimeLimit]      = useState(0);   // 0=off, 15, 20, 30 min
+  const [notifTime,      setNotifTime]      = useState("19:00"); // daily reminder time HH:MM
   const [sessionStart,   setSessionStart]   = useState(0);
   const [nowTick,        setNowTick]        = useState(0);
   const [dailyCompletedDate, setDailyCompletedDate] = useState("");
@@ -2407,8 +2426,24 @@ export default function MondoMago() {
       }
       // Log this session for parent report
       setSessionLog(prev => {
-        const entry = { date: today, stars: sessionStars + (world?.id === "daily" ? 3 : 0), world: world?.id || "?", correct: results.filter(r=>r.ok).length, total: results.length };
-        return [...prev.slice(-29), entry]; // keep last 30 sessions
+        const skillData = {};
+        results.forEach(r => {
+          const sk = getSkill(r.type);
+          if (!skillData[sk]) skillData[sk] = { correct: 0, total: 0 };
+          skillData[sk].total++;
+          if (r.ok) skillData[sk].correct++;
+        });
+        const duration = sessionStart > 0 ? Math.max(1, Math.round((Date.now() - sessionStart) / 60000)) : 0;
+        const entry = {
+          date: today,
+          stars: sessionStars + (world?.id === "daily" ? 3 : 0),
+          world: world?.id || "?",
+          correct: results.filter(r=>r.ok).length,
+          total: results.length,
+          duration,
+          skillData,
+        };
+        return [...prev.slice(-59), entry]; // keep last 60 sessions
       });
       setConfetti(true); setTimeout(() => setConfetti(false), 2800);
       navigate("world_end");
@@ -2658,14 +2693,50 @@ export default function MondoMago() {
   useEffect(() => {
     const p = loadParent();
     if (!p) return;
-    if (p.pin)       setPinSaved(p.pin);
-    if (p.timeLimit) setTimeLimit(p.timeLimit);
+    if (p.pin)        setPinSaved(p.pin);
+    if (p.timeLimit)  setTimeLimit(p.timeLimit);
+    if (p.notifTime)  setNotifTime(p.notifTime);
   }, []);
 
   // Save parent settings when they change
   useEffect(() => {
-    writeParent({ pin: pinSaved, timeLimit });
-  }, [pinSaved, timeLimit]);
+    writeParent({ pin: pinSaved, timeLimit, notifTime });
+  }, [pinSaved, timeLimit, notifTime]);
+
+  // Scheduled notification check — runs every minute when page is visible
+  useEffect(() => {
+    const NOTIF_KEY = 'mondomago_lastNotif_v1';
+    function checkAndNotify() {
+      if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+      const now = new Date();
+      const todayStr = now.toISOString().slice(0, 10);
+      const lastNotif = localStorage.getItem(NOTIF_KEY) || '';
+      if (lastNotif === todayStr) return; // already notified today
+      const [hh, mm] = notifTime.split(':').map(Number);
+      const notifMinutes = hh * 60 + mm;
+      const nowMinutes   = now.getHours() * 60 + now.getMinutes();
+      if (nowMinutes < notifMinutes) return; // not yet time
+      // Check if user played today
+      const playedToday = sessionLog.some(s => s.date === todayStr);
+      if (playedToday) { localStorage.setItem(NOTIF_KEY, todayStr); return; }
+      // Show notification
+      const msg = streak >= 3
+        ? `🔥 Streak di ${streak} giorni! Non dimenticare di giocare oggi per mantenerla!`
+        : `✨ La sfida del giorno ti aspetta! Guadagna 3 stelle bonus oggi.`;
+      try {
+        new Notification('MondoMago 🧙‍♂️', {
+          body: msg,
+          icon: '/icon-192.png',
+          badge: '/icon-192.png',
+          tag: 'mondomago-daily',
+        });
+      } catch {}
+      localStorage.setItem(NOTIF_KEY, todayStr);
+    }
+    checkAndNotify(); // immediate check
+    const id = setInterval(checkAndNotify, 60000); // check every minute
+    return () => clearInterval(id);
+  }, [notifTime, sessionLog, streak]);
 
   // PIN check: when 4 digits entered in parent screen, verify or set
   useEffect(() => {
@@ -2745,8 +2816,8 @@ export default function MondoMago() {
             <div className="slide-up" style={{background:"linear-gradient(135deg,#1e1e3a,#2d2d5e)",border:"2px solid #A78BFA",borderRadius:24,padding:"14px 22px",display:"flex",alignItems:"center",gap:12,maxWidth:340,boxShadow:"0 8px 32px rgba(0,0,0,.5)"}}>
               <span style={{fontSize:34}}>{a?.emoji}</span>
               <div>
-                <div style={{fontWeight:900,fontSize:12,color:"#A78BFA",letterSpacing:1}}>OBIETTIVO SBLOCCATO!</div>
-                <div style={{fontWeight:700,fontSize:15,color:"white"}}>{a?.name}</div>
+                <div style={{fontFamily:FF,fontSize:13,color:"#A78BFA"}}>OBIETTIVO SBLOCCATO!</div>
+                <div style={{fontFamily:FF,fontSize:16,color:"white"}}>{a?.name}</div>
                 <div style={{fontSize:11,color:"rgba(255,255,255,.6)"}}>{a?.desc}</div>
               </div>
             </div>
@@ -2757,10 +2828,10 @@ export default function MondoMago() {
         <div onClick={() => setNewLevel(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.86)",zIndex:700,display:"flex",alignItems:"center",justifyContent:"center",padding:24,cursor:"pointer"}}>
           <div className="pop-in" style={{background:"linear-gradient(135deg,#2d1b69,#1a1a2e)",border:"2px solid #FFD700",borderRadius:28,padding:"36px 28px",textAlign:"center",maxWidth:320,boxShadow:"0 0 60px rgba(255,215,0,.3)"}}>
             <div style={{fontSize:72,marginBottom:12}}>{newLevel.emoji}</div>
-            <div style={{color:"#FFD700",fontWeight:900,fontSize:12,letterSpacing:2,marginBottom:8}}>LIVELLO RAGGIUNTO!</div>
-            <div style={{color:"white",fontWeight:900,fontSize:28,marginBottom:6}}>{newLevel.title}</div>
+            <div style={{fontFamily:FF,fontSize:14,color:"#FFD700",marginBottom:8}}>LIVELLO RAGGIUNTO!</div>
+            <div style={{fontFamily:FF,fontSize:32,color:"white",marginBottom:6}}>{newLevel.title}</div>
             <p style={{color:"rgba(255,255,255,.7)",fontSize:14,marginBottom:24}}>Continua così! Sei davvero bravo!</p>
-            <button onClick={() => setNewLevel(null)} style={{background:"#FFD700",color:"#1a1a2e",border:"none",borderRadius:50,padding:"13px 36px",fontWeight:900,fontSize:16,cursor:"pointer"}}>
+            <button onClick={() => setNewLevel(null)} style={{fontFamily:FF,background:"#FFD700",color:"#1a1a2e",border:"none",borderRadius:50,padding:"13px 36px",fontSize:18,cursor:"pointer"}}>
               Continua! ✨
             </button>
           </div>
@@ -2773,8 +2844,8 @@ export default function MondoMago() {
             <div className="slide-up" style={{background:"linear-gradient(135deg,#1a0f2e,#2d1b50)",border:"2px solid #C084FC",borderRadius:24,padding:"14px 22px",display:"flex",alignItems:"center",gap:12,maxWidth:340,boxShadow:"0 8px 32px rgba(192,132,252,.3)"}}>
               <span style={{fontSize:34}}>{c?.emoji}</span>
               <div>
-                <div style={{fontWeight:900,fontSize:12,color:"#C084FC",letterSpacing:1}}>COSMETICO SBLOCCATO! ✨</div>
-                <div style={{fontWeight:700,fontSize:15,color:"white"}}>{c?.name}</div>
+                <div style={{fontFamily:FF,fontSize:13,color:"#C084FC"}}>COSMETICO SBLOCCATO! ✨</div>
+                <div style={{fontFamily:FF,fontSize:16,color:"white"}}>{c?.name}</div>
                 <div style={{fontSize:11,color:"rgba(255,255,255,.6)"}}>Equipaggialo in Personalizza!</div>
               </div>
             </div>
@@ -2786,11 +2857,11 @@ export default function MondoMago() {
         <div onClick={() => setStreakCelebrate(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.88)",zIndex:710,display:"flex",alignItems:"center",justifyContent:"center",padding:24,cursor:"pointer"}}>
           <div className="pop-in" style={{background:"linear-gradient(135deg,#7C2D12,#B45309,#92400E)",border:"2px solid #FCD34D",borderRadius:28,padding:"36px 28px",textAlign:"center",maxWidth:320,boxShadow:"0 0 80px rgba(252,211,77,.4), 0 20px 60px rgba(0,0,0,.6)"}}>
             <div style={{fontSize:72,marginBottom:4,animation:"wiggle 0.6s ease-in-out infinite"}}>🔥</div>
-            <div style={{color:"#FCD34D",fontWeight:900,fontSize:13,letterSpacing:2,marginBottom:8}}>STREAK DA CAMPIONE!</div>
-            <div style={{color:"white",fontWeight:900,fontSize:36,marginBottom:4}}>{streak} giorni</div>
-            <div style={{color:"#FCD34D",fontWeight:700,fontSize:16,marginBottom:6}}>di fila!</div>
+            <div style={{fontFamily:FF,fontSize:15,color:"#FCD34D",marginBottom:8}}>STREAK DA CAMPIONE!</div>
+            <div style={{fontFamily:FF,fontSize:40,color:"white",marginBottom:4}}>{streak} giorni</div>
+            <div style={{fontFamily:FF,fontSize:18,color:"#FCD34D",marginBottom:6}}>di fila!</div>
             <p style={{color:"rgba(255,255,255,.8)",fontSize:14,marginBottom:24,lineHeight:1.6}}>Sei incredibile! Continua così ogni giorno!</p>
-            <button onClick={() => setStreakCelebrate(false)} style={{background:"#FCD34D",color:"#1a1a2e",border:"none",borderRadius:50,padding:"14px 40px",fontWeight:900,fontSize:16,cursor:"pointer"}}>
+            <button onClick={() => setStreakCelebrate(false)} style={{fontFamily:FF,background:"#FCD34D",color:"#1a1a2e",border:"none",borderRadius:50,padding:"14px 40px",fontSize:18,cursor:"pointer"}}>
               Continuo! 🔥
             </button>
           </div>
@@ -2810,9 +2881,24 @@ export default function MondoMago() {
       <CorrectBurst pos={burstPos} particles={world ? (WORLD_PARTICLES[world.id] || ["⭐","✨","💫"]) : ["⭐","✨","💫"]} />
       {/* [B4] Guided hand — first challenge ever */}
       {guidedTap && ch && (ch.format === "multiple_choice" || ch.format === "visual_tap") && (
-        <div style={{position:"fixed",bottom:"18%",left:"50%",transform:"translateX(-50%)",zIndex:800,pointerEvents:"none",textAlign:"center"}}>
-          <div style={{fontSize:52,animation:"handPoint 0.9s ease-in-out infinite",display:"inline-block"}}>👆</div>
-          <div style={{background:"rgba(0,0,0,.7)",borderRadius:20,padding:"6px 18px",marginTop:6,color:"white",fontSize:13,fontWeight:700}}>Tocca la risposta!</div>
+        <div style={{position:"fixed",bottom:"14%",left:"50%",transform:"translateX(-50%)",zIndex:800,pointerEvents:"none",textAlign:"center",userSelect:"none"}}>
+          {/* ripple circles */}
+          <div style={{position:"absolute",top:"50%",left:"50%",width:64,height:64,borderRadius:"50%",
+            background:"rgba(167,139,250,.55)",marginLeft:-32,marginTop:-32,
+            animation:"tapRipple 1.2s ease-out infinite"}} />
+          <div style={{position:"absolute",top:"50%",left:"50%",width:64,height:64,borderRadius:"50%",
+            background:"rgba(167,139,250,.35)",marginLeft:-32,marginTop:-32,
+            animation:"tapRipple2 1.2s ease-out infinite",animationDelay:".35s"}} />
+          {/* hand */}
+          <div style={{fontSize:56,animation:"tapGesture 1.2s ease-in-out infinite",display:"inline-block",
+            filter:"drop-shadow(0 4px 12px rgba(167,139,250,.8))",position:"relative",zIndex:1}}>
+            👆
+          </div>
+          <div style={{background:"rgba(0,0,0,.75)",backdropFilter:"blur(6px)",
+            borderRadius:20,padding:"6px 18px",marginTop:8,color:"white",fontSize:13,fontWeight:700,
+            border:"1px solid rgba(255,255,255,.15)",display:"inline-block"}}>
+            Tocca una risposta!
+          </div>
         </div>
       )}
     </>
@@ -2843,7 +2929,7 @@ export default function MondoMago() {
     <div key="profile_select" className={screenAnim} style={{minHeight:"100dvh",background:"linear-gradient(135deg,#667eea,#764ba2)",color:"white",padding:28,display:"flex",flexDirection:"column",alignItems:"center",paddingTop:60}}>
       {G}
       <div className="float" style={{fontSize:56,marginBottom:12}}>👋</div>
-      <h2 style={{fontWeight:900,fontSize:24,marginBottom:4}}>Chi gioca oggi?</h2>
+      <h2 style={{fontFamily:FF,fontSize:28,marginBottom:4}}>Chi gioca oggi?</h2>
       <p style={{opacity:.75,fontSize:14,marginBottom:32}}>Scegli il tuo profilo</p>
       <div style={{width:"100%",maxWidth:360,display:"flex",flexDirection:"column",gap:12}}>
         {allProfiles.map((p, i) => {
@@ -2854,7 +2940,7 @@ export default function MondoMago() {
               style={{background:"rgba(255,255,255,.2)",border:"2px solid rgba(255,255,255,.45)",borderRadius:22,padding:"16px 20px",color:"white",cursor:"pointer",display:"flex",alignItems:"center",gap:14,textAlign:"left",animationDelay:`${i*.08}s`,boxShadow:"0 4px 16px rgba(0,0,0,.15)"}}>
               <div style={{fontSize:40}}>{lvl.emoji}</div>
               <div style={{flex:1}}>
-                <div style={{fontWeight:900,fontSize:18}}>{p.childName}</div>
+                <div style={{fontFamily:FF,fontSize:20}}>{p.childName}</div>
                 <div style={{fontSize:12,opacity:.85}}>{lvl.title} · {p.totalStars||0} ⭐ · età {ageLabel}</div>
               </div>
               <span style={{fontSize:22,opacity:.7}}>→</span>
@@ -2875,10 +2961,10 @@ export default function MondoMago() {
     <div key="name" className={screenAnim} style={{minHeight:"var(--vvh,100dvh)",background:"linear-gradient(135deg,#667eea,#764ba2)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",color:"white",padding:24,paddingBottom:"max(env(safe-area-inset-bottom,0px),24px)",textAlign:"center"}}>
       {G}
       <div className="float" style={{fontSize:80,marginBottom:16}}>🧙‍♂️</div>
-      <h1 style={{fontSize:40,fontWeight:900,margin:"0 0 6px",textShadow:"0 2px 14px rgba(0,0,0,.3)"}}>MondoMago</h1>
+      <h1 style={{fontFamily:FF,fontSize:44,margin:"0 0 6px",textShadow:"0 2px 14px rgba(0,0,0,.3)"}}>MondoMago</h1>
       <p style={{fontSize:16,opacity:.8,marginBottom:44}}>Il tuo viaggio magico inizia qui! ✨</p>
       <div style={{width:"100%",maxWidth:340}}>
-        <p style={{fontWeight:700,fontSize:18,marginBottom:14}}>Come ti chiami? 👋</p>
+        <p style={{fontFamily:FF,fontSize:20,marginBottom:14}}>Come ti chiami? 👋</p>
         <input value={childName} onChange={e => setChildName(e.target.value)}
           onKeyDown={e => e.key==="Enter" && childName.trim() && navigate("age")}
           placeholder="Scrivi il tuo nome..."
@@ -2902,7 +2988,7 @@ export default function MondoMago() {
       {G}
       <button onClick={() => navigate("name")} style={{position:"absolute",top:20,left:20,background:"rgba(255,255,255,.2)",border:"none",color:"white",borderRadius:50,padding:"8px 16px",cursor:"pointer",fontSize:14,fontWeight:700}}>← Indietro</button>
       <div className="bounce" style={{fontSize:60,marginBottom:14}}>🎂</div>
-      <h2 style={{fontSize:26,fontWeight:800,marginBottom:8}}>Quanti anni hai, {childName}?</h2>
+      <h2 style={{fontFamily:FF,fontSize:28,marginBottom:8}}>Quanti anni hai, {childName}?</h2>
       <p style={{opacity:.85,marginBottom:40}}>Sceglierò le sfide perfette per te!</p>
       <div style={{display:"flex",gap:14,width:"100%",maxWidth:420}}>
         {[{label:"3 – 4",val:4,emoji:"🐣",desc:"Sfide visive e divertenti"},
@@ -2911,7 +2997,7 @@ export default function MondoMago() {
           <button key={o.val} onClick={() => { setChildAge(o.val); navigate("companion"); }}
             style={{flex:1,background:"rgba(255,255,255,.2)",border:"3px solid rgba(255,255,255,.7)",borderRadius:24,padding:"20px 10px",cursor:"pointer",color:"white"}}>
             <div style={{fontSize:44}}>{o.emoji}</div>
-            <div style={{fontWeight:900,fontSize:22,marginTop:8}}>{o.label}</div>
+            <div style={{fontFamily:FF,fontSize:24,marginTop:8}}>{o.label}</div>
             <div style={{fontSize:11,opacity:.85,marginTop:5}}>{o.desc}</div>
           </button>
         ))}
@@ -2931,7 +3017,7 @@ export default function MondoMago() {
       {G}
       <button onClick={() => navigate("age")} style={{position:"absolute",top:20,left:20,background:"rgba(255,255,255,.1)",border:"none",color:"white",borderRadius:50,padding:"8px 16px",cursor:"pointer",fontSize:14,fontWeight:700}}>← Indietro</button>
       <div className="bounce" style={{fontSize:32,marginBottom:10}}>✨</div>
-      <h2 style={{fontSize:22,fontWeight:900,marginBottom:4,textAlign:"center"}}>Scegli il tuo compagno!</h2>
+      <h2 style={{fontFamily:FF,fontSize:26,marginBottom:4,textAlign:"center"}}>Scegli il tuo compagno!</h2>
       <p style={{opacity:.6,marginBottom:32,fontSize:13,textAlign:"center"}}>Sarà con te in ogni avventura magica, {childName}</p>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,width:"100%",maxWidth:420}}>
         {COMPANIONS.map((c,i) => (
@@ -2996,7 +3082,7 @@ export default function MondoMago() {
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:18}}>
         <div style={{flex:1,minWidth:0}}>
           <div style={{fontSize:12,opacity:.5}}>{isReturning ? `Bentornato, ${childName}!` : `Ciao, ${childName}!`} 👋</div>
-          <h2 style={{margin:0,fontSize:20,fontWeight:900}}>🗺️ I Mondi Magici</h2>
+          <h2 style={{fontFamily:FF,margin:0,fontSize:22}}>🗺️ I Mondi Magici</h2>
         </div>
         {comp && (
           <div onClick={() => navigate("profile")}
@@ -3009,7 +3095,7 @@ export default function MondoMago() {
               display:"flex", alignItems:"center", justifyContent:"center",
               fontSize:40, animation:compAnim,
             }}>{comp.emoji}</div>
-            <div style={{fontSize:11,fontWeight:800,color:comp.color,letterSpacing:.3}}>{comp.name}</div>
+            <div style={{fontFamily:FF,fontSize:13,color:comp.color}}>{comp.name}</div>
           </div>
         )}
       </div>
@@ -3024,7 +3110,7 @@ export default function MondoMago() {
         {[{i:"⭐",v:totalStars,l:"stelle",c:"#FFD700"},{i:"🏆",v:items.length,l:"trofei",c:"#C084FC"}].map((s,idx) => (
           <div key={idx} style={{flex:1,background:"rgba(255,255,255,.06)",borderRadius:20,padding:"14px 8px",textAlign:"center",border:"1px solid rgba(255,255,255,.08)"}}>
             <div style={{fontSize:26}}>{s.i}</div>
-            <div style={{fontWeight:900,fontSize:22,color:s.c,lineHeight:1}}>{s.v}</div>
+            <div style={{fontFamily:FF,fontSize:24,color:s.c,lineHeight:1}}>{s.v}</div>
             <div style={{fontSize:11,opacity:.5,marginTop:2}}>{s.l}</div>
           </div>
         ))}
@@ -3038,7 +3124,7 @@ export default function MondoMago() {
           return (
             <div style={{flex:1,background:"rgba(249,115,22,.1)",borderRadius:20,padding:"14px 8px",textAlign:"center",border:"1px solid rgba(249,115,22,.2)"}}>
               <div style={{fontSize:22,animation:streak>=3?"pulse 1.4s ease-in-out infinite":"none"}}>{flames}</div>
-              <div style={{fontWeight:900,fontSize:22,color:"#FB923C",lineHeight:1}}>{streak}</div>
+              <div style={{fontFamily:FF,fontSize:24,color:"#FB923C",lineHeight:1}}>{streak}</div>
               <div style={{display:"flex",gap:3,justifyContent:"center",marginTop:5}}>
                 {last7.map(d => (
                   <div key={d} style={{width:7,height:7,borderRadius:"50%",background:playedDates.has(d)?"#F97316":"rgba(255,255,255,.12)"}} />
@@ -3055,7 +3141,7 @@ export default function MondoMago() {
             <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:mapToNext ? 10 : 0}}>
               <span style={{fontSize:30}}>{mapLvl.emoji}</span>
               <div style={{flex:1}}>
-                <div style={{fontWeight:900,fontSize:15,color:"#FFD95A"}}>{mapLvl.title}</div>
+                <div style={{fontFamily:FF,fontSize:17,color:"#FFD95A"}}>{mapLvl.title}</div>
                 {mapToNext ? <div style={{fontSize:11,opacity:.5}}>{mapToNext} stelle per <strong>{mapNextTitle}</strong></div>
                            : <div style={{fontSize:11,color:"#FFD700",opacity:.8}}>Livello massimo! 🏆</div>}
               </div>
@@ -3143,7 +3229,7 @@ export default function MondoMago() {
               border:i===0?"1px solid rgba(255,255,255,.28)":"1px solid rgba(255,255,255,.07)",
               borderRadius:16,padding:"12px 4px",
               color:i===0?"white":"rgba(255,255,255,.55)",
-              fontSize:12,fontWeight:800,cursor:"pointer",
+              fontFamily:FF,fontSize:13,cursor:"pointer",
             }}>
             <div style={{fontSize:20,marginBottom:3}}>{icon}</div>
             <div>{label}</div>
@@ -3167,10 +3253,10 @@ export default function MondoMago() {
                     className={w.unlocked ? "pop-in" : ""}
                     style={{
                       width:72, height:72, borderRadius:"50%",
-                      background:w.unlocked?`radial-gradient(circle at 35% 32%,${w.color}88,${w.color}cc)`:
+                      background:w.unlocked?`radial-gradient(circle at 35% 32%,${w.color}55,${w.color}88)`:
                                             "rgba(255,255,255,.08)",
-                      border:`3px solid ${w.unlocked?w.color:"rgba(255,255,255,.15)"}`,
-                      boxShadow:w.unlocked?(has?`0 0 20px ${w.color}88,0 4px 16px rgba(0,0,0,.4)`:`0 4px 20px ${w.color}44,0 4px 16px rgba(0,0,0,.3)`):"none",
+                      border:`3px solid ${w.unlocked?w.color+"aa":"rgba(255,255,255,.15)"}`,
+                      boxShadow:w.unlocked?(has?`0 0 14px ${w.color}55,0 4px 12px rgba(0,0,0,.4)`:`0 4px 14px ${w.color}33,0 4px 12px rgba(0,0,0,.3)`):"none",
                       cursor:w.unlocked?"pointer":"default",
                       display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
                       fontSize:32, padding:0, position:"relative",
@@ -3179,7 +3265,7 @@ export default function MondoMago() {
                       animationDelay:`${i*.05}s`,
                     }}>
                     <span>{w.unlocked?w.emoji:"🔒"}</span>
-                    {has && <div style={{position:"absolute",top:-6,right:-6,background:"#22C55E",borderRadius:"50%",width:20,height:20,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,border:"2px solid white"}}>✓</div>}
+                    {has && <div style={{position:"absolute",top:-6,right:-6,background:w.color,borderRadius:"50%",width:20,height:20,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,border:"2px solid white"}}>✓</div>}
                     {!w.unlocked && w.starsNeeded > 0 && (
                       <div style={{position:"absolute",bottom:-10,left:"50%",transform:"translateX(-50%)",
                         background:"rgba(0,0,0,.8)",border:`1px solid ${w.color}44`,
@@ -3188,7 +3274,7 @@ export default function MondoMago() {
                       </div>
                     )}
                   </button>
-                  <div style={{fontSize:10,fontWeight:700,color:w.unlocked?"white":"rgba(255,255,255,.3)",textAlign:"center",lineHeight:1.2,maxWidth:90}}>
+                  <div style={{fontFamily:FF,fontSize:11,color:w.unlocked?"white":"rgba(255,255,255,.3)",textAlign:"center",lineHeight:1.2,maxWidth:90}}>
                     {w.name.split(" ").slice(0,2).join(" ")}
                   </div>
                   {/* Stars earned */}
@@ -3200,10 +3286,10 @@ export default function MondoMago() {
                 </div>
                 {/* Connector path between nodes */}
                 {!isLast && (
-                  <div style={{width:22,height:6,marginBottom:22,borderRadius:3,
+                  <div style={{width:22,height:4,marginBottom:22,borderRadius:3,
                     background: unlockedWorlds[i+1]?.unlocked
-                      ? `linear-gradient(90deg,${w.color},${unlockedWorlds[i+1].color})`
-                      : "rgba(255,255,255,.12)",
+                      ? `linear-gradient(90deg,${w.color}88,${unlockedWorlds[i+1].color}88)`
+                      : "rgba(255,255,255,.10)",
                     flexShrink:0}} />
                 )}
               </div>
@@ -3231,21 +3317,21 @@ export default function MondoMago() {
               style={{
                 background:locked
                   ? "rgba(255,255,255,.04)"
-                  : `linear-gradient(135deg,${w.color}28,${w.color}10,rgba(18,16,42,0))`,
-                border:`2px solid ${locked?"rgba(255,255,255,.08)":has?w.color:w.color+"66"}`,
+                  : `linear-gradient(to right,rgba(18,16,42,.6),rgba(18,16,42,.3),${w.color}18)`,
+                border:`2px solid ${locked?"rgba(255,255,255,.08)":has?w.color+"cc":w.color+"44"}`,
                 borderRadius:28,padding:"18px 20px",
                 cursor:locked?"default":"pointer",
                 color:"white",
                 display:"flex",alignItems:"center",gap:18,textAlign:"left",
                 boxShadow:locked?"none":has
-                  ? `0 8px 32px ${w.color}55`
-                  : `0 6px 24px ${w.color}33`,
+                  ? `0 6px 20px ${w.color}33`
+                  : `0 4px 14px ${w.color}22`,
                 opacity:locked?.45:1,
                 animationDelay:`${i*.06}s`,
                 position:"relative",overflow:"hidden",
               }}>
               {/* Shimmer accent for completed */}
-              {has && !locked && <div style={{position:"absolute",top:0,right:0,width:80,height:"100%",background:`linear-gradient(90deg,transparent,${w.color}22)`,borderRadius:"0 26px 26px 0",pointerEvents:"none"}} />}
+              {has && !locked && <div style={{position:"absolute",top:0,right:0,width:60,height:"100%",background:`linear-gradient(90deg,transparent,${w.color}18)`,borderRadius:"0 26px 26px 0",pointerEvents:"none"}} />}
               {/* World icon */}
               <div style={{
                 width:64,height:64,borderRadius:20,flexShrink:0,
@@ -3561,7 +3647,7 @@ export default function MondoMago() {
             </button>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:10,fontSize:14}}>
-            {world && <span style={{fontSize:11,background:`${worldColor}33`,border:`1px solid ${worldColor}55`,borderRadius:20,padding:"2px 10px",color:worldColor,fontWeight:800}}>{world.emoji} {world.name}</span>}
+            {world && <span style={{fontFamily:FF,fontSize:12,background:`${worldColor}33`,border:`1px solid ${worldColor}55`,borderRadius:20,padding:"2px 10px",color:worldColor}}>{world.emoji} {world.name}</span>}
             {starPop
               ? <span className="star-pop" style={{fontSize:22,color:"#FFD95A"}}>⭐+{pts}</span>
               : <span style={{fontWeight:800,color:youngBg?"#1a1a2e":"white"}}>⭐ {sessionStars}</span>
@@ -3662,10 +3748,10 @@ export default function MondoMago() {
             <div style={{fontSize:11,fontWeight:800,letterSpacing:2,opacity:.5,marginBottom:6,color:youngBg?"#666":"rgba(255,255,255,.5)"}}>🔤 TROVA LA LETTERA</div>
             <div onClick={() => { SFX.tap(); speak(`Quale immagine inizia con la lettera ${alphaLetter}?`); }}
               style={{
-                fontSize:96, fontWeight:900, lineHeight:1,
+                fontFamily:FF, fontSize:100, lineHeight:1,
                 color:youngBg?"#764ba2":worldColor,
                 textShadow:youngBg?"none":`0 0 30px ${worldColor}88`,
-                fontFamily:"serif", cursor:"pointer",
+                cursor:"pointer",
                 display:"inline-block", marginBottom:6,
               }}>
               {alphaLetter}
@@ -3683,7 +3769,7 @@ export default function MondoMago() {
               style={{fontSize:youngBg?60:52,letterSpacing:8,marginBottom:12,cursor:"pointer"}}>{ch.visual}</div>}
             {isStory
               ? <p style={{fontSize:youngBg?17:15,lineHeight:1.75,margin:0,color:youngBg?"#333":"inherit"}}>{ch.situation}</p>
-              : <p style={{fontSize:isVis?(youngBg?24:21):youngBg?21:17,lineHeight:1.7,margin:0,fontWeight:isVis?700:youngBg?700:500,whiteSpace:"pre-line",color:youngBg?"#222":"inherit"}}>{ch.prompt}</p>
+              : <p style={{fontFamily:FF,fontSize:isVis?(youngBg?26:23):youngBg?23:19,lineHeight:1.6,margin:0,whiteSpace:"pre-line",color:youngBg?"#222":"inherit"}}>{ch.prompt}</p>
             }
           </div>
         )}
@@ -3858,7 +3944,7 @@ export default function MondoMago() {
               </div>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{
-                  fontWeight:900, fontSize:youngBg?20:17,
+                  fontFamily:FF, fontSize:youngBg?22:19,
                   color:isCorrect?(youngBg?"#15803D":"#4ade80"):(youngBg?"#D97706":"#FCD34D"),
                   marginBottom:3,
                 }}>
@@ -3896,7 +3982,7 @@ export default function MondoMago() {
               color:isCorrect ? "white" : youngBg ? "#1a1a2e" : "white",
               border:isCorrect||youngBg ? "none" : "2px solid rgba(255,255,255,.35)",
               borderRadius:50, padding:"15px",
-              fontWeight:900, fontSize:18, cursor:"pointer",
+              fontFamily:FF, fontSize:20, cursor:"pointer",
               boxShadow:isCorrect ? "0 4px 20px rgba(34,197,94,.45)" : youngBg ? "0 4px 16px rgba(251,191,36,.35)" : "none",
             }}>
               {ci < challenges.length-1 ? "Avanti →" : "Fine Missione! 🏁"}
@@ -3916,7 +4002,7 @@ export default function MondoMago() {
         {G}
         <div className="pop-in" style={{fontSize:72,marginBottom:4}}>{arc.reward_emoji}</div>
         <div className="bounce" style={{fontSize:64,marginBottom:14}}>{world.emoji}</div>
-        <h2 className="slide-up" style={{fontSize:24,fontWeight:900,color:"#FFD95A",marginBottom:12}}>Mondo completato! 🏆</h2>
+        <h2 className="slide-up" style={{fontFamily:FF,fontSize:28,color:"#FFD95A",marginBottom:12}}>Mondo completato! 🏆</h2>
         <p className="fade-in" style={{fontSize:15,lineHeight:1.75,opacity:.9,marginBottom:24,maxWidth:360,animationDelay:".1s"}}>{arc.outro}</p>
         {comp && (
           <div className="slide-up" style={{background:"rgba(255,255,255,.1)",borderRadius:20,padding:"12px 18px",marginBottom:22,fontSize:14,maxWidth:360,animationDelay:".2s",display:"flex",alignItems:"center",gap:12}}>
@@ -3926,7 +4012,7 @@ export default function MondoMago() {
         )}
         <div className="pop-in glow" style={{background:"rgba(255,215,0,.15)",borderRadius:24,padding:"20px 32px",marginBottom:24,border:"2px solid rgba(255,215,0,.45)",animationDelay:".3s"}}>
           <div style={{fontSize:50}}>{arc.reward_emoji}</div>
-          <div style={{fontWeight:800,fontSize:18,marginTop:8,color:"#FFD95A"}}>{arc.reward_name}</div>
+          <div style={{fontFamily:FF,fontSize:20,marginTop:8,color:"#FFD95A"}}>{arc.reward_name}</div>
           <div style={{fontSize:12,opacity:.65,marginTop:4}}>Sbloccato per {comp?.name}!</div>
         </div>
         {world?.id === "daily" && (
@@ -3938,7 +4024,7 @@ export default function MondoMago() {
           {[{i:"⭐",v:sessionStars,l:"stelle"},{i:"✅",v:correct,l:"giuste"},{i:"🎯",v:`${pct}%`,l:"precisione"},{i:"🔥",v:combo,l:"combo max"}].map((s,idx) => (
             <div key={idx} className="pop-in" style={{textAlign:"center",background:"rgba(255,255,255,.08)",borderRadius:16,padding:"12px 6px",animationDelay:`${idx*.06}s`}}>
               <div style={{fontSize:24}}>{s.i}</div>
-              <div style={{fontWeight:900,fontSize:18,marginTop:4}}>{s.v}</div>
+              <div style={{fontFamily:FF,fontSize:20,marginTop:4}}>{s.v}</div>
               <div style={{opacity:.5,fontSize:10,marginTop:2}}>{s.l}</div>
             </div>
           ))}
@@ -4407,47 +4493,214 @@ export default function MondoMago() {
     // Dashboard (unlocked)
     const completedMissions = missionsDone.length;
     const timeLimitOptions = [0, 15, 20, 30];
+
+    // ── Analytics computations ────────────────────────────────────────────────
+    const activeDays = new Set(sessionLog.map(s => s.date)).size;
+    const totalMinutes = sessionLog.reduce((a, s) => a + (s.duration || 0), 0);
+    const avgMinPerSession = sessionLog.length > 0 ? Math.round(totalMinutes / sessionLog.length) : 0;
+
+    // Per-skill accuracy from ALL sessions (using skillData field if present)
+    const skillAccuracy = {};
+    SKILLS.forEach(sk => { skillAccuracy[sk.id] = { correct: 0, total: 0 }; });
+    sessionLog.forEach(s => {
+      if (s.skillData) {
+        SKILLS.forEach(sk => {
+          const d = s.skillData[sk.id];
+          if (d) {
+            skillAccuracy[sk.id].correct += d.correct;
+            skillAccuracy[sk.id].total   += d.total;
+          }
+        });
+      }
+    });
+
+    // ── 20-rule proactive coaching engine ────────────────────────────────────
+    const totalCorrect = Object.values(skillAccuracy).reduce((a,v) => a + v.correct, 0);
+    const totalAttempts = Object.values(skillAccuracy).reduce((a,v) => a + v.total, 0);
+    const overallPct = totalAttempts > 0 ? Math.round((totalCorrect / totalAttempts) * 100) : null;
+    const last7Days  = Array.from({length:7}, (_,i) => { const d=new Date(); d.setDate(d.getDate()-i); return d.toISOString().slice(0,10); });
+    const recentSessions = sessionLog.filter(s => last7Days.includes(s.date));
+    const todayStr   = new Date().toISOString().slice(0, 10);
+    const playedToday = sessionLog.some(s => s.date === todayStr);
+    const worldsDone = new Set(sessionLog.map(s => s.world)).size;
+
+    const allCoachingRules = [
+      // ── Skill-based rules (10) ─────────────────────────────────────────────
+      ...SKILLS.flatMap(sk => {
+        const acc = skillAccuracy[sk.id];
+        if (acc.total < 5) return [];
+        const pct = Math.round((acc.correct / acc.total) * 100);
+        const tips = {
+          logica:     {
+            struggle: ["Fai puzzle fisici insieme ogni sera — incastri, Lego, giochi di logica.", "Gioca a 'cosa succede dopo?' mentre leggete una storia.", "I giochi in sequenza come le filastrocche aiutano molto la logica."],
+            strong:   ["È pronto per sfide più complesse: prova a fargli creare le sue regole di gioco.", "Introduci i giochi di strategia come gli scacchi semplificati per bambini."],
+          },
+          numeri:     {
+            struggle: ["Conta oggetti concreti ogni giorno: scalini, mele, macchine.", "Usa monete vere per insegnargli i numeri in contesto.", "Le canzoni con i numeri aiutano molto la memoria numerica."],
+            strong:   ["Introduce l'addizione con oggetti fisici: 3 mele + 2 mele.", "È pronto per le prime misurazioni: altezza, peso, tempo."],
+          },
+          creativita: {
+            struggle: ["Disegna insieme senza tema fisso — lascia fluire la sua fantasia.", "Costruite una storia con 3 oggetti casuali trovati in casa.", "La creta e il disegno libero stimolano molto la creatività."],
+            strong:   ["Inventa storie insieme ogni sera prima di dormire.", "Proponigli di creare il suo personaggio immaginario con nome e poteri."],
+          },
+          empatia:    {
+            struggle: ["Parla di come si sentono i personaggi dei suoi libri preferiti.", "Guarda cartoni animati insieme e chiedi 'come si sente quel personaggio?'.", "I giochi di ruolo con bambole o pupazzi sviluppano l'empatia."],
+            strong:   ["Chiedigli sempre come si sente il suo compagno di giochi dopo una sessione.", "Coinvolgilo in piccoli gesti di cura: annaffiare piante, dare da mangiare agli animali."],
+          },
+          parole:     {
+            struggle: ["Leggi ad alta voce ogni giorno, anche solo 10 minuti.", "Raccontate storie a turno aggiungendo una frase ciascuno.", "Giocate alle rime durante i pasti — è divertente e formativo."],
+            strong:   ["Sfidatevi a trovare parole che iniziano con la stessa lettera.", "È pronto per i primi giochi di parole scritte: completa la parola mancante."],
+          },
+        };
+        const tipArr = tips[sk.id]?.[pct < 55 ? "struggle" : "strong"] || [];
+        const tip = tipArr[Math.floor(Math.random() * tipArr.length)];
+        if (pct < 55) return [{ emoji: sk.emoji, title: `${childName} fatica un po' con ${sk.name} (${pct}% corretto)`, tip, color: "#FCD34D", priority: 3 }];
+        if (pct >= 85 && acc.total >= 10) return [{ emoji: sk.emoji, title: `${childName} è forte in ${sk.name}! (${pct}%)`, tip, color: "#4ade80", priority: 2 }];
+        return [];
+      }),
+      // ── Habit & behavioral rules (10) ──────────────────────────────────────
+      streak >= 7 && playedToday
+        ? { emoji:"🔥", title:`Streak di ${streak} giorni consecutivi — straordinario!`, tip:`Condividi questo risultato con ${childName}: riconosce i propri progressi e si motiva ancora di più.`, color:"#FB923C", priority:1 }
+        : null,
+      streak >= 2 && !playedToday
+        ? { emoji:"⚠️", title:`Streak a rischio! ${streak} giorni di fila ma oggi non ha ancora giocato.`, tip:`Un solo minuto di gioco basta per mantenere la serie. Suggeriscigli di fare la sfida del giorno prima di cena.`, color:"#F87171", priority:1 }
+        : null,
+      recentSessions.length === 0 && activeDays > 0
+        ? { emoji:"😴", title:`${childName} non ha giocato negli ultimi 7 giorni.`, tip:`Una pausa lunga è normale. Riprendi con la sfida del giorno — è breve e rilascia dopamina positiva.`, color:"#93C5FD", priority:2 }
+        : null,
+      avgMinPerSession > 0 && avgMinPerSession < 4 && sessionLog.length >= 3
+        ? { emoji:"⏱", title:`Le sessioni di ${childName} sono molto brevi (media ${avgMinPerSession} min).`, tip:`È normale per i bambini 3-5 anni. Prova a giocare insieme: la co-presenza prolunga l'attenzione fino a 3x.`, color:"#C4B5FD", priority:3 }
+        : null,
+      avgMinPerSession >= 15 && sessionLog.length >= 3
+        ? { emoji:"🎯", title:`${childName} è molto concentrato: sessioni da ${avgMinPerSession} min in media!`, tip:`Ottima capacità attentiva. Assicurati che faccia anche pause fisiche ogni 20-30 minuti.`, color:"#4ade80", priority:3 }
+        : null,
+      overallPct !== null && overallPct < 45 && totalAttempts >= 20
+        ? { emoji:"🤔", title:`Precisione generale bassa: ${overallPct}%. Le sfide potrebbero essere troppo difficili.`, tip:`Prova a cambiare la fascia d'età in questa sezione (vai su "Età di ${childName}"). Le sfide si adatteranno automaticamente.`, color:"#FCD34D", priority:1 }
+        : null,
+      overallPct !== null && overallPct >= 88 && totalAttempts >= 20
+        ? { emoji:"🚀", title:`${childName} risponde correttamente a ${overallPct}% delle domande — è pronto per qualcosa di più!`, tip:`Aumenta la fascia d'età nelle impostazioni per offrirgli sfide più stimolanti.`, color:"#34d399", priority:2 }
+        : null,
+      achievements.length >= 8
+        ? { emoji:"🏆", title:`${childName} ha sbloccato ${achievements.length} obiettivi su ${ACHIEVEMENTS.length}!`, tip:`Condividere questi traguardi rafforza l'autostima. Chiedigli di mostrarti i suoi trofei nella sezione obiettivi.`, color:"#FCD34D", priority:3 }
+        : null,
+      worldsDone >= 5
+        ? { emoji:"🌍", title:`Ha esplorato ${worldsDone} mondi diversi — ottima varietà!`, tip:`La varietà delle attività sviluppa più aree cognitive contemporaneamente. Continua così!`, color:"#60A5FA", priority:3 }
+        : null,
+      (childAge || 5) <= 4 && totalStars >= 30
+        ? { emoji:"🐣", title:`Per la sua età (3–4 anni), ${childName} ha già guadagnato ${totalStars} stelle — eccellente!`, tip:`I bambini 3-4 anni imparano soprattutto attraverso il gioco visivo. Le sue capacità sono al di sopra della media per questa fascia.`, color:"#4ade80", priority:2 }
+        : null,
+    ].filter(Boolean).sort((a, b) => a.priority - b.priority).slice(0, 4);
+
+    const insights = allCoachingRules;
+
     return (
-      <div key="parent-dash" className={screenAnim} style={{minHeight:"100dvh",background:"linear-gradient(135deg,#0f0c29,#302b63)",color:"white",padding:24}}>
+      <div key="parent-dash" className={screenAnim} style={{minHeight:"100dvh",background:"linear-gradient(135deg,#0f0c29,#302b63)",color:"white",padding:24,paddingBottom:40}}>
         {G}
         <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
           <button onClick={() => navigate("map")} style={{background:"rgba(255,255,255,.1)",border:"none",color:"white",borderRadius:50,padding:"8px 16px",cursor:"pointer",fontSize:14,fontWeight:700}}>← Mappa</button>
-          <h2 style={{margin:0,fontSize:20,fontWeight:900}}>🔐 Area Genitori</h2>
+          <h2 style={{fontFamily:FF,margin:0,fontSize:22}}>🔐 Area Genitori</h2>
         </div>
 
         {/* Child overview */}
         <div style={{background:"rgba(255,255,255,.07)",borderRadius:20,padding:"16px 18px",marginBottom:14}}>
-          <div style={{fontSize:12,fontWeight:800,opacity:.5,marginBottom:10,letterSpacing:1}}>PROFILO DI {childName.toUpperCase()}</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,textAlign:"center"}}>
-            {[{i:"⭐",v:totalStars,l:"stelle"},{i:"🔥",v:streak,l:"streak"},{i:"✅",v:completedMissions,l:"missioni"}].map((s,i) => (
-              <div key={i} style={{background:"rgba(255,255,255,.06)",borderRadius:14,padding:"12px 6px"}}>
-                <div style={{fontSize:22}}>{s.i}</div>
-                <div style={{fontWeight:900,fontSize:20}}>{s.v}</div>
-                <div style={{fontSize:10,opacity:.5}}>{s.l}</div>
+          <div style={{fontSize:11,fontWeight:800,opacity:.5,marginBottom:10,letterSpacing:1}}>PROFILO DI {childName.toUpperCase()}</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8,textAlign:"center"}}>
+            {[
+              {i:"⭐",v:totalStars,    l:"stelle"},
+              {i:"🔥",v:streak,        l:"streak"},
+              {i:"📅",v:activeDays,    l:"giorni attivi"},
+              {i:"✅",v:completedMissions,l:"missioni"},
+            ].map((s,i) => (
+              <div key={i} style={{background:"rgba(255,255,255,.06)",borderRadius:14,padding:"10px 4px"}}>
+                <div style={{fontSize:20}}>{s.i}</div>
+                <div style={{fontFamily:FF,fontSize:20,color:"#E0D7FF"}}>{s.v}</div>
+                <div style={{fontSize:9,opacity:.5}}>{s.l}</div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Skills */}
+        {/* Time analytics */}
         <div style={{background:"rgba(255,255,255,.07)",borderRadius:20,padding:"16px 18px",marginBottom:14}}>
-          <div style={{fontSize:12,fontWeight:800,opacity:.5,marginBottom:10,letterSpacing:1}}>ABILITÀ SVILUPPATE</div>
-          {SKILLS.map(sk => (
-            <div key={sk.id} style={{marginBottom:9}}>
-              <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:3}}>
-                <span>{sk.emoji} {sk.name}</span>
-                <span style={{color:sk.color,fontWeight:800}}>Lv.{skills[sk.id]}</span>
+          <div style={{fontSize:11,fontWeight:800,opacity:.5,marginBottom:10,letterSpacing:1}}>⏱ TEMPO GIOCATO</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,textAlign:"center"}}>
+            {[
+              {v: totalMinutes >= 60 ? `${Math.floor(totalMinutes/60)}h ${totalMinutes%60}m` : `${totalMinutes}m`, l:"totale"},
+              {v: `${avgMinPerSession}m`, l:"media sessione"},
+              {v: sessionLog.length,       l:"sessioni totali"},
+            ].map((s,i) => (
+              <div key={i} style={{background:"rgba(255,255,255,.06)",borderRadius:14,padding:"12px 4px"}}>
+                <div style={{fontFamily:FF,fontSize:18,color:"#93C5FD"}}>{s.v}</div>
+                <div style={{fontSize:9,opacity:.5,marginTop:2}}>{s.l}</div>
               </div>
-              <div style={{background:"rgba(255,255,255,.08)",borderRadius:6,height:7}}>
-                <div style={{background:sk.color,height:"100%",borderRadius:6,width:`${(skills[sk.id]/10)*100}%`,transition:"width .7s"}} />
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
+
+        {/* Skill accuracy breakdown */}
+        <div style={{background:"rgba(255,255,255,.07)",borderRadius:20,padding:"16px 18px",marginBottom:14}}>
+          <div style={{fontSize:11,fontWeight:800,opacity:.5,marginBottom:12,letterSpacing:1}}>🎯 PRECISIONE PER ABILITÀ</div>
+          {SKILLS.map(sk => {
+            const acc = skillAccuracy[sk.id];
+            const pct = acc.total > 0 ? Math.round((acc.correct / acc.total) * 100) : null;
+            const lvColor = pct === null ? "rgba(255,255,255,.2)" : pct >= 80 ? "#4ade80" : pct >= 55 ? "#FCD34D" : "#F87171";
+            return (
+              <div key={sk.id} style={{marginBottom:10}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:12,marginBottom:4}}>
+                  <span>{sk.emoji} {sk.name}</span>
+                  <span style={{display:"flex",gap:8,alignItems:"center"}}>
+                    <span style={{color:"rgba(255,255,255,.35)",fontSize:10}}>Lv.{skills[sk.id]}</span>
+                    <span style={{fontFamily:FF,fontSize:13,color:lvColor}}>
+                      {pct !== null ? `${pct}%` : "—"}
+                    </span>
+                  </span>
+                </div>
+                <div style={{background:"rgba(255,255,255,.08)",borderRadius:6,height:8,position:"relative"}}>
+                  <div style={{background:sk.color,height:"100%",borderRadius:6,width:`${(skills[sk.id]/10)*100}%`,transition:"width .7s",opacity:.7}} />
+                  {pct !== null && (
+                    <div style={{position:"absolute",top:0,left:0,height:"100%",borderRadius:6,
+                      width:`${pct}%`,
+                      background:`${lvColor}55`,
+                      borderRight:`2px solid ${lvColor}`,
+                      transition:"width .9s cubic-bezier(.22,1,.36,1)"}} />
+                  )}
+                </div>
+                {pct !== null && (
+                  <div style={{fontSize:9,opacity:.4,marginTop:2}}>{acc.correct}/{acc.total} risposte corrette</div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Proactive parent coaching insights */}
+        {insights.length > 0 && (
+          <div style={{background:"linear-gradient(135deg,rgba(167,139,250,.12),rgba(139,92,246,.08))",border:"1px solid rgba(167,139,250,.25)",borderRadius:20,padding:"16px 18px",marginBottom:14}}>
+            <div style={{fontSize:11,fontWeight:800,opacity:.7,marginBottom:12,letterSpacing:1,color:"#C4B5FD"}}>💡 SUGGERIMENTI PER TE</div>
+            {insights.map((ins, i) => (
+              <div key={i} style={{display:"flex",gap:12,marginBottom:i < insights.length-1 ? 12 : 0,paddingBottom:i < insights.length-1 ? 12 : 0,borderBottom:i < insights.length-1 ? "1px solid rgba(255,255,255,.06)" : "none"}}>
+                <div style={{fontSize:24,flexShrink:0,lineHeight:1.2}}>{ins.emoji}</div>
+                <div>
+                  <div style={{fontSize:12,fontWeight:700,color:ins.color,marginBottom:4,lineHeight:1.4}}>
+                    {ins.title}
+                  </div>
+                  <div style={{fontSize:11,color:"rgba(255,255,255,.65)",lineHeight:1.55}}>
+                    {ins.tip}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        {insights.length === 0 && sessionLog.length < 3 && (
+          <div style={{background:"rgba(255,255,255,.05)",borderRadius:20,padding:"14px 18px",marginBottom:14,textAlign:"center",opacity:.5}}>
+            <div style={{fontSize:11}}>💡 I suggerimenti personalizzati appariranno dopo qualche sessione di gioco.</div>
+          </div>
+        )}
 
         {/* Age change */}
         <div style={{background:"rgba(255,255,255,.07)",borderRadius:20,padding:"16px 18px",marginBottom:14}}>
-          <div style={{fontSize:12,fontWeight:800,opacity:.5,marginBottom:10,letterSpacing:1}}>🎂 ETÀ DI {childName.toUpperCase()}</div>
+          <div style={{fontSize:11,fontWeight:800,opacity:.5,marginBottom:10,letterSpacing:1}}>🎂 ETÀ DI {childName.toUpperCase()}</div>
           <div style={{display:"flex",gap:8}}>
             {[{label:"3–4",val:4},{label:"5–6",val:6},{label:"7–8",val:8}].map(o => (
               <button key={o.val} onClick={() => setChildAge(o.val)}
@@ -4482,28 +4735,47 @@ export default function MondoMago() {
             if (!notifSupported) return;
             const perm = await Notification.requestPermission();
             if (perm === 'granted') {
-              // Register periodic sync if available
-              if ('periodicSync' in navigator.serviceWorker) {
-                const reg = await navigator.serviceWorker.ready.catch(() => null);
+              if ('periodicSync' in (navigator.serviceWorker || {})) {
+                const reg = await navigator.serviceWorker?.ready?.catch(() => null);
                 if (reg) reg.periodicSync?.register('daily-reminder', { minInterval: 86400000 }).catch(() => {});
               }
-              // Force re-render
-              window.dispatchEvent(new Event('notif-update'));
+              // Trigger re-render
+              setNotifTime(t => t);
             }
           }
+          const HOUR_OPTIONS = ["07:00","08:00","16:00","17:00","18:00","19:00","20:00","21:00"];
           return (
             <div style={{background:"rgba(255,255,255,.07)",borderRadius:20,padding:"14px 18px",marginBottom:14}}>
-              <div style={{fontSize:12,fontWeight:800,opacity:.5,marginBottom:10,letterSpacing:1}}>🔔 PROMEMORIA GIORNALIERO</div>
-              <p style={{fontSize:12,opacity:.6,marginBottom:12}}>Ricevi una notifica quando è ora di giocare con la sfida del giorno.</p>
-              {denied
-                ? <p style={{fontSize:11,color:"#F87171"}}>Notifiche bloccate dal browser. Abilitale nelle impostazioni del sito.</p>
-                : granted
-                  ? <div style={{display:"flex",alignItems:"center",gap:10,color:"#4ade80",fontSize:13,fontWeight:700}}><span>✅</span>Promemoria attivo!</div>
-                  : <button onClick={enableNotifications}
-                      style={{background:"#A78BFA",border:"none",color:"white",borderRadius:50,padding:"10px 24px",fontSize:13,fontWeight:900,cursor:"pointer",width:"100%"}}>
-                      Attiva promemoria 🔔
-                    </button>
-              }
+              <div style={{fontSize:11,fontWeight:800,opacity:.5,marginBottom:10,letterSpacing:1}}>🔔 PROMEMORIA GIORNALIERO</div>
+              <p style={{fontSize:12,opacity:.6,marginBottom:12}}>
+                Ricevi una notifica quando è ora di giocare. Include un avviso streak se non ha ancora giocato oggi.
+              </p>
+              {denied ? (
+                <p style={{fontSize:11,color:"#F87171"}}>Notifiche bloccate. Abilitale nelle impostazioni del browser.</p>
+              ) : granted ? (
+                <div>
+                  <div style={{display:"flex",alignItems:"center",gap:10,color:"#4ade80",fontSize:13,fontWeight:700,marginBottom:12}}>
+                    <span>✅</span>Promemoria attivo
+                  </div>
+                  <div style={{fontSize:11,opacity:.5,marginBottom:8}}>Orario promemoria:</div>
+                  <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                    {HOUR_OPTIONS.map(t => (
+                      <button key={t} onClick={() => setNotifTime(t)}
+                        style={{background:notifTime===t?"#A78BFA":"rgba(255,255,255,.1)",
+                          border:"none",borderRadius:10,padding:"6px 10px",
+                          color:"white",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                  <div style={{fontSize:10,opacity:.4,marginTop:8}}>Promemoria ogni giorno alle {notifTime}</div>
+                </div>
+              ) : (
+                <button onClick={enableNotifications}
+                  style={{background:"#A78BFA",border:"none",color:"white",borderRadius:50,padding:"10px 24px",fontSize:13,fontWeight:900,cursor:"pointer",width:"100%"}}>
+                  Attiva promemoria 🔔
+                </button>
+              )}
             </div>
           );
         })()}
@@ -4517,11 +4789,12 @@ export default function MondoMago() {
           }).reverse();
           const logByDay = {};
           sessionLog.forEach(s => {
-            if (!logByDay[s.date]) logByDay[s.date] = { stars:0, sessions:0, correct:0, total:0 };
+            if (!logByDay[s.date]) logByDay[s.date] = { stars:0, sessions:0, correct:0, total:0, minutes:0 };
             logByDay[s.date].stars    += s.stars;
             logByDay[s.date].sessions += 1;
-            logByDay[s.date].correct  += s.correct || 0;
-            logByDay[s.date].total    += s.total   || 0;
+            logByDay[s.date].correct  += s.correct  || 0;
+            logByDay[s.date].total    += s.total    || 0;
+            logByDay[s.date].minutes  += s.duration || 0;
           });
           const weekStars  = last7.reduce((a,d) => a + (logByDay[d]?.stars   || 0), 0);
           const weekSess   = last7.reduce((a,d) => a + (logByDay[d]?.sessions || 0), 0);
@@ -4533,15 +4806,27 @@ export default function MondoMago() {
             const rows = last7.map(d => {
               const e = logByDay[d] || {};
               const acc = e.total > 0 ? Math.round((e.correct/e.total)*100) : null;
-              return `<tr><td>${d}</td><td>${e.sessions||0}</td><td>${e.stars||0}</td><td>${acc !== null ? acc+'%' : '—'}</td></tr>`;
+              return `<tr><td>${d}</td><td>${e.sessions||0}</td><td>${e.stars||0}</td><td>${e.minutes||0}m</td><td>${acc !== null ? acc+'%' : '—'}</td></tr>`;
+            }).join('');
+            const skillRows = SKILLS.map(sk => {
+              const acc = skillAccuracy[sk.id];
+              const pct = acc.total > 0 ? Math.round((acc.correct/acc.total)*100) : null;
+              return `<tr><td>${sk.emoji} ${sk.name}</td><td>Lv.${skills[sk.id]}/10</td><td>${pct !== null ? pct+'%' : '—'}</td><td>${acc.correct}/${acc.total}</td></tr>`;
             }).join('');
             const html = `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><title>Report MondoMago — ${childName}</title>
-<style>body{font-family:system-ui,sans-serif;max-width:600px;margin:40px auto;padding:20px;background:#f9fafb}h1{color:#764ba2}table{width:100%;border-collapse:collapse;margin:16px 0}th,td{border:1px solid #e5e7eb;padding:10px;text-align:center}th{background:#f3f4f6;font-weight:700}.stat{display:inline-block;background:#ede9fe;border-radius:12px;padding:12px 20px;margin:6px;text-align:center}.stat b{display:block;font-size:24px;color:#764ba2}</style></head>
+<style>body{font-family:system-ui,sans-serif;max-width:640px;margin:40px auto;padding:20px;background:#f9fafb}h1,h2{color:#764ba2}table{width:100%;border-collapse:collapse;margin:16px 0}th,td{border:1px solid #e5e7eb;padding:10px;text-align:center}th{background:#f3f4f6;font-weight:700}.stat{display:inline-block;background:#ede9fe;border-radius:12px;padding:12px 20px;margin:6px;text-align:center}.stat b{display:block;font-size:24px;color:#764ba2}.pct-good{color:#16a34a;font-weight:700}.pct-mid{color:#d97706;font-weight:700}.pct-low{color:#dc2626;font-weight:700}</style></head>
 <body><h1>📊 Report MondoMago — ${childName}</h1>
 <p>Generato il ${new Date().toLocaleDateString('it-IT')} | Livello: ${lvl.emoji} ${lvl.title} | Stelle totali: ${totalStars} ⭐</p>
-<div><span class="stat"><b>${weekStars}</b>Stelle (7gg)</span><span class="stat"><b>${weekSess}</b>Sessioni (7gg)</span><span class="stat"><b>${streak}</b>Giorni consecutivi</span><span class="stat"><b>${achievements.length}/${ACHIEVEMENTS.length}</b>Obiettivi</span></div>
-<h2>Attività degli ultimi 7 giorni</h2><table><tr><th>Data</th><th>Sessioni</th><th>Stelle</th><th>Precisione</th></tr>${rows}</table>
-<h2>Abilità sviluppate</h2><table><tr><th>Abilità</th><th>Livello</th></tr>${SKILLS.map(sk=>`<tr><td>${sk.emoji} ${sk.name}</td><td>Lv.${skills[sk.id]}/10</td></tr>`).join('')}</table>
+<div>
+  <span class="stat"><b>${weekStars}</b>Stelle (7gg)</span>
+  <span class="stat"><b>${weekSess}</b>Sessioni (7gg)</span>
+  <span class="stat"><b>${streak}</b>Giorni di fila</span>
+  <span class="stat"><b>${activeDays}</b>Giorni attivi</span>
+  <span class="stat"><b>${totalMinutes}m</b>Tempo totale</span>
+  <span class="stat"><b>${achievements.length}/${ACHIEVEMENTS.length}</b>Obiettivi</span>
+</div>
+<h2>Attività ultimi 7 giorni</h2><table><tr><th>Data</th><th>Sessioni</th><th>Stelle</th><th>Tempo</th><th>Precisione</th></tr>${rows}</table>
+<h2>Precisione per abilità</h2><table><tr><th>Abilità</th><th>Livello</th><th>Precisione</th><th>Risposte</th></tr>${skillRows}</table>
 <p style="color:#9ca3af;font-size:12px">MondoMago — App educativa per bambini 3–8 anni. Tutti i dati sono salvati solo su questo dispositivo.</p></body></html>`;
             const blob = new Blob([html], {type:'text/html'});
             const a = document.createElement('a');
