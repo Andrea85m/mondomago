@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import TTS_MAP from "./ttsMap.json";
+import WorldScene from "./WorldScene.jsx";
 
 // ── CSS ANIMATIONS ────────────────────────────────────────────────────────────
 function AnimationStyles() {
@@ -2089,28 +2090,8 @@ const WORLD_PARTICLES = {
   biblioteca:["📚","📖","✨","🦉","📜","🔮"],
 };
 function WorldBg({ worldId }) {
-  const parts = WORLD_PARTICLES[worldId]; if (!parts) return null;
-  return (
-    <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,overflow:"hidden"}}>
-      {parts.flatMap((e, pi) =>
-        [0,1,2].map(j => {
-          const id = pi * 3 + j;
-          return (
-            <div key={id} style={{
-              position:"absolute",
-              left:`${(id * 17 + 5) % 92}%`,
-              top: `${(id * 23 + 8) % 88}%`,
-              fontSize: 14 + (id % 3) * 8,
-              opacity: 0.16 + (id % 3) * 0.06,
-              animation:`particleFloat ${3.2 + (id % 4) * 0.7}s ease-in-out infinite`,
-              animationDelay:`${id * 0.32}s`,
-              userSelect:"none",
-            }}>{e}</div>
-          );
-        })
-      )}
-    </div>
-  );
+  // Illustrated SVG scene background — replaces old emoji particles
+  return <WorldScene worldId={worldId} variant="bg" />;
 }
 
 // ── PERSISTENCE ───────────────────────────────────────────────────────────────
@@ -3364,7 +3345,7 @@ export default function MondoMago() {
               style={{
                 background:locked
                   ? "rgba(255,255,255,.04)"
-                  : `linear-gradient(to right,rgba(18,16,42,.6),rgba(18,16,42,.3),${w.color}18)`,
+                  : "rgba(12,10,30,.85)",
                 border:`2px solid ${locked?"rgba(255,255,255,.08)":has?w.color+"cc":w.color+"44"}`,
                 borderRadius:28,padding:"18px 20px",
                 cursor:locked?"default":"pointer",
@@ -3377,18 +3358,23 @@ export default function MondoMago() {
                 animationDelay:`${i*.06}s`,
                 position:"relative",overflow:"hidden",
               }}>
+              {/* WorldScene illustrated background */}
+              {!locked && <div style={{position:"absolute",inset:0,borderRadius:26,overflow:"hidden",opacity:.22,pointerEvents:"none"}}><WorldScene worldId={w.id} variant="card" /></div>}
+              {/* Gradient overlay left→right for text legibility */}
+              {!locked && <div style={{position:"absolute",inset:0,background:`linear-gradient(90deg,rgba(12,10,30,.92) 0%,rgba(12,10,30,.5) 55%,${w.color}11 100%)`,borderRadius:26,pointerEvents:"none"}} />}
               {/* Shimmer accent for completed */}
-              {has && !locked && <div style={{position:"absolute",top:0,right:0,width:60,height:"100%",background:`linear-gradient(90deg,transparent,${w.color}18)`,borderRadius:"0 26px 26px 0",pointerEvents:"none"}} />}
+              {has && !locked && <div style={{position:"absolute",top:0,right:0,width:60,height:"100%",background:`linear-gradient(90deg,transparent,${w.color}22)`,borderRadius:"0 26px 26px 0",pointerEvents:"none"}} />}
               {/* World icon */}
               <div style={{
-                width:64,height:64,borderRadius:20,flexShrink:0,
-                background:locked?"rgba(255,255,255,.06)":`linear-gradient(135deg,${w.color}55,${w.color}99)`,
+                width:68,height:68,borderRadius:20,flexShrink:0,
+                background:locked?"rgba(255,255,255,.06)":`${w.color}22`,
+                border:`2px solid ${locked?"rgba(255,255,255,.1)":w.color+"55"}`,
                 display:"flex",alignItems:"center",justifyContent:"center",
-                fontSize:36,
-                boxShadow:locked?"none":`0 4px 16px ${w.color}44`,
+                fontSize:34,position:"relative",zIndex:1,
+                boxShadow:locked?"none":`0 0 20px ${w.color}44`,
               }}>{locked?"🔒":w.emoji}</div>
               {/* Content */}
-              <div style={{flex:1,minWidth:0}}>
+              <div style={{flex:1,minWidth:0,position:"relative",zIndex:1}}>
                 <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
                   <span style={{fontWeight:900,fontSize:16,color:locked?"rgba(255,255,255,.4)":"white"}}>{w.name}</span>
                   {has && <span style={{background:`${w.color}33`,color:w.color,fontSize:10,fontWeight:900,borderRadius:20,padding:"2px 8px",border:`1px solid ${w.color}55`}}>✓ COMPLETO</span>}
@@ -3408,7 +3394,7 @@ export default function MondoMago() {
                 )}
               </div>
               {/* Arrow */}
-              {!locked && <div style={{color:w.color,fontSize:22,opacity:.8,flexShrink:0}}>›</div>}
+              {!locked && <div style={{color:w.color,fontSize:22,opacity:.8,flexShrink:0,position:"relative",zIndex:1}}>›</div>}
             </button>
           );
         })}
@@ -3455,25 +3441,30 @@ export default function MondoMago() {
   // ════════════════════ SCREEN: WORLD INTRO ════════════════════════════════
   if (screen === "world_intro" && arc) return (
     <div key="world_intro" className={screenAnim} style={{minHeight:"100dvh",background:`linear-gradient(160deg,#1a1a2e,${arc.color}44,#1a1a2e)`,color:"white",padding:28,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center",position:"relative"}}>
+      {/* WorldScene full illustrated background */}
+      <div style={{position:"absolute",inset:0,overflow:"hidden",zIndex:0}}><WorldScene worldId={world?.id} variant="full" /></div>
+      <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg,rgba(10,8,26,.55) 0%,rgba(10,8,26,.25) 50%,rgba(10,8,26,.75) 100%)",zIndex:1,pointerEvents:"none"}} />
       {G}
-      <button onClick={() => navigate("map")} style={{position:"absolute",top:20,left:20,background:"rgba(255,255,255,.1)",border:"none",color:"white",borderRadius:50,padding:"8px 16px",cursor:"pointer",fontSize:14,fontWeight:700}}>← Mappa</button>
-      <div className="float" style={{fontSize:72,marginBottom:16}}>{world.emoji}</div>
-      <h2 className="slide-up" style={{fontSize:26,fontWeight:900,marginBottom:14,color:"#FFD95A"}}>{arc.intro_title}</h2>
-      <p className="fade-in" style={{fontSize:16,lineHeight:1.75,opacity:.9,marginBottom:12,maxWidth:380,animationDelay:".15s"}}>{arc.intro_text}</p>
-      <button onClick={() => speak(arc.intro_text, 0.8)}
-        style={{background:"rgba(255,255,255,.15)",border:"none",color:"white",borderRadius:50,padding:"8px 22px",cursor:"pointer",marginBottom:24,fontSize:14}}>
-        🔊 Riascolta
-      </button>
-      {comp && (
-        <div className="slide-up" style={{background:"rgba(255,255,255,.1)",borderRadius:20,padding:"12px 18px",marginBottom:32,fontSize:14,maxWidth:360,animationDelay:".25s",display:"flex",alignItems:"center",gap:12}}>
-          <CompanionAvatar c={comp} size={38} />
-          <span>{comp.onWorldStart()}</span>
-        </div>
-      )}
-      <button className="pop-in" onClick={() => navigate("challenge")}
-        style={{background:"white",color:"#1a1a2e",border:"none",borderRadius:50,padding:"16px 48px",fontWeight:900,fontSize:18,cursor:"pointer",boxShadow:"0 6px 24px rgba(0,0,0,.25)",animationDelay:".35s"}}>
-        Inizia la Missione! ⚔️
-      </button>
+      <button onClick={() => navigate("map")} style={{position:"absolute",top:20,left:20,background:"rgba(255,255,255,.15)",border:"none",color:"white",borderRadius:50,padding:"8px 16px",cursor:"pointer",fontSize:14,fontWeight:700,zIndex:2}}>← Mappa</button>
+      <div className="float" style={{fontSize:72,marginBottom:16,position:"relative",zIndex:2}}>{world.emoji}</div>
+      <div style={{position:"relative",zIndex:2,display:"flex",flexDirection:"column",alignItems:"center",width:"100%"}}>
+        <h2 className="slide-up" style={{fontSize:26,fontWeight:900,marginBottom:14,color:"#FFD95A"}}>{arc.intro_title}</h2>
+        <p className="fade-in" style={{fontSize:16,lineHeight:1.75,opacity:.9,marginBottom:12,maxWidth:380,animationDelay:".15s"}}>{arc.intro_text}</p>
+        <button onClick={() => speak(arc.intro_text, 0.8)}
+          style={{background:"rgba(255,255,255,.15)",border:"none",color:"white",borderRadius:50,padding:"8px 22px",cursor:"pointer",marginBottom:24,fontSize:14}}>
+          🔊 Riascolta
+        </button>
+        {comp && (
+          <div className="slide-up" style={{background:"rgba(255,255,255,.1)",borderRadius:20,padding:"12px 18px",marginBottom:32,fontSize:14,maxWidth:360,animationDelay:".25s",display:"flex",alignItems:"center",gap:12}}>
+            <CompanionAvatar c={comp} size={38} />
+            <span>{comp.onWorldStart()}</span>
+          </div>
+        )}
+        <button className="pop-in" onClick={() => navigate("challenge")}
+          style={{background:"white",color:"#1a1a2e",border:"none",borderRadius:50,padding:"16px 48px",fontWeight:900,fontSize:18,cursor:"pointer",boxShadow:"0 6px 24px rgba(0,0,0,.25)",animationDelay:".35s"}}>
+          Inizia la Missione! ⚔️
+        </button>
+      </div>
     </div>
   );
 
