@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import TTS_MAP from "./ttsMap.json";
 import WorldScene from "./WorldScene.jsx";
+import SvgAsset from "./SvgAssets.jsx";
 
 // ── CSS ANIMATIONS ────────────────────────────────────────────────────────────
 function AnimationStyles() {
@@ -3803,8 +3804,19 @@ export default function MondoMago() {
             style={{background:youngBg?"white":ch.isBoss?"rgba(255,60,60,.13)":"rgba(255,255,255,.10)",borderRadius:youngBg?32:24,padding:youngBg?"24px 22px":"22px 20px",marginBottom:16,border:`1px solid ${youngBg?"rgba(0,0,0,.06)":ch.isBoss?"rgba(255,80,80,.3)":"rgba(255,255,255,.14)"}`,boxShadow:youngBg?"0 6px 30px rgba(0,0,0,.10)":"0 8px 32px rgba(0,0,0,.4)",position:"relative",zIndex:1}}>
             <div onClick={() => { SFX.tap(); speak(ch.format==="story_choice"?ch.situation:ch.prompt); }}
               style={{fontSize:youngBg?52:40,marginBottom:12,cursor:"pointer",display:"inline-block"}}>{ch.emoji}</div>
-            {isVis && <div onClick={() => { SFX.tap(); speak(ch.prompt); }}
-              style={{fontSize:youngBg?60:52,letterSpacing:8,marginBottom:12,cursor:"pointer"}}>{ch.visual}</div>}
+            {isVis && (() => {
+              const segs = typeof Intl?.Segmenter === "function"
+                ? [...new Intl.Segmenter().segment(ch.visual)].map(s => s.segment).filter(s => s.trim())
+                : Array.from(ch.visual).filter(c => c.trim());
+              return (
+                <div onClick={() => { SFX.tap(); speak(ch.prompt); }}
+                  style={{display:"flex",flexWrap:"wrap",gap:youngBg?10:8,justifyContent:"center",marginBottom:14,cursor:"pointer"}}>
+                  {segs.map((em, i) => (
+                    <SvgAsset key={i} emoji={em} size={youngBg?60:50} state="default" />
+                  ))}
+                </div>
+              );
+            })()}
             {isStory
               ? <p style={{fontSize:youngBg?17:15,lineHeight:1.75,margin:0,color:youngBg?"#333":"inherit"}}>{ch.situation}</p>
               : <p style={{fontFamily:FF,fontSize:isVis?(youngBg?26:23):youngBg?23:19,lineHeight:1.6,margin:0,whiteSpace:"pre-line",color:youngBg?"#222":"inherit"}}>{ch.prompt}</p>
@@ -3944,16 +3956,32 @@ export default function MondoMago() {
                       color: youngBg ? (done && (correct||wrong) ? "white" : youngColors[idx%4]) : "white",
                       fontWeight: youngBg ? 800 : 600,
                       cursor:done?"default":"pointer",
-                      height: (isVis||isWordPic||isAlpha) ? 120 : (youngBg ? 100 : young ? 92 : 82),
-                      fontSize: (isVis||isWordPic||isAlpha) ? 52 : youngBg ? 20 : 18,
-                      display:"flex", alignItems:"center", justifyContent:"center",
-                      padding: (isVis||isWordPic||isAlpha) ? 0 : "16px 12px",
+                      height: (isVis||isWordPic) ? 148 : isAlpha ? 120 : (youngBg ? 100 : young ? 92 : 82),
+                      fontSize: isAlpha ? 52 : youngBg ? 20 : 18,
+                      display:"flex", flexDirection:(isVis||isWordPic)?"column":"row",
+                      alignItems:"center", justifyContent:"center",
+                      padding: (isVis||isWordPic) ? "10px 4px 8px" : isAlpha ? 0 : "16px 12px",
+                      gap: (isVis||isWordPic) ? 4 : 0,
                       transform: wrong ? "scale(0.97)" : correct ? "scale(1.04)" : "scale(1)",
                       boxShadow: youngBg&&!done ? `0 4px 14px ${youngColors[idx%4]}44` : isHinted ? "0 0 16px rgba(255,213,0,.4)" : correct ? "0 0 20px rgba(34,197,94,.4)" : "none",
                       position:"relative",
+                      overflow:"hidden",
                     }}>
                     {isHinted && <span style={{position:"absolute",top:5,left:8,fontSize:14,lineHeight:1}}>💡</span>}
-                    {opt}
+                    {(isVis||isWordPic) ? (
+                      <>
+                        <SvgAsset
+                          emoji={opt}
+                          size={94}
+                          state={done ? (idx===ch.correct ? "correct" : idx===selected ? "wrong" : "dimmed") : "default"}
+                        />
+                        {(isWordPic) && (
+                          <span style={{fontSize:11,opacity:done?0.6:0.45,lineHeight:1,maxWidth:"90%",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                            {opt}
+                          </span>
+                        )}
+                      </>
+                    ) : opt}
                     {correct && <span style={{position:"absolute",top:6,right:8,fontSize:18,lineHeight:1}}>✓</span>}
                   </button>
                 );
