@@ -1604,6 +1604,26 @@ ALL_CHALLENGES.biblioteca = [
     emoji:"📜",
     prompt:"🦉 La Civetta chiede:\nLa principessa nell'alto castello chiaro,\naspettava il principe buono e ___",
     options:["caro","bello","forte","lontano"], correct:0 },
+
+  // ── Letter tracing (age 3-4) ─────────────────────────────────────────────
+  { id:"lt_I", format:"letter_trace", type:"parole", ageMin:3, ageMax:4,
+    letter:"I", word:"Isola", wordEmoji:"🏝️",
+    emoji:"✏️", prompt:"Traccia la lettera I come in Isola!", tts:[] },
+  { id:"lt_O", format:"letter_trace", type:"parole", ageMin:3, ageMax:4,
+    letter:"O", word:"Orso", wordEmoji:"🐻",
+    emoji:"✏️", prompt:"Traccia la lettera O come in Orso!", tts:[] },
+  { id:"lt_U", format:"letter_trace", type:"parole", ageMin:3, ageMax:4,
+    letter:"U", word:"Uva", wordEmoji:"🍇",
+    emoji:"✏️", prompt:"Traccia la lettera U come in Uva!", tts:[] },
+  { id:"lt_A", format:"letter_trace", type:"parole", ageMin:3, ageMax:4,
+    letter:"A", word:"Arancia", wordEmoji:"🍊",
+    emoji:"✏️", prompt:"Traccia la lettera A come in Arancia!", tts:[] },
+  { id:"lt_M", format:"letter_trace", type:"parole", ageMin:3, ageMax:4,
+    letter:"M", word:"Mela", wordEmoji:"🍎",
+    emoji:"✏️", prompt:"Traccia la lettera M come in Mela!", tts:[] },
+  { id:"lt_E", format:"letter_trace", type:"parole", ageMin:3, ageMax:4,
+    letter:"E", word:"Elefante", wordEmoji:"🐘",
+    emoji:"✏️", prompt:"Traccia la lettera E come in Elefante!", tts:[] },
 ];
 
 // ── AGE 7-8 EXTENSIONS: VULCANO + BIBLIOTECA ─────────────────────────────────
@@ -2219,6 +2239,150 @@ const SCREEN_DEPTH = {
   parent: 5, fulmine: 5, coplay_intro: 6, world_intro: 7, school: 6,
   challenge: 8, world_end: 9, session_stats: 9,
 };
+
+// ── LETTER TRACING (L2) ───────────────────────────────────────────────────────
+// Letters defined in a 0-100 normalized coordinate space (SVG viewBox "0 0 100 100").
+// refPts are waypoints sampled from the ideal path; a draw session passes when
+// ≥65% of refPts are within HIT_RADIUS (18 units ≈ 40px on the 220px canvas).
+const LETTER_DATA = {
+  I: {
+    guide:   "M50,10 L50,90",
+    refPts:  [[50,10],[50,30],[50,50],[50,70],[50,90]],
+    start:   [50,10],
+  },
+  O: {
+    guide:   "M50,10 C74,10 90,26 90,50 C90,74 74,90 50,90 C26,90 10,74 10,50 C10,26 26,10 50,10 Z",
+    refPts:  [[50,10],[79,22],[90,50],[79,78],[50,90],[21,78],[10,50],[21,22],[50,10]],
+    start:   [50,10],
+  },
+  U: {
+    guide:   "M22,10 L22,65 C22,88 38,93 50,93 C62,93 78,88 78,65 L78,10",
+    refPts:  [[22,10],[22,38],[22,65],[27,80],[40,90],[50,93],[60,90],[73,80],[78,65],[78,38],[78,10]],
+    start:   [22,10],
+  },
+  A: {
+    guide:   "M15,90 L50,8 L85,90 M32,56 L68,56",
+    refPts:  [[15,90],[25,72],[38,56],[50,28],[50,8],[62,28],[62,56],[75,72],[85,90],[32,56],[50,56],[68,56]],
+    start:   [15,90],
+  },
+  M: {
+    guide:   "M10,90 L10,10 L50,55 L90,10 L90,90",
+    refPts:  [[10,90],[10,60],[10,30],[10,10],[30,32],[50,55],[70,32],[90,10],[90,30],[90,60],[90,90]],
+    start:   [10,90],
+  },
+  E: {
+    guide:   "M75,12 L20,12 L20,90 L75,90 M20,51 L60,51",
+    refPts:  [[75,12],[48,12],[20,12],[20,40],[20,51],[60,51],[20,51],[20,70],[20,90],[48,90],[75,90]],
+    start:   [75,12],
+  },
+};
+
+function LetterTracer({ letter, onComplete, youngBg }) {
+  const svgRef           = useRef(null);
+  const [path, setPath]  = useState([]);
+  const [active, setAct] = useState(false);
+  const [pct, setPct]    = useState(0);
+  const [done, setDone]  = useState(false);
+
+  const ld  = LETTER_DATA[letter] || LETTER_DATA.I;
+  const HIT = 18;   // hit radius in normalized units
+  const PASS = 65;  // % coverage needed to succeed
+
+  function pt(e) {
+    const svg = svgRef.current; if (!svg) return null;
+    const r = svg.getBoundingClientRect();
+    const s = e.touches?.[0] || e.changedTouches?.[0] || e;
+    return { x: ((s.clientX-r.left)/r.width)*100, y: ((s.clientY-r.top)/r.height)*100 };
+  }
+
+  function onStart(e) {
+    e.preventDefault(); if (done) return;
+    const p = pt(e); if (!p) return;
+    setAct(true); setPath([p]); setPct(0);
+  }
+  function onMove(e) {
+    e.preventDefault(); if (!active || done) return;
+    const p = pt(e); if (!p) return;
+    setPath(prev => {
+      const last = prev[prev.length-1];
+      if (last && Math.hypot(p.x-last.x, p.y-last.y) < 2.5) return prev;
+      return [...prev, p];
+    });
+  }
+  function onEnd(e) {
+    e.preventDefault(); if (!active) return;
+    setAct(false);
+    const score = Math.round(
+      (ld.refPts.filter(([rx,ry]) => path.some(p => Math.hypot(p.x-rx,p.y-ry)<HIT)).length
+       / ld.refPts.length) * 100
+    );
+    setPct(score);
+    if (score >= PASS) { setDone(true); setTimeout(onComplete, 700); }
+  }
+  function reset() { setPath([]); setPct(0); setDone(false); setAct(false); }
+
+  const poly = path.map(p => `${p.x},${p.y}`).join(' ');
+  const [sx, sy] = ld.start;
+
+  return (
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:10}}>
+      <svg ref={svgRef} viewBox="0 0 100 100" width={220} height={220}
+        style={{background:youngBg?"white":"rgba(255,255,255,.09)",borderRadius:24,
+          border:youngBg?"2px solid rgba(0,0,0,.08)":"2px solid rgba(255,255,255,.12)",
+          touchAction:"none",cursor:"crosshair",display:"block"}}
+        onMouseDown={onStart} onMouseMove={onMove} onMouseUp={onEnd} onMouseLeave={onEnd}
+        onTouchStart={onStart} onTouchMove={onMove} onTouchEnd={onEnd}>
+
+        {/* Guide letter — thick light fill */}
+        <path d={ld.guide} fill="none"
+          stroke={youngBg?"#DCDCF0":"rgba(255,255,255,.14)"}
+          strokeWidth={14} strokeLinecap="round" strokeLinejoin="round"/>
+        {/* Guide outline — dashed centerline */}
+        <path d={ld.guide} fill="none"
+          stroke={youngBg?"#AAAAC8":"rgba(255,255,255,.22)"}
+          strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" strokeDasharray="3,3"/>
+
+        {/* Starting dot — pulsing green circle */}
+        {!done && (
+          <circle cx={sx} cy={sy} r={youngBg?7:6} fill="#22C55E" className="pulse" opacity={active?0:.9}/>
+        )}
+
+        {/* User drawn path */}
+        {path.length > 1 && (
+          <polyline points={poly} fill="none"
+            stroke={done?"#22C55E":"#7C3AED"}
+            strokeWidth={youngBg?7:5.5} strokeLinecap="round" strokeLinejoin="round" opacity={.88}/>
+        )}
+
+        {/* Success star */}
+        {done && <text x="50" y="56" textAnchor="middle" dominantBaseline="middle" fontSize="38">⭐</text>}
+      </svg>
+
+      {/* Progress bar */}
+      {pct > 0 && !done && (
+        <div style={{width:220,background:youngBg?"rgba(0,0,0,.09)":"rgba(255,255,255,.09)",borderRadius:8,height:9,overflow:"hidden"}}>
+          <div style={{background:pct>=PASS?"#22C55E":"#7C3AED",height:"100%",borderRadius:8,
+            width:`${Math.min(pct,100)}%`,transition:"width .3s"}}/>
+        </div>
+      )}
+
+      {/* Hint / retry */}
+      {!done && path.length === 0 && (
+        <div style={{fontSize:13,color:youngBg?"rgba(0,0,0,.4)":"rgba(255,255,255,.4)",fontFamily:"'Fredoka One',cursive"}}>
+          Traccia con il dito! 👆
+        </div>
+      )}
+      {pct > 0 && pct < PASS && !done && (
+        <button onClick={reset}
+          style={{background:youngBg?"rgba(0,0,0,.07)":"rgba(255,255,255,.12)",border:"none",
+            color:youngBg?"#444":"white",borderRadius:20,padding:"8px 22px",fontSize:14,
+            cursor:"pointer",fontWeight:700,fontFamily:"'Fredoka One',cursive"}}>
+          Riprova! 🔄
+        </button>
+      )}
+    </div>
+  );
+}
 
 // ── MAIN COMPONENT ────────────────────────────────────────────────────────────
 const FF = "'Fredoka One', cursive";
@@ -3802,14 +3966,15 @@ export default function MondoMago() {
 
   // ════════════════════ SCREEN: CHALLENGE ══════════════════════════════════
   if (screen === "challenge" && ch) {
-    const isMC      = ch.format === "multiple_choice";
-    const isVis     = ch.format === "visual_tap";
-    const isStory   = ch.format === "story_choice";
-    const isSeq     = ch.format === "sequence_tap";
-    const isDrag    = ch.format === "drag_drop";
-    const isRhyme   = ch.format === "rhyme_complete";
-    const isWordPic = ch.format === "word_picture";
-    const isAlpha   = ch.id?.startsWith("ba_");  // biblioteca alphabet challenge
+    const isMC         = ch.format === "multiple_choice";
+    const isVis        = ch.format === "visual_tap";
+    const isStory      = ch.format === "story_choice";
+    const isSeq        = ch.format === "sequence_tap";
+    const isDrag       = ch.format === "drag_drop";
+    const isRhyme      = ch.format === "rhyme_complete";
+    const isWordPic    = ch.format === "word_picture";
+    const isLetterTrace= ch.format === "letter_trace";
+    const isAlpha      = ch.id?.startsWith("ba_");  // biblioteca alphabet challenge
     const alphaLetter = isAlpha ? ch.id.replace("ba_","") : null;
     const pts     = ch.isBoss ? 3 : young ? 1 : 2;
 
@@ -3957,7 +4122,24 @@ export default function MondoMago() {
           </div>
         )}
         {/* Challenge card */}
-        {isWordPic ? (
+        {isLetterTrace ? (
+          /* Letter trace card — big letter + word label */
+          <div className={`slide-up ${cardAnim}`}
+            style={{background:youngBg?"white":"rgba(255,255,255,.10)",borderRadius:youngBg?32:24,
+              padding:"18px 20px 12px",marginBottom:10,
+              border:`1px solid ${youngBg?"rgba(0,0,0,.06)":"rgba(255,255,255,.14)"}`,
+              boxShadow:youngBg?"0 6px 30px rgba(0,0,0,.10)":"0 8px 32px rgba(0,0,0,.4)",
+              position:"relative",zIndex:1,textAlign:"center"}}>
+            <div style={{fontSize:11,fontWeight:800,letterSpacing:2,marginBottom:6,color:youngBg?"#666":"rgba(255,255,255,.5)"}}>✏️ TRACCIA LA LETTERA</div>
+            <div style={{fontFamily:FF,fontSize:88,lineHeight:1,color:youngBg?"#764ba2":worldColor,
+              textShadow:youngBg?"none":`0 0 30px ${worldColor}88`,marginBottom:4}}>
+              {ch.letter}
+            </div>
+            <div style={{fontSize:15,fontWeight:700,color:youngBg?"#444":"rgba(255,255,255,.8)",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+              <span style={{fontSize:22}}>{ch.wordEmoji}</span> {ch.word}
+            </div>
+          </div>
+        ) : isWordPic ? (
           /* Word-picture card — big word + "tap the emoji" */
           <div className={`slide-up ${cardAnim}`}
             style={{background:youngBg?"white":"rgba(255,255,255,.10)",borderRadius:youngBg?32:24,padding:"28px 20px",marginBottom:16,border:`1px solid ${youngBg?"rgba(0,0,0,.06)":"rgba(255,255,255,.14)"}`,boxShadow:youngBg?"0 6px 30px rgba(0,0,0,.10)":"0 8px 32px rgba(0,0,0,.4)",position:"relative",zIndex:1,textAlign:"center"}}>
@@ -4036,6 +4218,28 @@ export default function MondoMago() {
               ? <p style={{fontSize:youngBg?17:15,lineHeight:1.75,margin:0,color:youngBg?"#333":"inherit"}}>{ch.situation}</p>
               : <p style={{fontFamily:FF,fontSize:isVis?(youngBg?26:23):youngBg?23:19,lineHeight:1.6,margin:0,whiteSpace:"pre-line",color:youngBg?"#222":"inherit"}}>{ch.prompt}</p>
             }
+          </div>
+        )}
+
+        {/* Letter tracer — interactive SVG canvas */}
+        {isLetterTrace && !done && (
+          <div style={{display:"flex",justifyContent:"center",position:"relative",zIndex:1}}>
+            <LetterTracer
+              letter={ch.letter}
+              youngBg={youngBg}
+              onComplete={() => {
+                setSelected(999);
+                triggerOK(young ? 1 : 2);
+                setSkills(s => addSkill(s, ch.type || "parole"));
+                setResults(r => [...r, { type: ch.type || "parole", ok: true }]);
+              }}
+            />
+          </div>
+        )}
+        {isLetterTrace && done && (
+          <div style={{textAlign:"center",padding:"18px 0 4px",fontSize:18,fontFamily:FF,
+            color:youngBg?"#15803D":"#4ade80"}}>
+            ⭐ Bravissimo! Lettera completata!
           </div>
         )}
 
