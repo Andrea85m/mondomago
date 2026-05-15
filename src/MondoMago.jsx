@@ -2313,7 +2313,8 @@ export default function MondoMago() {
   const comp  = COMPANIONS.find(c => c.id === companion);
   const arc   = world ? STORY_ARCS[world.id] : null;
   const ch    = challenges[ci];
-  const young = (childAge || 5) <= 4;
+  const young    = (childAge || 5) <= 4;
+  const youngBg  = young;   // light mode active for age ≤ 4 across all screens
   const done  = selected !== null;
 
   // Worlds unlocked dynamically based on totalStars
@@ -3265,8 +3266,34 @@ export default function MondoMago() {
     const mapBg = season ? season.bg : "linear-gradient(180deg,#1a1a2e,#0f3460)";
     const equippedForComp = comp ? (COSMETICS.find(c => c.id === equippedCosmetic[comp.id]) || null) : null;
     const { lvl: mapLvl, pct: mapPct, toNext: mapToNext, nextTitle: mapNextTitle } = getLevelProgress(totalStars);
+    // L1: light-mode theme tokens for children ≤ 4 years
+    const mt = youngBg ? {
+      bg:         "linear-gradient(180deg,#FFF8EC,#EDE9FE)",
+      fg:         "#1a1a2e",   fgDim: "rgba(0,0,0,.45)",  fgDimmer: "rgba(0,0,0,.28)",
+      card:       "rgba(0,0,0,.05)",    cardBd: "1px solid rgba(0,0,0,.08)",
+      xpBg:       "rgba(255,215,0,.12)", xpBd: "1px solid rgba(255,215,0,.3)", xpBarBg: "rgba(0,0,0,.07)",
+      tabAct:     "linear-gradient(135deg,rgba(0,0,0,.12),rgba(0,0,0,.07))", tabActBd: "1px solid rgba(0,0,0,.18)", tabActFg: "#1a1a2e",
+      tabInact:   "rgba(0,0,0,.04)",  tabInactBd: "1px solid rgba(0,0,0,.06)",  tabInactFg: "rgba(0,0,0,.4)",
+      wCard:      "rgba(255,255,255,.92)", wLocked: "rgba(0,0,0,.04)",
+      wOvl:       "linear-gradient(90deg,rgba(255,255,255,.9) 0%,rgba(255,255,255,.55) 55%,transparent 100%)",
+      wNodeConn:  "rgba(0,0,0,.10)", wNodeTxt: "#1a1a2e", wNodeLocked: "rgba(0,0,0,.28)",
+      parentBtn:  "rgba(0,0,0,.04)", parentBd: "1px solid rgba(0,0,0,.09)", parentFg: "rgba(0,0,0,.4)",
+      sectionLbl: "rgba(0,0,0,.4)",
+    } : {
+      bg:         mapBg,
+      fg:         "white",      fgDim: "rgba(255,255,255,.4)", fgDimmer: "rgba(255,255,255,.25)",
+      card:       "rgba(255,255,255,.06)", cardBd: "1px solid rgba(255,255,255,.08)",
+      xpBg:       "rgba(255,215,0,.08)",  xpBd: "1px solid rgba(255,215,0,.2)",  xpBarBg: "rgba(255,255,255,.08)",
+      tabAct:     "linear-gradient(135deg,rgba(255,255,255,.2),rgba(255,255,255,.1))", tabActBd: "1px solid rgba(255,255,255,.28)", tabActFg: "white",
+      tabInact:   "rgba(255,255,255,.05)", tabInactBd: "1px solid rgba(255,255,255,.07)", tabInactFg: "rgba(255,255,255,.55)",
+      wCard:      "rgba(12,10,30,.85)",  wLocked: "rgba(255,255,255,.04)",
+      wOvl:       "linear-gradient(90deg,rgba(12,10,30,.92) 0%,rgba(12,10,30,.5) 55%,transparent 100%)",
+      wNodeConn:  "rgba(255,255,255,.10)", wNodeTxt: "white", wNodeLocked: "rgba(255,255,255,.3)",
+      parentBtn:  "rgba(255,255,255,.03)", parentBd: "1px solid rgba(255,255,255,.08)", parentFg: "rgba(255,255,255,.35)",
+      sectionLbl: "rgba(255,255,255,.45)",
+    };
     return (
-    <div key="map" className={screenAnim} style={{minHeight:"100dvh",background:mapBg,color:"white",padding:22,paddingBottom:"max(env(safe-area-inset-bottom,0px),22px)",position:"relative"}}>
+    <div key="map" className={screenAnim} style={{minHeight:"100dvh",background:mt.bg,color:mt.fg,padding:22,paddingBottom:"max(env(safe-area-inset-bottom,0px),22px)",position:"relative"}}>
       {G}
       {/* Seasonal background particles */}
       {season && (
@@ -3293,13 +3320,13 @@ export default function MondoMago() {
       <div style={{position:"relative",zIndex:1}}>
       {/* Seasonal banner */}
       {season && (
-        <div className="slide-up" style={{background:`${season.color}22`,border:`1px solid ${season.color}55`,borderRadius:14,padding:"10px 14px",marginBottom:14,fontSize:12,textAlign:"center",fontWeight:700,color:"white"}}>
+        <div className="slide-up" style={{background:`${season.color}22`,border:`1px solid ${season.color}55`,borderRadius:14,padding:"10px 14px",marginBottom:14,fontSize:12,textAlign:"center",fontWeight:700,color:mt.fg}}>
           {season.banner}
         </div>
       )}
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:18}}>
         <div style={{flex:1,minWidth:0}}>
-          <div style={{fontSize:12,opacity:.5}}>{isReturning ? `Bentornato, ${childName}!` : `Ciao, ${childName}!`} 👋</div>
+          <div style={{fontSize:12,color:mt.fgDim}}>{isReturning ? `Bentornato, ${childName}!` : `Ciao, ${childName}!`} 👋</div>
           <h2 style={{fontFamily:FF,margin:0,fontSize:22}}>🗺️ I Mondi Magici</h2>
         </div>
         {comp && (
@@ -3321,15 +3348,15 @@ export default function MondoMago() {
       {(() => {
         const h = new Date().getHours();
         const g = h < 10 ? "☀️ Buongiorno!" : h < 13 ? "🌤️ Buona mattina!" : h < 17 ? "🌤️ Buon pomeriggio!" : h < 21 ? "🌙 Buona sera!" : "🌟 Notte di avventura!";
-        return <div style={{fontSize:12,color:"rgba(255,255,255,.4)",marginBottom:12,textAlign:"right",fontWeight:600}}>{g}</div>;
+        return <div style={{fontSize:12,color:mt.fgDim,marginBottom:12,textAlign:"right",fontWeight:600}}>{g}</div>;
       })()}
       {/* ── STATS ROW ── */}
       <div style={{display:"flex",gap:10,marginBottom:12}}>
         {[{i:"⭐",v:totalStars,l:"stelle",c:"#FFD700"},{i:"🏆",v:items.length,l:"trofei",c:"#C084FC"}].map((s,idx) => (
-          <div key={idx} style={{flex:1,background:"rgba(255,255,255,.06)",borderRadius:20,padding:"14px 8px",textAlign:"center",border:"1px solid rgba(255,255,255,.08)"}}>
+          <div key={idx} style={{flex:1,background:mt.card,borderRadius:20,padding:"14px 8px",textAlign:"center",border:mt.cardBd}}>
             <div style={{fontSize:26}}>{s.i}</div>
             <div style={{fontFamily:FF,fontSize:24,color:s.c,lineHeight:1}}>{s.v}</div>
-            <div style={{fontSize:11,opacity:.5,marginTop:2}}>{s.l}</div>
+            <div style={{fontSize:11,color:mt.fgDim,marginTop:2}}>{s.l}</div>
           </div>
         ))}
         {/* Streak card */}
@@ -3340,12 +3367,12 @@ export default function MondoMago() {
           const playedDates = new Set(sessionLog.map(s=>s.date));
           playedDates.add(today);
           return (
-            <div style={{flex:1,background:"rgba(249,115,22,.1)",borderRadius:20,padding:"14px 8px",textAlign:"center",border:"1px solid rgba(249,115,22,.2)"}}>
+            <div style={{flex:1,background:youngBg?"rgba(255,100,0,.1)":"rgba(249,115,22,.1)",borderRadius:20,padding:"14px 8px",textAlign:"center",border:youngBg?"1px solid rgba(255,100,0,.2)":"1px solid rgba(249,115,22,.2)"}}>
               <div style={{fontSize:22,animation:streak>=3?"pulse 1.4s ease-in-out infinite":"none"}}>{flames}</div>
               <div style={{fontFamily:FF,fontSize:24,color:"#FB923C",lineHeight:1}}>{streak}</div>
               <div style={{display:"flex",gap:3,justifyContent:"center",marginTop:5}}>
                 {last7.map(d => (
-                  <div key={d} style={{width:7,height:7,borderRadius:"50%",background:playedDates.has(d)?"#F97316":"rgba(255,255,255,.12)"}} />
+                  <div key={d} style={{width:7,height:7,borderRadius:"50%",background:playedDates.has(d)?"#F97316":youngBg?"rgba(0,0,0,.14)":"rgba(255,255,255,.12)"}} />
                 ))}
               </div>
             </div>
@@ -3355,7 +3382,7 @@ export default function MondoMago() {
       {/* ── XP LEVEL BAR ── */}
       {(() => {
         return (
-          <div style={{background:"rgba(255,215,0,.08)",border:"1px solid rgba(255,215,0,.2)",borderRadius:20,padding:"14px 16px",marginBottom:14}}>
+          <div style={{background:mt.xpBg,border:mt.xpBd,borderRadius:20,padding:"14px 16px",marginBottom:14}}>
             <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:mapToNext ? 10 : 0}}>
               <span style={{fontSize:30}}>{mapLvl.emoji}</span>
               <div style={{flex:1}}>
@@ -3364,14 +3391,14 @@ export default function MondoMago() {
                            : <div style={{fontSize:11,color:"#FFD700",opacity:.8}}>Livello massimo! 🏆</div>}
               </div>
               {allProfiles.length > 1 && (
-                <button onClick={() => navigate('profile_select')} style={{background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.2)",color:"white",borderRadius:20,padding:"6px 14px",fontSize:12,cursor:"pointer",fontWeight:700}}>
+                <button onClick={() => navigate('profile_select')} style={{background:youngBg?"rgba(0,0,0,.07)":"rgba(255,255,255,.1)",border:youngBg?"1px solid rgba(0,0,0,.14)":"1px solid rgba(255,255,255,.2)",color:mt.fg,borderRadius:20,padding:"6px 14px",fontSize:12,cursor:"pointer",fontWeight:700}}>
                   Cambia
                 </button>
               )}
             </div>
             {mapToNext > 0 && (
               <div>
-                <div style={{background:"rgba(255,255,255,.08)",borderRadius:8,height:12,overflow:"hidden",border:"1px solid rgba(255,255,255,.06)"}}>
+                <div style={{background:mt.xpBarBg,borderRadius:8,height:12,overflow:"hidden",border:youngBg?"1px solid rgba(0,0,0,.05)":"1px solid rgba(255,255,255,.06)"}}>
                   <div style={{background:"linear-gradient(90deg,#F59E0B,#FFD700,#FFF08A)",height:"100%",borderRadius:8,width:`${mapPct}%`,transition:"width 1.2s cubic-bezier(.22,1,.36,1)",boxShadow:"0 0 8px #FFD70088"}} />
                 </div>
                 <div style={{fontSize:10,opacity:.35,marginTop:4,textAlign:"right"}}>{Math.round(mapPct)}%</div>
@@ -3443,20 +3470,20 @@ export default function MondoMago() {
           }}
             style={{
               flex:1,
-              background:i===0?"linear-gradient(135deg,rgba(255,255,255,.2),rgba(255,255,255,.1))":"rgba(255,255,255,.05)",
-              border:i===0?"1px solid rgba(255,255,255,.28)":"1px solid rgba(255,255,255,.07)",
+              background:i===0?mt.tabAct:mt.tabInact,
+              border:i===0?mt.tabActBd:mt.tabInactBd,
               borderRadius:16,padding:"12px 4px",
-              color:i===0?"white":"rgba(255,255,255,.55)",
+              color:i===0?mt.tabActFg:mt.tabInactFg,
               fontFamily:FF,fontSize:13,cursor:"pointer",
               display:"flex",flexDirection:"column",alignItems:"center",gap:3,
             }}>
-            <Icon c={i===0?"white":"rgba(255,255,255,.55)"} s={22}/>
+            <Icon c={i===0?mt.tabActFg:mt.tabInactFg} s={22}/>
             <div>{label}</div>
           </button>
         ))}
       </div>
       {/* [A2] Visual path map */}
-      <div style={{fontSize:11,opacity:.45,fontWeight:800,letterSpacing:1,marginBottom:10}}>🗺️ MONDI</div>
+      <div style={{fontSize:11,fontWeight:800,letterSpacing:1,marginBottom:10,color:mt.sectionLbl}}>🗺️ MONDI</div>
       <div className="h-scroll" style={{overflowX:"auto",overflowY:"visible",paddingBottom:12,marginBottom:4}}>
         <div style={{display:"flex",gap:0,alignItems:"center",minWidth: unlockedWorlds.length * 106 + 40, padding:"16px 12px 8px"}}>
           {unlockedWorlds.map((w, i) => {
@@ -3487,13 +3514,13 @@ export default function MondoMago() {
                     {has && <div style={{position:"absolute",top:-6,right:-6,background:w.color,borderRadius:"50%",width:20,height:20,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,border:"2px solid white"}}>✓</div>}
                     {!w.unlocked && w.starsNeeded > 0 && (
                       <div style={{position:"absolute",bottom:-10,left:"50%",transform:"translateX(-50%)",
-                        background:"rgba(0,0,0,.8)",border:`1px solid ${w.color}44`,
-                        borderRadius:10,padding:"1px 6px",fontSize:9,color:"rgba(255,255,255,.7)",whiteSpace:"nowrap"}}>
+                        background:youngBg?"rgba(255,255,255,.9)":"rgba(0,0,0,.8)",border:`1px solid ${w.color}44`,
+                        borderRadius:10,padding:"1px 6px",fontSize:9,color:youngBg?"#333":"rgba(255,255,255,.7)",whiteSpace:"nowrap"}}>
                         ⭐{w.starsNeeded}
                       </div>
                     )}
                   </button>
-                  <div style={{fontFamily:FF,fontSize:11,color:w.unlocked?"white":"rgba(255,255,255,.3)",textAlign:"center",lineHeight:1.2,maxWidth:90}}>
+                  <div style={{fontFamily:FF,fontSize:11,color:w.unlocked?mt.wNodeTxt:mt.wNodeLocked,textAlign:"center",lineHeight:1.2,maxWidth:90}}>
                     {w.name.split(" ").slice(0,2).join(" ")}
                   </div>
                   {/* Stars earned */}
@@ -3508,7 +3535,7 @@ export default function MondoMago() {
                   <div style={{width:22,height:4,marginBottom:22,borderRadius:3,
                     background: unlockedWorlds[i+1]?.unlocked
                       ? `linear-gradient(90deg,${w.color}88,${unlockedWorlds[i+1].color}88)`
-                      : "rgba(255,255,255,.10)",
+                      : mt.wNodeConn,
                     flexShrink:0}} />
                 )}
               </div>
@@ -3523,7 +3550,7 @@ export default function MondoMago() {
         return null;
       })()}
       {/* ── WORLD CARDS ── */}
-      <div style={{fontSize:12,opacity:.5,fontWeight:800,letterSpacing:1.5,marginBottom:12,textTransform:"uppercase"}}>✦ I tuoi Mondi</div>
+      <div style={{fontSize:12,fontWeight:800,letterSpacing:1.5,marginBottom:12,textTransform:"uppercase",color:mt.sectionLbl}}>✦ I tuoi Mondi</div>
       <div style={{display:"flex",flexDirection:"column",gap:14,marginBottom:8}}>
         {unlockedWorlds.map((w,i) => {
           const a   = STORY_ARCS[w.id];
@@ -3534,13 +3561,11 @@ export default function MondoMago() {
               className="slide-up"
               disabled={locked}
               style={{
-                background:locked
-                  ? "rgba(255,255,255,.04)"
-                  : "rgba(12,10,30,.85)",
-                border:`2px solid ${locked?"rgba(255,255,255,.08)":has?w.color+"cc":w.color+"44"}`,
+                background:locked ? mt.wLocked : mt.wCard,
+                border:`2px solid ${locked?"rgba(0,0,0,.06)":has?w.color+"cc":w.color+"44"}`,
                 borderRadius:28,padding:"18px 20px",
                 cursor:locked?"default":"pointer",
-                color:"white",
+                color:mt.fg,
                 display:"flex",alignItems:"center",gap:18,textAlign:"left",
                 boxShadow:locked?"none":has
                   ? `0 6px 20px ${w.color}33`
@@ -3552,7 +3577,7 @@ export default function MondoMago() {
               {/* WorldScene illustrated background */}
               {!locked && <div style={{position:"absolute",inset:0,borderRadius:26,overflow:"hidden",opacity:.22,pointerEvents:"none"}}><WorldScene worldId={w.id} variant="card" /></div>}
               {/* Gradient overlay left→right for text legibility */}
-              {!locked && <div style={{position:"absolute",inset:0,background:`linear-gradient(90deg,rgba(12,10,30,.92) 0%,rgba(12,10,30,.5) 55%,${w.color}11 100%)`,borderRadius:26,pointerEvents:"none"}} />}
+              {!locked && <div style={{position:"absolute",inset:0,background:mt.wOvl,borderRadius:26,pointerEvents:"none"}} />}
               {/* Shimmer accent for completed */}
               {has && !locked && <div style={{position:"absolute",top:0,right:0,width:60,height:"100%",background:`linear-gradient(90deg,transparent,${w.color}22)`,borderRadius:"0 26px 26px 0",pointerEvents:"none"}} />}
               {/* World icon */}
@@ -3567,14 +3592,14 @@ export default function MondoMago() {
               {/* Content */}
               <div style={{flex:1,minWidth:0,position:"relative",zIndex:1}}>
                 <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
-                  <span style={{fontWeight:900,fontSize:16,color:locked?"rgba(255,255,255,.4)":"white"}}>{w.name}</span>
+                  <span style={{fontWeight:900,fontSize:16,color:locked?mt.fgDimmer:mt.fg}}>{w.name}</span>
                   {has && <span style={{background:`${w.color}33`,color:w.color,fontSize:10,fontWeight:900,borderRadius:20,padding:"2px 8px",border:`1px solid ${w.color}55`}}>✓ COMPLETO</span>}
                 </div>
                 {locked
                   ? <div style={{fontSize:12,color:w.color,opacity:.7,fontWeight:700}}>🔒 Servono {w.starsNeeded} ⭐ per sbloccare</div>
                   : has
-                    ? <div style={{fontSize:12,color:"#FFD95A",opacity:.9,fontWeight:700}}>🏆 {a?.reward_name}</div>
-                    : <div style={{fontSize:12,opacity:.5}}>🎯 ~6 sfide · {young?"visive":"interattive"}</div>}
+                    ? <div style={{fontSize:12,color:youngBg?"#D97706":"#FFD95A",fontWeight:700}}>🏆 {a?.reward_name}</div>
+                    : <div style={{fontSize:12,color:mt.fgDim}}>🎯 ~6 sfide · {young?"visive":"interattive"}</div>}
                 {/* Stars */}
                 {!locked && (
                   <div style={{display:"flex",gap:4,marginTop:6}}>
@@ -3585,13 +3610,13 @@ export default function MondoMago() {
                 )}
               </div>
               {/* Arrow */}
-              {!locked && <div style={{color:w.color,fontSize:22,opacity:.8,flexShrink:0,position:"relative",zIndex:1}}>›</div>}
+              {!locked && <div style={{color:youngBg?w.color:w.color,fontSize:22,opacity:youngBg?.9:.8,flexShrink:0,position:"relative",zIndex:1}}>›</div>}
             </button>
           );
         })}
       </div>
       <button onClick={() => navigate("parent")}
-        style={{width:"100%",marginTop:10,background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.08)",borderRadius:18,padding:"13px",color:"rgba(255,255,255,.35)",fontSize:13,cursor:"pointer",fontWeight:700}}>
+        style={{width:"100%",marginTop:10,background:mt.parentBtn,border:mt.parentBd,borderRadius:18,padding:"13px",color:mt.parentFg,fontSize:13,cursor:"pointer",fontWeight:700}}>
         🔐 Area Genitori
       </button>
       </div>{/* /relative z-1 */}
