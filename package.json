@@ -1,7 +1,8 @@
 {
   "name": "mondomago",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "MondoMago — Gioco educativo magico per bambini italiani 3-8 anni",
   "type": "module",
   "scripts": {
     "dev": "vite",

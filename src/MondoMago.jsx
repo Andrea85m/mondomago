@@ -293,7 +293,7 @@ function NavSparkle({c="currentColor",s=22}){return<svg width={s} height={s} vie
 const WORLD_COSTUMES = {
   foresta:    "🌿", cielo:   "⭐", oceano:    "🌊",
   montagna:   "🍃", giungla: "🌴", vulcano:   "🔥",
-  biblioteca: "📖",
+  biblioteca: "📖", laboratorio: "🔬",
 };
 const COMPANION_FACE_DATA = {
   fiamma: { // Dragon
@@ -337,6 +337,20 @@ const COMPANION_FACE_DATA = {
     </>; },
     decoTop: "🍃",
     whiskers: true,
+  },
+  pixel: { // Robot
+    headFill:"url(#pxG)", headStroke:"#0E7490",
+    highlights:[{cx:36,cy:30,rx:13,ry:8}],
+    extras: (s, cy, r) => { const cx=s*.5; return <>
+      {/* Antenna */}
+      <line x1={cx} y1={cy-r*.95} x2={cx} y2={cy-r*1.55} stroke="#06B6D4" strokeWidth={r*.07} strokeLinecap="round"/>
+      <circle cx={cx} cy={cy-r*1.65} r={r*.13} fill="#F0ABFC"/>
+      {/* Side ear panels */}
+      <rect x={cx-r*1.05} y={cy-r*.22} width={r*.18} height={r*.44} rx={r*.04} fill="#0E7490"/>
+      <rect x={cx+r*.87} y={cy-r*.22} width={r*.18} height={r*.44} rx={r*.04} fill="#0E7490"/>
+    </>; },
+    decoTop: "💻",
+    squareEyes: true,
   },
 };
 
@@ -422,6 +436,7 @@ function CompanionAvatar({ c, size = 64, anim = "", cosmetic = null, mood = "idl
           {c.id==="luna"   && <radialGradient id="lG" cx="38%" cy="32%"><stop offset="0%" stopColor="#E9D5FF"/><stop offset="100%" stopColor="#7c3aed"/></radialGradient>}
           {c.id==="onde"   && <radialGradient id="oG" cx="38%" cy="32%"><stop offset="0%" stopColor="#BAE6FD"/><stop offset="100%" stopColor="#1d4ed8"/></radialGradient>}
           {c.id==="foglia" && <radialGradient id="fxG" cx="38%" cy="32%"><stop offset="0%" stopColor="#BBF7D0"/><stop offset="100%" stopColor="#047857"/></radialGradient>}
+          {c.id==="pixel"  && <linearGradient id="pxG" x1="30%" y1="0%" x2="70%" y2="100%"><stop offset="0%" stopColor="#67E8F9"/><stop offset="100%" stopColor="#0284C7"/></linearGradient>}
           <linearGradient id="hornG" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stopColor="#F9A8D4"/><stop offset="100%" stopColor="#FDE68A"/></linearGradient>
         </defs>
 
@@ -475,6 +490,18 @@ function CompanionAvatar({ c, size = 64, anim = "", cosmetic = null, mood = "idl
           <>
             <path d={`M ${eyeLX-r*.2} ${eyeY} Q ${eyeLX} ${eyeY-r*.18} ${eyeLX+r*.2} ${eyeY}`} stroke={fd.headStroke} strokeWidth={Math.max(1.5,s*.022*headScale)} fill="none" strokeLinecap="round"/>
             <path d={`M ${eyeRX-r*.2} ${eyeY} Q ${eyeRX} ${eyeY-r*.18} ${eyeRX+r*.2} ${eyeY}`} stroke={fd.headStroke} strokeWidth={Math.max(1.5,s*.022*headScale)} fill="none" strokeLinecap="round"/>
+          </>
+        ) : fd.squareEyes ? (
+          <>
+            <rect x={eyeLX-r*.22} y={eyeY-eyeLRY} width={r*.44} height={eyeLRY*2} rx={r*.05} fill="#E0F7FA"/>
+            <rect x={eyeRX-r*.22} y={eyeY-eyeRRY} width={r*.44} height={eyeRRY*2} rx={r*.05} fill="#E0F7FA"/>
+            <rect x={eyeLX-r*.11} y={eyeY-Math.min(eyeLRY*.8,r*.11)} width={r*.22} height={Math.min(eyeLRY*.75,r*.11)*2} rx={r*.03} fill="#06B6D4"/>
+            <rect x={eyeRX-r*.11} y={eyeY-Math.min(eyeRRY*.8,r*.11)} width={r*.22} height={Math.min(eyeRRY*.75,r*.11)*2} rx={r*.03} fill="#06B6D4"/>
+            <circle cx={eyeLX+r*.07} cy={eyeY-r*.04} r={r*.036} fill="white"/>
+            <circle cx={eyeRX+r*.07} cy={eyeY-r*.04} r={r*.036} fill="white"/>
+            {mood === "thinking" && size >= 44 && (
+              <text x={cx+r*.65} y={cy-r*.55} fontSize={r*.24} textAnchor="middle" style={{userSelect:"none"}}>💭</text>
+            )}
           </>
         ) : (
           <>
@@ -713,6 +740,46 @@ const COMPANIONS = [
       "Ce l'abbiamo fatta! Grande mente!",
     ]),
   },
+  {
+    id:"pixel", name:"Pixel", emoji:"🤖", type:"Robot",
+    color:"#06B6D4", bg:"linear-gradient(135deg,#06B6D4,#0284C7)",
+    onCorrect: () => pick([
+      "Codice corretto! BEEP — sistema aggiornato!",
+      "Elaborazione completata! Risposta esatta!",
+      "Calcolo verificato! Sei un programmatore nato!",
+      "Dati confermati! Bravissimo!",
+      "Output corretto! Il robot applaude!",
+    ]),
+    onWrong: () => pick([
+      "Bug rilevato! Nessun problema — i robot imparano dagli errori.",
+      "Errore nel codice! Proviamo a debuggare insieme.",
+      "Dato non corretto. Rianalizza il problema!",
+      "Sistema in modalità apprendimento. Riprova!",
+      "Piccolo glitch! Ce la fai al prossimo tentativo.",
+    ]),
+    onStreak: () => pick([
+      "Istruzioni perfette di fila! Sei un vero programmatore!",
+      "Serie di successi! Il robot è impressionato!",
+      "COMBO attivata! Stai hackando la sfida!",
+      "Prestazioni eccellenti! Livello ESPERTO raggiunto!",
+      "Processore al massimo! Inarrestabile!",
+    ]),
+    onReturn: () => pick([
+      "Sistema riavviato. Pronti a scrivere codice?",
+      "Connessione ristabilita! Iniziamo a programmare!",
+      "Boot completato! Nuove sfide ci aspettano!",
+    ]),
+    onWorldStart: () => pick([
+      "Inizializzazione missione! Sistema pronto!",
+      "Caricamento programma... Pronti!",
+      "Codice attivato! Iniziamo!",
+    ]),
+    onWorld: () => pick([
+      "Missione completata al 100%! Sei un genio del codice!",
+      "Programma eseguito con successo! Bravo programmatore!",
+      "Sistema di vittoria attivato! Sei fantastico!",
+    ]),
+  },
 ];
 
 // ── STORY ARCS ────────────────────────────────────────────────────────────────
@@ -773,6 +840,14 @@ const STORY_ARCS = {
     reward_name:  "Libro della Saggezza",
     color: "#D97706",
   },
+  laboratorio: {
+    intro_title: "Il Codice Segreto di Pixel! 🔬",
+    intro_text:  "Il Laboratorio Logico è in pericolo! I robot si sono inceppati e il codice è pieno di bug. Pixel il Robot ha bisogno di te: risolvi i puzzle di programmazione e rimetti in moto il laboratorio!",
+    outro: "💻 Il laboratorio è ripartito! Pixel esulta e ti consegna il Diploma di Programmatore. Sei un vero genio del codice!",
+    reward_emoji: "💻",
+    reward_name:  "Diploma di Programmatore",
+    color: "#06B6D4",
+  },
   daily: {
     intro_title: "Sfida del Giorno! 🌟",
     intro_text:  "Ogni giorno ti aspettano 3 sfide speciali scelte per te! Completale tutte per guadagnare 3 stelle bonus. Pronto?",
@@ -791,7 +866,8 @@ const WORLDS = [
   { id:"mercato",   name:"Mercato dei Colori",      emoji:"🎪", color:"#F97316", unlocked:false, starsNeeded:30  },
   { id:"galassia",  name:"Galassia Stellare",       emoji:"🌌", color:"#818CF8", unlocked:false, starsNeeded:50  },
   { id:"vulcano",   name:"Vulcano Magico",          emoji:"🌋", color:"#EF4444", unlocked:false, starsNeeded:70  },
-  { id:"biblioteca",name:"Biblioteca Incantata",    emoji:"📚", color:"#D97706", unlocked:false, starsNeeded:100 },
+  { id:"biblioteca",  name:"Biblioteca Incantata",   emoji:"📚", color:"#D97706", unlocked:false, starsNeeded:100 },
+  { id:"laboratorio", name:"Laboratorio Logico",     emoji:"🔬", color:"#06B6D4", unlocked:false, starsNeeded:140 },
 ];
 
 // ── SKILLS ────────────────────────────────────────────────────────────────────
@@ -801,6 +877,7 @@ const SKILLS = [
   { id:"creativita", name:"Creatività", emoji:"🎨", color:"#EC4899" },
   { id:"empatia",    name:"Empatia",    emoji:"💛", color:"#10B981" },
   { id:"parole",     name:"Parole",     emoji:"📖", color:"#8B5CF6" },
+  { id:"coding",     name:"Coding",     emoji:"💻", color:"#06B6D4" },
 ];
 
 const SKILL_MAP = {
@@ -809,6 +886,7 @@ const SKILL_MAP = {
   creativita: ["creativita"],
   empatia:    ["empatia"],
   parole:     ["parole"],
+  coding:     ["coding","sequenza","condizione","debug"],
 };
 
 // ── CHALLENGES ────────────────────────────────────────────────────────────────
@@ -1670,6 +1748,163 @@ Object.assign(ALL_CHALLENGES, {
   ]),
 });
 
+// ── LABORATORIO LOGICO (Mondo 8) ──────────────────────────────────────────────
+ALL_CHALLENGES.laboratorio = [
+  // ── 4-5 anni: if_else_tap + code_sequence 3 passi ───────────────────────────
+  { id:"lab01", format:"if_else_tap", type:"coding", ageMin:4, ageMax:5,
+    emoji:"🐻", condition:"L'orso vede il miele 🍯",
+    prompt:"L'orso ha fame. Se vede il miele, lo mangia.\nL'orso vede il miele?",
+    correct:0 },
+
+  { id:"lab02", format:"if_else_tap", type:"coding", ageMin:4, ageMax:5,
+    emoji:"☂️", condition:"Oggi piove? 🌧️",
+    prompt:"Se piove, prendi l'ombrello.\nOggi c'è il sole! ☀️",
+    correct:1 },
+
+  { id:"lab03", format:"code_sequence", type:"coding", ageMin:4, ageMax:5,
+    emoji:"🤖", prompt:"Aiuta il robot a fare colazione!\nMetti in ordine le istruzioni:",
+    items:["🥣 Mangia i cereali","🥛 Versa il latte","🛒 Apri la scatola"],
+    correctOrder:[2,1,0] },
+
+  { id:"lab04", format:"if_else_tap", type:"coding", ageMin:4, ageMax:5,
+    emoji:"🔢", condition:"3 è più grande di 5?",
+    prompt:"Se il numero è più grande di 5, dì VERO.\nIl numero è 3.",
+    correct:1 },
+
+  { id:"lab05", format:"code_sequence", type:"coding", ageMin:4, ageMax:5,
+    emoji:"🤖", prompt:"Come si veste il robot al mattino?\nMetti in ordine:",
+    items:["👕 Metti la maglietta","👖 Indossa i pantaloni","🧦 Calza i calzini"],
+    correctOrder:[2,0,1] },
+
+  { id:"lab06", format:"if_else_tap", type:"coding", ageMin:4, ageMax:5, isBoss:true,
+    emoji:"🤖", condition:"Il robot ha abbastanza energia? 🔋",
+    prompt:"BOSS! 👾\nSe il robot ha abbastanza energia, può camminare.\nIl robot ha 80% di energia!",
+    correct:0 },
+
+  // ── 5-6 anni: sequenze 4 passi, condizioni, debug base ──────────────────────
+  { id:"lab07", format:"code_sequence", type:"coding", ageMin:5, ageMax:6,
+    emoji:"🌱", prompt:"Ordina le istruzioni per annaffiare la pianta:",
+    items:["💧 Annaffia la pianta","🪣 Riempi il secchio","🌡️ Controlla il terreno","☀️ Metti al sole"],
+    correctOrder:[2,1,0,3] },
+
+  { id:"lab08", format:"if_else_tap", type:"coding", ageMin:5, ageMax:6,
+    emoji:"🔢", condition:"6 è un numero pari?",
+    prompt:"SE il numero è pari, stampa VERO.\nIl numero è 6.",
+    correct:0 },
+
+  { id:"lab09", format:"debug_find", type:"coding", ageMin:5, ageMax:6,
+    emoji:"🥤", prompt:"Qual è l'istruzione SBAGLIATA nella ricetta del succo?",
+    items:["1. Prendi le arance 🍊","2. Spremi le arance 🍊","3. Aggiungi sale 🧂","4. Versa nel bicchiere 🥛"],
+    correct:2 },
+
+  { id:"lab10", format:"code_sequence", type:"coding", ageMin:5, ageMax:6,
+    emoji:"🧱", prompt:"Ordina per costruire una casa con i mattoncini:",
+    items:["🏠 Metti il tetto","🧱 Metti le pareti","🚪 Aggiungi la porta","🪨 Posa le fondamenta"],
+    correctOrder:[3,1,2,0] },
+
+  { id:"lab11", format:"if_else_tap", type:"coding", ageMin:5, ageMax:6,
+    emoji:"🍓", condition:"Questa frutta è rossa?",
+    prompt:"SE la frutta è rossa, è una fragola.\nQuesta frutta è gialla! 🍌",
+    correct:1 },
+
+  { id:"lab12", format:"debug_find", type:"coding", ageMin:5, ageMax:6,
+    emoji:"🦷", prompt:"Qual è l'istruzione SBAGLIATA per lavarsi i denti?",
+    items:["1. Prendi lo spazzolino 🪥","2. Metti il dentifricio 🪥","3. Strofina i capelli 💇","4. Sciacqua la bocca 💧"],
+    correct:2 },
+
+  { id:"lab13", format:"code_sequence", type:"coding", ageMin:5, ageMax:6,
+    emoji:"📱", prompt:"Aiuta il robot a mandare un messaggio:",
+    items:["📤 Invia il messaggio","✍️ Scrivi il testo","📱 Apri l'app","👤 Scegli il destinatario"],
+    correctOrder:[2,3,1,0] },
+
+  { id:"lab14", format:"if_else_tap", type:"coding", ageMin:5, ageMax:6,
+    emoji:"🚦", condition:"Il semaforo è verde?",
+    prompt:"SE il semaforo è verde, vai avanti.\nIl semaforo è rosso! 🔴",
+    correct:1 },
+
+  { id:"lab15", format:"debug_find", type:"coding", ageMin:5, ageMax:6, isBoss:true,
+    emoji:"🎒", prompt:"BOSS! 👾 Pixel ha un bug!\nQual è il comando SBAGLIATO per andare a scuola?",
+    items:["1. Svegliati 🌅","2. Fai colazione 🥣","3. Vai a letto 🛏️","4. Prendi lo zaino 🎒"],
+    correct:2 },
+
+  // ── 6-7 anni: confronti numerici, debug, loop count ─────────────────────────
+  { id:"lab16", format:"if_else_tap", type:"coding", ageMin:6, ageMax:7,
+    emoji:"💡", condition:"15 è maggiore di 10?",
+    prompt:"SE 15 è maggiore di 10, il robot accende la luce.\n15 > 10?",
+    correct:0 },
+
+  { id:"lab17", format:"debug_find", type:"coding", ageMin:6, ageMax:7,
+    emoji:"🤖", prompt:"In quale riga c'è il BUG?\nIl robot deve contare da 1 a 5:",
+    items:["1. Parti da 1 🔢","2. Conta: 1, 2, 3, 4... 📊","3. Salta a 7 📈","4. Fermati a 5 🛑"],
+    correct:2 },
+
+  { id:"lab18", format:"code_sequence", type:"coding", ageMin:6, ageMax:7,
+    emoji:"🔄", prompt:"Ordina le istruzioni del loop:\n'Ripeti 3 volte: saluta!'",
+    items:["🔁 Ripeti 3 volte","👋 Dì 'Ciao!'","✅ Dopo 3 volte, fermati"],
+    correctOrder:[0,1,2] },
+
+  { id:"lab19", format:"if_else_tap", type:"coding", ageMin:6, ageMax:7,
+    emoji:"🏆", condition:"85 >= 100?",
+    prompt:"SE il punteggio >= 100, hai vinto!\nIl tuo punteggio è 85.",
+    correct:1 },
+
+  { id:"lab20", format:"debug_find", type:"coding", ageMin:6, ageMax:7,
+    emoji:"🚦", prompt:"Trova il BUG nel programma del semaforo:",
+    items:["1. Mostra VERDE per 30s ✅","2. Mostra GIALLO per 3s ⚠️","3. Mostra VERDE ancora 🟢","4. Mostra ROSSO per 30s 🛑"],
+    correct:2 },
+
+  { id:"lab21", format:"code_sequence", type:"coding", ageMin:6, ageMax:7, isBoss:true,
+    emoji:"🤖", prompt:"BOSS! 👾 Ordina il programma del robot cameriere:",
+    items:["🍽️ Porta il piatto al tavolo","📋 Prendi l'ordine","👋 Saluta il cliente","🍳 Porta in cucina"],
+    correctOrder:[2,1,3,0] },
+
+  // ── 7-8 anni: variabili, loop, bug avanzato ──────────────────────────────────
+  { id:"lab22", format:"if_else_tap", type:"coding", ageMin:7, ageMax:8,
+    emoji:"🔢", condition:"8 è un numero pari?",
+    prompt:"SE il resto di 8 ÷ 2 è zero, 8 è pari.\n8 ÷ 2 = 4, resto 0.",
+    correct:0 },
+
+  { id:"lab23", format:"debug_find", type:"coding", ageMin:7, ageMax:8,
+    emoji:"✖️", prompt:"C'è un bug nella tabellina del 3.\nTrova l'errore!",
+    items:["3 × 1 = 3 ✅","3 × 2 = 6 ✅","3 × 3 = 10 ❌","3 × 4 = 12 ✅"],
+    correct:2 },
+
+  { id:"lab24", format:"code_sequence", type:"coding", ageMin:7, ageMax:8,
+    emoji:"⬜", prompt:"Ordina il programma per disegnare un quadrato:",
+    items:["↑ Vai avanti 10 passi","↰ Gira a sinistra 90°","↑ Ancora avanti 10","↰ Ancora sinistra 90°"],
+    correctOrder:[0,1,2,3] },
+
+  { id:"lab25", format:"if_else_tap", type:"coding", ageMin:7, ageMax:8,
+    emoji:"🌡️", condition:"Il robot ha la febbre?",
+    prompt:"Il robot ha una variabile: temperatura = 38°\nSE temperatura > 37°, il robot ha la febbre!",
+    correct:0 },
+
+  { id:"lab26", format:"debug_find", type:"coding", ageMin:7, ageMax:8,
+    emoji:"🚗", prompt:"Trova il BUG nel programma dell'auto:",
+    items:["1. Avvia motore 🔑","2. Premi freno prima di partire 🛑","3. Inserisci marcia ⚙️","4. Accelera 🚀"],
+    correct:1 },
+
+  { id:"lab27", format:"code_sequence", type:"coding", ageMin:7, ageMax:8,
+    emoji:"🔐", prompt:"Programma la password del robot:",
+    items:["✅ Accesso concesso!","🔑 Inserisci password","🤔 Confronta con quella salvata","👁️ Controlla le cifre"],
+    correctOrder:[1,3,2,0] },
+
+  { id:"lab28", format:"if_else_tap", type:"coding", ageMin:7, ageMax:8,
+    emoji:"🔋", condition:"Il robot si ricarica?",
+    prompt:"Il programma dice:\nSE batteria < 20% → ricarica\nLa batteria è al 15%.",
+    correct:0 },
+
+  { id:"lab29", format:"debug_find", type:"coding", ageMin:7, ageMax:8,
+    emoji:"⭕", prompt:"Trova il BUG nel loop:\n'Disegna 4 cerchi rossi'",
+    items:["1. Inizia il loop (4 volte) 🔄","2. Disegna cerchio ⭕","3. Colora di VERDE 🟢","4. Ripeti finché non sono 4 ✅"],
+    correct:2 },
+
+  { id:"lab30", format:"code_sequence", type:"coding", ageMin:7, ageMax:8, isBoss:true,
+    emoji:"🚗", prompt:"BOSS! 👾 Programma l'auto autonoma!\nOrdina le istruzioni:",
+    items:["🔴 Fermati se c'è ostacolo","📡 Scansiona la strada","🚗 Vai avanti","🔄 Calcola il percorso"],
+    correctOrder:[1,3,2,0] },
+];
+
 // ── VULCANO SET B (pool expansion) ────────────────────────────────────────────
 ALL_CHALLENGES.vulcano = ALL_CHALLENGES.vulcano.concat([
   // 3-4 anni
@@ -1800,6 +2035,7 @@ const FAMILY_MISSIONS = [
   { id:7, emoji:"🌊", title:"Esplorazione Natura",   desc:"Vai al parco o in giardino. Raccogliete foglie, sassi, petali. Chi ne trova di più tipi?", skill:"logica",     dur:"30 min" },
   { id:8, emoji:"🎨", title:"Pittori per un Giorno", desc:"Dipingete insieme! Scegliete un tema: il mare, lo spazio, il bosco. Ogni quadro vale!",    skill:"creativita", dur:"40 min" },
   { id:9, emoji:"🚀", title:"Astronomi Junior",       desc:"Di notte guardate il cielo. Trovate la luna, una stella. Inventate una costellazione!",    skill:"logica",     dur:"20 min" },
+  { id:10, emoji:"🤖", title:"Robot di Casa",         desc:"Dai istruzioni precise come un robot! Es: 'Vai avanti 3 passi, gira a destra, prendi la tazza'. Chi le esegue meglio?", skill:"coding", dur:"15 min" },
 ];
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
@@ -1828,7 +2064,7 @@ function _opts(correct, spread, count = 4) {
 }
 function genMathChallenge(worldId, age) {
   const id = `proc_${worldId}_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;
-  const emojis = { foresta:"🐿️", castello:"👑", oceano:"🐬", mercato:"🧙", galassia:"🚀", vulcano:"🌋", biblioteca:"📖" };
+  const emojis = { foresta:"🐿️", castello:"👑", oceano:"🐬", mercato:"🧙", galassia:"🚀", vulcano:"🌋", biblioteca:"📖", laboratorio:"🤖" };
   const e = emojis[worldId] || "⭐";
   if (age <= 4) {
     // Simple addition with pictures
@@ -1902,7 +2138,7 @@ function getDailyChallenges(age, profileId = '') {
   }
   return picks;
 }
-function initSkills() { return { logica:1, numeri:1, creativita:1, empatia:1, parole:1 }; }
+function initSkills() { return { logica:1, numeri:1, creativita:1, empatia:1, parole:1, coding:1 }; }
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 // C7: parse "YYYY-MM-DD" as local midnight to avoid UTC off-by-one in European timezones
 function parseDateLocal(s) { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); }
@@ -2813,9 +3049,9 @@ export default function MondoMago() {
   }
 
   const isCorrect =
-    ch?.format === "story_choice" ? storyChoice?.correct :
-    ch?.format === "sequence_tap" ? selected === 999 :
-    ch?.format === "drag_drop"    ? selected === 0 :
+    ch?.format === "story_choice"  ? storyChoice?.correct :
+    ch?.format === "sequence_tap" || ch?.format === "code_sequence" ? selected === 999 :
+    ch?.format === "drag_drop"     ? selected === 0 :
     selected === ch?.correct;
 
   const progressPct = challenges.length ? ((ci + 1) / challenges.length) * 100 : 0;
@@ -3394,6 +3630,7 @@ export default function MondoMago() {
     luna:   "Poetica e gentile. Ogni errore è un passo verso la luce.",
     onde:   "Curioso e giocoso. Ogni sfida è una scoperta meravigliosa!",
     foglia: "Furba e creativa. Trova sempre l'angolo inaspettato.",
+    pixel:  "Logico e preciso. Trasforma ogni errore in un codice migliore!",
   };
   if (screen === "companion") return (
     <div key="companion" className={screenAnim} style={{minHeight:"100dvh",background:"linear-gradient(160deg,#0f0c29,#302b63,#0f0c29)",display:"flex",flexDirection:"column",alignItems:"center",padding:"36px 20px 0",paddingBottom:"max(env(safe-area-inset-bottom,0px),48px)",color:"white",position:"relative"}}>
@@ -3402,23 +3639,23 @@ export default function MondoMago() {
       <div className="bounce" style={{fontSize:32,marginBottom:10}}>✨</div>
       <h2 style={{fontFamily:FF,fontSize:26,marginBottom:4,textAlign:"center"}}>Scegli il tuo compagno!</h2>
       <p style={{opacity:.6,marginBottom:32,fontSize:13,textAlign:"center"}}>Sarà con te in ogni avventura magica, {childName}</p>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,width:"100%",maxWidth:420}}>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14,width:"100%",maxWidth:420}}>
         {COMPANIONS.map((c,i) => (
           <button key={c.id} onClick={() => { SFX.tap(); setCompanion(c.id); navigate("map"); }}
             className="slide-up pop-in"
             style={{
               background:`linear-gradient(160deg,${c.color}22,${c.color}08)`,
               border:`2px solid ${c.color}66`,
-              borderRadius:28, padding:"24px 14px 20px",
+              borderRadius:24, padding:"18px 8px 16px",
               cursor:"pointer", color:"white",
               animationDelay:`${i*.09}s`,
               boxShadow:`0 8px 32px ${c.color}22`,
               display:"flex", flexDirection:"column", alignItems:"center",
             }}>
-            <div style={{fontSize:80,lineHeight:1,filter:"drop-shadow(0 4px 16px rgba(0,0,0,.5))",animation:"float 3s ease-in-out infinite",animationDelay:`${i*.4}s`}}>{c.emoji}</div>
-            <div style={{fontWeight:900,fontSize:17,marginTop:14}}>{c.name}</div>
-            <div style={{fontSize:11,color:c.color,marginTop:3,fontWeight:800,letterSpacing:.5}}>{c.type.toUpperCase()}</div>
-            <div style={{fontSize:11,opacity:.65,marginTop:8,lineHeight:1.5,textAlign:"center"}}>{COMP_DESC[c.id]}</div>
+            <div style={{fontSize:58,lineHeight:1,filter:"drop-shadow(0 4px 16px rgba(0,0,0,.5))",animation:"float 3s ease-in-out infinite",animationDelay:`${i*.4}s`}}>{c.emoji}</div>
+            <div style={{fontWeight:900,fontSize:15,marginTop:10}}>{c.name}</div>
+            <div style={{fontSize:10,color:c.color,marginTop:2,fontWeight:800,letterSpacing:.5}}>{c.type.toUpperCase()}</div>
+            <div style={{fontSize:10,opacity:.65,marginTop:6,lineHeight:1.5,textAlign:"center"}}>{COMP_DESC[c.id]}</div>
           </button>
         ))}
       </div>
@@ -3969,11 +4206,13 @@ export default function MondoMago() {
     const isMC         = ch.format === "multiple_choice";
     const isVis        = ch.format === "visual_tap";
     const isStory      = ch.format === "story_choice";
-    const isSeq        = ch.format === "sequence_tap";
+    const isSeq        = ch.format === "sequence_tap" || ch.format === "code_sequence";
     const isDrag       = ch.format === "drag_drop";
     const isRhyme      = ch.format === "rhyme_complete";
     const isWordPic    = ch.format === "word_picture";
     const isLetterTrace= ch.format === "letter_trace";
+    const isIfElse     = ch.format === "if_else_tap";
+    const isDebug      = ch.format === "debug_find";
     const isAlpha      = ch.id?.startsWith("ba_");  // biblioteca alphabet challenge
     const alphaLetter = isAlpha ? ch.id.replace("ba_","") : null;
     const pts     = ch.isBoss ? 3 : young ? 1 : 2;
@@ -4240,6 +4479,74 @@ export default function MondoMago() {
           <div style={{textAlign:"center",padding:"18px 0 4px",fontSize:18,fontFamily:FF,
             color:youngBg?"#15803D":"#4ade80"}}>
             ⭐ Bravissimo! Lettera completata!
+          </div>
+        )}
+
+        {/* If-else tap — two large SE VERO / SE FALSO buttons */}
+        {isIfElse && !done && (
+          <div style={{position:"relative",zIndex:1,marginBottom:8}}>
+            <div style={{background:"rgba(6,182,212,.15)",border:"1px solid rgba(6,182,212,.4)",
+              borderRadius:16,padding:"10px 16px",marginBottom:14,textAlign:"center",
+              fontSize:youngBg?15:13,fontWeight:800,color:"#06B6D4",letterSpacing:.3}}>
+              🔍 {ch.condition}
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:12}}>
+              <button onClick={(e) => answerMC(0, e)}
+                style={{background:youngBg?"rgba(34,197,94,.15)":"rgba(34,197,94,.2)",
+                  border:"3px solid rgba(34,197,94,.6)",borderRadius:22,
+                  padding:"22px 20px",color:youngBg?"#15803D":"#4ade80",
+                  fontSize:youngBg?22:20,fontWeight:900,cursor:"pointer",
+                  display:"flex",alignItems:"center",justifyContent:"center",gap:10,
+                  minHeight:72,transition:"all .15s",
+                  boxShadow:"0 4px 16px rgba(34,197,94,.2)"}}>
+                ✅ SE VERO
+              </button>
+              <button onClick={(e) => answerMC(1, e)}
+                style={{background:youngBg?"rgba(239,68,68,.15)":"rgba(239,68,68,.2)",
+                  border:"3px solid rgba(239,68,68,.6)",borderRadius:22,
+                  padding:"22px 20px",color:youngBg?"#DC2626":"#F87171",
+                  fontSize:youngBg?22:20,fontWeight:900,cursor:"pointer",
+                  display:"flex",alignItems:"center",justifyContent:"center",gap:10,
+                  minHeight:72,transition:"all .15s",
+                  boxShadow:"0 4px 16px rgba(239,68,68,.2)"}}>
+                ❌ SE FALSO
+              </button>
+            </div>
+          </div>
+        )}
+        {isIfElse && done && (
+          <div style={{textAlign:"center",padding:"10px 0 4px",fontSize:16,fontFamily:FF,
+            color:isCorrect?(youngBg?"#15803D":"#4ade80"):(youngBg?"#DC2626":"#F87171")}}>
+            {isCorrect ? "✅ Esatto!" : `La risposta giusta era: ${ch.correct === 0 ? "SE VERO ✅" : "SE FALSO ❌"}`}
+          </div>
+        )}
+
+        {/* Debug find — numbered list, tap the wrong instruction */}
+        {isDebug && !done && (
+          <div style={{position:"relative",zIndex:1}}>
+            <p style={{textAlign:"center",fontSize:youngBg?13:12,opacity:.65,marginBottom:10,
+              color:youngBg?"#555":"rgba(255,255,255,.7)"}}>
+              🐛 Tocca l'istruzione SBAGLIATA!
+            </p>
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              {ch.items.map((item, idx) => (
+                <button key={idx} onClick={(e) => answerMC(idx, e)}
+                  style={{background:youngBg?"rgba(0,0,0,.04)":"rgba(255,255,255,.08)",
+                    border:`2px solid ${youngBg?"rgba(0,0,0,.10)":"rgba(255,255,255,.16)"}`,
+                    borderRadius:16,padding:"14px 16px",
+                    color:youngBg?"#1a1a2e":"white",
+                    fontSize:youngBg?16:15,fontWeight:700,cursor:"pointer",
+                    textAlign:"left",lineHeight:1.4,transition:"all .15s"}}>
+                  {item}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        {isDebug && done && (
+          <div style={{textAlign:"center",padding:"10px 0 4px",fontSize:15,fontFamily:FF,
+            color:isCorrect?(youngBg?"#15803D":"#4ade80"):(youngBg?"#DC2626":"#F87171")}}>
+            {isCorrect ? "🐛 Bug trovato! Ottimo lavoro!" : `Il bug era: ${ch.items[ch.correct]}`}
           </div>
         )}
 

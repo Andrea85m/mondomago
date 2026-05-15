@@ -2,7 +2,7 @@
   "id": "/",
   "name": "MondoMago — Giochi per bambini",
   "short_name": "MondoMago",
-  "description": "Il gioco educativo magico per bambini 3-8 anni",
+  "description": "Avventure educative per bambini 3-8 anni: logica, numeri, parole e coding. Offline, senza pubblicità, 8 mondi e 4 compagni magici.",
   "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
@@ -53,6 +53,29 @@
       "description": "Inizia la sfida del giorno e guadagna 3 stelle bonus",
       "url": "/?action=daily",
       "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/screen-map.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Mappa dei mondi magici"
+    },
+    {
+      "src": "/screenshots/screen-challenge.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Sfida con il compagno"
+    },
+    {
+      "src": "/screenshots/screen-reward.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Ricompense e stelle"
     }
   ]
 }
