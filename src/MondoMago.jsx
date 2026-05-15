@@ -281,53 +281,60 @@ function CorrectBurst({ pos, particles }) {
 
 // ── COMPANION SVG FACES ───────────────────────────────────────────────────────
 // Fully inline SVG companions with blink, expressions, and talking animation.
-// mood: "idle" | "happy" | "sad" | "excited"  talking: bool
+// mood: "idle" | "happy" | "sad" | "excited" | "thinking" | "celebrating"
+
+// World-themed costume badge shown on companions during gameplay
+const WORLD_COSTUMES = {
+  foresta:    "🌿", cielo:   "⭐", oceano:    "🌊",
+  montagna:   "🍃", giungla: "🌴", vulcano:   "🔥",
+  biblioteca: "📖",
+};
 const COMPANION_FACE_DATA = {
   fiamma: { // Dragon
     headFill:"url(#fG)", headStroke:"#FF4500",
     highlights:[{cx:34,cy:32,rx:12,ry:8}],
-    extras: (s) => <>
-      <polygon points={`${s*.3},${s*.2} ${s*.26},${s*.06} ${s*.38},${s*.18}`} fill="#FF4500" />
-      <polygon points={`${s*.7},${s*.2} ${s*.74},${s*.06} ${s*.62},${s*.18}`} fill="#FF4500" />
-    </>,
+    extras: (s, cy, r) => { const cx=s*.5; return <>
+      <polygon points={`${cx-r*.455},${cy-r*.727} ${cx-r*.545},${cy-r*1.045} ${cx-r*.273},${cy-r*.772}`} fill="#FF4500" />
+      <polygon points={`${cx+r*.455},${cy-r*.727} ${cx+r*.545},${cy-r*1.045} ${cx+r*.273},${cy-r*.772}`} fill="#FF4500" />
+    </>; },
     decoTop: "🔥",
   },
   luna: { // Unicorn
     headFill:"url(#lG)", headStroke:"#A855F7",
     highlights:[{cx:36,cy:33,rx:11,ry:7}],
-    extras: (s) => <>
-      <polygon points={`${s*.5},${s*.03} ${s*.44},${s*.22} ${s*.56},${s*.22}`} fill="url(#hornG)" />
-      <polygon points={`${s*.24},${s*.34} ${s*.17},${s*.16} ${s*.3},${s*.28}`} fill="#F0ABFC" />
-      <polygon points={`${s*.76},${s*.34} ${s*.83},${s*.16} ${s*.7},${s*.28}`} fill="#F0ABFC" />
-    </>,
+    extras: (s, cy, r) => { const cx=s*.5; return <>
+      <polygon points={`${cx},${cy-r*1.113} ${cx-r*.136},${cy-r*.682} ${cx+r*.136},${cy-r*.682}`} fill="url(#hornG)" />
+      <polygon points={`${cx-r*.590},${cy-r*.409} ${cx-r*.750},${cy-r*.818} ${cx-r*.455},${cy-r*.545}`} fill="#F0ABFC" />
+      <polygon points={`${cx+r*.590},${cy-r*.409} ${cx+r*.750},${cy-r*.818} ${cx+r*.455},${cy-r*.545}`} fill="#F0ABFC" />
+    </>; },
     decoTop: "✨",
     lashes: true,
   },
   onde: { // Dolphin
     headFill:"url(#oG)", headStroke:"#2563EB",
     highlights:[{cx:36,cy:34,rx:11,ry:7}],
-    extras: (s) => <>
-      <ellipse cx={s*.5} cy={s*.68} rx={s*.18} ry={s*.1} fill="#93C5FD" />
-      <polygon points={`${s*.2},${s*.36} ${s*.12},${s*.2} ${s*.28},${s*.32}`} fill="#60A5FA" />
-      <polygon points={`${s*.8},${s*.36} ${s*.88},${s*.2} ${s*.72},${s*.32}`} fill="#60A5FA" />
-    </>,
+    extras: (s, cy, r) => { const cx=s*.5; return <>
+      <ellipse cx={cx} cy={cy+r*.363} rx={r*.409} ry={r*.227} fill="#93C5FD" />
+      <polygon points={`${cx-r*.682},${cy-r*.363} ${cx-r*.864},${cy-r*.727} ${cx-r*.500},${cy-r*.454}`} fill="#60A5FA" />
+      <polygon points={`${cx+r*.682},${cy-r*.363} ${cx+r*.864},${cy-r*.727} ${cx+r*.500},${cy-r*.454}`} fill="#60A5FA" />
+    </>; },
     decoTop: "💧",
   },
   foglia: { // Fox
     headFill:"url(#fxG)", headStroke:"#059669",
     highlights:[{cx:36,cy:33,rx:11,ry:7}],
-    extras: (s) => <>
-      <polygon points={`${s*.24},${s*.36} ${s*.15},${s*.1} ${s*.36},${s*.3}`} fill="#34D399" />
-      <polygon points={`${s*.76},${s*.36} ${s*.85},${s*.1} ${s*.64},${s*.3}`} fill="#34D399" />
-      <polygon points={`${s*.26},${s*.33} ${s*.19},${s*.16} ${s*.33},${s*.28}`} fill="#FCA5A5" />
-      <polygon points={`${s*.74},${s*.33} ${s*.81},${s*.16} ${s*.67},${s*.28}`} fill="#FCA5A5" />
-    </>,
+    extras: (s, cy, r) => { const cx=s*.5; return <>
+      <polygon points={`${cx-r*.590},${cy-r*.363} ${cx-r*.795},${cy-r*.954} ${cx-r*.318},${cy-r*.500}`} fill="#34D399" />
+      <polygon points={`${cx+r*.590},${cy-r*.363} ${cx+r*.795},${cy-r*.954} ${cx+r*.318},${cy-r*.500}`} fill="#34D399" />
+      <polygon points={`${cx-r*.545},${cy-r*.431} ${cx-r*.704},${cy-r*.818} ${cx-r*.386},${cy-r*.545}`} fill="#FCA5A5" />
+      <polygon points={`${cx+r*.545},${cy-r*.431} ${cx+r*.704},${cy-r*.818} ${cx+r*.386},${cy-r*.545}`} fill="#FCA5A5" />
+    </>; },
     decoTop: "🍃",
     whiskers: true,
   },
 };
 
-function CompanionAvatar({ c, size = 64, anim = "", cosmetic = null, mood = "idle", talking = false }) {
+function CompanionAvatar({ c, size = 64, anim = "", cosmetic = null, mood = "idle", talking = false, worldId = null, showBody = false }) {
   const [blink, setBlink] = useState(false);
   const [mouthPhase, setMouthPhase] = useState(0);
 
@@ -336,7 +343,7 @@ function CompanionAvatar({ c, size = 64, anim = "", cosmetic = null, mood = "idl
     let blinkTimeout;
     const interval = setInterval(() => {
       setBlink(true);
-      blinkTimeout = setTimeout(() => setBlink(false), 140); // M5: track to clean up on unmount
+      blinkTimeout = setTimeout(() => setBlink(false), 140);
     }, 3200 + Math.random() * 2000);
     return () => { clearInterval(interval); clearTimeout(blinkTimeout); };
   }, []);
@@ -350,29 +357,47 @@ function CompanionAvatar({ c, size = 64, anim = "", cosmetic = null, mood = "idl
 
   const fd = COMPANION_FACE_DATA[c.id] || COMPANION_FACE_DATA.fiamma;
   const s  = size;
-  const cx = s * 0.5, cy = s * 0.52;
-  const r  = s * 0.44;
 
-  // Eye geometry
-  const eyeRY = blink ? 1 : mood === "excited" ? s*0.12 : mood === "happy" ? s*0.10 : mood === "sad" ? s*0.08 : s*0.09;
-  const eyeLX = s * 0.34, eyeRX = s * 0.66, eyeY = s * 0.46;
-  const browTilt = mood === "sad" ? 3 : mood === "happy" || mood === "excited" ? -2 : 0;
-  const browY    = s * 0.36;
+  // Body mode: head shifts up to make room for torso when showBody && size >= 80
+  const bodyMode = showBody && size >= 80;
+  const headScale = bodyMode ? 0.72 : 1;
+  const cx = s * 0.5;
+  const cy = bodyMode ? s * 0.38 : s * 0.52;
+  const r  = s * 0.44 * headScale;
+
+  // Eye geometry — relative to head center
+  const eyeBaseRY = blink || mood === "celebrating" ? 1
+    : mood === "excited"   ? s*0.12*headScale
+    : mood === "happy"     ? s*0.10*headScale
+    : mood === "sad"       ? s*0.08*headScale
+    : mood === "thinking"  ? s*0.085*headScale
+    : s*0.09*headScale;
+  const eyeLRY = mood === "thinking" ? eyeBaseRY * 0.6 : eyeBaseRY; // squint left eye when thinking
+  const eyeRRY = eyeBaseRY;
+  const eyeLX  = cx - r*0.36, eyeRX = cx + r*0.36, eyeY = cy - r*0.13;
+  const browTilt = mood === "sad" ? 3 : (mood === "happy" || mood === "excited" || mood === "celebrating") ? -2 : mood === "thinking" ? -4 : 0;
+  const browY    = cy - r*0.40;
+  const browTiltL = mood === "thinking" ? 4 : browTilt;   // opposite tilt on left brow for thinking
 
   // Mouth path
-  const mouthOpenY = talking ? [s*0.67, s*0.7, s*0.67][mouthPhase] : s*0.68;
-  const mouthCurve = mood === "happy" || mood === "excited" ? s*0.76 : mood === "sad" ? s*0.64 : mouthOpenY;
-  const mouthPath  = `M ${s*.33} ${s*.68} Q ${s*.5} ${mouthCurve} ${s*.67} ${s*.68}`;
+  const mouthOpenY = talking ? [cy+r*0.35, cy+r*0.42, cy+r*0.35][mouthPhase] : cy+r*0.37;
+  const mouthCurve = (mood === "happy" || mood === "excited") ? cy+r*0.56
+    : mood === "celebrating" ? cy+r*0.62
+    : mood === "sad"         ? cy+r*0.18
+    : mood === "thinking"    ? cy+r*0.3
+    : mouthOpenY;
+  const mouthPath  = `M ${cx-r*.34} ${cy+r*.35} Q ${cx} ${mouthCurve} ${cx+r*.34} ${cy+r*.35}`;
 
-  // Cheek blush (happy/excited only)
-  const showCheeks = mood === "happy" || mood === "excited";
+  const showCheeks = mood === "happy" || mood === "excited" || mood === "celebrating";
 
-  // Aura color
   const auraCols = { "🔥":"#FF6B00","❄️":"#60D0FF","✨":"#FFD700","🏆":"#C084FC" };
   const auraCol  = cosmetic?.type === "aura" ? (auraCols[cosmetic.emoji] || "#C084FC") : null;
 
+  // SVG height: taller when body mode
+  const svgH = bodyMode ? s * 1.45 : s;
+
   return (
-    <div className={anim} style={{ position:"relative", width:size, height:size, flexShrink:0 }}>
+    <div className={anim} style={{ position:"relative", width:size, height:bodyMode ? Math.round(s*1.45) : size, flexShrink:0 }}>
       {/* Aura ring */}
       {auraCol && (
         <div style={{position:"absolute",inset:-Math.round(s*0.22),borderRadius:"50%",
@@ -380,12 +405,12 @@ function CompanionAvatar({ c, size = 64, anim = "", cosmetic = null, mood = "idl
           animation:"wiggle 2.4s ease-in-out infinite",pointerEvents:"none",zIndex:0}} />
       )}
       {/* Outer glow ring */}
-      <div style={{position:"absolute",inset:-Math.round(s*0.07),borderRadius:"50%",
+      <div style={{position:"absolute",top:0,left:0,width:size,height:size,borderRadius:"50%",
         background:`conic-gradient(${c.color}33,transparent,${c.color}55,transparent,${c.color}33)`,
         animation:"wiggle 4s ease-in-out infinite",
         animationDelay:c.id==="luna"?"0.5s":c.id==="onde"?"1s":c.id==="foglia"?"1.5s":"0s"}} />
-      {/* SVG face */}
-      <svg width={s} height={s} viewBox={`0 0 ${s} ${s}`} style={{display:"block",overflow:"visible"}}>
+      {/* SVG face + optional body */}
+      <svg width={s} height={svgH} viewBox={`0 0 ${s} ${svgH}`} style={{display:"block",overflow:"visible"}}>
         <defs>
           {c.id==="fiamma" && <radialGradient id="fG" cx="38%" cy="32%"><stop offset="0%" stopColor="#FF9A8B"/><stop offset="100%" stopColor="#c0392b"/></radialGradient>}
           {c.id==="luna"   && <radialGradient id="lG" cx="38%" cy="32%"><stop offset="0%" stopColor="#E9D5FF"/><stop offset="100%" stopColor="#7c3aed"/></radialGradient>}
@@ -393,50 +418,111 @@ function CompanionAvatar({ c, size = 64, anim = "", cosmetic = null, mood = "idl
           {c.id==="foglia" && <radialGradient id="fxG" cx="38%" cy="32%"><stop offset="0%" stopColor="#BBF7D0"/><stop offset="100%" stopColor="#047857"/></radialGradient>}
           <linearGradient id="hornG" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stopColor="#F9A8D4"/><stop offset="100%" stopColor="#FDE68A"/></linearGradient>
         </defs>
+
+        {/* ── Body (torso + arms) — only in bodyMode ── */}
+        {bodyMode && (() => {
+          const bY = cy + r + s*0.04;     // top of neck
+          const torsoW = s*0.34, torsoH = s*0.36, torsoX = cx - torsoW/2;
+          const armW = s*0.14, armH = s*0.09;
+          return <>
+            {/* Neck */}
+            <rect x={cx-s*.09} y={bY} width={s*.18} height={s*.08} rx={s*.04} fill={fd.headFill}/>
+            {/* Left arm */}
+            <ellipse cx={torsoX - armW*0.3} cy={bY+s*.15} rx={armW} ry={armH}
+              fill={fd.headFill} stroke={fd.headStroke} strokeWidth={Math.max(1,s*.018)}
+              transform={`rotate(-30 ${torsoX - armW*0.3} ${bY+s*.15})`}/>
+            {/* Right arm */}
+            <ellipse cx={torsoX+torsoW + armW*0.3} cy={bY+s*.15} rx={armW} ry={armH}
+              fill={fd.headFill} stroke={fd.headStroke} strokeWidth={Math.max(1,s*.018)}
+              transform={`rotate(30 ${torsoX+torsoW + armW*0.3} ${bY+s*.15})`}/>
+            {/* Torso */}
+            <rect x={torsoX} y={bY+s*.06} width={torsoW} height={torsoH} rx={s*.09}
+              fill={fd.headFill} stroke={fd.headStroke} strokeWidth={Math.max(1.2,s*.022)}/>
+            {/* Chest shimmer */}
+            <ellipse cx={cx-torsoW*.12} cy={bY+s*.12} rx={torsoW*.22} ry={s*.05} fill="rgba(255,255,255,.2)"/>
+            {/* World badge on torso */}
+            {worldId && WORLD_COSTUMES[worldId] && (
+              <text x={cx} y={bY+s*.28} fontSize={s*.18} textAnchor="middle" style={{userSelect:"none"}}>
+                {WORLD_COSTUMES[worldId]}
+              </text>
+            )}
+          </>;
+        })()}
+
         {/* Companion-specific extras (ears, horns, fins) */}
-        {fd.extras(s)}
+        {fd.extras(s, cy, r, headScale)}
         {/* Head */}
         <circle cx={cx} cy={cy} r={r} fill={fd.headFill} stroke={fd.headStroke} strokeWidth={Math.max(1.5,s*0.025)} />
         {/* Inner shimmer */}
-        {fd.highlights.map((h,i)=><ellipse key={i} cx={h.cx/100*s} cy={h.cy/100*s} rx={h.rx/100*s} ry={h.ry/100*s} fill="rgba(255,255,255,0.22)" />)}
+        {fd.highlights.map((h,i)=><ellipse key={i} cx={cx+(h.cx/100-0.5)*r*2} cy={cy+(h.cy/100-0.5)*r*2} rx={h.rx/100*s*headScale} ry={h.ry/100*s*headScale} fill="rgba(255,255,255,0.22)" />)}
         {/* Cheeks */}
         {showCheeks && <>
-          <ellipse cx={s*.28} cy={s*.56} rx={s*.07} ry={s*.045} fill={c.color} opacity="0.4"/>
-          <ellipse cx={s*.72} cy={s*.56} rx={s*.07} ry={s*.045} fill={c.color} opacity="0.4"/>
+          <ellipse cx={cx-r*.44} cy={cy+r*.15} rx={r*.18} ry={r*.12} fill={c.color} opacity="0.4"/>
+          <ellipse cx={cx+r*.44} cy={cy+r*.15} rx={r*.18} ry={r*.12} fill={c.color} opacity="0.4"/>
         </>}
         {/* Eyebrows */}
-        <line x1={eyeLX-s*.08} y1={browY+browTilt} x2={eyeLX+s*.08} y2={browY-browTilt} stroke={fd.headStroke} strokeWidth={Math.max(1,s*0.028)} strokeLinecap="round"/>
-        <line x1={eyeRX-s*.08} y1={browY-browTilt} x2={eyeRX+s*.08} y2={browY+browTilt} stroke={fd.headStroke} strokeWidth={Math.max(1,s*0.028)} strokeLinecap="round"/>
-        {/* Eyes */}
-        <ellipse cx={eyeLX} cy={eyeY} rx={s*.09} ry={eyeRY} fill="white"/>
-        <ellipse cx={eyeRX} cy={eyeY} rx={s*.09} ry={eyeRY} fill="white"/>
-        {!blink && <>
-          <ellipse cx={eyeLX+s*.02} cy={eyeY+s*.01} rx={s*.046} ry={Math.min(eyeRY*.7,s*.046)} fill="#1a1a2e"/>
-          <ellipse cx={eyeRX+s*.02} cy={eyeY+s*.01} rx={s*.046} ry={Math.min(eyeRY*.7,s*.046)} fill="#1a1a2e"/>
-          <circle cx={eyeLX+s*.03} cy={eyeY-s*.015} r={s*.016} fill="white"/>
-          <circle cx={eyeRX+s*.03} cy={eyeY-s*.015} r={s*.016} fill="white"/>
-          {fd.lashes && <>
-            <line x1={eyeLX-s*.07} y1={eyeY-eyeRY-s*.01} x2={eyeLX-s*.1} y2={eyeY-eyeRY-s*.04} stroke={fd.headStroke} strokeWidth={s*.018} strokeLinecap="round"/>
-            <line x1={eyeLX} y1={eyeY-eyeRY-s*.01} x2={eyeLX} y2={eyeY-eyeRY-s*.05} stroke={fd.headStroke} strokeWidth={s*.018} strokeLinecap="round"/>
-            <line x1={eyeRX+s*.07} y1={eyeY-eyeRY-s*.01} x2={eyeRX+s*.1} y2={eyeY-eyeRY-s*.04} stroke={fd.headStroke} strokeWidth={s*.018} strokeLinecap="round"/>
-          </>}
-        </>}
+        <line x1={eyeLX-r*.19} y1={browY+browTiltL} x2={eyeLX+r*.19} y2={browY-browTiltL} stroke={fd.headStroke} strokeWidth={Math.max(1,s*0.028*headScale)} strokeLinecap="round"/>
+        <line x1={eyeRX-r*.19} y1={browY-browTilt}  x2={eyeRX+r*.19} y2={browY+browTilt}  stroke={fd.headStroke} strokeWidth={Math.max(1,s*0.028*headScale)} strokeLinecap="round"/>
+
+        {/* Eyes — celebrating uses closed ^_^ arcs, others use ellipses */}
+        {(blink || mood === "celebrating") ? (
+          <>
+            <path d={`M ${eyeLX-r*.2} ${eyeY} Q ${eyeLX} ${eyeY-r*.18} ${eyeLX+r*.2} ${eyeY}`} stroke={fd.headStroke} strokeWidth={Math.max(1.5,s*.022*headScale)} fill="none" strokeLinecap="round"/>
+            <path d={`M ${eyeRX-r*.2} ${eyeY} Q ${eyeRX} ${eyeY-r*.18} ${eyeRX+r*.2} ${eyeY}`} stroke={fd.headStroke} strokeWidth={Math.max(1.5,s*.022*headScale)} fill="none" strokeLinecap="round"/>
+          </>
+        ) : (
+          <>
+            <ellipse cx={eyeLX} cy={eyeY} rx={r*.20} ry={eyeLRY} fill="white"/>
+            <ellipse cx={eyeRX} cy={eyeY} rx={r*.20} ry={eyeRRY} fill="white"/>
+            <ellipse cx={eyeLX+r*.04} cy={eyeY+r*.02} rx={r*.10} ry={Math.min(eyeLRY*.75,r*.10)} fill="#1a1a2e"/>
+            <ellipse cx={eyeRX+r*.04} cy={eyeY+r*.02} rx={r*.10} ry={Math.min(eyeRRY*.75,r*.10)} fill="#1a1a2e"/>
+            <circle cx={eyeLX+r*.07} cy={eyeY-r*.04} r={r*.036} fill="white"/>
+            <circle cx={eyeRX+r*.07} cy={eyeY-r*.04} r={r*.036} fill="white"/>
+            {/* Thinking: ellipsis dot in top-right */}
+            {mood === "thinking" && size >= 44 && (
+              <text x={cx+r*.65} y={cy-r*.55} fontSize={r*.24} textAnchor="middle" style={{userSelect:"none"}}>💭</text>
+            )}
+            {fd.lashes && <>
+              <line x1={eyeLX-r*.17} y1={eyeY-eyeLRY-r*.02} x2={eyeLX-r*.24} y2={eyeY-eyeLRY-r*.09} stroke={fd.headStroke} strokeWidth={s*.018*headScale} strokeLinecap="round"/>
+              <line x1={eyeLX}       y1={eyeY-eyeLRY-r*.02} x2={eyeLX}       y2={eyeY-eyeLRY-r*.12} stroke={fd.headStroke} strokeWidth={s*.018*headScale} strokeLinecap="round"/>
+              <line x1={eyeRX+r*.17} y1={eyeY-eyeRRY-r*.02} x2={eyeRX+r*.24} y2={eyeY-eyeRRY-r*.09} stroke={fd.headStroke} strokeWidth={s*.018*headScale} strokeLinecap="round"/>
+            </>}
+          </>
+        )}
+
         {/* Mouth */}
-        <path d={mouthPath} fill={talking && mouthPhase===1 ? "#1a1a2e" : "none"} stroke="#1a1a2e" strokeWidth={Math.max(1.2,s*.027)} strokeLinecap="round"/>
-        {/* Whiskers (Foglia) */}
-        {fd.whiskers && <>
-          <line x1={s*.22} y1={s*.62} x2={s*.38} y2={s*.64} stroke={fd.headStroke} strokeWidth={s*.015} strokeLinecap="round" opacity=".6"/>
-          <line x1={s*.22} y1={s*.66} x2={s*.37} y2={s*.66} stroke={fd.headStroke} strokeWidth={s*.015} strokeLinecap="round" opacity=".6"/>
-          <line x1={s*.78} y1={s*.62} x2={s*.62} y2={s*.64} stroke={fd.headStroke} strokeWidth={s*.015} strokeLinecap="round" opacity=".6"/>
-          <line x1={s*.78} y1={s*.66} x2={s*.63} y2={s*.66} stroke={fd.headStroke} strokeWidth={s*.015} strokeLinecap="round" opacity=".6"/>
+        <path d={mouthPath} fill={talking && mouthPhase===1 ? "#1a1a2e" : "none"} stroke="#1a1a2e" strokeWidth={Math.max(1.2,s*.027*headScale)} strokeLinecap="round"/>
+
+        {/* Celebrating: sparkle particles */}
+        {mood === "celebrating" && size >= 48 && <>
+          <text x={cx-r*.7} y={cy-r*.7} fontSize={r*.28} textAnchor="middle" style={{userSelect:"none",animation:"ws-twinkle 0.6s ease-in-out infinite"}}>✨</text>
+          <text x={cx+r*.75} y={cy-r*.6} fontSize={r*.22} textAnchor="middle" style={{userSelect:"none",animation:"ws-twinkle 0.6s ease-in-out infinite",animationDelay:".2s"}}>⭐</text>
+          <text x={cx+r*.6}  y={cy+r*.7} fontSize={r*.20} textAnchor="middle" style={{userSelect:"none",animation:"ws-twinkle 0.6s ease-in-out infinite",animationDelay:".4s"}}>🎉</text>
         </>}
-        {/* Deco top emoji (small) — only for larger sizes */}
-        {size >= 52 && fd.decoTop && (
-          <text x={s*.78} y={s*.14} fontSize={s*.22} textAnchor="middle" style={{userSelect:"none",filter:"drop-shadow(0 1px 2px rgba(0,0,0,.5))"}}>
+
+        {/* Whiskers (Foglia only) */}
+        {fd.whiskers && <>
+          <line x1={cx-r*.56} y1={cy+r*.25} x2={cx-r*.14} y2={cy+r*.3}  stroke={fd.headStroke} strokeWidth={s*.015*headScale} strokeLinecap="round" opacity=".6"/>
+          <line x1={cx-r*.56} y1={cy+r*.36} x2={cx-r*.15} y2={cy+r*.36} stroke={fd.headStroke} strokeWidth={s*.015*headScale} strokeLinecap="round" opacity=".6"/>
+          <line x1={cx+r*.56} y1={cy+r*.25} x2={cx+r*.14} y2={cy+r*.3}  stroke={fd.headStroke} strokeWidth={s*.015*headScale} strokeLinecap="round" opacity=".6"/>
+          <line x1={cx+r*.56} y1={cy+r*.36} x2={cx+r*.15} y2={cy+r*.36} stroke={fd.headStroke} strokeWidth={s*.015*headScale} strokeLinecap="round" opacity=".6"/>
+        </>}
+
+        {/* Deco top emoji — only for larger sizes, hidden in bodyMode (too cluttered) */}
+        {!bodyMode && size >= 52 && fd.decoTop && (
+          <text x={cx+r*.6} y={cy-r*.74} fontSize={r*.5} textAnchor="middle" style={{userSelect:"none",filter:"drop-shadow(0 1px 2px rgba(0,0,0,.5))"}}>
             {fd.decoTop}
           </text>
         )}
+
+        {/* World costume badge — bottom-left of head, when NOT in bodyMode */}
+        {!bodyMode && worldId && WORLD_COSTUMES[worldId] && size >= 44 && (
+          <text x={cx-r*.68} y={cy+r*.82} fontSize={r*.44} textAnchor="middle" style={{userSelect:"none",filter:"drop-shadow(0 1px 4px rgba(0,0,0,.7))"}}>
+            {WORLD_COSTUMES[worldId]}
+          </text>
+        )}
       </svg>
+
       {/* Hat cosmetic */}
       {cosmetic?.type === "hat" && (
         <div style={{position:"absolute",top:`-${Math.round(s*.28)}px`,left:"50%",transform:"translateX(-50%)",
@@ -2462,6 +2548,7 @@ export default function MondoMago() {
         return [...prev.slice(-59), entry]; // keep last 60 sessions
       });
       setConfetti(true); setTimeout(() => setConfetti(false), 2800);
+      setCompMood("celebrating"); setTimeout(() => setCompMood("idle"), 3500);
       navigate("world_end");
     }
   }
@@ -3693,7 +3780,7 @@ export default function MondoMago() {
             }
             {combo >= 2 && <span style={{fontSize:12,color:"#F97316",fontWeight:900}}>🔥×{combo}</span>}
           </div>
-          {comp && <CompanionAvatar c={comp} size={56} anim={compAnim} talking={compTalking} mood={compMood} />}
+          {comp && <CompanionAvatar c={comp} size={56} anim={compAnim} talking={compTalking} mood={compMood} worldId={world?.id} />}
         </div>
         {/* Progress bar — Duolingo style */}
         <div style={{position:"relative",zIndex:1,marginBottom:14,display:"flex",alignItems:"center",gap:10}}>
@@ -4309,7 +4396,7 @@ export default function MondoMago() {
         {/* Current look preview */}
         <div style={{background:"rgba(255,255,255,.07)",borderRadius:24,padding:"22px 20px",marginBottom:20,display:"flex",flexDirection:"column",alignItems:"center",gap:12}}>
           <div style={{fontSize:12,opacity:.5,letterSpacing:1,fontWeight:800,marginBottom:4}}>IL TUO {comp.name.toUpperCase()} ADESSO</div>
-          <CompanionAvatar c={comp} size={96} anim="float" cosmetic={equippedObj} />
+          <CompanionAvatar c={comp} size={96} anim="float" cosmetic={equippedObj} showBody />
           <div style={{fontSize:13,opacity:.7}}>{equippedObj ? `Equipaggiato: ${equippedObj.emoji} ${equippedObj.name}` : "Nessun cosmetico equipaggiato"}</div>
           {equipped && (
             <button onClick={() => setEquippedCosmetic(prev => { const n = {...prev}; delete n[comp.id]; return n; })}
@@ -4450,7 +4537,7 @@ export default function MondoMago() {
     <div key="profile" className={screenAnim} style={{minHeight:"100dvh",background:comp.bg,color:"white",padding:28,display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center"}}>
       {G}
       <button onClick={() => navigate("map")} style={{alignSelf:"flex-start",background:"rgba(255,255,255,.15)",border:"none",color:"white",borderRadius:12,padding:"8px 14px",cursor:"pointer",marginBottom:24,fontSize:14}}>← Indietro</button>
-      <CompanionAvatar c={comp} size={110} anim="float" cosmetic={COSMETICS.find(c => c.id === equippedCosmetic[comp.id]) || null} />
+      <CompanionAvatar c={comp} size={110} anim="float" cosmetic={COSMETICS.find(c => c.id === equippedCosmetic[comp.id]) || null} showBody />
       <h2 style={{fontSize:28,fontWeight:900,marginBottom:4}}>{comp.name}</h2>
       <div style={{fontSize:14,opacity:.7,marginBottom:8}}>{comp.type} · Il tuo compagno magico</div>
       <button onClick={() => navigate("cosmetics")} style={{background:"rgba(255,255,255,.15)",border:"none",color:"white",borderRadius:20,padding:"6px 18px",fontSize:12,fontWeight:700,cursor:"pointer",marginBottom:22}}>
