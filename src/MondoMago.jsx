@@ -279,6 +279,12 @@ function CorrectBurst({ pos, particles }) {
   );
 }
 
+// ── NAV ICONS (K4) ───────────────────────────────────────────────────────────
+function NavMap({c="currentColor",s=22}){return<svg width={s} height={s} viewBox="0 0 22 22" fill="none" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 6L8 4L14 7L20 5L20 18L14 20L8 17L2 19Z" fill={c} fillOpacity=".18"/><line x1="8" y1="4" x2="8" y2="17"/><line x1="14" y1="7" x2="14" y2="20"/></svg>;}
+function NavBrain({c="currentColor",s=22}){return<svg width={s} height={s} viewBox="0 0 22 22" fill="none" stroke={c} strokeWidth="1.8" strokeLinecap="round"><path d="M8 6C8 4 10 3 12 5C14 3 17 5 16 8C18 9 18 12 16 13C17 16 15 19 12 18L10 18C7 19 5 16 6 13C4 12 4 9 6 8C5 5 6 3 8 6Z"/><line x1="11" y1="5" x2="11" y2="18" strokeDasharray="2.5 2"/></svg>;}
+function NavFamily({c="currentColor",s=22}){return<svg width={s} height={s} viewBox="0 0 22 22" fill={c} stroke="none"><circle cx="6" cy="6" r="2.4"/><circle cx="16" cy="6" r="2.4"/><circle cx="11" cy="9" r="1.9"/><path d="M2 15C2 12 4 11 6 11C8 11 9.5 12 9.5 13L9.5 20L2 20Z"/><path d="M12.5 15C12.5 12 14 11 16 11C18 11 20 12 20 15L20 20L12.5 20Z"/><path d="M8 16C8 14 9.2 13 11 13C12.8 13 14 14 14 16L14 20L8 20Z"/></svg>;}
+function NavSparkle({c="currentColor",s=22}){return<svg width={s} height={s} viewBox="0 0 22 22" fill={c} stroke="none"><path d="M11 2L12.8 9.2L20 11L12.8 12.8L11 20L9.2 12.8L2 11L9.2 9.2Z"/><circle cx="18" cy="5" r="1.5"/><circle cx="5" cy="16.5" r="1.2"/></svg>;}
+
 // ── COMPANION SVG FACES ───────────────────────────────────────────────────────
 // Fully inline SVG companions with blink, expressions, and talking animation.
 // mood: "idle" | "happy" | "sad" | "excited" | "thinking" | "celebrating"
@@ -2208,7 +2214,7 @@ function writeParent(data) {
 
 // ── SCREEN NAVIGATION DEPTH MAP (for directional transitions) ─────────────────
 const SCREEN_DEPTH = {
-  consent: 0, name: 1, age: 2, companion: 3, map: 4,
+  consent: 0, onboarding: 0.5, name: 1, age: 2, companion: 3, map: 4,
   profile_select: 5, skills: 5, family: 5, cosmetics: 5, profile: 5,
   parent: 5, fulmine: 5, coplay_intro: 6, world_intro: 7, school: 6,
   challenge: 8, world_end: 9, session_stats: 9,
@@ -2223,6 +2229,7 @@ export default function MondoMago() {
   const prevScreenRef = useRef("");
   const nextRef       = useRef(null);
   const advancingRef  = useRef(false);
+  const obTouchRef    = useRef(0);
   const [childName,    setChildName]    = useState("");
   const [childAge,     setChildAge]     = useState(null);
   const [companion,    setCompanion]    = useState(null);
@@ -2301,6 +2308,7 @@ export default function MondoMago() {
   const [fulminoCi,         setFulminoCi]         = useState(0);   // challenge index in pool
   const [fulminoPool,       setFulminoPool]       = useState([]); // shuffled visual_tap challenges
   const [fulminoRunning,    setFulminoRunning]    = useState(false);
+  const [obSlide,           setObSlide]           = useState(0);
 
   const comp  = COMPANIONS.find(c => c.id === companion);
   const arc   = world ? STORY_ARCS[world.id] : null;
@@ -3030,7 +3038,7 @@ export default function MondoMago() {
           style={{width:18,height:18,accentColor:"#667eea",flexShrink:0}} />
         Confermo di essere un adulto e di essere il responsabile dell'utilizzo di questa app da parte del bambino.
       </label>
-      <button onClick={() => { if(!consentChecked) return; warmUpAudio(); localStorage.setItem('mondomago_consent','1'); navigate('name'); }}
+      <button onClick={() => { if(!consentChecked) return; warmUpAudio(); localStorage.setItem('mondomago_consent','1'); navigate('onboarding'); }}
         style={{background:consentChecked?"linear-gradient(135deg,#667eea,#764ba2)":"rgba(255,255,255,.15)",border:"none",color:"white",borderRadius:50,padding:"16px 44px",fontWeight:900,fontSize:18,cursor:consentChecked?"pointer":"default",marginBottom:14,boxShadow:consentChecked?"0 8px 32px rgba(102,126,234,.4)":"none",transition:"all .3s",opacity:consentChecked?1:.5}}>
         Inizia! ✨
       </button>
@@ -3071,6 +3079,100 @@ export default function MondoMago() {
       </div>
     </div>
   );
+
+  // ════════════════════ SCREEN: ONBOARDING (K5) ════════════════════════════
+  if (screen === "onboarding") {
+    const OB = [
+      {
+        bg:    "linear-gradient(160deg,#0f0c29,#302b63,#0f0c29)",
+        icon:  "✨",
+        title: "Benvenuto in MondoMago!",
+        sub:   "Il viaggio magico che fa crescere i bambini",
+        body: (
+          <div style={{display:"flex",gap:10,justifyContent:"center",margin:"20px 0 16px",flexWrap:"wrap"}}>
+            {COMPANIONS.map(c => <CompanionAvatar key={c.id} c={c} size={60} anim="float" mood="happy" />)}
+          </div>
+        ),
+        pills: ["3–8 anni","100% offline","Zero pubblicità"],
+      },
+      {
+        bg:    "linear-gradient(160deg,#0d1b2a,#064e3b,#0d1b2a)",
+        icon:  "🧠",
+        title: "Sfide che fanno crescere!",
+        sub:   "Calibrate per la tua età, sempre nuove",
+        body: (
+          <div style={{display:"flex",flexWrap:"wrap",gap:10,justifyContent:"center",margin:"20px 0 16px",maxWidth:320}}>
+            {[["🔢","Numeri"],["📝","Lettura"],["🎵","Ritmo"],["🖼️","Immagini"],["🧠","Logica"]].map(([e,l]) => (
+              <div key={l} style={{background:"rgba(255,255,255,.12)",borderRadius:16,padding:"10px 14px",fontSize:13,fontWeight:700,display:"flex",flexDirection:"column",alignItems:"center",gap:4,minWidth:72}}>
+                <span style={{fontSize:28}}>{e}</span>{l}
+              </div>
+            ))}
+          </div>
+        ),
+        pills: null,
+      },
+      {
+        bg:    "linear-gradient(160deg,#1a1a2e,#4c1d95,#1a1a2e)",
+        icon:  "🏆",
+        title: "Guadagna stelle e premi!",
+        sub:   "Sblocca mondi e personalizza il tuo compagno",
+        body: (
+          <div style={{display:"flex",gap:12,justifyContent:"center",margin:"20px 0 16px"}}>
+            {[["⭐","Stelle"],["🏆","Trofei"],["✨","Costumi"],["🗺️","Mondi"]].map(([e,l]) => (
+              <div key={l} style={{background:"rgba(255,255,255,.1)",borderRadius:20,padding:"14px 12px",textAlign:"center",minWidth:64}}>
+                <div style={{fontSize:32,marginBottom:4}}>{e}</div>
+                <div style={{fontSize:11,fontWeight:700,opacity:.8}}>{l}</div>
+              </div>
+            ))}
+          </div>
+        ),
+        pills: null,
+      },
+    ];
+    const sl = OB[obSlide];
+    return (
+      <div key="onboarding" className={screenAnim}
+        style={{minHeight:"100dvh",background:sl.bg,color:"white",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"space-between",padding:"44px 28px",paddingBottom:"max(env(safe-area-inset-bottom,0px),44px)",textAlign:"center"}}
+        onTouchStart={e => { obTouchRef.current = e.touches[0].clientX; }}
+        onTouchEnd={e => {
+          const dx = e.changedTouches[0].clientX - obTouchRef.current;
+          if (dx < -50 && obSlide < 2) setObSlide(s => s+1);
+          else if (dx > 50 && obSlide > 0) setObSlide(s => s-1);
+        }}>
+        {G}
+        <div style={{alignSelf:"flex-end"}}>
+          <button onClick={() => navigate("name")}
+            style={{background:"rgba(255,255,255,.1)",border:"none",color:"rgba(255,255,255,.6)",borderRadius:20,padding:"7px 18px",fontSize:13,cursor:"pointer",fontWeight:700}}>
+            Salta
+          </button>
+        </div>
+        <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",width:"100%",maxWidth:400}}>
+          <div className="pop-in" style={{fontSize:52,marginBottom:6}}>{sl.icon}</div>
+          <h2 style={{fontFamily:FF,fontSize:26,margin:"0 0 8px",lineHeight:1.2}}>{sl.title}</h2>
+          <p style={{opacity:.75,fontSize:14,margin:0,maxWidth:300}}>{sl.sub}</p>
+          {sl.body}
+          {sl.pills && (
+            <div style={{display:"flex",gap:8,flexWrap:"wrap",justifyContent:"center"}}>
+              {sl.pills.map(p => (
+                <span key={p} style={{background:"rgba(255,255,255,.16)",borderRadius:20,padding:"5px 14px",fontSize:12,fontWeight:700}}>{p}</span>
+              ))}
+            </div>
+          )}
+        </div>
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:18}}>
+          <div style={{display:"flex",gap:8}}>
+            {[0,1,2].map(i => (
+              <div key={i} onClick={() => setObSlide(i)} style={{width:i===obSlide?26:8,height:8,borderRadius:8,background:i===obSlide?"white":"rgba(255,255,255,.3)",transition:"width .3s",cursor:"pointer"}} />
+            ))}
+          </div>
+          <button onClick={() => obSlide < 2 ? setObSlide(s => s+1) : navigate("name")}
+            style={{background:"linear-gradient(135deg,#667eea,#764ba2)",border:"none",color:"white",borderRadius:50,padding:"16px 48px",fontWeight:900,fontSize:18,cursor:"pointer",boxShadow:"0 8px 32px rgba(102,126,234,.4)"}}>
+            {obSlide < 2 ? "Avanti →" : "Inizia! ✨"}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // ════════════════════ SCREEN: NAME ════════════════════════════════════════
   if (screen === "name") return (
@@ -3333,7 +3435,7 @@ export default function MondoMago() {
       </button>
       {/* ── NAV TABS ── */}
       <div style={{display:"flex",gap:8,marginBottom:20}}>
-        {[["🗺️","Mondi"],["🌳","Skill"],["👨‍👩‍👧","Famiglia"],["✨","Look"]].map(([icon,label],i) => (
+        {[[NavMap,"Mondi"],[NavBrain,"Skill"],[NavFamily,"Famiglia"],[NavSparkle,"Look"]].map(([Icon,label],i) => (
           <button key={i} onClick={() => {
             if(i===1) navigate("skills");
             else if(i===2) navigate("family");
@@ -3346,8 +3448,9 @@ export default function MondoMago() {
               borderRadius:16,padding:"12px 4px",
               color:i===0?"white":"rgba(255,255,255,.55)",
               fontFamily:FF,fontSize:13,cursor:"pointer",
+              display:"flex",flexDirection:"column",alignItems:"center",gap:3,
             }}>
-            <div style={{fontSize:20,marginBottom:3}}>{icon}</div>
+            <Icon c={i===0?"white":"rgba(255,255,255,.55)"} s={22}/>
             <div>{label}</div>
           </button>
         ))}
