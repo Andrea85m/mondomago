@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import TTS_MAP from "./ttsMap.json";
 import WorldScene from "./WorldScene.jsx";
 import SvgAsset from "./SvgAssets.jsx";
+import canvasConfetti from "canvas-confetti";
 
 // ── CSS ANIMATIONS ────────────────────────────────────────────────────────────
 function AnimationStyles() {
@@ -95,10 +96,10 @@ function AnimationStyles() {
         30%     { transform: translateY(-10px) rotate(6deg) scale(1.06); }
         70%     { transform: translateY(-16px) rotate(-5deg) scale(0.94); }
       }
-      .ans-btn { transition: transform .12s ease, filter .15s; touch-action: manipulation; }
-      .ans-btn:active { transform: scale(0.95) !important; filter: brightness(0.9); }
-      .ans-vis { transition: transform .1s ease, filter .15s; touch-action: manipulation; }
-      .ans-vis:active { transform: scale(0.92) !important; filter: brightness(0.85); }
+      .ans-btn { transition: transform .22s cubic-bezier(.34,1.56,.64,1), filter .15s; touch-action: manipulation; }
+      .ans-btn:active { transform: scale(0.87) !important; filter: brightness(0.88); }
+      .ans-vis { transition: transform .22s cubic-bezier(.34,1.56,.64,1), filter .15s; touch-action: manipulation; }
+      .ans-vis:active { transform: scale(0.83) !important; filter: brightness(0.85); }
       @keyframes burstOut {
         0%   { transform: translate(-50%,-50%) rotate(var(--a)) translateY(0)    scale(1);   opacity:1; }
         100% { transform: translate(-50%,-50%) rotate(var(--a)) translateY(-62px) scale(0.2); opacity:0; }
@@ -146,6 +147,74 @@ function AnimationStyles() {
       /* Active scale for all interactive cards */
       .tap-card { transition: transform .11s ease, box-shadow .11s ease; }
       .tap-card:active { transform: scale(0.96) !important; }
+      /* ── PREMIUM VISUAL EFFECTS ─────────────────────────────────────────── */
+      @keyframes twinkle {
+        0%,100% { opacity: 0.07; transform: scale(0.6); }
+        50%     { opacity: 1;    transform: scale(1.4); }
+      }
+      @keyframes orbitSpin {
+        from { transform: rotate(0deg)   translateX(40px) rotate(0deg);    }
+        to   { transform: rotate(360deg) translateX(40px) rotate(-360deg); }
+      }
+      @keyframes shimmerSweep {
+        0%   { transform: translateX(-200%) skewX(-20deg); }
+        100% { transform: translateX(400%)  skewX(-20deg); }
+      }
+      @keyframes barGlint {
+        0%,70%  { transform: translateX(-100%); opacity: 0; }
+        76%     { opacity: 1; }
+        100%    { transform: translateX(400%);  opacity: 0; }
+      }
+      @keyframes ambientRise {
+        0%   { transform: translateY(0)     translateX(0)              scale(1);   opacity: 0; }
+        12%  { opacity: 0.65; }
+        80%  { opacity: 0.35; }
+        100% { transform: translateY(-170px) translateX(var(--dx,12px)) scale(0.5); opacity: 0; }
+      }
+      @keyframes cardLift {
+        from { transform: translateY(0); }
+        to   { transform: translateY(-3px); }
+      }
+      .world-card-btn:not(:disabled):hover {
+        transform: translateY(-3px) !important;
+        transition: transform .16s ease, box-shadow .16s ease !important;
+      }
+      .world-shimmer {
+        position: absolute; top: 0; bottom: 0;
+        width: 30%; pointer-events: none; border-radius: inherit;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,.11), transparent);
+        animation: shimmerSweep 5s ease-in-out infinite;
+      }
+      .xp-glint {
+        position: absolute; top: 0; bottom: 0; left: 0; width: 38%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,.52), transparent);
+        border-radius: 8px; pointer-events: none;
+        animation: barGlint 5s ease-in-out 0.8s infinite;
+      }
+      .ans-enter { animation: slideUp .32s cubic-bezier(.34,1.56,.64,1) both; }
+      .ans-btn-idle {
+        transition: transform .1s ease, box-shadow .15s ease, border-color .15s ease;
+      }
+      .ans-btn-idle:not(:disabled):hover {
+        transform: scale(1.03) !important;
+        box-shadow: 0 0 16px rgba(167,139,250,.35) !important;
+      }
+      @keyframes screenFlashOk {
+        0%   { opacity: 0; }
+        18%  { opacity: 1; }
+        100% { opacity: 0; }
+      }
+      @keyframes screenFlashBad {
+        0%   { opacity: 0; }
+        18%  { opacity: 0.72; }
+        100% { opacity: 0; }
+      }
+      @keyframes comboZoom {
+        0%   { transform: scale(0.35) rotate(-8deg); opacity: 0; }
+        52%  { transform: scale(1.14) rotate(3deg);  opacity: 1; }
+        75%  { transform: scale(1)    rotate(0deg);  opacity: 1; }
+        100% { transform: scale(0.85) rotate(0deg);  opacity: 0; }
+      }
       @keyframes installSlide {
         from { transform: translateY(120%); }
         to   { transform: translateY(0); }
@@ -237,27 +306,15 @@ function InstallBanner() {
 }
 
 // ── CONFETTI ──────────────────────────────────────────────────────────────────
-const CONF = [
-  {l:8,  d:0,    e:"⭐"}, {l:18, d:.08, e:"✨"}, {l:28, d:.04, e:"🎉"},
-  {l:38, d:.12, e:"💫"}, {l:48, d:.02, e:"🌟"}, {l:58, d:.09, e:"🎊"},
-  {l:68, d:.16, e:"🎈"}, {l:78, d:.06, e:"⭐"}, {l:88, d:.14, e:"✨"},
-  {l:13, d:.22, e:"💫"}, {l:43, d:.18, e:"🌟"}, {l:73, d:.11, e:"🎉"},
-  {l:23, d:.26, e:"🎊"}, {l:53, d:.20, e:"⭐"}, {l:83, d:.07, e:"✨"},
-];
-function Confetti({ active }) {
-  if (!active) return null;
-  return (
-    <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:500,overflow:"hidden"}}>
-      {CONF.map((c, i) => (
-        <div key={i} style={{
-          position:"absolute", left:`${c.l}%`, top:"78%",
-          fontSize: i % 3 === 0 ? 28 : 22,
-          animation:"confettiFly 1.2s ease-out both",
-          animationDelay:`${c.d}s`,
-        }}>{c.e}</div>
-      ))}
-    </div>
-  );
+const CONFETTI_COLORS = ["#FFD700","#FF6B6B","#4ECDC4","#A78BFA","#F97316","#22C55E","#60A5FA"];
+function triggerConfetti(big = false) {
+  if (big) {
+    canvasConfetti({ particleCount: 100, spread: 100, origin: { y: 0.52 }, ticks: 280, colors: CONFETTI_COLORS });
+    setTimeout(() => canvasConfetti({ particleCount: 55, spread: 70, origin: { y: 0.42, x: 0.2 }, ticks: 200, colors: CONFETTI_COLORS }), 320);
+    setTimeout(() => canvasConfetti({ particleCount: 55, spread: 70, origin: { y: 0.42, x: 0.8 }, ticks: 200, colors: CONFETTI_COLORS }), 580);
+  } else {
+    canvasConfetti({ particleCount: 40, spread: 60, origin: { y: 0.62 }, ticks: 140, colors: CONFETTI_COLORS });
+  }
 }
 
 // ── CORRECT BURST — radial particle explosion from answer button ──────────────
@@ -276,6 +333,88 @@ function CorrectBurst({ pos, particles }) {
         }}>{particles[i % particles.length]}</div>
       ))}
     </div>
+  );
+}
+
+// ── PREMIUM VISUAL COMPONENTS ────────────────────────────────────────────────
+
+// 58 deterministic twinkling stars — pure CSS, zero JS overhead
+function StarField() {
+  return (
+    <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,overflow:"hidden"}}>
+      {Array.from({length:58}, (_,i) => {
+        const x    = (i * 73.13 + 11.7) % 100;
+        const y    = (i * 47.37 + 23.1) % 100;
+        const size = [1,1,2,2,2,3][i%6];
+        const dur  = 2.2 + (i%7) * 0.38;
+        const del  = (i * 0.21) % 4.2;
+        return (
+          <div key={i} style={{
+            position:"absolute", left:`${x}%`, top:`${y}%`,
+            width:size, height:size, borderRadius:"50%", background:"white",
+            animation:`twinkle ${dur}s ease-in-out ${del}s infinite`,
+          }} />
+        );
+      })}
+    </div>
+  );
+}
+
+const WORLD_AMBIENTS = {
+  foresta:     ["🍃","🌿","✨","🍀","🦋"],
+  castello:    ["✨","💫","⭐","🔮","🌙"],
+  oceano:      ["💧","🫧","✨","🐠","🐡"],
+  mercato:     ["🎈","🎊","✨","🎨","🌈"],
+  galassia:    ["⭐","💫","🌟","🪐","✨"],
+  vulcano:     ["🔥","✨","💥","🌋","⬆️"],
+  biblioteca:  ["✨","📖","🔮","💡","📜"],
+  laboratorio: ["⚡","💡","🔮","✨","🤖"],
+};
+
+// Per-world floating ambient particles — gives each world a living identity
+function WorldAmbient({ worldId }) {
+  const emojis = WORLD_AMBIENTS[worldId];
+  if (!emojis) return null;
+  return (
+    <div style={{position:"fixed",inset:0,overflow:"hidden",pointerEvents:"none",zIndex:0}}>
+      {Array.from({length:12}, (_,i) => {
+        const left = (i * 23.7 + 8) % 91;
+        const dur  = 5.5 + (i%5) * 1.1;
+        const del  = (i * 0.72) % 5;
+        const dx   = -22 + (i%7) * 8;
+        return (
+          <div key={i} style={{
+            position:"absolute", bottom:`${(i%4)*10+4}%`, left:`${left}%`,
+            fontSize: 13 + (i%3)*5,
+            animation:`ambientRise ${dur}s ease-out ${del}s infinite`,
+            "--dx":`${dx}px`, userSelect:"none",
+          }}>{emojis[i%emojis.length]}</div>
+        );
+      })}
+    </div>
+  );
+}
+
+// Orbiting particles around companion on map
+function CompanionOrbit({ color }) {
+  const palette = [color,"#FFD700","#FF9FF3","#54A0FF","#5F27CD"];
+  return (
+    <>
+      {[0,1,2,3,4].map(i => (
+        <div key={i} style={{
+          position:"absolute", left:"50%", top:"50%",
+          width:0, height:0, pointerEvents:"none",
+          animation:`orbitSpin ${3.8+i*0.65}s linear ${i*0.6}s infinite`,
+        }}>
+          <div style={{
+            width:6, height:6, borderRadius:"50%",
+            background:palette[i],
+            boxShadow:`0 0 7px ${palette[i]}`,
+            position:"absolute", transform:"translate(-50%,-50%)",
+          }} />
+        </div>
+      ))}
+    </>
   );
 }
 
@@ -2045,6 +2184,20 @@ function getSkill(type) {
   }
   return "logica";
 }
+const SKILL_TIPS = {
+  logica:     ["💡 Guarda bene il pattern — si ripete sempre nello stesso modo!", "💡 Pensa a cosa viene prima e cosa viene dopo.", "💡 Chiudi gli occhi e immagina la sequenza."],
+  numeri:     ["💡 Conta sulle dita — funziona sempre!", "💡 Usa i blocchi o disegna pallini per contare.", "💡 Pensa a quante cose hai nella tua stanza!"],
+  creativita: ["💡 Non c'è risposta sbagliata in arte — ma qui una è più giusta!", "💡 Guarda i colori e le forme con attenzione.", "💡 Immagina di essere un pittore!"],
+  empatia:    ["💡 Pensa a come ti sentiresti tu al posto del personaggio.", "💡 Le espressioni del viso ci dicono come ci sentiamo.", "💡 Cosa faresti tu in questa situazione?"],
+  parole:     ["💡 Pronuncia la parola ad alta voce lentamente.", "💡 Pensa alla prima lettera — quale suono fa?", "💡 Conosci altre parole che suonano simili?"],
+  coding:     ["💡 Segui le istruzioni passo dopo passo, come un robot.", "💡 Prima pensa poi agisci — i computer fanno così!", "💡 Rileggi la condizione: è VERO o FALSO?"],
+};
+function getSkillTip(type) {
+  const sk = getSkill(type);
+  const tips = SKILL_TIPS[sk] || SKILL_TIPS.logica;
+  return tips[Math.floor(Math.random() * tips.length)];
+}
+
 // ── PROCEDURAL MATH GENERATOR ─────────────────────────────────────────────────
 function _rnd(min, max) { return min + Math.floor(Math.random() * (max - min + 1)); }
 function _opts(correct, spread, count = 4) {
@@ -2430,13 +2583,14 @@ function checkNewAchievements(prev, { totalStars, results, items, streak, combo,
 
 // ── WORLD BACKGROUND PARTICLES ───────────────────────────────────────────────
 const WORLD_PARTICLES = {
-  foresta:   ["🌿","🍃","🌲","🦋","🐝","🌸"],
-  castello:  ["⭐","✨","🌟","💫","🔮","🌙"],
-  oceano:    ["🌊","🐚","💧","🐠","🐡","🌿"],
-  mercato:   ["🎨","🌈","✨","🎪","🍎","🌸"],
-  galassia:  ["⭐","🌟","💫","🪐","🌌","✨"],
-  vulcano:   ["🌋","🔥","💥","✨","🌑","🪨"],
-  biblioteca:["📚","📖","✨","🦉","📜","🔮"],
+  foresta:     ["🌿","🍃","🌲","🦋","🐝","🌸"],
+  castello:    ["⭐","✨","🌟","💫","🔮","🌙"],
+  oceano:      ["🌊","🐚","💧","🐠","🐡","🌿"],
+  mercato:     ["🎨","🌈","✨","🎪","🍎","🌸"],
+  galassia:    ["⭐","🌟","💫","🪐","🌌","✨"],
+  vulcano:     ["🌋","🔥","💥","✨","🌑","🪨"],
+  biblioteca:  ["📚","📖","✨","🦉","📜","🔮"],
+  laboratorio: ["⚡","💡","🔮","✨","🤖","🔬"],
 };
 function WorldBg({ worldId }) {
   // Illustrated SVG scene background — replaces old emoji particles
@@ -2646,7 +2800,6 @@ export default function MondoMago() {
   const [results,      setResults]      = useState([]);
   const [combo,        setCombo]        = useState(0);
   const [items,        setItems]        = useState([]);
-  const [confetti,     setConfetti]     = useState(false);
   const [compAnim,     setCompAnim]     = useState("float");
   const [cardAnim,     setCardAnim]     = useState("");
   const [starPop,      setStarPop]      = useState(false);
@@ -2668,6 +2821,7 @@ export default function MondoMago() {
   const [nowTick,        setNowTick]        = useState(0);
   const [dailyCompletedDate, setDailyCompletedDate] = useState("");
   const [wrongStreak,    setWrongStreak]    = useState(0);
+  const [idleHint,       setIdleHint]       = useState(false);
   const [showHint,       setShowHint]       = useState(false);
   const [showFeedback,   setShowFeedback]   = useState(false);
   // multi-profile
@@ -2709,6 +2863,9 @@ export default function MondoMago() {
   const [fulminoPool,       setFulminoPool]       = useState([]); // shuffled visual_tap challenges
   const [fulminoRunning,    setFulminoRunning]    = useState(false);
   const [obSlide,           setObSlide]           = useState(0);
+  const [screenFlash,  setScreenFlash]  = useState(null);   // null | "ok" | "bad"
+  const [comboPopup,   setComboPopup]   = useState(null);   // null | string
+  const [wrongIdx,     setWrongIdx]     = useState(null);   // null | button index
 
   const comp  = COMPANIONS.find(c => c.id === companion);
   const arc   = world ? STORY_ARCS[world.id] : null;
@@ -2743,25 +2900,29 @@ export default function MondoMago() {
     navigator.vibrate?.(50);
     setMissionsDone(d => [...d, id]);
     setTotalStars(s => s + 2);
-    setConfetti(true); setTimeout(() => setConfetti(false), 1600);
+    triggerConfetti();
   }
 
   // Animation triggers
+  const COMBO_MILESTONES = { 3:"🔥 3 di fila!", 5:"⚡ 5 COMBO!", 7:"🌟 7 in serie!", 10:"🏆 10 PERFETTI!" };
   function triggerOK(pts) {
     const actualPts = doubleStar ? pts * 2 : pts;
     if (doubleStar) setDoubleStar(false);
     navigator.vibrate?.(combo >= 4 ? [30,20,30,20,80] : combo >= 2 ? [40,20,60] : [50]);
     setSessionStars(s => s + actualPts); setTotalStars(s => s + actualPts);
+    setScreenFlash("ok"); setTimeout(() => setScreenFlash(null), 420);
     setCombo(c => {
       const nc = c + 1;
       if (nc >= 5) { SFX.combo(); setCompMood("excited"); }
       else if (nc >= 3) { SFX.combo(); setCompMood("excited"); }
       else { SFX.correct(); setCompMood("happy"); }
+      const milestone = COMBO_MILESTONES[nc] || (nc >= 10 && nc % 5 === 0 ? `🔥 ${nc} di fila!` : null);
+      if (milestone) { setComboPopup(milestone); setTimeout(() => setComboPopup(null), 1700); }
       return nc;
     });
     setAutoAdvancing(true);
     setStarPop(true);  setTimeout(() => setStarPop(false),  700);
-    setConfetti(true); setTimeout(() => setConfetti(false), 1600);
+    triggerConfetti();
     setCompAnim("bounce"); setTimeout(() => setCompAnim("float"), 900);
     setTimeout(() => setCompMood("idle"), 2000);
     // Mystery box: every 5 correct answers in session
@@ -2784,7 +2945,8 @@ export default function MondoMago() {
     navigator.vibrate?.([60, 30, 60]);
     SFX.wrong();
     setCombo(0); setAutoAdvancing(false); setCompMood("sad");
-    setCardAnim("shake"); setTimeout(() => setCardAnim(""), 500);
+    setScreenFlash("bad"); setTimeout(() => setScreenFlash(null), 420);
+    setTimeout(() => setCardAnim(""), 500);
     setCompAnim("wiggle"); setTimeout(() => setCompAnim("float"), 600);
     setTimeout(() => setCompMood("idle"), 1200);
   }
@@ -2812,6 +2974,7 @@ export default function MondoMago() {
       }
     } else {
       triggerBAD();
+      setWrongIdx(idx); setTimeout(() => setWrongIdx(null), 520);
       setWrongStreak(w => w + 1);
       if (comp) {
         const msg = comp.onWrong();
@@ -2920,8 +3083,8 @@ export default function MondoMago() {
 
   function next() {
     setAutoAdvancing(false); setBurstPos(null); setGuidedTap(false);
-    setFeedbackMsg(""); setShowHint(false); setWrongStreak(0); setShowFeedback(false);
-    setDragPicked(null); setDragPlaced({});
+    setFeedbackMsg(""); setShowHint(false); setWrongStreak(0); setShowFeedback(false); setIdleHint(false); setIdleHint(false);
+    setDragPicked(null); setDragPlaced({}); setWrongIdx(null); setScreenFlash(null); setComboPopup(null);
     if (ci < challenges.length - 1) {
       setCi(i => i + 1);
       setSelected(null); setStoryChoice(null); setSeqTaps([]); setSeqError(false); setDragPicked(null); setDragPlaced({});
@@ -2956,7 +3119,7 @@ export default function MondoMago() {
         };
         return [...prev.slice(-59), entry]; // keep last 60 sessions
       });
-      setConfetti(true); setTimeout(() => setConfetti(false), 2800);
+      triggerConfetti(true);
       setCompMood("celebrating"); setTimeout(() => setCompMood("idle"), 3500);
       navigate("world_end");
     }
@@ -2980,7 +3143,7 @@ export default function MondoMago() {
     stopMusic();
     setWorld(w); setChallenges(list); setCi(0);
     setSelected(null); setStoryChoice(null); setSeqTaps([]); setSeqError(false); setDragPicked(null); setDragPlaced({});
-    setFeedbackMsg(""); setShowHint(false); setWrongStreak(0); setShowFeedback(false);
+    setFeedbackMsg(""); setShowHint(false); setWrongStreak(0); setShowFeedback(false); setIdleHint(false);
     setSessionStars(0); setResults([]); setCombo(0);
     setCompMood("idle"); setCompTalking(false); setAutoAdvancing(false);
     setMysteryBox(null); setDoubleStar(false); setBurstPos(null); setGuidedTap(false); setBossHPAnimated(100);
@@ -2994,7 +3157,7 @@ export default function MondoMago() {
     setWorld({ id:"daily", name:"Sfida del Giorno", emoji:"🌟", color:"#FFD95A", unlocked:true });
     setChallenges(list); setCi(0);
     setSelected(null); setStoryChoice(null); setSeqTaps([]); setSeqError(false); setDragPicked(null); setDragPlaced({});
-    setFeedbackMsg(""); setShowHint(false); setWrongStreak(0); setShowFeedback(false);
+    setFeedbackMsg(""); setShowHint(false); setWrongStreak(0); setShowFeedback(false); setIdleHint(false);
     setSessionStars(0); setResults([]); setCombo(0);
     setCompMood("idle"); setCompTalking(false); setAutoAdvancing(false);
     setMysteryBox(null); setDoubleStar(false); setBurstPos(null); setGuidedTap(false); setBossHPAnimated(100);
@@ -3185,6 +3348,48 @@ export default function MondoMago() {
     }
   }, [screen, ci, done, tutorialSeen]); // eslint-disable-line
 
+  // Companion alive on map — cycles expressions every ~9s to feel "live"
+  useEffect(() => {
+    if (screen !== "map") return;
+    const moods = ["happy", "thinking", "idle", "idle"];
+    const id = setInterval(() => {
+      const m = moods[Math.floor(Math.random() * moods.length)];
+      setCompMood(m);
+      setTimeout(() => setCompMood("idle"), 1600);
+    }, 8500 + Math.random() * 2000);
+    return () => clearInterval(id);
+  }, [screen]); // eslint-disable-line
+
+  // Companion "thinking" mood when a new challenge loads, returns to idle after 1.8s
+  useEffect(() => {
+    if (screen !== "challenge" || done) return;
+    setCompMood("thinking");
+    const t = setTimeout(() => setCompMood("idle"), 1800);
+    return () => clearTimeout(t);
+  }, [screen, ci]); // eslint-disable-line
+
+  // Companion idle ambient — periodic expression change while waiting for answer
+  useEffect(() => {
+    if (screen !== "challenge" || done) return;
+    const delay = 10000 + Math.random() * 4000;
+    const id = setInterval(() => {
+      setCompMood(m => {
+        if (m !== "idle") return m;
+        setTimeout(() => setCompMood(cur => cur === "thinking" ? "idle" : cur), 1500);
+        return "thinking";
+      });
+    }, delay);
+    return () => clearInterval(id);
+  }, [screen, ci, done]); // eslint-disable-line
+
+  // Passive hint: after 5s of inactivity on a challenge, pulse the correct button
+  useEffect(() => {
+    if (screen !== "challenge" || done) return;
+    setIdleHint(false);
+    const t = setTimeout(() => setIdleHint(true), 5000);
+    return () => { clearTimeout(t); setIdleHint(false); };
+  }, [screen, ci, done]); // eslint-disable-line
+
   // Cosmetics unlock check
   useEffect(() => {
     if (!childName || !activeProfileId) return;
@@ -3315,6 +3520,7 @@ export default function MondoMago() {
     } else if (screen === "world_end") {
       stopMusic();
       SFX.victory();
+      triggerConfetti(true);
       if (arc) setTimeout(() => speak(arc.outro, 0.85), 1400);
     } else if (screen === "map" || screen === "session_stats") {
       stopMusic();
@@ -3326,7 +3532,6 @@ export default function MondoMago() {
     <>
       <AnimationStyles />
       <InstallBanner />
-      <Confetti active={confetti} />
       {newAchievements.length > 0 && (() => {
         const a = ACHIEVEMENTS.find(x => x.id === newAchievements[0]);
         return (
@@ -3397,25 +3602,61 @@ export default function MondoMago() {
       )}
       {/* [A5] Correct burst particles */}
       <CorrectBurst pos={burstPos} particles={world ? (WORLD_PARTICLES[world.id] || ["⭐","✨","💫"]) : ["⭐","✨","💫"]} />
+      {/* Screen flash overlay — green on correct, red on wrong */}
+      {screenFlash && (
+        <div style={{
+          position:"fixed", inset:0, zIndex:490, pointerEvents:"none",
+          background: screenFlash === "ok" ? "#22C55E" : "#EF4444",
+          animation: screenFlash === "ok" ? "screenFlashOk .42s ease-out both" : "screenFlashBad .42s ease-out both",
+        }} />
+      )}
+      {/* Combo milestone popup */}
+      {comboPopup && (
+        <div style={{position:"fixed",inset:0,zIndex:510,pointerEvents:"none",display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <div style={{
+            fontFamily:"Fredoka One, Nunito, sans-serif",
+            fontSize: youngBg ? 36 : 42,
+            fontWeight:900,
+            color:"white",
+            textShadow:"0 4px 20px rgba(0,0,0,.55), 0 0 40px rgba(249,115,22,.7)",
+            animation:"comboZoom 1.7s cubic-bezier(.34,1.56,.64,1) both",
+            background:"rgba(0,0,0,.35)",
+            borderRadius:28,
+            padding:"16px 32px",
+            letterSpacing:1,
+          }}>{comboPopup}</div>
+        </div>
+      )}
       {/* [B4] Guided hand — first challenge ever */}
       {guidedTap && ch && (ch.format === "multiple_choice" || ch.format === "visual_tap") && (
-        <div style={{position:"fixed",bottom:"14%",left:"50%",transform:"translateX(-50%)",zIndex:800,pointerEvents:"none",textAlign:"center",userSelect:"none"}}>
-          {/* ripple circles */}
-          <div style={{position:"absolute",top:"50%",left:"50%",width:64,height:64,borderRadius:"50%",
-            background:"rgba(167,139,250,.55)",marginLeft:-32,marginTop:-32,
-            animation:"tapRipple 1.2s ease-out infinite"}} />
-          <div style={{position:"absolute",top:"50%",left:"50%",width:64,height:64,borderRadius:"50%",
-            background:"rgba(167,139,250,.35)",marginLeft:-32,marginTop:-32,
-            animation:"tapRipple2 1.2s ease-out infinite",animationDelay:".35s"}} />
-          {/* hand */}
-          <div style={{fontSize:56,animation:"tapGesture 1.2s ease-in-out infinite",display:"inline-block",
-            filter:"drop-shadow(0 4px 12px rgba(167,139,250,.8))",position:"relative",zIndex:1}}>
+        <div style={{position:"fixed",bottom:"12%",left:"50%",transform:"translateX(-50%)",zIndex:800,pointerEvents:"none",textAlign:"center",userSelect:"none"}}>
+          {/* target pulse ring */}
+          <div style={{position:"absolute",top:"30%",left:"50%",width:80,height:80,borderRadius:"50%",
+            border:"3px solid rgba(167,139,250,.9)",marginLeft:-40,marginTop:-40,
+            animation:"tapRipple 1.1s ease-out infinite"}} />
+          <div style={{position:"absolute",top:"30%",left:"50%",width:80,height:80,borderRadius:"50%",
+            border:"2px solid rgba(167,139,250,.5)",marginLeft:-40,marginTop:-40,
+            animation:"tapRipple 1.1s ease-out infinite",animationDelay:".4s"}} />
+          {/* hand descending + tapping */}
+          <div style={{
+            fontSize:64,
+            animation:"tapGesture 1.3s cubic-bezier(.34,1.56,.64,1) infinite",
+            display:"inline-block",
+            filter:"drop-shadow(0 6px 18px rgba(167,139,250,1)) drop-shadow(0 2px 6px rgba(0,0,0,.5))",
+            position:"relative",zIndex:1,
+            marginBottom:4,
+          }}>
             👆
           </div>
-          <div style={{background:"rgba(0,0,0,.75)",backdropFilter:"blur(6px)",
-            borderRadius:20,padding:"6px 18px",marginTop:8,color:"white",fontSize:13,fontWeight:700,
-            border:"1px solid rgba(255,255,255,.15)",display:"inline-block"}}>
-            Tocca una risposta!
+          <div style={{
+            background:"rgba(124,58,237,.92)",backdropFilter:"blur(8px)",
+            borderRadius:24,padding:"8px 22px",marginTop:4,color:"white",
+            fontSize:youngBg?16:14,fontFamily:FF,fontWeight:800,
+            border:"2px solid rgba(167,139,250,.6)",
+            boxShadow:"0 4px 20px rgba(124,58,237,.5)",
+            display:"inline-block",animation:"pulse 1.8s ease-in-out infinite",
+          }}>
+            👆 Tocca una risposta!
           </div>
         </div>
       )}
@@ -3696,6 +3937,8 @@ export default function MondoMago() {
     return (
     <div key="map" className={screenAnim} style={{minHeight:"100dvh",background:mt.bg,color:mt.fg,padding:22,paddingBottom:"max(env(safe-area-inset-bottom,0px),22px)",position:"relative"}}>
       {G}
+      {/* StarField — dark mode only, adds cosmic depth */}
+      {!youngBg && <StarField />}
       {/* Seasonal background particles */}
       {season && (
         <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,overflow:"hidden"}}>
@@ -3733,14 +3976,10 @@ export default function MondoMago() {
         {comp && (
           <div onClick={() => navigate("profile")}
             style={{textAlign:"center",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,flexShrink:0}}>
-            <div style={{
-              width:72, height:72, borderRadius:"50%",
-              background:`radial-gradient(circle at 35% 30%, ${comp.color}33, ${comp.color}aa)`,
-              border:`3px solid ${comp.color}`,
-              boxShadow:`0 0 20px ${comp.color}88, 0 4px 16px rgba(0,0,0,.5)`,
-              display:"flex", alignItems:"center", justifyContent:"center",
-              fontSize:40, animation:compAnim,
-            }}>{comp.emoji}</div>
+            <div style={{position:"relative",width:72,height:72}}>
+              <CompanionAvatar c={comp} size={72} mood="idle" anim={compAnim} />
+              {!youngBg && <CompanionOrbit color={comp.color} />}
+            </div>
             <div style={{fontFamily:FF,fontSize:13,color:comp.color}}>{comp.name}</div>
           </div>
         )}
@@ -3771,10 +4010,17 @@ export default function MondoMago() {
             <div style={{flex:1,background:youngBg?"rgba(255,100,0,.1)":"rgba(249,115,22,.1)",borderRadius:20,padding:"14px 8px",textAlign:"center",border:youngBg?"1px solid rgba(255,100,0,.2)":"1px solid rgba(249,115,22,.2)"}}>
               <div style={{fontSize:22,animation:streak>=3?"pulse 1.4s ease-in-out infinite":"none"}}>{flames}</div>
               <div style={{fontFamily:FF,fontSize:24,color:"#FB923C",lineHeight:1}}>{streak}</div>
-              <div style={{display:"flex",gap:3,justifyContent:"center",marginTop:5}}>
-                {last7.map(d => (
-                  <div key={d} style={{width:7,height:7,borderRadius:"50%",background:playedDates.has(d)?"#F97316":youngBg?"rgba(0,0,0,.14)":"rgba(255,255,255,.12)"}} />
-                ))}
+              <div style={{display:"flex",gap:4,justifyContent:"center",marginTop:6}}>
+                {last7.map(d => {
+                  const dayLbl = ["D","L","M","M","G","V","S"][new Date(d+"T12:00:00").getDay()];
+                  const played = playedDates.has(d);
+                  return (
+                    <div key={d} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
+                      <div style={{fontSize:8,fontWeight:800,color:played?"#F97316":youngBg?"rgba(0,0,0,.3)":"rgba(255,255,255,.3)",lineHeight:1}}>{dayLbl}</div>
+                      <div style={{width:10,height:10,borderRadius:"50%",background:played?"#F97316":youngBg?"rgba(0,0,0,.14)":"rgba(255,255,255,.12)"}} />
+                    </div>
+                  );
+                })}
               </div>
             </div>
           );
@@ -3799,8 +4045,9 @@ export default function MondoMago() {
             </div>
             {mapToNext > 0 && (
               <div>
-                <div style={{background:mt.xpBarBg,borderRadius:8,height:12,overflow:"hidden",border:youngBg?"1px solid rgba(0,0,0,.05)":"1px solid rgba(255,255,255,.06)"}}>
+                <div style={{background:mt.xpBarBg,borderRadius:8,height:12,overflow:"hidden",border:youngBg?"1px solid rgba(0,0,0,.05)":"1px solid rgba(255,255,255,.06)",position:"relative"}}>
                   <div style={{background:"linear-gradient(90deg,#F59E0B,#FFD700,#FFF08A)",height:"100%",borderRadius:8,width:`${mapPct}%`,transition:"width 1.2s cubic-bezier(.22,1,.36,1)",boxShadow:"0 0 8px #FFD70088"}} />
+                  {!youngBg && mapPct > 10 && <div className="xp-glint" />}
                 </div>
                 <div style={{fontSize:10,opacity:.35,marginTop:4,textAlign:"right"}}>{Math.round(mapPct)}%</div>
               </div>
@@ -3873,10 +4120,10 @@ export default function MondoMago() {
               flex:1,
               background:i===0?mt.tabAct:mt.tabInact,
               border:i===0?mt.tabActBd:mt.tabInactBd,
-              borderRadius:16,padding:"12px 4px",
+              borderRadius:16,padding:"14px 10px",minHeight:58,
               color:i===0?mt.tabActFg:mt.tabInactFg,
               fontFamily:FF,fontSize:13,cursor:"pointer",
-              display:"flex",flexDirection:"column",alignItems:"center",gap:3,
+              display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:3,
             }}>
             <Icon c={i===0?mt.tabActFg:mt.tabInactFg} s={22}/>
             <div>{label}</div>
@@ -3959,7 +4206,7 @@ export default function MondoMago() {
           const locked = !w.unlocked;
           return (
             <button key={w.id} onClick={() => locked ? speak(`Guadagna ancora ${w.starsNeeded - totalStars} stelle per aprire ${w.name}!`) : startWorld(w)}
-              className="slide-up"
+              className={`slide-up${locked?"":" world-card-btn"}`}
               disabled={locked}
               style={{
                 background:locked ? mt.wLocked : mt.wCard,
@@ -3969,11 +4216,12 @@ export default function MondoMago() {
                 color:mt.fg,
                 display:"flex",alignItems:"center",gap:18,textAlign:"left",
                 boxShadow:locked?"none":has
-                  ? `0 6px 20px ${w.color}33`
-                  : `0 4px 14px ${w.color}22`,
+                  ? `0 8px 28px ${w.color}44`
+                  : `0 4px 20px ${w.color}28`,
                 opacity:locked?.45:1,
                 animationDelay:`${i*.06}s`,
                 position:"relative",overflow:"hidden",
+                transition:"transform .16s ease, box-shadow .16s ease",
               }}>
               {/* WorldScene illustrated background */}
               {!locked && <div style={{position:"absolute",inset:0,borderRadius:26,overflow:"hidden",opacity:.22,pointerEvents:"none"}}><WorldScene worldId={w.id} variant="card" /></div>}
@@ -3981,6 +4229,8 @@ export default function MondoMago() {
               {!locked && <div style={{position:"absolute",inset:0,background:mt.wOvl,borderRadius:26,pointerEvents:"none"}} />}
               {/* Shimmer accent for completed */}
               {has && !locked && <div style={{position:"absolute",top:0,right:0,width:60,height:"100%",background:`linear-gradient(90deg,transparent,${w.color}22)`,borderRadius:"0 26px 26px 0",pointerEvents:"none"}} />}
+              {/* Animated shimmer sweep */}
+              {!locked && !youngBg && <div className="world-shimmer" style={{animationDelay:`${i*0.55}s`}} />}
               {/* World icon */}
               <div style={{
                 width:68,height:68,borderRadius:20,flexShrink:0,
@@ -4224,6 +4474,7 @@ export default function MondoMago() {
       <div key={`ch-${ci}`} className={screenAnim} style={{minHeight:"100dvh",background:youngBg?"linear-gradient(180deg,#FFF8EC,#F0EAFF)":ch.isBoss?`linear-gradient(135deg,#1a0808,#3a0808)`:`linear-gradient(180deg,#12102a,#1a1a2e)`,color:youngBg?"#1a1a2e":"white",padding:20,display:"flex",flexDirection:"column",position:"relative"}}>
         {G}
         <WorldBg worldId={world?.id} />
+        {!youngBg && <WorldAmbient worldId={world?.id} />}
         {/* Session time limit overlay */}
         {timeLimit > 0 && sessionStart > 0 && Math.floor((Date.now() - sessionStart) / 60000) >= timeLimit && (
           <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.88)",zIndex:1001,display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
@@ -4322,7 +4573,10 @@ export default function MondoMago() {
               height:"100%", borderRadius:50,
               width:`${progressPct}%`,
               transition:"width .5s cubic-bezier(.22,1,.36,1)",
-              boxShadow:youngBg?"0 2px 6px rgba(255,82,82,.35)":"0 2px 6px rgba(34,197,94,.35)",
+              boxShadow: done && isCorrect && ci === challenges.length-1
+                ? "0 0 14px rgba(255,215,0,.9), 0 2px 6px rgba(34,197,94,.35)"
+                : youngBg?"0 2px 6px rgba(255,82,82,.35)":"0 2px 6px rgba(34,197,94,.35)",
+              animation: done && isCorrect && ci === challenges.length-1 ? "pulse .55s ease-in-out 3" : "none",
             }} />
           </div>
           <div style={{fontSize:11,fontWeight:900,color:youngBg?"#666":"rgba(255,255,255,.5)",whiteSpace:"nowrap",minWidth:32,textAlign:"right"}}>
@@ -4663,20 +4917,23 @@ export default function MondoMago() {
             )}
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:(isVis||isWordPic)?14:youngBg?14:10}}>
               {ch.options.map((opt,idx) => {
-                let bg = "rgba(255,255,255,.09)", border = "rgba(255,255,255,.14)";
+                let bg = "rgba(255,255,255,.13)", border = "rgba(255,255,255,.22)";
                 let correct = false, wrong = false;
                 const isHinted = showHint && idx === ch.correct && !done;
-                if (youngBg && !done && !isHinted) { bg=youngColors[idx%4]+"22"; border=youngColors[idx%4]; }
-                if (isHinted) { bg="rgba(255,213,0,.12)"; border="#FFD95A88"; }
+                const isAutoHint = (wrongStreak >= 2 || idleHint) && idx === ch.correct && !done && !showHint;
+                if (youngBg && !done && !isHinted && !isAutoHint) { bg=youngColors[idx%4]+"22"; border=youngColors[idx%4]; }
+                if (isHinted)    { bg="rgba(255,213,0,.12)"; border="#FFD95A88"; }
+                if (isAutoHint)  { border=`${comp?.color||"#7C3AED"}88`; }
                 if (done) {
                   if (idx === ch.correct)    { bg=youngBg?"#22C55E":"rgba(34,197,94,.35)";  border="#22C55E"; correct=true; }
                   else if (idx === selected) { bg=youngBg?"#FF5252":"rgba(239,68,68,.35)";  border="#EF4444"; wrong=true; }
                   else if (youngBg) { bg="rgba(0,0,0,.04)"; border="rgba(0,0,0,.08)"; }
                 }
                 return (
-                  <button key={idx} onClick={(e) => answerMC(idx, e)}
-                    className={`${(isVis||isWordPic||isAlpha)?"ans-vis":"ans-btn"}${correct?" correct-flash":""}`}
+                  <button key={`${ci}-${idx}`} onClick={(e) => answerMC(idx, e)}
+                    className={`${(isVis||isWordPic||isAlpha)?"ans-vis":"ans-btn"}${!done?" ans-btn-idle ans-enter":""}${correct?" correct-flash":""}${wrongIdx===idx?" shake":""}`}
                     style={{
+                      animationDelay: !done ? `${idx * 80}ms` : undefined,
                       background:bg, border:`3px solid ${border}`,
                       borderRadius: (isVis||isWordPic||isAlpha) ? 28 : youngBg ? 22 : 18,
                       color: youngBg ? (done && (correct||wrong) ? "white" : youngColors[idx%4]) : "white",
@@ -4689,7 +4946,8 @@ export default function MondoMago() {
                       padding: (isVis||isWordPic) ? "10px 4px 8px" : isAlpha ? 0 : "16px 12px",
                       gap: (isVis||isWordPic) ? 4 : 0,
                       transform: wrong ? "scale(0.97)" : correct ? "scale(1.04)" : "scale(1)",
-                      boxShadow: youngBg&&!done ? `0 4px 14px ${youngColors[idx%4]}44` : isHinted ? "0 0 16px rgba(255,213,0,.4)" : correct ? "0 0 20px rgba(34,197,94,.4)" : "none",
+                      boxShadow: youngBg&&!done ? `0 4px 14px ${youngColors[idx%4]}44` : isHinted ? "0 0 16px rgba(255,213,0,.4)" : isAutoHint ? `0 0 14px ${comp?.color||"#7C3AED"}55` : correct ? "0 0 20px rgba(34,197,94,.4)" : (done&&wrong) ? "0 0 18px rgba(239,68,68,.55)" : "none",
+                      animation: isAutoHint ? "pulse 1.2s ease-in-out infinite" : undefined,
                       position:"relative",
                       overflow:"hidden",
                     }}>
@@ -4742,7 +5000,7 @@ export default function MondoMago() {
                 }}>
                   {isCorrect
                     ? (isDrag ? "Abbinamenti perfetti!" : isSeq ? "Ordine perfetto!" : "Perfetto!")
-                    : "Quasi ci sei!"}
+                    : (["Quasi ci sei!","Riprova, ce la fai!","Non mollare!","Ancora un tentativo!","Ci siamo quasi!","Dai, una volta ancora!"])[Math.min((wrongStreak||1)-1,5)]}
                 </div>
                 {/* Story narrative outcome */}
                 {isStory && storyChoice?.outcome && (
@@ -4755,6 +5013,18 @@ export default function MondoMago() {
                   <div style={{fontSize:13,fontWeight:700,color:youngBg?"#92400E":"rgba(255,255,255,.8)"}}>
                     Risposta giusta:{" "}
                     <span style={{color:youngBg?"#D97706":"#FCD34D"}}>{ch.options[ch.correct]}</span>
+                  </div>
+                )}
+                {/* Skill-based educational tip after wrong answer */}
+                {!isCorrect && ch.type && (
+                  <div style={{
+                    fontSize:12,lineHeight:1.5,marginTop:6,
+                    color:youngBg?"#78350F":"rgba(255,255,255,.65)",
+                    background:youngBg?"rgba(251,191,36,.15)":"rgba(255,255,255,.07)",
+                    borderRadius:10,padding:"5px 10px",
+                    borderLeft:`3px solid ${youngBg?"#FBBF24":"rgba(251,191,36,.5)"}`,
+                  }}>
+                    {getSkillTip(ch.type)}
                   </div>
                 )}
                 {/* Companion message */}
@@ -4792,29 +5062,29 @@ export default function MondoMago() {
     return (
       <div key="world_end" className={screenAnim} style={{minHeight:"100dvh",background:`linear-gradient(160deg,#1a1a2e,${arc.color}55,#1a1a2e)`,color:"white",padding:28,paddingBottom:"max(env(safe-area-inset-bottom,0px),28px)",display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center"}}>
         {G}
-        <div className="pop-in" style={{fontSize:72,marginBottom:4}}>{arc.reward_emoji}</div>
-        <div className="bounce" style={{fontSize:64,marginBottom:14}}>{world.emoji}</div>
-        <h2 className="slide-up" style={{fontFamily:FF,fontSize:28,color:"#FFD95A",marginBottom:12}}>Mondo completato! 🏆</h2>
-        <p className="fade-in" style={{fontSize:15,lineHeight:1.75,opacity:.9,marginBottom:24,maxWidth:360,animationDelay:".1s"}}>{arc.outro}</p>
+        <div className="pop-in" style={{fontSize:72,marginBottom:4,animationDelay:"0s"}}>{arc.reward_emoji}</div>
+        <div className="bounce" style={{fontSize:64,marginBottom:14,animationDelay:".25s"}}>{world.emoji}</div>
+        <h2 className="slide-up" style={{fontFamily:FF,fontSize:28,color:"#FFD95A",marginBottom:12,animationDelay:".5s"}}> Mondo completato! 🏆</h2>
+        <p className="fade-in" style={{fontSize:15,lineHeight:1.75,opacity:.9,marginBottom:24,maxWidth:360,animationDelay:".7s"}}>{arc.outro}</p>
         {comp && (
-          <div className="slide-up" style={{background:"rgba(255,255,255,.1)",borderRadius:20,padding:"12px 18px",marginBottom:22,fontSize:14,maxWidth:360,animationDelay:".2s",display:"flex",alignItems:"center",gap:12}}>
+          <div className="slide-up" style={{background:"rgba(255,255,255,.1)",borderRadius:20,padding:"12px 18px",marginBottom:22,fontSize:14,maxWidth:360,animationDelay:".95s",display:"flex",alignItems:"center",gap:12}}>
             <CompanionAvatar c={comp} size={38} />
             <span>{comp.onWorld()}</span>
           </div>
         )}
-        <div className="pop-in glow" style={{background:"rgba(255,215,0,.15)",borderRadius:24,padding:"20px 32px",marginBottom:24,border:"2px solid rgba(255,215,0,.45)",animationDelay:".3s"}}>
+        <div className="pop-in glow" style={{background:"rgba(255,215,0,.15)",borderRadius:24,padding:"20px 32px",marginBottom:24,border:"2px solid rgba(255,215,0,.45)",animationDelay:"1.2s"}}>
           <div style={{fontSize:50}}>{arc.reward_emoji}</div>
           <div style={{fontFamily:FF,fontSize:20,marginTop:8,color:"#FFD95A"}}>{arc.reward_name}</div>
           <div style={{fontSize:12,opacity:.65,marginTop:4}}>Sbloccato per {comp?.name}!</div>
         </div>
         {world?.id === "daily" && (
-          <div className="pop-in glow" style={{background:"rgba(255,213,0,.18)",borderRadius:20,padding:"12px 28px",marginBottom:16,border:"2px solid rgba(255,213,0,.5)",fontSize:16,fontWeight:900,color:"#FFD95A",animationDelay:".35s"}}>
+          <div className="pop-in glow" style={{background:"rgba(255,213,0,.18)",borderRadius:20,padding:"12px 28px",marginBottom:16,border:"2px solid rgba(255,213,0,.5)",fontSize:16,fontWeight:900,color:"#FFD95A",animationDelay:"1.35s"}}>
             🌟 +3 stelle bonus!
           </div>
         )}
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:10,marginBottom:20,width:"100%",maxWidth:360}}>
           {[{i:"⭐",v:sessionStars,l:"stelle"},{i:"✅",v:correct,l:"giuste"},{i:"🎯",v:`${pct}%`,l:"precisione"},{i:"🔥",v:combo,l:"combo max"}].map((s,idx) => (
-            <div key={idx} className="pop-in" style={{textAlign:"center",background:"rgba(255,255,255,.08)",borderRadius:16,padding:"12px 6px",animationDelay:`${idx*.06}s`}}>
+            <div key={idx} className="pop-in" style={{textAlign:"center",background:"rgba(255,255,255,.08)",borderRadius:16,padding:"12px 6px",animationDelay:`${1.55 + idx*.1}s`}}>
               <div style={{fontSize:24}}>{s.i}</div>
               <div style={{fontFamily:FF,fontSize:20,marginTop:4}}>{s.v}</div>
               <div style={{opacity:.5,fontSize:10,marginTop:2}}>{s.l}</div>
@@ -4825,7 +5095,7 @@ export default function MondoMago() {
         {(() => {
           const trained = [...new Set(results.map(r => getSkill(r.type)))];
           return trained.length > 0 && (
-            <div className="fade-in" style={{background:"rgba(255,255,255,.07)",borderRadius:18,padding:"12px 18px",marginBottom:20,width:"100%",maxWidth:360,textAlign:"left"}}>
+            <div className="fade-in" style={{background:"rgba(255,255,255,.07)",borderRadius:18,padding:"12px 18px",marginBottom:20,width:"100%",maxWidth:360,textAlign:"left",animationDelay:"1.9s"}}>
               <div style={{fontSize:11,opacity:.5,fontWeight:800,marginBottom:8,letterSpacing:1}}>ABILITÀ ALLENATE OGGI</div>
               <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
                 {trained.map(sk => {
@@ -4840,7 +5110,7 @@ export default function MondoMago() {
             </div>
           );
         })()}
-        <div style={{width:"100%",maxWidth:360,marginBottom:12}}>
+        <div className="fade-in" style={{width:"100%",maxWidth:360,marginBottom:12,animationDelay:"2.1s"}}>
           {/* Skills breakdown */}
           <div style={{background:"rgba(255,255,255,.07)",borderRadius:18,padding:"14px 16px",marginBottom:12}}>
             <div style={{fontSize:11,opacity:.5,fontWeight:800,marginBottom:10,letterSpacing:1}}>ABILITÀ ALLENATE</div>
