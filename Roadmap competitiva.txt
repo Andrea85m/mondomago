@@ -1,0 +1,23 @@
+  Roadmap realistica per il mercato
+
+  Fase A — Market Entry (4-6 settimane, costo ~500-1000€)
+  1. Voce neurale di qualità (Azure/Google TTS in app, non browser) o voice actor (Per aggiornare l'audio se aggiungi nuovi contenuti: python3 scripts/gen-tts.py)
+  2. Privacy policy + COPPA-K compliance
+  3. Multi-profilo (2-3 bambini)
+  4. Onboarding tutorial garantito
+  5. Icone PNG native per manifest
+  6. Achievement system base (10 badge)
+
+  Fase B — Crescita (6-10 settimane)
+  1. 2 mondi aggiuntivi → 200+ sfide
+  2. Generazione procedurale domande matematiche
+  3. Illustrazione 4 personaggi base (outsourcing)
+  4. Drag-and-drop format per 3-4 anni
+  5. Push notifications per re-engagement
+
+  Fase C — Dominanza IT (3-4 mesi)
+  1. Personalizzazione compagno (cosmesi)
+  2. Sistema livelli globale
+  3. Dashboard genitori con report settimanale email
+  4. Integrazione scuola (docente può assegnare sfide)
+  5. Stagioni / eventi (Natale, Pasqua, inizio scuola)

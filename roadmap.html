@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MondoMago — Roadmap Completa</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: #F4F0FF;
+    color: #1a1140;
+    padding: 40px 20px 80px;
+  }
+
+  .page { max-width: 860px; margin: 0 auto; }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, #1A1140, #4A2090);
+    border-radius: 28px;
+    padding: 40px;
+    text-align: center;
+    margin-bottom: 48px;
+    box-shadow: 0 8px 40px #1A114055;
+  }
+  .header h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 42px;
+    color: #FFD95A;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+  .header p {
+    color: #C97FFF;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .header .subtitle {
+    color: #ffffffaa;
+    font-size: 14px;
+    margin-top: 12px;
+    letter-spacing: 0;
+    text-transform: none;
+    font-weight: 400;
+  }
+
+  /* PHASE BLOCK */
+  .phase {
+    margin-bottom: 48px;
+    position: relative;
+  }
+
+  .phase-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .phase-number {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fredoka One', cursive;
+    font-size: 22px;
+    color: white;
+    flex-shrink: 0;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  }
+
+  .phase-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 24px;
+  }
+
+  .phase-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+
+  /* STEP CARDS */
+  .steps { display: flex; flex-direction: column; gap: 12px; }
+
+  .step {
+    background: white;
+    border-radius: 18px;
+    padding: 20px 24px;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    border-left: 5px solid transparent;
+    transition: transform 0.2s;
+  }
+  .step:hover { transform: translateX(4px); }
+
+  .step-icon {
+    font-size: 28px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .step-content { flex: 1; }
+
+  .step-title {
+    font-weight: 800;
+    font-size: 15px;
+    margin-bottom: 4px;
+  }
+
+  .step-desc {
+    font-size: 13px;
+    color: #555;
+    line-height: 1.6;
+  }
+
+  .step-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-top: 8px;
+  }
+
+  .step-check {
+    width: 28px;
+    height: 28px;
+    border: 2.5px solid #ddd;
+    border-radius: 8px;
+    flex-shrink: 0;
+    margin-top: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: all 0.2s;
+  }
+  .step-check:hover { border-color: #C97FFF; background: #F5EBFF; }
+  .step-check.done { background: #5DD87A; border-color: #5DD87A; color: white; }
+
+  /* SUB-STEPS */
+  .substeps {
+    margin-top: 10px;
+    padding-left: 8px;
+    border-left: 3px solid #f0e6ff;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .substep {
+    font-size: 12px;
+    color: #666;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    line-height: 1.5;
+  }
+  .substep::before {
+    content: "→";
+    color: #C97FFF;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+
+  /* SPECIAL BOX */
+  .info-box {
+    border-radius: 18px;
+    padding: 20px 24px;
+    margin-top: 16px;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  .info-box strong { font-weight: 800; }
+
+  /* CONNECTOR LINE */
+  .connector {
+    width: 3px;
+    height: 28px;
+    margin: 0 auto 0 25px;
+    border-radius: 3px;
+    opacity: 0.3;
+  }
+
+  /* COLORS PER PHASE */
+  /* Phase 1 — Validazione */
+  .p1 .phase-number { background: linear-gradient(135deg, #6EC6F5, #4A90D9); }
+  .p1 .phase-title { color: #2a6fc9; }
+  .p1 .phase-badge { background: #EBF7FF; color: #2a6fc9; }
+  .p1 .step { border-left-color: #6EC6F5; }
+  .p1 .step-title { color: #2a6fc9; }
+  .p1 .step-tag { background: #EBF7FF; color: #2a6fc9; }
+  .p1 .connector { background: #6EC6F5; }
+
+  /* Phase 2 — Prompt */
+  .p2 .phase-number { background: linear-gradient(135deg, #C97FFF, #9B40E0); }
+  .p2 .phase-title { color: #7B2FBE; }
+  .p2 .phase-badge { background: #F5EBFF; color: #7B2FBE; }
+  .p2 .step { border-left-color: #C97FFF; }
+  .p2 .step-title { color: #7B2FBE; }
+  .p2 .step-tag { background: #F5EBFF; color: #7B2FBE; }
+  .p2 .connector { background: #C97FFF; }
+
+  /* Phase 3 — Design */
+  .p3 .phase-number { background: linear-gradient(135deg, #FFD95A, #FF9900); }
+  .p3 .phase-title { color: #b86e00; }
+  .p3 .phase-badge { background: #FFF8E6; color: #b86e00; }
+  .p3 .step { border-left-color: #FFD95A; }
+  .p3 .step-title { color: #b86e00; }
+  .p3 .step-tag { background: #FFF8E6; color: #b86e00; }
+  .p3 .connector { background: #FFD95A; }
+
+  /* Phase 4 — Sviluppo */
+  .p4 .phase-number { background: linear-gradient(135deg, #FF6B3D, #CC3300); }
+  .p4 .phase-title { color: #CC3300; }
+  .p4 .phase-badge { background: #FFF0EB; color: #CC3300; }
+  .p4 .step { border-left-color: #FF6B3D; }
+  .p4 .step-title { color: #CC3300; }
+  .p4 .step-tag { background: #FFF0EB; color: #CC3300; }
+  .p4 .connector { background: #FF6B3D; }
+
+  /* Phase 5 — Testing */
+  .p5 .phase-number { background: linear-gradient(135deg, #5DD87A, #2aaa50); }
+  .p5 .phase-title { color: #1a8a3a; }
+  .p5 .phase-badge { background: #EBFFF0; color: #1a8a3a; }
+  .p5 .step { border-left-color: #5DD87A; }
+  .p5 .step-title { color: #1a8a3a; }
+  .p5 .step-tag { background: #EBFFF0; color: #1a8a3a; }
+  .p5 .connector { background: #5DD87A; }
+
+  /* Phase 6 — Lancio */
+  .p6 .phase-number { background: linear-gradient(135deg, #1A1140, #4A2090); }
+  .p6 .phase-title { color: #4A2090; }
+  .p6 .phase-badge { background: #F0E6FF; color: #4A2090; }
+  .p6 .step { border-left-color: #4A2090; }
+  .p6 .step-title { color: #4A2090; }
+  .p6 .step-tag { background: #F0E6FF; color: #4A2090; }
+  .p6 .connector { background: #4A2090; }
+
+  /* LEGEND */
+  .legend {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 40px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    background: white;
+    border-radius: 20px;
+    padding: 6px 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  }
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+  }
+
+  /* PROGRESS BAR */
+  .progress-section {
+    background: white;
+    border-radius: 20px;
+    padding: 24px 28px;
+    margin-bottom: 40px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  .progress-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 18px;
+    margin-bottom: 16px;
+    color: #1a1140;
+  }
+  .progress-bar-bg {
+    background: #f0e6ff;
+    border-radius: 99px;
+    height: 16px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, #C97FFF, #6EC6F5);
+    width: 0%;
+    transition: width 1s ease;
+  }
+  .progress-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    font-weight: 700;
+    color: #888;
+  }
+
+  /* NOW CTA BOX */
+  .cta-box {
+    background: linear-gradient(135deg, #1A1140, #4A2090);
+    border-radius: 24px;
+    padding: 32px;
+    text-align: center;
+    margin-top: 48px;
+    box-shadow: 0 8px 40px #1A114044;
+  }
+  .cta-box h3 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 26px;
+    color: #FFD95A;
+    margin-bottom: 12px;
+  }
+  .cta-box p {
+    color: #ffffffcc;
+    font-size: 14px;
+    line-height: 1.7;
+    max-width: 560px;
+    margin: 0 auto 24px;
+  }
+  .cta-step {
+    background: #ffffff18;
+    border-radius: 14px;
+    padding: 14px 20px;
+    margin: 8px 0;
+    color: white;
+    font-size: 13px;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 500px;
+    margin: 8px auto;
+  }
+  .cta-num {
+    background: #FFD95A;
+    color: #1a1140;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  @media print {
+    body { background: white; padding: 20px; }
+    .step:hover { transform: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <h1>🧙‍♂️ MondoMago</h1>
+    <p>Roadmap Completa di Progetto</p>
+    <div class="subtitle">Dal prototipo al lancio — tutte le attività in ordine</div>
+  </div>
+
+  <!-- LEGEND -->
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#6EC6F5"></div> Fase 1 — Validazione</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#C97FFF"></div> Fase 2 — Prompt AI</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#FFD95A"></div> Fase 3 — Design</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#FF6B3D"></div> Fase 4 — Sviluppo</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#5DD87A"></div> Fase 5 — Testing</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#4A2090"></div> Fase 6 — Lancio</div>
+  </div>
+
+  <!-- ======================== FASE 1 ======================== -->
+  <div class="phase p1">
+    <div class="phase-header">
+      <div class="phase-number">1</div>
+      <div>
+        <div class="phase-title">Validazione e Strategia
+          <span class="phase-badge">Da fare subito</span>
+        </div>
+      </div>
+    </div>
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-icon">✅</div>
+        <div class="step-content">
+          <div class="step-title">Analisi competitiva completata</div>
+          <div class="step-desc">LogicLike, Prodigy Math, Duolingo Kids, Khan Academy Kids, Lingokids analizzati. Gap di mercato identificati.</div>
+          <div class="step-tag">Già fatto ✓</div>
+        </div>
+        <div class="step-check done" onclick="toggleCheck(this)">✓</div>
+      </div>
+
+      <div class="step">
+        <div class="step-icon">🎯</div>
+        <div class="step-content">
+          <div class="step-title">Definire il target preciso</div>
+          <div class="step-desc">Scegliere su quale fascia d'età concentrarsi per la versione 1.0: consigliato 4–7 anni (mercato meno saturo, genitori più propensi all'acquisto).</div>
+          <div class="step-tag">Decisione strategica</div>
+          <div class="substeps">
+            <div class="substep">Creare 2-3 "personas" del bambino tipo (nome, età, cosa ama, difficoltà a scuola)</div>
+            <div class="substep">Creare 1-2 personas del genitore tipo (valori, timori, budget)</div>
+          </div>
+        </div>
+        <div class="step-check" onclick="toggleCheck(this)"></div>
+      </div>
+
+      <div class="step">
+        <div class="step-icon">💰</div>
+        <div class="step-content">
+          <div class="step-title">Definire il modello di business</div>
+          <div class="step-desc">Scegliere tra: freemium con abbonamento famiglia, one-time purchase, o licenza scuole. Questa scelta impatta tutta l'architettura dell'app.</div>
+          <div class="step-tag">Decisione strategica</div>
+          <div class="substeps">
+            <div class="substep">Consigliato: abbonamento famiglia €4,99/mese — zero FOMO sul bambino</div>
+            <div class="substep">Considerare anche licenza B2B per scuole dell'infanzia (mercato meno competitivo)</div>
+          </div>
+        </div>
+        <div class="step-check" onclick="toggleCheck(this)"></div>
+      </div>
+
+      <div class="step">
+        <div class="step-icon">📋</div>
+        <div class="step-content">
+          <div class="step-title">Definire il Core Loop dell'app</div>
+          <div class="step-desc">Documentare il ciclo esatto di una sessione tipo: dall'apertura dell'app alla chiusura. Questo documento guiderà tutto lo sviluppo successivo.</div>
+          <div class="step-tag">Documentazione</div>
+          <div class="substeps">
+            <div class="substep">Aprire app → saluto compagno → mondo del giorno → 3-5 sfide → ricompensa → report genitore</div>
+            <div class="substep">Definire durata sessione per fascia età: 10 min (3-4 anni) / 15 min (5-6) / 20 min (7-8) / 25 min (9-10)</div>
+          </div>
+        </div>
+        <div class="step-check" onclick="toggleCheck(this)"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======================== FASE 2 ======================== -->
+  <div class="phase p2">
+    <div class="phase-header">
+      <div class="phase-number">2</div>
+      <div>
+        <div class="phase-title">Sistema Prompt AI
+          <span class="phase-badge">Prossimo passo</span>
+        </div>
+      </div>
+    </div>
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-icon">📄</div>
+        <div class="step-content">
+          <div class="step-title">Scaricare il documento dei 5 prompt</div>
+          <div class="step-desc">Il file "MondoMago_Sistema_Prompt.md" è già pronto e disponibile in questa conversazione. Scaricarlo e tenerlo a portata di mano.</div>
+          <div class="step-tag">Già pronto ✓</div>
+        </div>
+        <div class="step-check done" onclick="toggleCheck(this)">✓</div>
+      </div>
+
+      <div class="step">
+        <div class="step-icon">💬</div>
+        <div class="step-content">
+          <div class="step-title">Aprire UNA nuova conversazione Claude</div>
+          <div class="step-desc">In una conversazione fresca, incollare i prompt nell'ordine corretto e simulare una sessione completa con il JSON di test di Sofia (6 anni).</div>
+          <div class="step-tag">Da fare subito</div>
+          <div class="substeps">
+            <div class="substep">Step 1: incolla il Prompt Orchestratore (copia dal documento)</div>
+            <div class="substep">Step 2: incolla i Prompt 2, 3, 4, 5 (Sfide, Compagno, Analisi, Genitore)</div>
+            <div class="substep">Step 3: invia il JSON di test incluso nel documento</div>
+            <div class="substep">Step 4: verifica che il sistema risponda in modo coerente e corretto</div>
+          </div>
+        </div>
+        <div class="step-check" onclick="toggleCheck(this)"></div>
+      </div>
+
+      <div class="step">
+        <div class="step-icon">🔧</div>
+        <div class="step-content">
+          <div class="step-title">Raffinare i prompt in base ai test</div>
+          <div class="step-desc">Dopo il primo test, identificare dove il sistema non risponde come atteso e modificare le regole nei prompt. Ripetere fino a ottenere un comportamento soddisfacente.</div>
+          <div class="step-tag">Iterazione</div>
+          <div class="substeps">
+            <div class="substep">Testare scenario: bambino di 4 anni, sbaglia 3 volte di fila (Agente Compagno deve gestire la frustrazione)</div>
+            <div class="substep">Testare scenario: sessione di 25 minuti, deve chiudersi automaticamente</div>
+            <div class="substep">Testare scenario: richiesta missione famiglia dal genitore</div>
+          </div>
+        </div>
+        <div class="step-check" onclick="toggleCheck(this)"></div>
+      </div>
+
+      <div class="step">
+        <div class="step-icon">🗣️</div>
+        <div class="step-content">
+          <div class="step-title">Validare i prompt con genitori reali</div>
+          <div class="step-desc">Mostrare gli output dell'Agente Compagno e dell'Agente Genitore a 3-5 genitori reali e raccogliere feedback. Il linguaggio è comprensibile? Il tono è quello giusto?</div>
+          <div class="step-tag">User research</div>
+        </div>
+        <div class="step-check" onclick="toggleCheck(this)"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======================== FASE 3 ======================== -->
+  <div class="phase p3">
+    <div class="phase-header">
+      <div class="phase-number">3</div>
+      <div>
+        <div class="phase-title">Design dell'Esperienza
+          <span class="phase-badge">In parallelo alla Fase 2</span>
+        </div>
+      </div>
+    </div>
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-icon">🎨</div>
+        <div class="step-content">
+          <div class="step-title">Identità visiva e sistema di design</div>
+          <div class="step-desc">Definire palette colori definitiva, tipografia, stile illustrativo dei personaggi e dei mondi. Il prototipo React è già un punto di partenza solido.</div>
+          <div class="step-tag">Design</div>
+          <div class="substeps">
+            <div class="substep">Illustrare i 4 compagni (Fiamma, Luna, Onde, Foglia) con uno stile coerente</div>
+            <div class="substep">Illustrare i 7 mondi narrativi (Foresta, Castello, Mercato...)</div>
+            <div class="substep">Creare il set di icone e UI elements per l'app</div>
+          </div>
+        </div>
+        <div class="step-check" onclick="toggleCheck(this)"></div>
+      </div>
+
+      <div class="step">
+        <div class="step-icon">📱</div>
+        <div class="step-content">
+          <div class="step-title">Wireframe di tutte le schermate</div>
+          <div class="step-desc">Disegnare il flusso completo dell'app: onboarding, home, missioni, sfide (per ogni tipo), compagno, skill tree, missioni famiglia, dashboard genitore.</div>
+          <div class="step-tag">UX Design</div>
+          <div class="substeps">
+            <div class="substep">Schermate core: ~15 (usa Figma, Sketch o anche carta)</div>
+            <div class="substep">Attenzione speciale alla dashboard genitore: deve essere leggibile in 30 secondi</div>
+            <div class="substep">Testare wireframe con bambini reali nella fascia 4-7 anni</div>
+          </div>
+        </div>
+        <div class="step-check" onclick="toggleCheck(this)"></div>
+      </div>
+
+      <div class="step">
+        <div class="step-icon">🔊</div>
+        <div class="step-content">
+          <div class="step-title">Design audio e micro-interazioni</div>
+          <div class="step-desc">L'audio è fondamentale per i bambini. Definire il set completo di suoni: feedback corretto/sbagliato, voce del compagno, musica per ogni mondo, suoni UI.</div>
+          <div class="step-tag">Audio Design</div>
+          <div class="substeps">
+            <div class="substep">Assumere o commissionare un voice actor per ogni compagno (opzionale per v1.0)</div>
+            <div class="substep">Creare musiche ambientali per i 7 mondi (loop di 60-90 secondi)</div>
+          </div>
+        </div>
+        <div class="step-check" onclick="toggleCheck(this)"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======================== FASE 4 ======================== -->
+  <div class="phase p4">
+    <div class="phase-header">
+      <div class="phase-number">4</div>
+      <div>
+        <div class="phase-title">Sviluppo Tecnico
+          <span class="phase-badge">Nucleo del progetto</span>
+        </div>
+      </div>
+    </div>
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-icon">🏗️</div>
+        <div class="step-content">
+          <div class="step-title">Scegliere lo stack tecnologico</div>
+          <div class="step-desc">Decisione fondamentale che impatta tutto: nativo (Swift/Kotlin), cross-platform (React Native, Flutter) o web app. Per una prima versione, React Native è il miglior bilanciamento.</div>
+          <div class="step-tag">Architettura</div>
+          <div class="substeps">
+            <div class="substep">Consigliato: React Native + Expo (iOS + Android da un'unica codebase)</div>
+            <div class="substep">Backend: Node.js + database profilo bambino (Firebase o Supabase)</div>
+            <div class="substep">AI: Anthropic API con i 5 prompt già sviluppati</div>
+          </div>
+        </div>
+        <div class="step-check" onclick="toggleCheck(this)"></div>
+      </div>
+
+      <div class="step">
+        <div class="step-icon">🔌</div>
+        <div class="step-content">
+          <div class="step-title">Integrare l'Agente Sfide via API</div>
+          <div class="step-desc">Primo agente da integrare. Connettere il Prompt 2 all'API Anthropic e testare la generazione di sfide in tutte le combinazioni (5 tipi × 4 fasce età × 5 livelli = 100 varianti).</div>
+          <div class="step-tag">Sviluppo AI</div>
+        </div>
+        <div class="step-check" onclick="toggleCheck(this)"></div>
+      </div>
+
+      <div class="step">
+        <div class="step-icon">🐉</div>
+        <div class="step-content">
+          <div class="step-title">Integrare l'Agente Compagno via API</div>
+          <div class="step-desc">Secondo agente. Il più delicato perché deve mantenere la coerenza del personaggio in tutte le situazioni. Testare specialmente i casi di frustrazione del bambino.</div>
+          <div class="step-tag">Sviluppo AI</div>
+        </div>
+        <div class="step-check" onclick="toggleCheck(this)"></div>
+      </div>
+
+      <div class="step">
+        <div class="step-icon">📊</div>
+        <div class="step-content">
+          <div class="step-title">Implementare il sistema di progressione</div>
+          <div class="step-desc">Costruire il database del profilo bambino, il sistema XP, i livelli delle 5 abilità, la streak, lo skill tree e le milestone. È la memoria persistente dell'app.</div>
+          <div class="step-tag">Backend</div>
+          <div class="substeps">
+            <div class="substep">Schema DB: profilo_bambino, sessioni, sfide_storia, abilita_livelli</div>
+            <div class="substep">Implementare l'algoritmo di aggiornamento livelli dell'Agente Analisi</div>
+          </div>
+        </div>
+        <div class="step-check" onclick="toggleCheck(this)"></div>
+      </div>
+
+      <div class="step">
+        <div class="step-icon">👨‍👩‍👧</div>
+        <div class="step-content">
+          <div class="step-title">Dashboard genitore e Agente Genitore</div>
+          <div class="step-desc">Costruire la sezione genitori separata dall'interfaccia bambino. Integrare il Prompt 5 per report fine sessione, report settimanale e missioni famiglia.</div>
+          <div class="step-tag">Sviluppo</div>
+          <div class="substeps">
+            <div class="substep">La dashboard genitore deve essere accessibile solo con PIN/Face ID</div>
+            <div class="substep">Notifiche push intelligenti (non troppo frequenti)</div>
+          </div>
+        </div>
+        <div class="step-check" onclick="toggleCheck(this)"></div>
+      </div>
+
+      <div class="step">
+        <div class="step-icon">🔒</div>
+        <div class="step-content">
+          <div class="step-title">Sicurezza e conformità COPPA/GDPR</div>
+          <div class="step-desc">Le app per bambini sotto i 13 anni hanno requisiti legali molto specifici. È un passaggio obbligatorio prima della pubblicazione sugli store.</div>
+          <div class="step-tag">Legale / Compliance</div>
+          <div class="substeps">
+            <div class="substep">Nessun tracciamento pubblicitario (zero SDK di advertising)</div>
+            <div class="substep">Consenso genitoriale verificabile per la creazione del profilo</div>
+            <div class="substep">Possibilità di cancellare tutti i dati del bambino on-demand</div>
+            <div class="substep">Nessun acquisto in-app accessibile al bambino senza conferma genitore</div>
+          </div>
+        </div>
+        <div class="step-check" onclick="toggleCheck(this)"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======================== FASE 5 ======================== -->
+  <div class="phase p5">
+    <div class="phase-header">
+      <div class="phase-number">5</div>
+      <div>
+        <div class="phase-title">Testing e Ottimizzazione
+          <span class="phase-badge">Prima del lancio</span>
+        </div>
+      </div>
+    </div>
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-icon">👶</div>
+        <div class="step-content">
+          <div class="step-title">User testing con bambini reali</div>
+          <div class="step-desc">Sessioni di osservazione diretta con bambini nella fascia 4-7 anni. Non chiedere "ti è piaciuto?" ma osservare: si blocca? Si annoia? Sorride? Abbandona?</div>
+          <div class="step-tag">UX Research</div>
+          <div class="substeps">
+            <div class="substep">Obiettivo minimo: 5 bambini per fascia d'età (4-5 anni, 6-7 anni)</div>
+            <div class="substep">Metriche chiave: tempo sulla sfida, errori prima di abbandonare, espressione facciale</div>
+            <div class="substep">Anche i genitori presenti — osservare anche le loro reazioni</div>
+          </div>
+        </div>
+        <div class="step-check" onclick="toggleCheck(this)"></div>
+      </div>
+
+      <div class="step">
+        <div class="step-icon">🧪</div>
+        <div class="step-content">
+          <div class="step-title">Beta testing chiuso (50-100 famiglie)</div>
+          <div class="step-desc">Rilascio in beta tramite TestFlight (iOS) e Google Play Console (Android). Raccogliere dati di utilizzo reale per 3-4 settimane prima del lancio pubblico.</div>
+          <div class="step-tag">Beta</div>
+          <div class="substeps">
+            <div class="substep">Metriche da monitorare: DAU (utenti attivi giornalieri), streak medio, sessioni per settimana</div>
+            <div class="substep">Sondaggio genitori a settimana 2: NPS (consiglieresti questa app?)</div>
+          </div>
+        </div>
+        <div class="step-check" onclick="toggleCheck(this)"></div>
+      </div>
+
+      <div class="step">
+        <div class="step-icon">⚡</div>
+        <div class="step-content">
+          <div class="step-title">Ottimizzare performance e costi API</div>
+          <div class="step-desc">Le chiamate all'API Anthropic hanno un costo. Ottimizzare il sistema per bilanciare qualità dell'esperienza e costo per utente attivo.</div>
+          <div class="step-tag">Ottimizzazione</div>
+          <div class="substeps">
+            <div class="substep">Cachare le sfide generate per tipo/livello/mondo (riduce chiamate API del 60-70%)</div>
+            <div class="substep">Generare 10-20 sfide in batch invece di una alla volta</div>
+            <div class="substep">Target: costo AI &lt; €0,05 per sessione per utente</div>
+          </div>
+        </div>
+        <div class="step-check" onclick="toggleCheck(this)"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======================== FASE 6 ======================== -->
+  <div class="phase p6">
+    <div class="phase-header">
+      <div class="phase-number">6</div>
+      <div>
+        <div class="phase-title">Lancio e Crescita
+          <span class="phase-badge">Obiettivo finale</span>
+        </div>
+      </div>
+    </div>
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-icon">🏪</div>
+        <div class="step-content">
+          <div class="step-title">Pubblicazione su App Store e Google Play</div>
+          <div class="step-desc">Preparare le schede store ottimizzate: screenshot, video preview, descrizione, parole chiave. La scheda store è la prima cosa che vede il genitore.</div>
+          <div class="step-tag">Store Optimization</div>
+          <div class="substeps">
+            <div class="substep">Video preview di 30 secondi: mostrare un bambino reale che usa l'app con reazione genuina</div>
+            <div class="substep">Screenshot che mostrano sia l'esperienza bambino che la dashboard genitore</div>
+            <div class="substep">Parole chiave: "app educativa bambini", "matematica bambini", "logica prescolare"</div>
+          </div>
+        </div>
+        <div class="step-check" onclick="toggleCheck(this)"></div>
+      </div>
+
+      <div class="step">
+        <div class="step-icon">📣</div>
+        <div class="step-content">
+          <div class="step-title">Strategia di acquisizione utenti</div>
+          <div class="step-desc">I genitori si fidano di altri genitori. Il canale più efficace non è la pubblicità, ma le community di genitori e i blog/podcast di educazione infantile.</div>
+          <div class="step-tag">Marketing</div>
+          <div class="substeps">
+            <div class="substep">Contattare 10-15 blogger/influencer "mamme e papà" per recensioni autentiche</div>
+            <div class="substep">Pubblicare contenuti educativi gratuiti su Instagram/TikTok (non solo promozione)</div>
+            <div class="substep">Partnership con asili nido e scuole dell'infanzia per accesso gratuito in cambio di feedback</div>
+          </div>
+        </div>
+        <div class="step-check" onclick="toggleCheck(this)"></div>
+      </div>
+
+      <div class="step">
+        <div class="step-icon">🔄</div>
+        <div class="step-content">
+          <div class="step-title">Ciclo di aggiornamenti mensili</div>
+          <div class="step-desc">Dopo il lancio, la cosa più importante è mantenere l'app viva con nuovi contenuti. Il sistema AI permette di farlo con uno sforzo minimo.</div>
+          <div class="step-tag">Post-lancio</div>
+          <div class="substeps">
+            <div class="substep">Ogni mese: 1 nuovo mondo narrativo + nuove missioni famiglia stagionali</div>
+            <div class="substep">Ogni trimestre: 1 nuovo compagno magico o evoluzione dei compagni esistenti</div>
+            <div class="substep">Ascoltare le richieste dei genitori nelle recensioni store</div>
+          </div>
+        </div>
+        <div class="step-check" onclick="toggleCheck(this)"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CTA BOX — COSA FARE ADESSO -->
+  <div class="cta-box">
+    <h3>🚀 Cosa fare adesso — Subito</h3>
+    <p>Il primo passo concreto che puoi fare nei prossimi 30 minuti:</p>
+    <div class="cta-step">
+      <div class="cta-num">1</div>
+      <div>Apri <strong>una nuova conversazione</strong> su Claude.ai</div>
+    </div>
+    <div class="cta-step">
+      <div class="cta-num">2</div>
+      <div>Apri il file <strong>MondoMago_Sistema_Prompt.md</strong> e copia il Prompt 1 (Orchestratore)</div>
+    </div>
+    <div class="cta-step">
+      <div class="cta-num">3</div>
+      <div>Incolla uno dopo l'altro i <strong>5 prompt</strong> nella nuova conversazione</div>
+    </div>
+    <div class="cta-step">
+      <div class="cta-num">4</div>
+      <div>Invia il <strong>JSON di test di Sofia</strong> (trovi in fondo al documento) e osserva il sistema in azione</div>
+    </div>
+    <div class="cta-step">
+      <div class="cta-num">5</div>
+      <div>Torna qui e <strong>spunta le attività completate</strong> man mano che procedi</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function toggleCheck(el) {
+    el.classList.toggle('done');
+    el.textContent = el.classList.contains('done') ? '✓' : '';
+    updateProgress();
+  }
+
+  function updateProgress() {
+    const total = document.querySelectorAll('.step-check').length;
+    const done = document.querySelectorAll('.step-check.done').length;
+    const pct = Math.round((done / total) * 100);
+    document.querySelector('.progress-bar-fill').style.width = pct + '%';
+    document.querySelector('#progress-pct').textContent = pct + '%';
+    document.querySelector('#progress-count').textContent = done + '/' + total + ' attività';
+  }
+
+  // Add progress bar after legend
+  const legend = document.querySelector('.legend');
+  const progressHtml = `
+    <div class="progress-section">
+      <div class="progress-title">📈 Il tuo progresso</div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" style="width:0%"></div>
+      </div>
+      <div class="progress-labels">
+        <span id="progress-count">0/0 attività</span>
+        <span id="progress-pct">0%</span>
+      </div>
+    </div>
+  `;
+  legend.insertAdjacentHTML('afterend', progressHtml);
+  updateProgress();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,11 @@
+[project]
+name = "mondomago-agents"
+version = "0.1.0"
+description = "AI agents per MondoMago educational PWA"
+requires-python = ">=3.11"
+dependencies = [
+    "claude-agent-sdk>=0.1.80",
+    "python-dotenv>=1.0.0",
+    "edge-tts>=6.1.12",
+    "rich>=13.7.0",
+]

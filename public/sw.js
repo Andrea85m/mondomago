@@ -1,13 +1,13 @@
-const CACHE_CORE  = 'mondomago-core-v4';
-const CACHE_AUDIO = 'mondomago-audio-v4';
+const CACHE_CORE  = 'mondomago-core-v7';
+const CACHE_AUDIO = 'mondomago-audio-v7';
 
-// Assets to precache on install (static, never change between sessions)
+// Assets to precache on install — relative paths so they work under any base URL
 const PRECACHE_URLS = [
-  '/',
-  '/manifest.json',
-  '/favicon.svg',
-  '/icon-192.png',
-  '/icon-512.png',
+  './',
+  './manifest.json',
+  './favicon.svg',
+  './icon-192.png',
+  './icon-512.png',
 ];
 
 self.addEventListener('message', e => {
@@ -43,7 +43,7 @@ self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
 
   // ── Audio files: cache-first (MP3s never change after generation) ──────────
-  if (url.pathname.startsWith('/audio/') && url.pathname.endsWith('.mp3')) {
+  if (url.pathname.includes('/audio/') && url.pathname.endsWith('.mp3')) {
     e.respondWith(
       caches.open(CACHE_AUDIO).then(async cache => {
         const cached = await cache.match(e.request);

@@ -1391,6 +1391,9 @@ Object.assign(ALL_CHALLENGES, {
         { text:"🏃 Non è affar mio, me ne vado", outcome:"Il lupo è rimasto solo... includere chi è escluso è un atto di grande coraggio.", correct:false },
       ] },
     { id:"fb12", format:"multiple_choice", type:"numeri", ageMin:5, ageMax:6, isBoss:true,
+      prompt:"🦉 Il Grande Gufo chiede:\nHai 8 ghiande. Ne regali 3 all'amico scoiattolo. Quante ne restano?",
+      emoji:"🦉", options:["4","5","6","7"], correct:1 },
+    { id:"fb12b", format:"multiple_choice", type:"numeri", ageMin:7, ageMax:8, isBoss:true,
       prompt:"🦉 Il Grande Gufo chiede:\nUna settimana ha 7 giorni. Quanti giorni ci sono in 2 settimane?",
       emoji:"🦉", options:["10","12","14","16"], correct:2 },
   ]),
@@ -1672,7 +1675,7 @@ ALL_CHALLENGES.vulcano = [
     visual:"🦅🔥🦅🔥🦅", prompt:"🐦 La Fenice chiede:\ncosa viene dopo? 🦅🔥🦅🔥🦅__", emoji:"🐦",
     options:["🔥","🦅","🌋","💧"], correct:0 },
   { id:"v_dd1", format:"drag_drop", type:"logica", ageMin:3, ageMax:4,
-    prompt:"Dove vive ognuno?", emoji:"🌋",
+    prompt:"Abbina ogni animale al posto dove vive!", emoji:"🌋",
     items:["🦁","🐬","🦅"],
     zones:["🌋 Vulcano","🌊 Mare","☁️ Cielo"],
     correctMapping:[0,1,2] },
@@ -2095,7 +2098,7 @@ ALL_CHALLENGES.vulcano = ALL_CHALLENGES.vulcano.concat([
 // ── DRAG-DROP: aggiunto ai 5 mondi principali ─────────────────────────────────
 [
   { id:"f_dd1",  world:"foresta",  ageMin:3, ageMax:5,
-    prompt:"Dove vive ognuno?", emoji:"🌲",
+    prompt:"Abbina ogni animale al posto dove vive!", emoji:"🌲",
     items:["🐟","🦅","🐺"], zones:["💧 Acqua","☁️ Cielo","🌲 Bosco"],
     correctMapping:[0,1,2] },
   { id:"c_dd1",  world:"castello", ageMin:4, ageMax:6,
@@ -2116,6 +2119,33 @@ ALL_CHALLENGES.vulcano = ALL_CHALLENGES.vulcano.concat([
     correctMapping:[0,1,2] },
 ].forEach(({ id, world, ageMin, ageMax, prompt, emoji, items, zones, correctMapping }) => {
   ALL_CHALLENGES[world].push({ id, format:"drag_drop", type:"logica", ageMin, ageMax, emoji, prompt, items, zones, correctMapping });
+});
+
+// ── MEMORY MATCH ─────────────────────────────────────────────────────────────
+[
+  // Foresta
+  { id:"f_mm1", world:"foresta", ageMin:3, ageMax:5, prompt:"Tocca due carte uguali per fare una coppia!",
+    pairs:[{a:"🌲",b:"🌲"},{a:"🦊",b:"🦊"},{a:"🍄",b:"🍄"},{a:"🐇",b:"🐇"}] },
+  { id:"f_mm2", world:"foresta", ageMin:5, ageMax:7, prompt:"Abbina ogni animale al cibo che mangia!",
+    pairs:[{a:"🐇",b:"🥕"},{a:"🐝",b:"🍯"},{a:"🐦",b:"🌱"},{a:"🦊",b:"🐟"},{a:"🐛",b:"🍃"},{a:"🐺",b:"🦴"}] },
+  { id:"f_mm3", world:"foresta", ageMin:5, ageMax:7, prompt:"Abbina ogni animale al suo nome!",
+    pairs:[{a:"🌲",b:"Albero"},{a:"🍄",b:"Fungo"},{a:"🐇",b:"Coniglio"},{a:"🌿",b:"Foglia"},{a:"🦋",b:"Farfalla"},{a:"🐝",b:"Ape"}] },
+  // Oceano
+  { id:"o_mm1", world:"oceano", ageMin:3, ageMax:5, prompt:"Trova le coppie del mare!",
+    pairs:[{a:"🐬",b:"🐬"},{a:"🐙",b:"🐙"},{a:"🦞",b:"🦞"},{a:"🐠",b:"🐠"}] },
+  { id:"o_mm2", world:"oceano", ageMin:5, ageMax:7, prompt:"Abbina animale all'habitat!",
+    pairs:[{a:"🐬",b:"🌊"},{a:"🦀",b:"🪸"},{a:"🐙",b:"🌑"},{a:"🦈",b:"🔵"},{a:"🐠",b:"🌿"},{a:"🐚",b:"🏖️"}] },
+  { id:"o_mm3", world:"oceano", ageMin:5, ageMax:7, prompt:"Abbina ogni animale marino al suo nome!",
+    pairs:[{a:"🐬",b:"Delfino"},{a:"🦑",b:"Calamaro"},{a:"🦞",b:"Aragosta"},{a:"🐠",b:"Pesce"},{a:"🐙",b:"Polpo"},{a:"🦈",b:"Squalo"}] },
+  // Mercato
+  { id:"m_mm1", world:"mercato", ageMin:3, ageMax:5, prompt:"Trova le coppie di frutta!",
+    pairs:[{a:"🍎",b:"🍎"},{a:"🍋",b:"🍋"},{a:"🍇",b:"🍇"},{a:"🍓",b:"🍓"}] },
+  { id:"m_mm2", world:"mercato", ageMin:5, ageMax:7, prompt:"Abbina frutto al colore!",
+    pairs:[{a:"🍎",b:"🔴"},{a:"🍋",b:"🟡"},{a:"🫐",b:"🔵"},{a:"🥝",b:"🟢"},{a:"🍊",b:"🟠"},{a:"🍇",b:"🟣"}] },
+  { id:"m_mm3", world:"mercato", ageMin:5, ageMax:7, prompt:"Abbina ogni frutto al suo nome!",
+    pairs:[{a:"🍎",b:"Mela"},{a:"🍋",b:"Limone"},{a:"🍇",b:"Uva"},{a:"🍓",b:"Fragola"},{a:"🍊",b:"Arancia"},{a:"🍌",b:"Banana"}] },
+].forEach(({ id, world, ageMin, ageMax, prompt, pairs }) => {
+  ALL_CHALLENGES[world].push({ id, format:"memory_match", type:"logica", ageMin, ageMax, emoji:"🃏", prompt, pairs });
 });
 
 // ── RHYME-COMPLETE: aggiunto a 5 mondi ───────────────────────────────────────
@@ -2228,23 +2258,17 @@ function genMathChallenge(worldId, age) {
       prompt:`${things.repeat(a)} e ${things.repeat(b)}\nQuanti ${things} in tutto?`, options, correct };
   }
   if (age <= 6) {
-    const type = _rnd(0, 2);
+    const type = _rnd(0, 1);
     if (type === 0) {
-      const a = _rnd(5, 15), b = _rnd(1, a - 1);
+      const a = _rnd(3, 12), b = _rnd(1, Math.min(a - 1, 8));
       const { options, correct } = _opts(a + b, 3);
       return { id, format:"multiple_choice", type:"numeri", ageMin:5, ageMax:6, emoji:e,
         prompt:`${a} + ${b} = ?`, options, correct };
     }
-    if (type === 1) {
-      const a = _rnd(6, 18), b = _rnd(1, a - 2);
-      const { options, correct } = _opts(a - b, 3);
-      return { id, format:"multiple_choice", type:"numeri", ageMin:5, ageMax:6, emoji:e,
-        prompt:`${a} − ${b} = ?`, options, correct };
-    }
-    const a = _rnd(2, 5), b = _rnd(2, 4);
-    const { options, correct } = _opts(a * b, 3);
+    const a = _rnd(5, 15), b = _rnd(1, a - 1);
+    const { options, correct } = _opts(a - b, 3);
     return { id, format:"multiple_choice", type:"numeri", ageMin:5, ageMax:6, emoji:e,
-      prompt:`${a} × ${b} = ?`, options, correct };
+      prompt:`${a} − ${b} = ?`, options, correct };
   }
   // age 7-8
   const type = _rnd(0, 2);
@@ -2303,6 +2327,7 @@ function addSkill(skills, type) {
 
 let _bestVoice    = undefined; // undefined = uncached; null = none found
 let _currentAudio = null;
+let _ttsEnabled   = true;     // toggled from parent panel
 
 function getBestVoice() {
   if (_bestVoice !== undefined) return _bestVoice;
@@ -2338,7 +2363,7 @@ function speakBrowser(text, rate = 0.85) {
 let _onTalkingEnd = null; // callback to clear compTalking
 
 function speak(text, rate = 0.85, onEnd) {
-  if (!text) { if (onEnd) setTimeout(onEnd, 300); return; }
+  if (!_ttsEnabled || !text) { if (onEnd) setTimeout(onEnd, 300); return; }
   window.speechSynthesis?.cancel?.();
   if (_currentAudio) { _currentAudio.pause(); _currentAudio = null; }
   if (_onTalkingEnd) { _onTalkingEnd(); _onTalkingEnd = null; }
@@ -2461,6 +2486,43 @@ function stopMusic() {
   clearTimeout(_musicTimer);
   _musicTimer = null;
   _musicStep  = 0;
+}
+
+// ── SONG ENGINE (MP3 pre-recorded lines) ─────────────────────────────────────
+const WORLD_SONGS = {
+  foresta:    ["Nella foresta magica canto,","tra gli alberi verdi e il cielo incantato!","Lo scoiattolo salta, l'uccello vola via,","quante cose belle nella foresta mia!","Uno, due, tre, quattro animali,","volano le farfalle con le ali speciali!","Nella foresta magica canto,","la natura è bella — ho imparato tanto!"],
+  castello:   ["C'è un castello nel mezzo del cielo,","con torri di pietra e un lungo mantello!","Il cavaliere coraggioso parte,","con il suo scudo e le sue arti!","Uno, due, tre passi nel castello,","ogni stanza nasconde qualcosa di bello!","Sii coraggioso come il cavalier snello,","e il castello diventerà il posto più bello!"],
+  oceano:     ["Nell'oceano profondo e blu,","nuotano i pesci in su e in giù!","Il polpo danza, il granchio cammina,","la stella marina splende e scintilla!","Uno, due, tre bolle nell'acqua,","l'oceano è bello ogni mattina!","Nuota con me nelle acque del blu,","l'oceano ci aspetta, andiamo su!"],
+  mercato:    ["Al mercato colorato e bello,","compro la frutta nel mio cestello!","Rosse le mele, gialle le banane,","arancio l'arancia, verdi le castagne!","Uno, due, tre frutti nel cesto,","conta con me — fai presto, fai presto!","Al mercato colorato e bello,","porta a casa tutto il cestello!"],
+  galassia:   ["Volo tra le stelle nel cielo blu,","pianeti lontani e la luna lassù!","La luna brilla, il sole scalda,","nello spazio infinito che mi sbalorda!","Uno, due, tre, quattro, cinque stelle,","scintillano su nel cielo belle!","Astronauta anch'io nel cielo blu,","le stelle mi aspettano, ci volo su!"],
+  vulcano:    ["Il vulcano brontola e fa boom,","la lava scende con il suo profumo!","Il drago dorme nella montagna,","si sveglia solo con la mattina!","Uno, due, tre, il vulcano conta,","ogni sfida vinta è una vetta che monta!","Sei coraggioso come il drago vero,","il vulcano magico è il tuo sentiero!"],
+  biblioteca: ["In biblioteca tante parole,","le lettere danzano come le viole!","La A di aiuto, la B di bambino,","la C di ciao e la D di destino!","Leggo una pagina, poi un'altra ancora,","in biblioteca il tempo vola!","Le lettere magiche mi insegnano tanto,","leggere è bello — è il mio canto!"],
+  laboratorio:["Nel laboratorio di Pixel il robot,","il codice corre su ogni spot!","Prima fai questo, poi fai quello,","il programma funziona — è tutto bello!","Uno, due, tre comandi in fila,","Pixel danza a meraviglia!","Nel laboratorio sei un campione,","programmare è la tua missione!"],
+  giardino:   ["Nel giardino magico canto,","tra i fiori colorati e il sole tanto!","La farfalla vola, l'ape ronza via,","quante cose belle nella natura mia!","Uno, due, tre fiori sbocciati,","ogni petalo rosa nei prati incantati!","Nel giardino magico canto,","la natura è bella — ho imparato tanto!"],
+};
+let _songAudio = null, _songWorld = null, _songLine = 0, _songActive = false;
+let _onSongTick = null;
+function _playSongLine() {
+  if (!_songActive || !_songWorld) return;
+  const lines = WORLD_SONGS[_songWorld]; if (!lines) return;
+  const idx = _songLine % lines.length;
+  _songAudio = new Audio(`${import.meta.env.BASE_URL}audio/song_${_songWorld}_${idx}.mp3`);
+  _songAudio.volume = 0.38;
+  if (_onSongTick) _onSongTick(lines[idx]);
+  _songAudio.onended = () => { if (_songActive) { _songLine++; _playSongLine(); } };
+  _songAudio.play().catch(() => {});
+}
+function startSong(worldId) {
+  stopSong();
+  if (!WORLD_SONGS[worldId]) return;
+  _songWorld = worldId; _songLine = 0; _songActive = true;
+  _playSongLine();
+}
+function stopSong() {
+  _songActive = false;
+  if (_songAudio) { _songAudio.pause(); _songAudio = null; }
+  _songLine = 0; _songWorld = null;
+  if (_onSongTick) _onSongTick(null);
 }
 
 // ── PLAYER LEVELS ────────────────────────────────────────────────────────────
@@ -2838,6 +2900,14 @@ export default function MondoMago() {
   // drag-drop state
   const [dragPicked,      setDragPicked]      = useState(null);   // index of picked item
   const [dragPlaced,      setDragPlaced]      = useState({});     // {zoneIdx: itemIdx}
+  // memory-match state
+  const [mmFlipped,       setMmFlipped]       = useState([]);     // indices of face-up cards
+  const [mmMatched,       setMmMatched]       = useState([]);     // indices of matched cards
+  const [mmLocked,        setMmLocked]        = useState(false);  // locked while checking pair
+  // song lyric ticker
+  const [songLyric,       setSongLyric]       = useState(null);
+  // tts toggle (persisted)
+  const [ttsEnabled,      setTtsEnabledState] = useState(() => localStorage.getItem('mondomago_tts') !== '0');
   // Fase C — cosmetics, seasons, school, session log
   const [equippedCosmetic,  setEquippedCosmetic]  = useState({});
   const [newCosmetics,      setNewCosmetics]      = useState([]);
@@ -2879,6 +2949,21 @@ export default function MondoMago() {
     ...w,
     unlocked: w.starsNeeded === 0 || totalStars >= w.starsNeeded,
   })), [totalStars]);
+
+  // memory_match cards — shuffled once per challenge id (hook must be at component level)
+  const memCards = useMemo(() => {
+    if (!ch?.pairs) return [];
+    const cards = [];
+    ch.pairs.forEach((p, i) => {
+      cards.push({ pairId: i, face: p.a });
+      cards.push({ pairId: i, face: p.b });
+    });
+    for (let i = cards.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [cards[i], cards[j]] = [cards[j], cards[i]];
+    }
+    return cards;
+  }, [ch?.id]); // eslint-disable-line
 
   function resetGame() {
     const remaining = allProfiles.filter(p => p.id !== activeProfileId);
@@ -3087,7 +3172,7 @@ export default function MondoMago() {
     setDragPicked(null); setDragPlaced({}); setWrongIdx(null); setScreenFlash(null); setComboPopup(null);
     if (ci < challenges.length - 1) {
       setCi(i => i + 1);
-      setSelected(null); setStoryChoice(null); setSeqTaps([]); setSeqError(false); setDragPicked(null); setDragPlaced({});
+      setSelected(null); setStoryChoice(null); setSeqTaps([]); setSeqError(false); setDragPicked(null); setDragPlaced({}); setMmFlipped([]); setMmMatched([]); setMmLocked(false);
     } else {
       if (arc && !items.find(it => it.emoji === arc.reward_emoji))
         setItems(prev => [...prev, { emoji: arc.reward_emoji, name: arc.reward_name }]);
@@ -3140,7 +3225,7 @@ export default function MondoMago() {
     if (!w.unlocked) return;
     const list = filterByAge(w.id, childAge || 5);
     if (!list.length) return;
-    stopMusic();
+    stopMusic(); stopSong();
     setWorld(w); setChallenges(list); setCi(0);
     setSelected(null); setStoryChoice(null); setSeqTaps([]); setSeqError(false); setDragPicked(null); setDragPlaced({});
     setFeedbackMsg(""); setShowHint(false); setWrongStreak(0); setShowFeedback(false); setIdleHint(false);
@@ -3153,7 +3238,7 @@ export default function MondoMago() {
   function startDaily() {
     const list = getDailyChallenges(childAge || 5, activeProfileId); // M6: per-profile daily
     if (!list.length) return;
-    stopMusic();
+    stopMusic(); stopSong();
     setWorld({ id:"daily", name:"Sfida del Giorno", emoji:"🌟", color:"#FFD95A", unlocked:true });
     setChallenges(list); setCi(0);
     setSelected(null); setStoryChoice(null); setSeqTaps([]); setSeqError(false); setDragPicked(null); setDragPlaced({});
@@ -3215,6 +3300,7 @@ export default function MondoMago() {
     ch?.format === "story_choice"  ? storyChoice?.correct :
     ch?.format === "sequence_tap" || ch?.format === "code_sequence" ? selected === 999 :
     ch?.format === "drag_drop"     ? selected === 0 :
+    ch?.format === "memory_match"  ? selected === 999 :
     selected === ch?.correct;
 
   const progressPct = challenges.length ? ((ci + 1) / challenges.length) * 100 : 0;
@@ -3426,6 +3512,12 @@ export default function MondoMago() {
     writeParent({ pin: pinSaved, timeLimit, notifTime });
   }, [pinSaved, timeLimit, notifTime]);
 
+  // Sync ttsEnabled to module-level flag
+  useEffect(() => {
+    _ttsEnabled = ttsEnabled;
+    localStorage.setItem('mondomago_tts', ttsEnabled ? '1' : '0');
+  }, [ttsEnabled]);
+
   // Scheduled notification check — runs every minute when page is visible
   useEffect(() => {
     const NOTIF_KEY = 'mondomago_lastNotif_v1';
@@ -3497,6 +3589,7 @@ export default function MondoMago() {
 
   // Auto-TTS + screen SFX
   useEffect(() => {
+    _onSongTick = setSongLyric;
     if (screen === "name") { setTimeout(() => speak("Come ti chiami?", 0.8), 300); return; }
     if (screen === "age")  { setTimeout(() => speak("Quanti anni hai?", 0.8), 300); return; }
     if (screen === "challenge") {
@@ -3511,19 +3604,21 @@ export default function MondoMago() {
       speak(autoText);
     } else if (screen === "world_intro" && arc) {
       startMusic(world?.id);
+      startSong(world?.id);
       speak(arc.intro_text, 0.8);
     } else if (screen === "coplay_intro") {
       startMusic(world?.id);
+      startSong(world?.id);
       speak(`Ciao! Siediti vicino a ${childName} e aiutalo a giocare. Leggi le domande ad alta voce e toccate le risposte insieme!`, 0.8);
     } else if (screen === "companion") {
       setTimeout(() => speak("Scegli il tuo compagno magico!", 0.8), 400);
     } else if (screen === "world_end") {
-      stopMusic();
+      stopMusic(); stopSong();
       SFX.victory();
       triggerConfetti(true);
       if (arc) setTimeout(() => speak(arc.outro, 0.85), 1400);
     } else if (screen === "map" || screen === "session_stats") {
-      stopMusic();
+      stopMusic(); stopSong();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen, ci]);
@@ -4463,6 +4558,36 @@ export default function MondoMago() {
     const isLetterTrace= ch.format === "letter_trace";
     const isIfElse     = ch.format === "if_else_tap";
     const isDebug      = ch.format === "debug_find";
+    const isMemMatch   = ch.format === "memory_match";
+
+    function tapMemCard(idx) {
+      if (mmLocked || mmFlipped.length >= 2 || mmFlipped.includes(idx) || mmMatched.includes(idx)) return;
+      SFX.tap();
+      const newFlipped = [...mmFlipped, idx];
+      setMmFlipped(newFlipped);
+      if (newFlipped.length === 2) {
+        setMmLocked(true);
+        const [i1, i2] = newFlipped;
+        if (memCards[i1].pairId === memCards[i2].pairId) {
+          const newMatched = [...mmMatched, i1, i2];
+          setMmMatched(newMatched);
+          setMmFlipped([]);
+          setMmLocked(false);
+          SFX.correct();
+          if (newMatched.length === memCards.length) {
+            setTimeout(() => {
+              setSelected(999);
+              triggerOK(young ? 1 : 2);
+              setSkills(s => addSkill(s, ch.type || "logica"));
+              setResults(r => [...r, { type: ch.type || "logica", ok: true }]);
+            }, 400);
+          }
+        } else {
+          SFX.wrong();
+          setTimeout(() => { setMmFlipped([]); setMmLocked(false); }, 850);
+        }
+      }
+    }
     const isAlpha      = ch.id?.startsWith("ba_");  // biblioteca alphabet challenge
     const alphaLetter = isAlpha ? ch.id.replace("ba_","") : null;
     const pts     = ch.isBoss ? 3 : young ? 1 : 2;
@@ -4489,7 +4614,7 @@ export default function MondoMago() {
                   style={{flex:1,background:"rgba(255,255,255,.12)",border:"none",color:"white",borderRadius:50,padding:14,cursor:"pointer",fontSize:13,fontWeight:700}}>
                   +5 minuti
                 </button>
-                <button onClick={() => { stopMusic(); navigate("map"); }}
+                <button onClick={() => { stopMusic(); stopSong(); navigate("map"); }}
                   style={{flex:1,background:"white",border:"none",color:"#1a1a2e",borderRadius:50,padding:14,cursor:"pointer",fontSize:13,fontWeight:900}}>
                   Vai alla mappa
                 </button>
@@ -4523,7 +4648,7 @@ export default function MondoMago() {
               <h3 style={{color:"white",margin:"0 0 8px",fontSize:20}}>Vuoi uscire?</h3>
               <p style={{color:"rgba(255,255,255,.65)",fontSize:14,margin:"0 0 24px",lineHeight:1.6}}>Perderai i progressi di questa sessione.</p>
               <div style={{display:"flex",gap:12}}>
-                <button onClick={() => { stopMusic(); setExitConfirm(false); navigate("map"); }}
+                <button onClick={() => { stopMusic(); stopSong(); setExitConfirm(false); navigate("map"); }}
                   style={{flex:1,background:"rgba(255,255,255,.12)",border:"none",color:"white",borderRadius:50,padding:14,cursor:"pointer",fontSize:14,fontWeight:700}}>
                   Sì, esci
                 </button>
@@ -4583,6 +4708,12 @@ export default function MondoMago() {
             {ci+1}/{challenges.length}
           </div>
         </div>
+        {/* Lyric ticker */}
+        {songLyric && !youngBg && (
+          <div style={{textAlign:"center",fontSize:11,color:"rgba(255,255,255,.38)",fontStyle:"italic",marginBottom:4,overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis",letterSpacing:.2}}>
+            🎵 {songLyric}
+          </div>
+        )}
         {/* [A3] Auto-advance countdown ring */}
         {autoAdvancing && (
           <div style={{position:"fixed",bottom:28,right:24,zIndex:600,pointerEvents:"none"}}>
@@ -4801,6 +4932,62 @@ export default function MondoMago() {
           <div style={{textAlign:"center",padding:"10px 0 4px",fontSize:15,fontFamily:FF,
             color:isCorrect?(youngBg?"#15803D":"#4ade80"):(youngBg?"#DC2626":"#F87171")}}>
             {isCorrect ? "🐛 Bug trovato! Ottimo lavoro!" : `Il bug era: ${ch.items[ch.correct]}`}
+          </div>
+        )}
+
+        {/* Memory match — card flip grid */}
+        {isMemMatch && !done && (
+          <div style={{position:"relative",zIndex:1}}>
+            <p style={{textAlign:"center",fontSize:youngBg?13:12,opacity:.6,marginBottom:12,color:youngBg?"#555":"rgba(255,255,255,.7)"}}>
+              🃏 Tocca due carte per trovare le coppie!
+            </p>
+            <div style={{
+              display:"grid",
+              gridTemplateColumns:"repeat(4, 1fr)",
+              gap:youngBg?10:8,
+              maxWidth: ch.pairs?.length <= 4 ? 300 : 360,
+              margin:"0 auto 10px",
+            }}>
+              {memCards.map((card, idx) => {
+                const isUp      = mmFlipped.includes(idx) || mmMatched.includes(idx);
+                const isOk      = mmMatched.includes(idx);
+                const isEven    = card.face.length <= 2; // emoji vs text
+                return (
+                  <div key={idx} onClick={() => tapMemCard(idx)}
+                    style={{
+                      aspectRatio:"1",
+                      borderRadius:youngBg?18:14,
+                      background: isOk
+                        ? (youngBg?"rgba(34,197,94,.25)":"rgba(34,197,94,.2)")
+                        : isUp
+                          ? (youngBg?"rgba(255,255,255,.95)":"rgba(255,255,255,.18)")
+                          : (youngBg?`${worldColor}22`:`${worldColor}33`),
+                      border:`2.5px solid ${isOk?"#22C55E":isUp?(youngBg?"rgba(0,0,0,.15)":"rgba(255,255,255,.55)"):(worldColor+"66")}`,
+                      display:"flex",alignItems:"center",justifyContent:"center",
+                      fontSize: isUp ? (isEven?32:11) : youngBg?26:22,
+                      fontWeight: isUp && !isEven ? 800 : undefined,
+                      color: isUp && !isEven ? (youngBg?"#1a1a2e":"white") : undefined,
+                      cursor: mmLocked || isOk ? "default" : "pointer",
+                      transition:"all .22s cubic-bezier(.34,1.56,.64,1)",
+                      transform: isUp ? "scale(1.04)" : "scale(0.94)",
+                      boxShadow: isOk ? "0 4px 14px rgba(34,197,94,.35)" : isUp ? "0 4px 12px rgba(0,0,0,.25)" : "none",
+                      userSelect:"none",
+                      padding: isEven ? 0 : "2px 4px",
+                      textAlign:"center",lineHeight:1.2,
+                    }}>
+                    {isUp ? card.face : youngBg ? "⭐" : "?"}
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{textAlign:"center",fontSize:12,opacity:.5,color:youngBg?"#555":"rgba(255,255,255,.6)"}}>
+              {mmMatched.length/2}/{ch.pairs?.length} coppie trovate
+            </div>
+          </div>
+        )}
+        {isMemMatch && done && (
+          <div style={{textAlign:"center",padding:"12px 0 4px",fontSize:17,fontFamily:FF,color:youngBg?"#15803D":"#4ade80"}}>
+            🃏 Tutte le coppie trovate! Bravissimo!
           </div>
         )}
 
@@ -5136,6 +5323,12 @@ export default function MondoMago() {
               }).catch(() => {});
             }} style={{width:"100%",background:"linear-gradient(135deg,#667eea,#764ba2)",color:"white",border:"none",borderRadius:50,padding:"14px",fontWeight:800,fontSize:14,cursor:"pointer",boxShadow:"0 4px 16px rgba(102,126,234,.3)",marginBottom:10}}>
               📤 Condividi il risultato!
+            </button>
+          )}
+          {world?.id && WORLD_SONGS[world.id] && (
+            <button onClick={() => { warmUpAudio(); startSong(world.id); }}
+              style={{width:"100%",background:`linear-gradient(135deg,${arc.color}44,${arc.color}22)`,color:"white",border:`1px solid ${arc.color}66`,borderRadius:50,padding:"13px",fontWeight:800,fontSize:14,cursor:"pointer",marginBottom:10,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+              🎵 Riascolta la canzone del mondo!
             </button>
           )}
           <button onClick={() => navigate("session_stats")}
@@ -5783,6 +5976,20 @@ export default function MondoMago() {
               <button key={v} onClick={() => setTimeLimit(v)}
                 style={{flex:1,background:timeLimit===v?"#A78BFA":"rgba(255,255,255,.08)",border:"none",borderRadius:10,padding:"9px 4px",color:"white",fontSize:12,fontWeight:700,cursor:"pointer"}}>
                 {v===0?"Off":`${v} min`}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* TTS Toggle */}
+        <div style={{background:"rgba(255,255,255,.07)",borderRadius:20,padding:"16px 18px",marginBottom:14}}>
+          <div style={{fontSize:12,fontWeight:800,opacity:.5,marginBottom:10,letterSpacing:1}}>🔊 NARRAZIONE VOCALE</div>
+          <p style={{fontSize:12,opacity:.6,marginBottom:12}}>Attiva o disattiva la voce che legge le domande ad alta voce.</p>
+          <div style={{display:"flex",gap:8}}>
+            {[{v:true,l:"🔊 Attiva"},{v:false,l:"🔇 Disattiva"}].map(opt => (
+              <button key={String(opt.v)} onClick={() => setTtsEnabledState(opt.v)}
+                style={{flex:1,background:ttsEnabled===opt.v?"#A78BFA":"rgba(255,255,255,.08)",border:"none",borderRadius:10,padding:"10px 4px",color:"white",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+                {opt.l}
               </button>
             ))}
           </div>

@@ -1,0 +1,9 @@
+    Skill      │   Invocazione   │                      Quando usarla                      │
+  ├────────────────┼─────────────────┼─────────────────────────────────────────────────────────┤
+  │ Aggiunge sfide │ /add-challenge  │ Nuove sfide in mondi esistenti, con TTS e bilanciamento │
+  ├────────────────┼─────────────────┼─────────────────────────────────────────────────────────┤
+  │ Nuovo mondo    │ /new-world      │ Progetta e implementa un mondo completo (es. Mondo 8)   │
+  ├────────────────┼─────────────────┼─────────────────────────────────────────────────────────┤
+  │ Letter tracing │ /letter-tracing │ Feature tracing lettere per 3-4 anni (Priorità 8)       │
+  ├────────────────┼─────────────────┼─────────────────────────────────────────────────────────┤
+  │ Code review    │ /mm-review      │ Review dopo ogni implementazione grossa                 │
