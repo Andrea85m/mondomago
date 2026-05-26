@@ -1,5 +1,5 @@
-const CACHE_CORE  = 'mondomago-core-v6';
-const CACHE_AUDIO = 'mondomago-audio-v6';
+const CACHE_CORE  = 'mondomago-core-v7';
+const CACHE_AUDIO = 'mondomago-audio-v7';
 
 // Assets to precache on install — relative paths so they work under any base URL
 const PRECACHE_URLS = [
