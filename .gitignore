@@ -1,9 +1,38 @@
+# Dipendenze (ognuno le rigenera con `npm install`)
 node_modules/
+
+# Build / output generato (si rigenera con `npm run build`)
+dist/
+dist-ssr/
+*.local
+
+# Cache strumenti
 .vite/
+.cache/
 node_modules/.cache/
+.eslintcache
+
+# Log
+*.log
+npm-debug.log*
+
+# File di sistema OS / editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.sw?
+
+# Artefatti Lighthouse / spazzatura accidentale
+C:\\Users\\*
 lighthouse-report.html
 lighthouse-report.json
-C:\\Users\\*
+lighthouse.*/
 /tmp/
-*.local
-.DS_Store
+*.tmp
+
+# Variabili d'ambiente (eventuali segreti)
+.env
+.env.*
+!.env.example

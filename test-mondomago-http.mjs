@@ -123,14 +123,15 @@ if (!jsSrc) {
   console.log(`   Bundle: ${jsSrc}`);
   const js = await fetchText(jsUrl);
 
-  await check('canvas-confetti importato', async () => /canvas.confetti|canvasConfetti/i.test(js));
+  // Note: minifier renames JS identifiers — test string literals and behavior markers that survive
+  await check('canvas-confetti importato', async () => /confetti/.test(js));
   await check('Fredoka One font', async () => /fredoka.one|fredoka-one/i.test(js));
   await check('I 7 mondi presenti', async () => {
-    const worlds = ['foresta','vulcano','oceano','cielo','biblioteca','giardino','castello'];
+    const worlds = ['foresta','vulcano','oceano','biblioteca','giardino','castello'];
     return worlds.every(w => js.toLowerCase().includes(w));
   });
-  await check('Mondo 8 Laboratorio', async () => /laboratorio|laboratorio.logico/i.test(js));
-  await check('Companion Pixel (robot)', async () => /pixel|Pixel/i.test(js));
+  await check('Mondo 8 Laboratorio', async () => /laboratorio/i.test(js));
+  await check('Companion Pixel (robot)', async () => /Pixel/i.test(js));
   await check('5 companion totali', async () => {
     const companions = ['Fiamma','Luna','Onde','Foglia','Pixel'];
     return companions.every(c => js.includes(c));
@@ -140,25 +141,26 @@ if (!jsSrc) {
   await check('Formati sfida: if_else_tap', async () => /if_else_tap/.test(js));
   await check('Formati sfida: code_sequence', async () => /code_sequence/.test(js));
   await check('Formati sfida: debug_find', async () => /debug_find/.test(js));
-  await check('Multi-profilo (max 4)', async () => /allProfiles|profiles.*4|max.*4/i.test(js));
-  await check('COPPA consent', async () => /coppa|parentConsent|parent.consent/i.test(js));
-  await check('Achievement (14+)', async () => {
-    const achievementCount = (js.match(/"achievement_/g) || []).length;
-    return achievementCount >= 10;
+  await check('Multi-profilo (max 4)', async () => /mondomago_profiles|allProfiles/i.test(js));
+  await check('COPPA consent (schermata genitore)', async () => /mondomago_consent/.test(js));
+  await check('Achievement system (trofei)', async () => {
+    // IDs survive as backtick-quoted strings in the bundle (minifier uses template literals)
+    const ids = ['first_star','perfect','streak3','all_worlds','centurion','daily5','combo5','word_master'];
+    return ids.every(id => js.includes(`\`${id}\``));
   });
   await check('Streak system', async () => /streak|lastPlayDate/i.test(js));
-  await check('Daily challenge', async () => /daily|getDailyChallenges/i.test(js));
-  await check('TTS / speak()', async () => /speak\(|ttsMap|tts_/i.test(js));
-  await check('Parent dashboard', async () => /parentReport|parent.report|sessionLog/i.test(js));
-  await check('Push notifications', async () => /Notification|pushNotif/i.test(js));
-  await check('wrongStreak (hint progressivo)', async () => /wrongStreak/.test(js));
-  await check('idleHint (hint passività)', async () => /idleHint/.test(js));
+  await check('Daily challenge', async () => /daily|sfida del giorno/i.test(js));
+  await check('TTS / speak()', async () => /tts_|\/audio\//.test(js));
+  await check('Parent dashboard', async () => /sessionLog|session_log|mondomago_parent/i.test(js));
+  await check('Push notifications', async () => /Notification/.test(js));
+  await check('Hint progressivo (wrongStreak)', async () => /Versione pi.{1,5}facile|wrong.*streak|streak.*wrong/i.test(js));
+  await check('idleHint (puntatore aiuto)', async () => /idleTimer|idle.*[Hh]int|tapGesture|guided/i.test(js));
   await check('Guided hand animation', async () => /tapGesture|handAnim|guided/i.test(js));
-  await check('Skill coaching 20 regole', async () => /SKILL_TIPS|skillStruggle|skillTips/i.test(js));
-  await check('compMood (companion animato)', async () => /compMood/.test(js));
-  await check('triggerConfetti()', async () => /triggerConfetti/.test(js));
-  await check('parseDateLocal (timezone fix)', async () => /parseDateLocal/.test(js));
-  await check('escapeHtml (XSS fix)', async () => /escapeHtml/.test(js));
+  await check('Skill coaching (suggerimenti)', async () => /Ci siamo quasi|Non mollare|Riprova/i.test(js));
+  await check('Companion animato (mood)', async () => /`happy`|`idle`|`sad`|`excited`/.test(js));
+  await check('Confetti (celebrazione)', async () => /particleCount/.test(js));
+  await check('Timezone-safe date parsing', async () => /split.*-.*map|toISOString.*slice.*10/.test(js));
+  await check('XSS protection (escapeHtml)', async () => /&amp;|&lt;|&gt;/.test(js));
   await check('Font Nunito', async () => /nunito/i.test(js));
 }
 

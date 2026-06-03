@@ -1,0 +1,12 @@
+● Salvato. Ecco il riepilogo di cosa troverai nella prossima sessione:
+
+  Stato salvato (memory/project_mondomago.md):
+  - Tutto il lavoro di questa sessione: Tier 3 (spaced repetition, 14 letter_trace, 9 drag_drop), Tier 4
+  (co-gioco, youngBg esteso, SFX nuovi), Tier 5 (Mondo Giardino, sfide 7-8yr, stagioni primavera+autunno)
+  - Analisi competitiva con gap esatti e valori pixel
+
+  Da fare subito nella prossima sessione (in ordine):
+  1. Tier A Quick Wins — 3 fix rapide: font 30px per visual_tap youngBg, SFX.tap() immediato in answerMC, CSS
+  headShake per companion
+  2. Deploy — bash deploy.sh TOKEN (chiedere il PAT)
+  3. gen-songs.py — eseguire per generare i file audio di Giardino
