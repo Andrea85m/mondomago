@@ -2623,13 +2623,16 @@ function getBestVoice() {
   if (_bestVoice !== undefined) return _bestVoice;
   const voices = window.speechSynthesis?.getVoices?.() ?? [];
   if (!voices.length) return null;
+  // Priority: premium neural/enhanced > Alice (macOS) > Google > local female > any italian
   _bestVoice =
     voices.find(v => /Alice/i.test(v.name) && v.lang.startsWith('it')) ||
+    voices.find(v => /Federica|Serena|Giulia/i.test(v.name) && v.lang.startsWith('it')) ||
     voices.find(v => /Elsa|Bianca|Paola|Isabella/i.test(v.name) && v.lang.startsWith('it')) ||
     voices.find(v => /Google.*ital/i.test(v.name)) ||
     voices.find(v => v.lang === 'it-IT' && v.localService && !/cosimo|luca|male/i.test(v.name)) ||
+    voices.find(v => v.lang === 'it-IT' && v.localService) ||
     voices.find(v => v.lang === 'it-IT' && !/cosimo|luca/i.test(v.name)) ||
-    voices.find(v => v.lang.startsWith('it') && !/cosimo|luca/i.test(v.name)) ||
+    voices.find(v => v.lang.startsWith('it')) ||
     null;
   return _bestVoice;
 }
@@ -2638,13 +2641,14 @@ function speakBrowser(text, rate = 0.85) {
   if (!window?.speechSynthesis || !text) return;
   const clean = String(text)
     .replace(/\n/g, ', ')
-    .replace(/[^\w\s.,!?àèéìòùÀÈÉÌÒÙ]/g, '')
+    .replace(/[^\w\s.,!?àèéìòùÀÈÉÌÒÙ'-]/g, '')
     .replace(/\s+/g, ' ').trim();
   if (!clean) return;
   const u = new SpeechSynthesisUtterance(clean);
-  u.lang  = 'it-IT';
-  u.rate  = rate;
-  u.pitch = 1.15;
+  u.lang   = 'it-IT';
+  u.rate   = Math.min(rate, 0.92);  // mai troppo veloce — più naturale
+  u.pitch  = 1.08;                  // leggermente caldo, non robotico
+  u.volume = 1.0;
   const v = getBestVoice();
   if (v) u.voice = v;
   window.speechSynthesis.speak(u);
@@ -4002,8 +4006,20 @@ export default function MondoMago() {
   // Auto-TTS + screen SFX
   useEffect(() => {
     _onSongTick = setSongLyric;
+    if (screen === "consent") {
+      setTimeout(() => speak("Ciao genitore! MondoMago è pronto per voi.", 0.82), 600);
+      return;
+    }
     if (screen === "name") { setTimeout(() => speak("Come ti chiami?", 0.8), 300); return; }
-    if (screen === "age")  { setTimeout(() => speak("Quanti anni hai?", 0.8), 300); return; }
+    if (screen === "age")  { setTimeout(() => speak(`Benvenuto ${childName || ""}! Quanti anni hai?`, 0.8), 300); return; }
+    if (screen === "companion") {
+      setTimeout(() => speak("Scegli il tuo compagno magico!", 0.8), 400); return;
+    }
+    if (screen === "companion_welcome") {
+      const cw = COMPANIONS.find(c => c.id === companion);
+      if (cw?.onMeet) setTimeout(() => speak(cw.onMeet(childName || "amico"), 0.82), 700);
+      return;
+    }
     if (screen === "challenge") {
       const c = challenges[ci];
       if (!c) return;
@@ -4022,8 +4038,6 @@ export default function MondoMago() {
       startMusic(world?.id);
       startSong(world?.id);
       speak(`Ciao! Siediti vicino a ${childName} e aiutalo a giocare. Leggi le domande ad alta voce e toccate le risposte insieme!`, 0.8);
-    } else if (screen === "companion") {
-      setTimeout(() => speak("Scegli il tuo compagno magico!", 0.8), 400);
     } else if (screen === "world_end") {
       stopMusic(); stopSong();
       SFX.victory();
@@ -4034,6 +4048,18 @@ export default function MondoMago() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen, ci]);
+
+  // Leggi il titolo della slide onboarding quando cambia
+  useEffect(() => {
+    if (screen !== "onboarding") return;
+    const titles = [
+      "Benvenuto in MondoMago! Il gioco educativo per bambini da tre a otto anni.",
+      "Sfide che fanno crescere! Calibrate per la tua età, sempre nuove.",
+      "Guadagna stelle e premi! Sblocca nuovi mondi e personalizza il tuo compagno.",
+    ];
+    const t = setTimeout(() => speak(titles[obSlide] || titles[0], 0.82), 400);
+    return () => clearTimeout(t);
+  }, [screen, obSlide]); // eslint-disable-line
 
   const G = (
     <>
@@ -4326,11 +4352,17 @@ export default function MondoMago() {
 
   // ════════════════════ SCREEN: NAME ════════════════════════════════════════
   if (screen === "name") return (
-    <div key="name" className={screenAnim} style={{minHeight:"var(--vvh,100dvh)",background:"linear-gradient(135deg,#667eea,#764ba2)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",color:"white",padding:24,paddingBottom:"max(env(safe-area-inset-bottom,0px),24px)",textAlign:"center"}}>
+    <div key="name" className={screenAnim} style={{minHeight:"var(--vvh,100dvh)",background:"linear-gradient(135deg,#1a1a2e,#0f3460)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",color:"white",padding:24,paddingBottom:"max(env(safe-area-inset-bottom,0px),24px)",textAlign:"center"}}>
       {G}
-      <div className="float" style={{fontSize:80,marginBottom:16}}>🧙‍♂️</div>
-      <h1 style={{fontFamily:FF,fontSize:44,margin:"0 0 6px",textShadow:"0 2px 14px rgba(0,0,0,.3)"}}>MondoMago</h1>
-      <p style={{fontSize:16,opacity:.8,marginBottom:44}}>Il tuo viaggio magico inizia qui! ✨</p>
+      <div style={{display:"flex",gap:8,justifyContent:"center",marginBottom:16}}>
+        {COMPANIONS.map((c,i) => (
+          <div key={c.id} style={{animation:"float 3s ease-in-out infinite",animationDelay:`${i*.35}s`}}>
+            <CompanionAvatar c={c} size={52} mood="happy" />
+          </div>
+        ))}
+      </div>
+      <h1 style={{fontFamily:FF,fontSize:40,margin:"0 0 6px",textShadow:"0 2px 14px rgba(0,0,0,.4)"}}>MondoMago</h1>
+      <p style={{fontSize:15,opacity:.75,marginBottom:44}}>Il tuo viaggio magico inizia qui! ✨</p>
       <div style={{width:"100%",maxWidth:340}}>
         <p style={{fontFamily:FF,fontSize:20,marginBottom:14}}>Come ti chiami? 👋</p>
         <input value={childName} onChange={e => setChildName(e.target.value)}
@@ -4343,7 +4375,7 @@ export default function MondoMago() {
           enterKeyHint="next"
           style={{width:"100%",padding:"16px 20px",borderRadius:20,border:"none",fontSize:18,outline:"none",textAlign:"center",color:"#1a1a2e",boxSizing:"border-box"}} />
         <button onClick={() => childName.trim() && navigate("age")} disabled={!childName.trim()}
-          style={{marginTop:14,width:"100%",background:childName.trim()?"white":"rgba(255,255,255,.3)",color:"#764ba2",border:"none",borderRadius:50,padding:16,fontSize:18,fontWeight:900,cursor:childName.trim()?"pointer":"default"}}>
+          style={{marginTop:14,width:"100%",background:childName.trim()?"linear-gradient(135deg,#667eea,#764ba2)":"rgba(255,255,255,.15)",color:"white",border:"none",borderRadius:50,padding:16,fontSize:18,fontWeight:900,cursor:childName.trim()?"pointer":"default",boxShadow:childName.trim()?"0 8px 24px rgba(102,126,234,.4)":"none",transition:"all .3s"}}>
           Avanti ✨
         </button>
       </div>
@@ -4352,10 +4384,16 @@ export default function MondoMago() {
 
   // ════════════════════ SCREEN: AGE ═════════════════════════════════════════
   if (screen === "age") return (
-    <div key="age" className={screenAnim} style={{minHeight:"100dvh",background:"linear-gradient(135deg,#4f46e5,#7c3aed)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",color:"white",padding:24,paddingBottom:"max(env(safe-area-inset-bottom,0px),24px)",textAlign:"center",position:"relative"}}>
+    <div key="age" className={screenAnim} style={{minHeight:"100dvh",background:"linear-gradient(135deg,#1a1a2e,#0f3460)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",color:"white",padding:24,paddingBottom:"max(env(safe-area-inset-bottom,0px),24px)",textAlign:"center",position:"relative"}}>
       {G}
       <button onClick={() => navigate("name")} style={{position:"absolute",top:20,left:20,background:"rgba(255,255,255,.2)",border:"none",color:"white",borderRadius:50,padding:"8px 16px",cursor:"pointer",fontSize:14,fontWeight:700}}>← Indietro</button>
-      <div className="bounce" style={{fontSize:60,marginBottom:14}}>🎂</div>
+      <div style={{marginBottom:14,display:"flex",gap:6,justifyContent:"center"}}>
+        {COMPANIONS.map((c,i) => (
+          <div key={c.id} style={{animation:"float 3s ease-in-out infinite",animationDelay:`${i*.35}s`}}>
+            <CompanionAvatar c={c} size={44} mood="happy" />
+          </div>
+        ))}
+      </div>
       <h2 style={{fontFamily:FF,fontSize:28,marginBottom:8}}>Quanti anni hai, {childName}?</h2>
       <p style={{opacity:.85,marginBottom:40}}>Sceglierò le sfide perfette per te!</p>
       <div style={{display:"flex",gap:14,width:"100%",maxWidth:420}}>
@@ -4363,7 +4401,7 @@ export default function MondoMago() {
           {label:"5 – 6",val:6,emoji:"🚀",desc:"Sfide con testo e numeri"},
           {label:"7 – 8",val:8,emoji:"🧑‍🚀",desc:"Sfide avanzate"}].map(o => (
           <button key={o.val} onClick={() => { setChildAge(o.val); navigate("companion"); }}
-            style={{flex:1,background:"rgba(255,255,255,.2)",border:"3px solid rgba(255,255,255,.7)",borderRadius:24,padding:"20px 10px",cursor:"pointer",color:"white"}}>
+            style={{flex:1,background:"rgba(255,255,255,.08)",border:"2px solid rgba(255,255,255,.35)",borderRadius:24,padding:"20px 10px",cursor:"pointer",color:"white",boxShadow:"0 4px 20px rgba(0,0,0,.3)",transition:"all .2s"}}>
             <div style={{fontSize:44}}>{o.emoji}</div>
             <div style={{fontFamily:FF,fontSize:24,marginTop:8}}>{o.label}</div>
             <div style={{fontSize:11,opacity:.85,marginTop:5}}>{o.desc}</div>
@@ -4401,7 +4439,7 @@ export default function MondoMago() {
               boxShadow:`0 8px 32px ${c.color}22`,
               display:"flex", flexDirection:"column", alignItems:"center",
             }}>
-            <div style={{fontSize:58,lineHeight:1,filter:"drop-shadow(0 4px 16px rgba(0,0,0,.5))",animation:"float 3s ease-in-out infinite",animationDelay:`${i*.4}s`}}>{c.emoji}</div>
+            <CompanionAvatar c={c} size={72} anim="float" mood="happy" />
             <div style={{fontWeight:900,fontSize:15,marginTop:10}}>{c.name}</div>
             <div style={{fontSize:10,color:c.color,marginTop:2,fontWeight:800,letterSpacing:.5}}>{c.type.toUpperCase()}</div>
             <div style={{fontSize:10,opacity:.65,marginTop:6,lineHeight:1.5,textAlign:"center"}}>{COMP_DESC[c.id]}</div>
@@ -4432,12 +4470,9 @@ export default function MondoMago() {
         </div>
         {/* Companion hero */}
         <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:22,width:"100%",maxWidth:360,flex:1,justifyContent:"center"}}>
-          <div className="pop-in" style={{position:"relative",width:180,height:180,display:"flex",alignItems:"center",justifyContent:"center"}}>
-            {/* Pulsing halo */}
-            <div className="pulse" style={{position:"absolute",inset:-12,borderRadius:"50%",background:`${cw.color}28`,border:`3px solid ${cw.color}55`}} />
-            <div style={{width:176,height:176,borderRadius:"50%",background:`${cw.color}18`,border:`4px solid ${cw.color}99`,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 0 60px ${cw.color}66, 0 0 100px ${cw.color}33`,animation:"float 2.5s ease-in-out infinite",fontSize:104,lineHeight:1}}>
-              {cw.emoji}
-            </div>
+          <div className="pop-in" style={{position:"relative",display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <div className="pulse" style={{position:"absolute",inset:-16,borderRadius:"50%",background:`${cw.color}28`,border:`3px solid ${cw.color}55`}} />
+            <CompanionAvatar c={cw} size={180} anim="float" mood="happy" talking={false} />
           </div>
           <h1 style={{fontFamily:FF,fontSize:40,margin:0,textShadow:"0 2px 18px rgba(0,0,0,.4)",letterSpacing:.5}}>{cw.name}!</h1>
           {/* Speech bubble */}
