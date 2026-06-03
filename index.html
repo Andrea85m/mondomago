@@ -5,7 +5,7 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.json" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#1a1a2e" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
@@ -103,7 +103,7 @@
       <div style="font-family:'Nunito',system-ui,sans-serif;font-size:14px;color:rgba(255,255,255,.45);margin-top:6px">Il mondo magico ti aspetta ✨</div>
       <style>@keyframes bounce{0%,100%{transform:translateY(0)}40%{transform:translateY(-18px)}70%{transform:translateY(-8px)}}</style>
     </div>
-    <div id="root"></div>
+    <main id="root"></main>
     <script type="module" src="/src/main.jsx"></script>
     <script>
       // Hide splash once the page is fully loaded
@@ -115,7 +115,7 @@
       });
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').then(reg => {
+          navigator.serviceWorker.register('./sw.js').then(reg => {
             reg.addEventListener('updatefound', () => {
               const nw = reg.installing;
               nw.addEventListener('statechange', () => {

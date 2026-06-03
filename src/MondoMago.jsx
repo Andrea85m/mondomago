@@ -476,280 +476,45 @@ const WORLD_COSTUMES = {
   montagna:   "🍃", giungla: "🌴", vulcano:   "🔥",
   biblioteca: "📖", laboratorio: "🔬",
 };
-const COMPANION_FACE_DATA = {
-  fiamma: { // Dragon
-    headFill:"url(#fG)", headStroke:"#FF4500",
-    highlights:[{cx:34,cy:32,rx:12,ry:8}],
-    extras: (s, cy, r) => { const cx=s*.5; return <>
-      <polygon points={`${cx-r*.455},${cy-r*.727} ${cx-r*.545},${cy-r*1.045} ${cx-r*.273},${cy-r*.772}`} fill="#FF4500" />
-      <polygon points={`${cx+r*.455},${cy-r*.727} ${cx+r*.545},${cy-r*1.045} ${cx+r*.273},${cy-r*.772}`} fill="#FF4500" />
-    </>; },
-    decoTop: "🔥",
-  },
-  luna: { // Unicorn
-    headFill:"url(#lG)", headStroke:"#A855F7",
-    highlights:[{cx:36,cy:33,rx:11,ry:7}],
-    extras: (s, cy, r) => { const cx=s*.5; return <>
-      <polygon points={`${cx},${cy-r*1.113} ${cx-r*.136},${cy-r*.682} ${cx+r*.136},${cy-r*.682}`} fill="url(#hornG)" />
-      <polygon points={`${cx-r*.590},${cy-r*.409} ${cx-r*.750},${cy-r*.818} ${cx-r*.455},${cy-r*.545}`} fill="#F0ABFC" />
-      <polygon points={`${cx+r*.590},${cy-r*.409} ${cx+r*.750},${cy-r*.818} ${cx+r*.455},${cy-r*.545}`} fill="#F0ABFC" />
-    </>; },
-    decoTop: "✨",
-    lashes: true,
-  },
-  onde: { // Dolphin
-    headFill:"url(#oG)", headStroke:"#2563EB",
-    highlights:[{cx:36,cy:34,rx:11,ry:7}],
-    extras: (s, cy, r) => { const cx=s*.5; return <>
-      <ellipse cx={cx} cy={cy+r*.363} rx={r*.409} ry={r*.227} fill="#93C5FD" />
-      <polygon points={`${cx-r*.682},${cy-r*.363} ${cx-r*.864},${cy-r*.727} ${cx-r*.500},${cy-r*.454}`} fill="#60A5FA" />
-      <polygon points={`${cx+r*.682},${cy-r*.363} ${cx+r*.864},${cy-r*.727} ${cx+r*.500},${cy-r*.454}`} fill="#60A5FA" />
-    </>; },
-    decoTop: "💧",
-  },
-  foglia: { // Fox
-    headFill:"url(#fxG)", headStroke:"#059669",
-    highlights:[{cx:36,cy:33,rx:11,ry:7}],
-    extras: (s, cy, r) => { const cx=s*.5; return <>
-      <polygon points={`${cx-r*.590},${cy-r*.363} ${cx-r*.795},${cy-r*.954} ${cx-r*.318},${cy-r*.500}`} fill="#34D399" />
-      <polygon points={`${cx+r*.590},${cy-r*.363} ${cx+r*.795},${cy-r*.954} ${cx+r*.318},${cy-r*.500}`} fill="#34D399" />
-      <polygon points={`${cx-r*.545},${cy-r*.431} ${cx-r*.704},${cy-r*.818} ${cx-r*.386},${cy-r*.545}`} fill="#FCA5A5" />
-      <polygon points={`${cx+r*.545},${cy-r*.431} ${cx+r*.704},${cy-r*.818} ${cx+r*.386},${cy-r*.545}`} fill="#FCA5A5" />
-    </>; },
-    decoTop: "🍃",
-    whiskers: true,
-  },
-  pixel: { // Robot
-    headFill:"url(#pxG)", headStroke:"#0E7490",
-    highlights:[{cx:36,cy:30,rx:13,ry:8}],
-    extras: (s, cy, r) => { const cx=s*.5; return <>
-      {/* Antenna */}
-      <line x1={cx} y1={cy-r*.95} x2={cx} y2={cy-r*1.55} stroke="#06B6D4" strokeWidth={r*.07} strokeLinecap="round"/>
-      <circle cx={cx} cy={cy-r*1.65} r={r*.13} fill="#F0ABFC"/>
-      {/* Side ear panels */}
-      <rect x={cx-r*1.05} y={cy-r*.22} width={r*.18} height={r*.44} rx={r*.04} fill="#0E7490"/>
-      <rect x={cx+r*.87} y={cy-r*.22} width={r*.18} height={r*.44} rx={r*.04} fill="#0E7490"/>
-    </>; },
-    decoTop: "💻",
-    squareEyes: true,
-  },
-};
 
 function CompanionAvatar({ c, size = 64, anim = "", cosmetic = null, mood = "idle", talking = false, worldId = null, showBody = false }) {
-  const [blink, setBlink] = useState(false);
-  const [mouthPhase, setMouthPhase] = useState(0);
-
-  // Blink every 3-5s
-  useEffect(() => {
-    let blinkTimeout;
-    const interval = setInterval(() => {
-      setBlink(true);
-      blinkTimeout = setTimeout(() => setBlink(false), 140);
-    }, 3200 + Math.random() * 2000);
-    return () => { clearInterval(interval); clearTimeout(blinkTimeout); };
-  }, []);
-
-  // Mouth animation when talking
-  useEffect(() => {
-    if (!talking) { setMouthPhase(0); return; }
-    const interval = setInterval(() => setMouthPhase(p => (p + 1) % 3), 120);
-    return () => clearInterval(interval);
-  }, [talking]);
-
-  const fd = COMPANION_FACE_DATA[c.id] || COMPANION_FACE_DATA.fiamma;
-  const s  = size;
-
-  // Body mode: head shifts up to make room for torso when showBody && size >= 80
-  const bodyMode = showBody && size >= 80;
-  const headScale = bodyMode ? 0.72 : 1;
-  const cx = s * 0.5;
-  const cy = bodyMode ? s * 0.38 : s * 0.52;
-  const r  = s * 0.44 * headScale;
-
-  // Eye geometry — relative to head center
-  const eyeBaseRY = blink || mood === "celebrating" ? 1
-    : mood === "excited"   ? s*0.12*headScale
-    : mood === "happy"     ? s*0.10*headScale
-    : mood === "sad"       ? s*0.08*headScale
-    : mood === "thinking"  ? s*0.085*headScale
-    : s*0.09*headScale;
-  const eyeLRY = mood === "thinking" ? eyeBaseRY * 0.6 : eyeBaseRY; // squint left eye when thinking
-  const eyeRRY = eyeBaseRY;
-  const eyeLX  = cx - r*0.36, eyeRX = cx + r*0.36, eyeY = cy - r*0.13;
-  const browTilt = mood === "sad" ? 3 : (mood === "happy" || mood === "excited" || mood === "celebrating") ? -2 : mood === "thinking" ? -4 : 0;
-  const browY    = cy - r*0.40;
-  const browTiltL = mood === "thinking" ? 4 : browTilt;   // opposite tilt on left brow for thinking
-
-  // Mouth path
-  const mouthOpenY = talking ? [cy+r*0.35, cy+r*0.42, cy+r*0.35][mouthPhase] : cy+r*0.37;
-  const mouthCurve = (mood === "happy" || mood === "excited") ? cy+r*0.56
-    : mood === "celebrating" ? cy+r*0.62
-    : mood === "sad"         ? cy+r*0.18
-    : mood === "thinking"    ? cy+r*0.3
-    : mouthOpenY;
-  const mouthPath  = `M ${cx-r*.34} ${cy+r*.35} Q ${cx} ${mouthCurve} ${cx+r*.34} ${cy+r*.35}`;
-
-  const showCheeks = mood === "happy" || mood === "excited" || mood === "celebrating";
-
+  const s = size;
   const auraCols = { "🔥":"#FF6B00","❄️":"#60D0FF","✨":"#FFD700","🏆":"#C084FC" };
   const auraCol  = cosmetic?.type === "aura" ? (auraCols[cosmetic.emoji] || "#C084FC") : null;
-
-  // SVG height: taller when body mode
-  const svgH = bodyMode ? s * 1.45 : s;
-
+  const celebratingExtras = mood === "celebrating" && size >= 48;
   return (
-    <div className={anim} style={{ position:"relative", width:size, height:bodyMode ? Math.round(s*1.45) : size, flexShrink:0 }}>
-      {/* Aura ring */}
+    <div className={anim} style={{ position:"relative", width:s, height:showBody && size >= 80 ? Math.round(s*1.2) : s, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center" }}>
       {auraCol && (
         <div style={{position:"absolute",inset:-Math.round(s*0.22),borderRadius:"50%",
           background:`conic-gradient(transparent,${auraCol}66,transparent,${auraCol}44,transparent)`,
           animation:"wiggle 2.4s ease-in-out infinite",pointerEvents:"none",zIndex:0}} />
       )}
-      {/* Outer glow ring */}
-      <div style={{position:"absolute",top:0,left:0,width:size,height:size,borderRadius:"50%",
-        background:`conic-gradient(${c.color}33,transparent,${c.color}55,transparent,${c.color}33)`,
-        animation:"wiggle 4s ease-in-out infinite",
-        animationDelay:c.id==="luna"?"0.5s":c.id==="onde"?"1s":c.id==="foglia"?"1.5s":"0s"}} />
-      {/* SVG face + optional body */}
-      <svg width={s} height={svgH} viewBox={`0 0 ${s} ${svgH}`} style={{display:"block",overflow:"visible"}}>
-        <defs>
-          {c.id==="fiamma" && <radialGradient id="fG" cx="38%" cy="32%"><stop offset="0%" stopColor="#FF9A8B"/><stop offset="100%" stopColor="#c0392b"/></radialGradient>}
-          {c.id==="luna"   && <radialGradient id="lG" cx="38%" cy="32%"><stop offset="0%" stopColor="#E9D5FF"/><stop offset="100%" stopColor="#7c3aed"/></radialGradient>}
-          {c.id==="onde"   && <radialGradient id="oG" cx="38%" cy="32%"><stop offset="0%" stopColor="#BAE6FD"/><stop offset="100%" stopColor="#1d4ed8"/></radialGradient>}
-          {c.id==="foglia" && <radialGradient id="fxG" cx="38%" cy="32%"><stop offset="0%" stopColor="#BBF7D0"/><stop offset="100%" stopColor="#047857"/></radialGradient>}
-          {c.id==="pixel"  && <linearGradient id="pxG" x1="30%" y1="0%" x2="70%" y2="100%"><stop offset="0%" stopColor="#67E8F9"/><stop offset="100%" stopColor="#0284C7"/></linearGradient>}
-          <linearGradient id="hornG" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stopColor="#F9A8D4"/><stop offset="100%" stopColor="#FDE68A"/></linearGradient>
-        </defs>
-
-        {/* ── Body (torso + arms) — only in bodyMode ── */}
-        {bodyMode && (() => {
-          const bY = cy + r + s*0.04;     // top of neck
-          const torsoW = s*0.34, torsoH = s*0.36, torsoX = cx - torsoW/2;
-          const armW = s*0.14, armH = s*0.09;
-          return <>
-            {/* Neck */}
-            <rect x={cx-s*.09} y={bY} width={s*.18} height={s*.08} rx={s*.04} fill={fd.headFill}/>
-            {/* Left arm */}
-            <ellipse cx={torsoX - armW*0.3} cy={bY+s*.15} rx={armW} ry={armH}
-              fill={fd.headFill} stroke={fd.headStroke} strokeWidth={Math.max(1,s*.018)}
-              transform={`rotate(-30 ${torsoX - armW*0.3} ${bY+s*.15})`}/>
-            {/* Right arm */}
-            <ellipse cx={torsoX+torsoW + armW*0.3} cy={bY+s*.15} rx={armW} ry={armH}
-              fill={fd.headFill} stroke={fd.headStroke} strokeWidth={Math.max(1,s*.018)}
-              transform={`rotate(30 ${torsoX+torsoW + armW*0.3} ${bY+s*.15})`}/>
-            {/* Torso */}
-            <rect x={torsoX} y={bY+s*.06} width={torsoW} height={torsoH} rx={s*.09}
-              fill={fd.headFill} stroke={fd.headStroke} strokeWidth={Math.max(1.2,s*.022)}/>
-            {/* Chest shimmer */}
-            <ellipse cx={cx-torsoW*.12} cy={bY+s*.12} rx={torsoW*.22} ry={s*.05} fill="rgba(255,255,255,.2)"/>
-            {/* World badge on torso */}
-            {worldId && WORLD_COSTUMES[worldId] && (
-              <text x={cx} y={bY+s*.28} fontSize={s*.18} textAnchor="middle" style={{userSelect:"none"}}>
-                {WORLD_COSTUMES[worldId]}
-              </text>
-            )}
-          </>;
-        })()}
-
-        {/* Companion-specific extras (ears, horns, fins) */}
-        {fd.extras(s, cy, r, headScale)}
-        {/* Head */}
-        <circle cx={cx} cy={cy} r={r} fill={fd.headFill} stroke={fd.headStroke} strokeWidth={Math.max(1.5,s*0.025)} />
-        {/* Inner shimmer */}
-        {fd.highlights.map((h,i)=><ellipse key={i} cx={cx+(h.cx/100-0.5)*r*2} cy={cy+(h.cy/100-0.5)*r*2} rx={h.rx/100*s*headScale} ry={h.ry/100*s*headScale} fill="rgba(255,255,255,0.22)" />)}
-        {/* Cheeks */}
-        {showCheeks && <>
-          <ellipse cx={cx-r*.44} cy={cy+r*.15} rx={r*.18} ry={r*.12} fill={c.color} opacity="0.4"/>
-          <ellipse cx={cx+r*.44} cy={cy+r*.15} rx={r*.18} ry={r*.12} fill={c.color} opacity="0.4"/>
-        </>}
-        {/* Eyebrows */}
-        <line x1={eyeLX-r*.19} y1={browY+browTiltL} x2={eyeLX+r*.19} y2={browY-browTiltL} stroke={fd.headStroke} strokeWidth={Math.max(1,s*0.028*headScale)} strokeLinecap="round"/>
-        <line x1={eyeRX-r*.19} y1={browY-browTilt}  x2={eyeRX+r*.19} y2={browY+browTilt}  stroke={fd.headStroke} strokeWidth={Math.max(1,s*0.028*headScale)} strokeLinecap="round"/>
-
-        {/* Eyes — celebrating uses closed ^_^ arcs, others use ellipses */}
-        {(blink || mood === "celebrating") ? (
-          <>
-            <path d={`M ${eyeLX-r*.2} ${eyeY} Q ${eyeLX} ${eyeY-r*.18} ${eyeLX+r*.2} ${eyeY}`} stroke={fd.headStroke} strokeWidth={Math.max(1.5,s*.022*headScale)} fill="none" strokeLinecap="round"/>
-            <path d={`M ${eyeRX-r*.2} ${eyeY} Q ${eyeRX} ${eyeY-r*.18} ${eyeRX+r*.2} ${eyeY}`} stroke={fd.headStroke} strokeWidth={Math.max(1.5,s*.022*headScale)} fill="none" strokeLinecap="round"/>
-          </>
-        ) : fd.squareEyes ? (
-          <>
-            <rect x={eyeLX-r*.22} y={eyeY-eyeLRY} width={r*.44} height={eyeLRY*2} rx={r*.05} fill="#E0F7FA"/>
-            <rect x={eyeRX-r*.22} y={eyeY-eyeRRY} width={r*.44} height={eyeRRY*2} rx={r*.05} fill="#E0F7FA"/>
-            <rect x={eyeLX-r*.11} y={eyeY-Math.min(eyeLRY*.8,r*.11)} width={r*.22} height={Math.min(eyeLRY*.75,r*.11)*2} rx={r*.03} fill="#06B6D4"/>
-            <rect x={eyeRX-r*.11} y={eyeY-Math.min(eyeRRY*.8,r*.11)} width={r*.22} height={Math.min(eyeRRY*.75,r*.11)*2} rx={r*.03} fill="#06B6D4"/>
-            <circle cx={eyeLX+r*.07} cy={eyeY-r*.04} r={r*.036} fill="white"/>
-            <circle cx={eyeRX+r*.07} cy={eyeY-r*.04} r={r*.036} fill="white"/>
-            {mood === "thinking" && size >= 44 && (
-              <text x={cx+r*.65} y={cy-r*.55} fontSize={r*.24} textAnchor="middle" style={{userSelect:"none"}}>💭</text>
-            )}
-          </>
-        ) : (
-          <>
-            <ellipse cx={eyeLX} cy={eyeY} rx={r*.20} ry={eyeLRY} fill="white"/>
-            <ellipse cx={eyeRX} cy={eyeY} rx={r*.20} ry={eyeRRY} fill="white"/>
-            <ellipse cx={eyeLX+r*.04} cy={eyeY+r*.02} rx={r*.10} ry={Math.min(eyeLRY*.75,r*.10)} fill="#1a1a2e"/>
-            <ellipse cx={eyeRX+r*.04} cy={eyeY+r*.02} rx={r*.10} ry={Math.min(eyeRRY*.75,r*.10)} fill="#1a1a2e"/>
-            <circle cx={eyeLX+r*.07} cy={eyeY-r*.04} r={r*.036} fill="white"/>
-            <circle cx={eyeRX+r*.07} cy={eyeY-r*.04} r={r*.036} fill="white"/>
-            {/* Thinking: ellipsis dot in top-right */}
-            {mood === "thinking" && size >= 44 && (
-              <text x={cx+r*.65} y={cy-r*.55} fontSize={r*.24} textAnchor="middle" style={{userSelect:"none"}}>💭</text>
-            )}
-            {fd.lashes && <>
-              <line x1={eyeLX-r*.17} y1={eyeY-eyeLRY-r*.02} x2={eyeLX-r*.24} y2={eyeY-eyeLRY-r*.09} stroke={fd.headStroke} strokeWidth={s*.018*headScale} strokeLinecap="round"/>
-              <line x1={eyeLX}       y1={eyeY-eyeLRY-r*.02} x2={eyeLX}       y2={eyeY-eyeLRY-r*.12} stroke={fd.headStroke} strokeWidth={s*.018*headScale} strokeLinecap="round"/>
-              <line x1={eyeRX+r*.17} y1={eyeY-eyeRRY-r*.02} x2={eyeRX+r*.24} y2={eyeY-eyeRRY-r*.09} stroke={fd.headStroke} strokeWidth={s*.018*headScale} strokeLinecap="round"/>
-            </>}
-          </>
-        )}
-
-        {/* Mouth */}
-        <path d={mouthPath} fill={talking && mouthPhase===1 ? "#1a1a2e" : "none"} stroke="#1a1a2e" strokeWidth={Math.max(1.2,s*.027*headScale)} strokeLinecap="round"/>
-
-        {/* Celebrating: sparkle particles */}
-        {mood === "celebrating" && size >= 48 && <>
-          <text x={cx-r*.7} y={cy-r*.7} fontSize={r*.28} textAnchor="middle" style={{userSelect:"none",animation:"ws-twinkle 0.6s ease-in-out infinite"}}>✨</text>
-          <text x={cx+r*.75} y={cy-r*.6} fontSize={r*.22} textAnchor="middle" style={{userSelect:"none",animation:"ws-twinkle 0.6s ease-in-out infinite",animationDelay:".2s"}}>⭐</text>
-          <text x={cx+r*.6}  y={cy+r*.7} fontSize={r*.20} textAnchor="middle" style={{userSelect:"none",animation:"ws-twinkle 0.6s ease-in-out infinite",animationDelay:".4s"}}>🎉</text>
-        </>}
-
-        {/* Whiskers (Foglia only) */}
-        {fd.whiskers && <>
-          <line x1={cx-r*.56} y1={cy+r*.25} x2={cx-r*.14} y2={cy+r*.3}  stroke={fd.headStroke} strokeWidth={s*.015*headScale} strokeLinecap="round" opacity=".6"/>
-          <line x1={cx-r*.56} y1={cy+r*.36} x2={cx-r*.15} y2={cy+r*.36} stroke={fd.headStroke} strokeWidth={s*.015*headScale} strokeLinecap="round" opacity=".6"/>
-          <line x1={cx+r*.56} y1={cy+r*.25} x2={cx+r*.14} y2={cy+r*.3}  stroke={fd.headStroke} strokeWidth={s*.015*headScale} strokeLinecap="round" opacity=".6"/>
-          <line x1={cx+r*.56} y1={cy+r*.36} x2={cx+r*.15} y2={cy+r*.36} stroke={fd.headStroke} strokeWidth={s*.015*headScale} strokeLinecap="round" opacity=".6"/>
-        </>}
-
-        {/* Deco top emoji — only for larger sizes, hidden in bodyMode (too cluttered) */}
-        {!bodyMode && size >= 52 && fd.decoTop && (
-          <text x={cx+r*.6} y={cy-r*.74} fontSize={r*.5} textAnchor="middle" style={{userSelect:"none",filter:"drop-shadow(0 1px 2px rgba(0,0,0,.5))"}}>
-            {fd.decoTop}
-          </text>
-        )}
-
-        {/* World costume badge — bottom-left of head, when NOT in bodyMode */}
-        {!bodyMode && worldId && WORLD_COSTUMES[worldId] && size >= 44 && (
-          <text x={cx-r*.68} y={cy+r*.82} fontSize={r*.44} textAnchor="middle" style={{userSelect:"none",filter:"drop-shadow(0 1px 4px rgba(0,0,0,.7))"}}>
-            {WORLD_COSTUMES[worldId]}
-          </text>
-        )}
-      </svg>
-
-      {/* Hat cosmetic */}
+      <div style={{fontSize:Math.round(s*0.88),lineHeight:1,userSelect:"none",
+        filter:`drop-shadow(0 2px 8px rgba(0,0,0,.35))`,zIndex:1,textAlign:"center",
+        animation: talking ? "ws-twinkle 0.3s ease-in-out infinite alternate" : undefined}}>
+        {c.emoji}
+      </div>
+      {celebratingExtras && (
+        <div style={{position:"absolute",top:`-${Math.round(s*.3)}px`,left:"50%",transform:"translateX(-50%)",
+          fontSize:Math.round(s*.32),userSelect:"none",pointerEvents:"none",zIndex:4,
+          animation:"ws-twinkle 0.6s ease-in-out infinite"}}>✨</div>
+      )}
+      {worldId && WORLD_COSTUMES[worldId] && size >= 44 && (
+        <div style={{position:"absolute",bottom:0,right:0,fontSize:Math.round(s*0.32),
+          userSelect:"none",filter:"drop-shadow(0 1px 4px rgba(0,0,0,.7))",lineHeight:1}}>
+          {WORLD_COSTUMES[worldId]}
+        </div>
+      )}
       {cosmetic?.type === "hat" && (
         <div style={{position:"absolute",top:`-${Math.round(s*.28)}px`,left:"50%",transform:"translateX(-50%)",
           fontSize:Math.round(s*.44),filter:"drop-shadow(0 2px 5px rgba(0,0,0,.6))",
           pointerEvents:"none",zIndex:3,animation:"float 3s ease-in-out infinite"}}>{cosmetic.emoji}</div>
       )}
-      {/* Accessory cosmetic */}
       {cosmetic?.type === "acc" && (
         <div style={{position:"absolute",right:`-${Math.round(s*.16)}px`,top:"28%",
           fontSize:Math.round(s*.36),filter:"drop-shadow(0 2px 4px rgba(0,0,0,.5))",
           pointerEvents:"none",zIndex:3,animation:"float 2.6s ease-in-out infinite"}}>{cosmetic.emoji}</div>
       )}
-      {/* Aura particle */}
       {cosmetic?.type === "aura" && size >= 48 && (
         <div style={{position:"absolute",top:`-${Math.round(s*.26)}px`,right:`-${Math.round(s*.08)}px`,
           fontSize:Math.round(s*.26),filter:"drop-shadow(0 0 4px rgba(255,255,255,.8))",
@@ -3190,8 +2955,6 @@ export default function MondoMago() {
   const [nowTick,        setNowTick]        = useState(0);
   const [dailyCompletedDate, setDailyCompletedDate] = useState("");
   const [wrongStreak,    setWrongStreak]    = useState(0);
-  const [idleHint,       setIdleHint]       = useState(false);
-  const [showHint,       setShowHint]       = useState(false);
   const [showFeedback,   setShowFeedback]   = useState(false);
   // multi-profile
   const [allProfiles,     setAllProfiles]     = useState([]);
@@ -3260,7 +3023,7 @@ export default function MondoMago() {
   const arc   = world ? STORY_ARCS[world.id] : null;
   const ch    = challenges[ci];
   const young    = (childAge || 5) <= 4;
-  const youngBg  = young;   // light mode active for age ≤ 4 across all screens
+  const youngBg  = false;
   const done  = selected !== null;
 
   // Worlds unlocked dynamically based on totalStars
@@ -3313,7 +3076,7 @@ export default function MondoMago() {
     setTotalStars(0); setSkills(initSkills()); setItems([]);
     setCombo(0); setResults([]); setConfirmReset(false); setIsReturning(false); setStreak(1);
     setMissionsDone([]); setDailyCompletedDate('');
-    setWrongStreak(0); setShowHint(false); setShowFeedback(false);
+    setWrongStreak(0); setShowFeedback(false);
     setAchievements([]); setDailyCount(0); setActiveProfileId(null);
     setEquippedCosmetic({}); setSessionLog([]);
     setCoins(0); setOwnedCosmetics([]);
@@ -3408,7 +3171,7 @@ export default function MondoMago() {
         setTimeout(() => setBurstPos(null), 900);
       }
       triggerOK(pts); setSkills(s => addSkill(s, ch.type));
-      setWrongStreak(0); setShowHint(false);
+      setWrongStreak(0);
       if (comp) {
         const msg = nc >= 2 ? comp.onStreak() : comp.onCorrect();
         setFeedbackMsg(msg);
@@ -3433,7 +3196,7 @@ export default function MondoMago() {
     const nc = combo + 1;
     if (choice.correct) {
       triggerOK(2); setSkills(s => addSkill(s, ch.type));
-      setWrongStreak(0); setShowHint(false);
+      setWrongStreak(0);
       if (comp) {
         const msg = nc >= 2 ? comp.onStreak() : comp.onCorrect();
         setFeedbackMsg(msg);
@@ -3473,7 +3236,7 @@ export default function MondoMago() {
       setSelected(999); triggerOK(2);
       setSkills(s => addSkill(s, ch.type));
       setResults(r => [...r, { type: ch.type, ok: true }]);
-      setWrongStreak(0); setShowHint(false);
+      setWrongStreak(0);
       if (comp) {
         const msg = nc >= 2 ? comp.onStreak() : comp.onCorrect();
         setFeedbackMsg(msg);
@@ -3512,7 +3275,7 @@ export default function MondoMago() {
     setSelected(ok ? 0 : 1);
     if (ok) {
       triggerOK(pts); setSkills(s => addSkill(s, ch.type));
-      setWrongStreak(0); setShowHint(false);
+      setWrongStreak(0);
       if (comp) { const msg = comp.onCorrect(); setFeedbackMsg(msg); setTimeout(() => { setCompTalking(true); speak(msg, 0.85, () => setCompTalking(false)); }, 400); }
       setTimeout(() => setShowFeedback(true), 280);
     } else {
@@ -3551,7 +3314,7 @@ export default function MondoMago() {
 
   function next() {
     setAutoAdvancing(false); setBurstPos(null); setGuidedTap(false);
-    setFeedbackMsg(""); setShowHint(false); setWrongStreak(0); setShowFeedback(false); setIdleHint(false); setIdleHint(false);
+    setFeedbackMsg(""); setWrongStreak(0); setShowFeedback(false);
     setDragPicked(null); setDragPlaced({}); setWrongIdx(null); setScreenFlash(null); setComboPopup(null);
     if (ci < challenges.length - 1) {
       setCi(i => i + 1);
@@ -3622,7 +3385,7 @@ export default function MondoMago() {
     stopMusic(); stopSong();
     setWorld(w); setChallenges(list); setCi(0);
     setSelected(null); setStoryChoice(null); setSeqTaps([]); setSeqError(false); setDragPicked(null); setDragPlaced({}); setColorZoneColors({}); setColorZonePicked(null); setPuzzleGrid(null); setPuzzleMoves(0);
-    setFeedbackMsg(""); setShowHint(false); setWrongStreak(0); setShowFeedback(false); setIdleHint(false);
+    setFeedbackMsg(""); setWrongStreak(0); setShowFeedback(false);
     setSessionStars(0); setResults([]); setCombo(0); setSessionAlertShown(false); setShowSessionAlert(false);
     setCompMood("idle"); setCompTalking(false); setAutoAdvancing(false);
     setMysteryBox(null); setDoubleStar(false); setBurstPos(null); setGuidedTap(false); setBossHPAnimated(100);
@@ -3636,7 +3399,7 @@ export default function MondoMago() {
     setWorld({ id:"daily", name:"Sfida del Giorno", emoji:"🌟", color:"#FFD95A", unlocked:true });
     setChallenges(list); setCi(0);
     setSelected(null); setStoryChoice(null); setSeqTaps([]); setSeqError(false); setDragPicked(null); setDragPlaced({}); setColorZoneColors({}); setColorZonePicked(null); setPuzzleGrid(null); setPuzzleMoves(0);
-    setFeedbackMsg(""); setShowHint(false); setWrongStreak(0); setShowFeedback(false); setIdleHint(false);
+    setFeedbackMsg(""); setWrongStreak(0); setShowFeedback(false);
     setSessionStars(0); setResults([]); setCombo(0);
     setCompMood("idle"); setCompTalking(false); setAutoAdvancing(false);
     setMysteryBox(null); setDoubleStar(false); setBurstPos(null); setGuidedTap(false); setBossHPAnimated(100);
@@ -3870,13 +3633,6 @@ export default function MondoMago() {
     return () => clearInterval(id);
   }, [screen, ci, done]); // eslint-disable-line
 
-  // Passive hint: after 5s of inactivity on a challenge, pulse the correct button
-  useEffect(() => {
-    if (screen !== "challenge" || done) return;
-    setIdleHint(false);
-    const t = setTimeout(() => setIdleHint(true), 5000);
-    return () => { clearTimeout(t); setIdleHint(false); };
-  }, [screen, ci, done]); // eslint-disable-line
 
   // Notify when coins cross a cosmetic's coinCost for the first time
   useEffect(() => {
@@ -5179,13 +4935,12 @@ export default function MondoMago() {
     const pts     = ch.isBoss ? 3 : young ? 1 : 2;
 
     const worldColor = world?.color || "#22C55E";
-    const youngBg = young && !ch.isBoss;
     const youngColors = ["#FF5252","#26C6DA","#66BB6A","#FFA726"];
     return (
-      <div key={`ch-${ci}`} className={screenAnim} style={{minHeight:"100dvh",background:youngBg?"linear-gradient(180deg,#FFF8EC,#F0EAFF)":ch.isBoss?`linear-gradient(135deg,#1a0808,#3a0808)`:`linear-gradient(180deg,#12102a,#1a1a2e)`,color:youngBg?"#1a1a2e":"white",padding:20,display:"flex",flexDirection:"column",position:"relative"}}>
+      <div key={`ch-${ci}`} className={screenAnim} style={{minHeight:"100dvh",background:ch.isBoss?`linear-gradient(135deg,#1a0808,#3a0808)`:`linear-gradient(180deg,#12102a,#1a1a2e)`,color:"white",padding:20,display:"flex",flexDirection:"column",position:"relative"}}>
         {G}
         <WorldBg worldId={world?.id} />
-        {!youngBg && <WorldAmbient worldId={world?.id} />}
+        <WorldAmbient worldId={world?.id} />
         {/* Session time limit overlay */}
         {timeLimit > 0 && sessionStart > 0 && Math.floor((Date.now() - sessionStart) / 60000) >= timeLimit && (
           <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.88)",zIndex:1001,display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
@@ -5940,25 +5695,13 @@ export default function MondoMago() {
         {/* Multiple choice / visual tap */}
         {(isMC || isVis || isRhyme || isWordPic || isAlpha) && (
           <div style={{position:"relative",zIndex:1}}>
-            {wrongStreak >= 3 && !done && !showHint && (
-              <button onClick={() => setShowHint(true)}
-                style={{width:"100%",marginBottom:10,background:"rgba(255,213,0,.18)",border:"2px solid rgba(255,213,0,.5)",borderRadius:14,padding:"10px 16px",color:"#FFD95A",cursor:"pointer",fontSize:14,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-                💡 Aiuto! Mostrami un suggerimento
-              </button>
-            )}
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:(isVis||isWordPic)?14:youngBg?14:10}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:(isVis||isWordPic)?14:10}}>
               {ch.options.map((opt,idx) => {
                 let bg = "rgba(255,255,255,.13)", border = "rgba(255,255,255,.22)";
                 let correct = false, wrong = false;
-                const isHinted = showHint && idx === ch.correct && !done;
-                const isAutoHint = (wrongStreak >= 2 || idleHint) && idx === ch.correct && !done && !showHint;
-                if (youngBg && !done && !isHinted && !isAutoHint) { bg=youngColors[idx%4]+"22"; border=youngColors[idx%4]; }
-                if (isHinted)    { bg="rgba(255,213,0,.12)"; border="#FFD95A88"; }
-                if (isAutoHint)  { border=`${comp?.color||"#7C3AED"}88`; }
                 if (done) {
-                  if (idx === ch.correct)    { bg=youngBg?"#22C55E":"rgba(34,197,94,.35)";  border="#22C55E"; correct=true; }
-                  else if (idx === selected) { bg=youngBg?"#FF5252":"rgba(239,68,68,.35)";  border="#EF4444"; wrong=true; }
-                  else if (youngBg) { bg="rgba(0,0,0,.04)"; border="rgba(0,0,0,.08)"; }
+                  if (idx === ch.correct)    { bg="rgba(34,197,94,.35)"; border="#22C55E"; correct=true; }
+                  else if (idx === selected) { bg="rgba(239,68,68,.35)"; border="#EF4444"; wrong=true; }
                 }
                 return (
                   <button key={`${ci}-${idx}`} onClick={(e) => answerMC(idx, e)}
@@ -5966,23 +5709,21 @@ export default function MondoMago() {
                     style={{
                       animationDelay: !done ? `${idx * 80}ms` : undefined,
                       background:bg, border:`3px solid ${border}`,
-                      borderRadius: (isVis||isWordPic||isAlpha) ? 28 : youngBg ? 22 : 18,
-                      color: youngBg ? (done && (correct||wrong) ? "white" : youngColors[idx%4]) : "white",
-                      fontWeight: youngBg ? 800 : 600,
+                      borderRadius: (isVis||isWordPic||isAlpha) ? 28 : 18,
+                      color: "white",
+                      fontWeight: 600,
                       cursor:done?"default":"pointer",
-                      height: (isVis||isWordPic) ? 148 : isAlpha ? 120 : (youngBg ? 100 : young ? 92 : 82),
-                      fontSize: isAlpha ? 52 : youngBg ? 20 : 18,
+                      height: (isVis||isWordPic) ? 148 : isAlpha ? 120 : (young ? 92 : 82),
+                      fontSize: isAlpha ? 52 : 18,
                       display:"flex", flexDirection:(isVis||isWordPic)?"column":"row",
                       alignItems:"center", justifyContent:"center",
                       padding: (isVis||isWordPic) ? "10px 4px 8px" : isAlpha ? 0 : "16px 12px",
                       gap: (isVis||isWordPic) ? 4 : 0,
                       transform: wrong ? "scale(0.97)" : correct ? "scale(1.04)" : "scale(1)",
-                      boxShadow: youngBg&&!done ? `0 4px 14px ${youngColors[idx%4]}44` : isHinted ? "0 0 16px rgba(255,213,0,.4)" : isAutoHint ? `0 0 14px ${comp?.color||"#7C3AED"}55` : correct ? "0 0 20px rgba(34,197,94,.4)" : (done&&wrong) ? "0 0 18px rgba(239,68,68,.55)" : "none",
-                      animation: isAutoHint ? "pulse 1.2s ease-in-out infinite" : undefined,
+                      boxShadow: correct ? "0 0 20px rgba(34,197,94,.4)" : (done&&wrong) ? "0 0 18px rgba(239,68,68,.55)" : "none",
                       position:"relative",
                       overflow:"hidden",
                     }}>
-                    {isHinted && <span style={{position:"absolute",top:5,left:8,fontSize:14,lineHeight:1}}>💡</span>}
                     {(isVis||isWordPic) ? (
                       <>
                         <SvgAsset

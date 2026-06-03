@@ -1,13 +1,13 @@
-const CACHE_CORE  = 'mondomago-core-v5';
-const CACHE_AUDIO = 'mondomago-audio-v5';
+const CACHE_CORE  = 'mondomago-core-v9';
+const CACHE_AUDIO = 'mondomago-audio-v8';
 
-// Assets to precache on install (static, never change between sessions)
+// Assets to precache on install — relative paths so they work under any base URL
 const PRECACHE_URLS = [
-  '/',
-  '/manifest.json',
-  '/favicon.svg',
-  '/icon-192.png',
-  '/icon-512.png',
+  './',
+  './manifest.json',
+  './favicon.svg',
+  './icon-192.png',
+  './icon-512.png',
 ];
 
 self.addEventListener('message', e => {
@@ -95,10 +95,10 @@ self.addEventListener('push', e => {
   e.waitUntil(
     self.registration.showNotification(data.title || 'MondoMago', {
       body:    data.body  || 'La tua avventura ti aspetta! 🧙‍♂️',
-      icon:    '/icon-192.png',
-      badge:   '/icon-192.png',
+      icon:    './icon-192.png',
+      badge:   './icon-192.png',
       vibrate: [100, 50, 100],
-      data:    { url: '/' },
+      data:    { url: './' },
       actions: [{ action: 'play', title: 'Gioca ora! 🎮' }],
     })
   );
@@ -110,7 +110,7 @@ self.addEventListener('notificationclick', e => {
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(cs => {
       const found = cs.find(c => c.url.includes(self.location.origin) && 'focus' in c);
       if (found) return found.focus();
-      return clients.openWindow('/');
+      return clients.openWindow('./');
     })
   );
 });
@@ -124,10 +124,10 @@ self.addEventListener('periodicsync', e => {
       if (all.length > 0) return;
       self.registration.showNotification('MondoMago 🧙‍♂️', {
         body:    'La sfida del giorno ti aspetta! Puoi guadagnare 3 stelle bonus ⭐⭐⭐',
-        icon:    '/icon-192.png',
-        badge:   '/icon-192.png',
+        icon:    './icon-192.png',
+        badge:   './icon-192.png',
         vibrate: [100, 50, 100],
-        data:    { url: '/' },
+        data:    { url: './' },
       });
     })()
   );

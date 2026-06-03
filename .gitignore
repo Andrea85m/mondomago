@@ -1,0 +1,9 @@
+node_modules/
+.vite/
+node_modules/.cache/
+lighthouse-report.html
+lighthouse-report.json
+C:\\Users\\*
+/tmp/
+*.local
+.DS_Store
