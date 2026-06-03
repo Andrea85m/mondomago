@@ -2661,7 +2661,7 @@ function speak(text, rate = 0.85, onEnd) {
 
   const file = TTS_MAP[text];
   if (file) {
-    const audio = new Audio(`/audio/${file}`);
+    const audio = new Audio(`./audio/${file}`);
     audio.playbackRate = rate <= 0.78 ? 0.88 : 1.0;
     _currentAudio = audio;
     audio.onended = () => {
