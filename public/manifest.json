@@ -1,10 +1,10 @@
 {
-  "id": "/",
+  "id": "/mondomago/",
   "name": "MondoMago — Giochi per bambini",
   "short_name": "MondoMago",
   "description": "Avventure educative per bambini 3-8 anni: logica, numeri, parole e coding. Offline, senza pubblicità, 8 mondi e 4 compagni magici.",
-  "start_url": "/?source=pwa",
-  "scope": "/",
+  "start_url": "/mondomago/?source=pwa",
+  "scope": "/mondomago/",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait",
@@ -12,25 +12,25 @@
   "theme_color": "#1a1a2e",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "/mondomago/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/mondomago/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/mondomago/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/favicon.svg",
+      "src": "/mondomago/favicon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
@@ -51,27 +51,27 @@
       "name": "Sfida del Giorno",
       "short_name": "Sfida",
       "description": "Inizia la sfida del giorno e guadagna 3 stelle bonus",
-      "url": "/?action=daily",
-      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+      "url": "/mondomago/?action=daily",
+      "icons": [{ "src": "/mondomago/icon-192.png", "sizes": "192x192" }]
     }
   ],
   "screenshots": [
     {
-      "src": "/screenshots/screen-map.png",
+      "src": "/mondomago/screenshots/screen-map.png",
       "sizes": "1080x1920",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Mappa dei mondi magici"
     },
     {
-      "src": "/screenshots/screen-challenge.png",
+      "src": "/mondomago/screenshots/screen-challenge-visual.png",
       "sizes": "1080x1920",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Sfida con il compagno"
     },
     {
-      "src": "/screenshots/screen-reward.png",
+      "src": "/mondomago/screenshots/screen-reward.png",
       "sizes": "1080x1920",
       "type": "image/png",
       "form_factor": "narrow",

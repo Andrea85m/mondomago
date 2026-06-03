@@ -42,6 +42,12 @@ function AnimationStyles() {
         65%  { transform: scale(1.6) rotate(10deg); }
         100% { transform: scale(1)   rotate(0deg); }
       }
+      @keyframes coinPop {
+        0%   { transform: scale(0) translateY(0); opacity: 0; }
+        55%  { transform: scale(1.45) translateY(-10px); opacity: 1; }
+        100% { transform: scale(0.85) translateY(-20px); opacity: 0; }
+      }
+      .coin-pop { animation: coinPop .75s cubic-bezier(.34,1.56,.64,1) both; }
       @keyframes confettiFly {
         0%   { transform: translateY(0) rotate(0deg)   scale(1);   opacity: 1; }
         100% { transform: translateY(-160px) rotate(540deg) scale(0.2); opacity: 0; }
@@ -235,6 +241,40 @@ function AnimationStyles() {
       }
       .screen-enter-fwd { animation: slideInRight .3s cubic-bezier(.22,1,.36,1) both; }
       .screen-enter-bk  { animation: slideInLeft  .3s cubic-bezier(.22,1,.36,1) both; }
+      @keyframes cartoonReveal {
+        0%   { filter: blur(12px) brightness(0.5) saturate(0); transform: scale(0.85); }
+        55%  { filter: blur(3px)  brightness(1.15) saturate(1.2); transform: scale(1.06); }
+        100% { filter: blur(0px)  brightness(1)   saturate(1);   transform: scale(1); }
+      }
+      .cartoon-reveal { animation: cartoonReveal .55s cubic-bezier(.34,1.56,.64,1) both; }
+      @keyframes tileSwap {
+        0%   { transform: scale(1); }
+        40%  { transform: scale(0.88); }
+        100% { transform: scale(1); }
+      }
+      .tile-swap { animation: tileSwap .18s ease both; }
+      @keyframes colorFill {
+        0%   { transform: scale(0.85); opacity: 0.5; }
+        65%  { transform: scale(1.08); }
+        100% { transform: scale(1);    opacity: 1; }
+      }
+      @keyframes sigilloPulse {
+        0%,100% { filter: drop-shadow(0 0 4px rgba(255,215,0,.3)); }
+        50%     { filter: drop-shadow(0 0 12px rgba(255,215,0,.9)); }
+      }
+      .sigillo-glow { animation: sigilloPulse 2.4s ease-in-out infinite; }
+      @keyframes streakFlame {
+        0%,100% { transform: scale(1) rotate(-3deg); }
+        50%     { transform: scale(1.18) rotate(3deg); }
+      }
+      .streak-flame { animation: streakFlame 1.2s ease-in-out infinite; }
+      @keyframes sessionAlert {
+        0%   { transform: translateY(-40px); opacity: 0; }
+        15%  { transform: translateY(0);     opacity: 1; }
+        85%  { transform: translateY(0);     opacity: 1; }
+        100% { transform: translateY(-40px); opacity: 0; }
+      }
+      .session-alert { animation: sessionAlert 4s cubic-bezier(.22,1,.36,1) both; }
     `}</style>
   );
 }
@@ -248,7 +288,9 @@ window.addEventListener('beforeinstallprompt', e => {
   window.dispatchEvent(new CustomEvent('installready'));
 });
 
-function InstallBanner() {
+const ONBOARDING_SCREENS = new Set(["consent","onboarding","name","age","companion","companion_welcome","profile_select"]);
+
+function InstallBanner({ screen }) {
   const [show, setShow] = useState(false);
   const [dismissed, setDismissed] = useState(
     () => !!localStorage.getItem('mondomago_install_dismissed')
@@ -262,7 +304,7 @@ function InstallBanner() {
     return () => window.removeEventListener('installready', handler);
   }, [dismissed]);
 
-  if (!show || dismissed) return null;
+  if (!show || dismissed || ONBOARDING_SCREENS.has(screen)) return null;
 
   const install = async () => {
     if (!_deferredInstall) return;
@@ -758,6 +800,7 @@ const COMPANIONS = [
       "Ce l'abbiamo fatta! Sei fantastico!",
       "Vittoria! Insieme siamo imbattibili!",
     ]),
+    onMeet: (name) => `Ciao ${name}! Sono Fiamma il Drago! Bruciamo ogni sfida insieme! 🔥`,
   },
   {
     id:"luna", name:"Luna", emoji:"🦄", type:"Unicorno",
@@ -798,6 +841,7 @@ const COMPANIONS = [
       "Abbiamo vinto! Sei un mago!",
       "Fantastico! Sei stato bravissimo!",
     ]),
+    onMeet: (name) => `${name}! Che bello incontrarsi! Sono Luna! Facciamo brillare questa avventura! ✨`,
   },
   {
     id:"onde", name:"Onde", emoji:"🐬", type:"Delfino",
@@ -838,9 +882,10 @@ const COMPANIONS = [
       "Abbiamo scoperto tutto! Fantastico!",
       "Ce l'abbiamo fatta! Sei magnifico!",
     ]),
+    onMeet: (name) => `SPLASH! Ciao ${name}! Sono Onde! Pronti per esplorare il mondo insieme? 🌊`,
   },
   {
-    id:"foglia", name:"Foglia", emoji:"🦊", type:"Volpe",
+    id:"foglia", name:"Volpe", emoji:"🦊", type:"Volpe",
     color:"#34D399", bg:"linear-gradient(135deg,#34D399,#047857)",
     onCorrect: () => pick([
       "Mossa da maestro! Geniale!",
@@ -878,6 +923,7 @@ const COMPANIONS = [
       "Missione riuscita! Sei straordinario!",
       "Ce l'abbiamo fatta! Grande mente!",
     ]),
+    onMeet: (name) => `Ehilà ${name}! Sono Volpe! Ho già un piano perfetto per noi! 🦊`,
   },
   {
     id:"pixel", name:"Pixel", emoji:"🤖", type:"Robot",
@@ -918,6 +964,7 @@ const COMPANIONS = [
       "Programma eseguito con successo! Bravo programmatore!",
       "Sistema di vittoria attivato! Sei fantastico!",
     ]),
+    onMeet: (name) => `BEEP-BOOP! Ciao ${name}! Sono Pixel! Sistema amicizia: ATTIVATO! 🤖`,
   },
 ];
 
@@ -1008,6 +1055,31 @@ const WORLDS = [
   { id:"biblioteca",  name:"Biblioteca Incantata",   emoji:"📚", color:"#D97706", unlocked:false, starsNeeded:100 },
   { id:"laboratorio", name:"Laboratorio Logico",     emoji:"🔬", color:"#06B6D4", unlocked:false, starsNeeded:140 },
 ];
+
+// ── SIGILLO MAGICO ─────────────────────────────────────────────────────────────
+// 8 frammenti del sigillo, uno per ogni mondo. Il 9° (giardino) verrà in futuro.
+const SIGILLO_FRAGMENTS = [
+  { worldId:"foresta",    angle:0,   color:"#22C55E", emoji:"🌲" },
+  { worldId:"castello",   angle:45,  color:"#A78BFA", emoji:"🏰" },
+  { worldId:"oceano",     angle:90,  color:"#38BDF8", emoji:"🌊" },
+  { worldId:"mercato",    angle:135, color:"#F97316", emoji:"🎪" },
+  { worldId:"galassia",   angle:180, color:"#818CF8", emoji:"🌌" },
+  { worldId:"vulcano",    angle:225, color:"#EF4444", emoji:"🌋" },
+  { worldId:"biblioteca", angle:270, color:"#D97706", emoji:"📚" },
+  { worldId:"laboratorio",angle:315, color:"#06B6D4", emoji:"🔬" },
+];
+
+const SIGILLO_STORY = {
+  0: "Benvenuto, giovane mago! Il Grande Sigillo Magico è in pezzi. Esplora i Mondi per ricomporlo...",
+  1: "Hai trovato il primo frammento! Il sigillo comincia a brillare. Continua la tua avventura!",
+  2: "Due frammenti! Le magiche energie si svegliano. Ogni mondo ti rende più forte.",
+  3: "Tre frammenti riuniti! I companion dei mondi si parlano nelle stelle della notte...",
+  4: "Metà del sigillo è ricomposta! Fiamma, Luna, Onde e Volpe cantano la tua vittoria!",
+  5: "Cinque frammenti! Il sigillo emette una luce dorata visibile da tutto il regno magico.",
+  6: "Sei frammenti! I Grandi Maestri del regno ti osservano con ammirazione.",
+  7: "Quasi completo! Il regno intero trema di emozione. Un solo frammento manca...",
+  8: "✨ IL SIGILLO È COMPLETO! ✨ Sei il più grande Mago del regno! Tutti i companion festeggiano insieme!",
+};
 
 // ── SKILLS ────────────────────────────────────────────────────────────────────
 const SKILLS = [
@@ -2194,6 +2266,224 @@ ALL_CHALLENGES.vulcano = ALL_CHALLENGES.vulcano.concat([
   ALL_CHALLENGES[world].push({ id, format:"word_picture", type:"parole", ageMin:5, ageMax:8, emoji:"📖", word, options, correct:0 });
 });
 
+// ── QUIZ_CARTOON: Indovina l'emoji oscurata ───────────────────────────────────
+[
+  // Foresta — animali
+  { id:"qc01", world:"foresta", ageMin:3, ageMax:5, cartoonEmoji:"🦁", question:"Sono il re della savana, chi sono?",
+    options:["Leone","Tigre","Orso","Lupo"], correct:0 },
+  { id:"qc02", world:"foresta", ageMin:3, ageMax:5, cartoonEmoji:"🐻", question:"Sono grande, peloso e vado in letargo, chi sono?",
+    options:["Orso","Leone","Lupo","Cervo"], correct:0 },
+  { id:"qc03", world:"foresta", ageMin:4, ageMax:6, cartoonEmoji:"🦊", question:"Ho la coda rossa e sono molto furbo, chi sono?",
+    options:["Volpe","Scoiattolo","Lupo","Gatto"], correct:0 },
+  { id:"qc04", world:"foresta", ageMin:5, ageMax:7, cartoonEmoji:"🦌", question:"Ho le corna ramificate e salto tra gli alberi, chi sono?",
+    options:["Cervo","Alce","Capra","Cavallo"], correct:0 },
+  // Oceano — animali marini
+  { id:"qc05", world:"oceano", ageMin:3, ageMax:5, cartoonEmoji:"🐬", question:"Salto fuori dall'acqua e faccio 'eee eee', chi sono?",
+    options:["Delfino","Balena","Squalo","Polpo"], correct:0 },
+  { id:"qc06", world:"oceano", ageMin:4, ageMax:6, cartoonEmoji:"🐙", question:"Ho otto braccia e cambio colore, chi sono?",
+    options:["Polpo","Medusa","Granchio","Calamaro"], correct:0 },
+  { id:"qc07", world:"oceano", ageMin:5, ageMax:7, cartoonEmoji:"🦈", question:"Sono il pesce più temuto dell'oceano, chi sono?",
+    options:["Squalo","Orca","Barracuda","Murena"], correct:0 },
+  // Foresta — natura extra
+  { id:"qc08", world:"foresta", ageMin:3, ageMax:5, cartoonEmoji:"🍓", question:"Sono rossa, piccola e molto dolce, cosa sono?",
+    options:["Fragola","Ciliegia","Mela","Pomodoro"], correct:0 },
+  { id:"qc09", world:"foresta", ageMin:3, ageMax:5, cartoonEmoji:"🌻", question:"Giro sempre verso il sole, sono un fiore, cosa sono?",
+    options:["Girasole","Rosa","Margherita","Tulipano"], correct:0 },
+  { id:"qc10", world:"mercato", ageMin:4, ageMax:6, cartoonEmoji:"🦋", question:"Ho le ali colorate e bevo il nettare, chi sono?",
+    options:["Farfalla","Libellula","Ape","Vespa"], correct:0 },
+  // Mercato — cibi
+  { id:"qc11", world:"mercato", ageMin:3, ageMax:5, cartoonEmoji:"🍕", question:"Sono un piatto italiano con pomodoro e mozzarella, cosa sono?",
+    options:["Pizza","Lasagna","Risotto","Gnocchi"], correct:0 },
+  { id:"qc12", world:"mercato", ageMin:4, ageMax:6, cartoonEmoji:"🍦", question:"Sono freddo, dolce e si lecca con la lingua, cosa sono?",
+    options:["Gelato","Budino","Torta","Cioccolata"], correct:0 },
+  // Galassia — spazio e scienza
+  { id:"qc13", world:"galassia", ageMin:4, ageMax:6, cartoonEmoji:"✈️", question:"Volo in cielo e porto le persone lontano, cosa sono?",
+    options:["Aereo","Elicottero","Aquilone","Razzo"], correct:0 },
+  { id:"qc14", world:"galassia", ageMin:6, ageMax:8, cartoonEmoji:"🪐", question:"Quale pianeta ha gli anelli intorno?",
+    options:["Saturno","Giove","Marte","Venere"], correct:0 },
+  // Castello — fiabe e professioni
+  { id:"qc15", world:"castello", ageMin:4, ageMax:6, cartoonEmoji:"👨‍🚒", question:"Spengo gli incendi e salvo le persone, chi sono?",
+    options:["Pompiere","Poliziotto","Dottore","Cuoco"], correct:0 },
+  { id:"qc16", world:"castello", ageMin:5, ageMax:7, cartoonEmoji:"👸", question:"Perde la scarpetta di cristallo a mezzanotte, chi è?",
+    options:["Cenerentola","Biancaneve","Rapunzel","Bella"], correct:0 },
+  // Biblioteca — strumenti e conoscenza
+  { id:"qc17", world:"biblioteca", ageMin:5, ageMax:7, cartoonEmoji:"🎸", question:"Ho le corde e si suona pizzicandole, cosa sono?",
+    options:["Chitarra","Violino","Piano","Arpa"], correct:0 },
+  { id:"qc18", world:"biblioteca", ageMin:6, ageMax:8, cartoonEmoji:"🔭", question:"Si usa per guardare le stelle lontane, cos'è?",
+    options:["Telescopio","Microscopio","Binocolo","Lente"], correct:0 },
+  // Vulcano — natura potente
+  { id:"qc19", world:"vulcano", ageMin:4, ageMax:6, cartoonEmoji:"🌋", question:"Erutto lava e fumo, cosa sono?",
+    options:["Vulcano","Montagna","Collina","Geyser"], correct:0 },
+  // Laboratorio — scienza e logica
+  { id:"qc20", world:"laboratorio", ageMin:6, ageMax:8, cartoonEmoji:"🌡️", question:"Si usa per misurare la temperatura, cos'è?",
+    options:["Termometro","Righello","Bilancia","Orologio"], correct:0 },
+].forEach(({ id, world, ageMin, ageMax, cartoonEmoji, question, options, correct }) => {
+  ALL_CHALLENGES[world].push({ id, format:"quiz_cartoon", type:"logica", ageMin, ageMax, emoji:"🔍", question, cartoonEmoji, options, correct });
+});
+
+// ── COLOR_ZONES CHALLENGES ────────────────────────────────────────────────────
+// zones: [{id, x, y, size, label, targetColor}] — SVG circles laid on a 280×140 canvas
+// colors: palette hex values shown as swatches
+// colorNames: short labels on swatches (max 3 chars)
+[
+  // cz01 — Arcobaleno (foresta, 3-5)
+  { id:"cz01", world:"foresta", ageMin:3, ageMax:5,
+    question:"Colora l'arcobaleno! Rosso, giallo, blu",
+    gridWidth:280, gridHeight:100,
+    zones:[
+      { id:"z1", x:20,  y:20, size:60, label:"🔴", targetColor:"#EF4444" },
+      { id:"z2", x:110, y:20, size:60, label:"🟡", targetColor:"#EAB308" },
+      { id:"z3", x:200, y:20, size:60, label:"🔵", targetColor:"#3B82F6" },
+    ],
+    colors:["#EF4444","#EAB308","#3B82F6","#22C55E"],
+    colorNames:["Ros","Gia","Blu","Ver"],
+  },
+  // cz02 — Semaforo (mercato, 3-5)
+  { id:"cz02", world:"mercato", ageMin:3, ageMax:5,
+    question:"Colora il semaforo! In alto rosso, in mezzo giallo, in basso verde",
+    gridWidth:280, gridHeight:140,
+    zones:[
+      { id:"z1", x:100, y:10,  size:60, label:"🔴", targetColor:"#EF4444" },
+      { id:"z2", x:100, y:80,  size:60, label:"🟡", targetColor:"#EAB308" },
+      { id:"z3", x:100, y:150, size:60, label:"🟢", targetColor:"#22C55E" },
+    ],
+    colors:["#EF4444","#EAB308","#22C55E","#3B82F6"],
+    colorNames:["Ros","Gia","Ver","Blu"],
+  },
+  // cz03 — Il Sole e il Mare (oceano, 3-5)
+  { id:"cz03", world:"oceano", ageMin:3, ageMax:5,
+    question:"Il sole è giallo, il mare è blu!",
+    gridWidth:280, gridHeight:100,
+    zones:[
+      { id:"z1", x:20,  y:20, size:60, label:"☀️", targetColor:"#EAB308" },
+      { id:"z2", x:110, y:20, size:60, label:"🌊", targetColor:"#3B82F6" },
+      { id:"z3", x:200, y:20, size:60, label:"🏖️", targetColor:"#F59E0B" },
+    ],
+    colors:["#EAB308","#3B82F6","#F59E0B","#EF4444"],
+    colorNames:["Gia","Blu","Sab","Ros"],
+  },
+  // cz04 — Bandiera italiana (castello, 4-6)
+  { id:"cz04", world:"castello", ageMin:4, ageMax:6,
+    question:"Colora la bandiera italiana: verde, bianco, rosso!",
+    gridWidth:280, gridHeight:100,
+    zones:[
+      { id:"z1", x:20,  y:20, size:60, label:"🟢", targetColor:"#22C55E" },
+      { id:"z2", x:110, y:20, size:60, label:"⬜", targetColor:"#F8FAFC" },
+      { id:"z3", x:200, y:20, size:60, label:"🔴", targetColor:"#EF4444" },
+    ],
+    colors:["#22C55E","#F8FAFC","#EF4444","#3B82F6"],
+    colorNames:["Ver","Bia","Ros","Blu"],
+  },
+  // cz05 — Pianeti (galassia, 4-6)
+  { id:"cz05", world:"galassia", ageMin:4, ageMax:6,
+    question:"Marte è rosso, la Terra è blu-verde, Saturno è giallo!",
+    gridWidth:280, gridHeight:100,
+    zones:[
+      { id:"z1", x:20,  y:20, size:60, label:"♂️", targetColor:"#EF4444" },
+      { id:"z2", x:110, y:20, size:60, label:"🌍", targetColor:"#3B82F6" },
+      { id:"z3", x:200, y:20, size:60, label:"🪐", targetColor:"#EAB308" },
+    ],
+    colors:["#EF4444","#3B82F6","#EAB308","#A855F7"],
+    colorNames:["Ros","Blu","Gia","Vio"],
+  },
+  // cz06 — Vulcano (vulcano, 4-6)
+  { id:"cz06", world:"vulcano", ageMin:4, ageMax:6,
+    question:"La lava è rossa, il fumo è grigio, il cielo è arancione!",
+    gridWidth:280, gridHeight:100,
+    zones:[
+      { id:"z1", x:20,  y:20, size:60, label:"🌋", targetColor:"#EF4444" },
+      { id:"z2", x:110, y:20, size:60, label:"💨", targetColor:"#6B7280" },
+      { id:"z3", x:200, y:20, size:60, label:"🌅", targetColor:"#F97316" },
+    ],
+    colors:["#EF4444","#6B7280","#F97316","#EAB308"],
+    colorNames:["Ros","Gri","Ara","Gia"],
+  },
+  // cz07 — Biblioteca stagioni (biblioteca, 5-7)
+  { id:"cz07", world:"biblioteca", ageMin:5, ageMax:7,
+    question:"Primavera rosa, estate gialla, autunno arancione, inverno blu!",
+    gridWidth:280, gridHeight:100,
+    zones:[
+      { id:"z1", x:10,  y:20, size:50, label:"🌸", targetColor:"#EC4899" },
+      { id:"z2", x:80,  y:20, size:50, label:"☀️", targetColor:"#EAB308" },
+      { id:"z3", x:150, y:20, size:50, label:"🍂", targetColor:"#F97316" },
+      { id:"z4", x:220, y:20, size:50, label:"❄️", targetColor:"#3B82F6" },
+    ],
+    colors:["#EC4899","#EAB308","#F97316","#3B82F6"],
+    colorNames:["Ros","Gia","Ara","Blu"],
+  },
+  // cz08 — Laboratorio (laboratorio, 5-7)
+  { id:"cz08", world:"laboratorio", ageMin:5, ageMax:7,
+    question:"Il laser è rosso, l'energia è verde, il plasma è blu!",
+    gridWidth:280, gridHeight:100,
+    zones:[
+      { id:"z1", x:20,  y:20, size:60, label:"⚡", targetColor:"#EF4444" },
+      { id:"z2", x:110, y:20, size:60, label:"🔋", targetColor:"#22C55E" },
+      { id:"z3", x:200, y:20, size:60, label:"🔬", targetColor:"#3B82F6" },
+    ],
+    colors:["#EF4444","#22C55E","#3B82F6","#A855F7"],
+    colorNames:["Ros","Ver","Blu","Vio"],
+  },
+  // cz09 — Emozioni (foresta, 5-7)
+  { id:"cz09", world:"foresta", ageMin:5, ageMax:7,
+    question:"Felicità è gialla, tristezza è blu, arrabbiatura è rossa!",
+    gridWidth:280, gridHeight:100,
+    zones:[
+      { id:"z1", x:20,  y:20, size:60, label:"😊", targetColor:"#EAB308" },
+      { id:"z2", x:110, y:20, size:60, label:"😢", targetColor:"#3B82F6" },
+      { id:"z3", x:200, y:20, size:60, label:"😡", targetColor:"#EF4444" },
+    ],
+    colors:["#EAB308","#3B82F6","#EF4444","#22C55E"],
+    colorNames:["Gia","Blu","Ros","Ver"],
+  },
+].forEach(({ id, world, ageMin, ageMax, question, zones, colors, colorNames, gridWidth, gridHeight }) => {
+  ALL_CHALLENGES[world].push({ id, format:"color_zones", type:"creativita", ageMin, ageMax, emoji:"🎨",
+    question, zones, colors, colorNames, gridWidth, gridHeight });
+});
+
+// ── PUZZLE_SWAP CHALLENGES ────────────────────────────────────────────────────
+// emojis: array of tiles (without the hole). size:2 → 2×2 (3 tiles + 1 hole); size:3 → 3×3 (8 tiles + 1 hole)
+[
+  // ps01 — Animali foresta 2x2 (3-4)
+  { id:"ps01", world:"foresta", ageMin:3, ageMax:4, size:2,
+    question:"Rimetti in ordine gli animali della foresta!",
+    emojis:["🐻","🦊","🌲"] },
+  // ps02 — Frutti oceano 2x2 (3-4)
+  { id:"ps02", world:"oceano", ageMin:3, ageMax:4, size:2,
+    question:"Riordina gli animali del mare!",
+    emojis:["🐬","🐙","🦈"] },
+  // ps03 — Cibi mercato 2x2 (3-4)
+  { id:"ps03", world:"mercato", ageMin:3, ageMax:4, size:2,
+    question:"Rimetti in ordine il mercato!",
+    emojis:["🍎","🍋","🥦"] },
+  // ps04 — Castello 2x2 (4-5)
+  { id:"ps04", world:"castello", ageMin:4, ageMax:5, size:2,
+    question:"Riordina gli oggetti del castello!",
+    emojis:["👑","🗡️","🏰"] },
+  // ps05 — Galassia 2x2 (4-5)
+  { id:"ps05", world:"galassia", ageMin:4, ageMax:5, size:2,
+    question:"Riordina i pianeti!",
+    emojis:["🚀","🪐","⭐"] },
+  // ps06 — Vulcano 3x3 (5-6)
+  { id:"ps06", world:"vulcano", ageMin:5, ageMax:6, size:3,
+    question:"Rimetti in ordine il vulcano! 8 pezzi da sistemare.",
+    emojis:["🌋","🔥","💨","🪨","🌡️","🦎","🏜️","⛏️"] },
+  // ps07 — Biblioteca 3x3 (5-7)
+  { id:"ps07", world:"biblioteca", ageMin:5, ageMax:7, size:3,
+    question:"Riordina la biblioteca! 8 oggetti al posto giusto.",
+    emojis:["📚","🔭","🎸","📝","🔬","🖊️","📖","🎹"] },
+  // ps08 — Laboratorio 3x3 (6-8)
+  { id:"ps08", world:"laboratorio", ageMin:6, ageMax:8, size:3,
+    question:"Rimetti in ordine il laboratorio di Pixel!",
+    emojis:["🤖","🔋","💡","🧪","⚙️","🔧","🖥️","📡"] },
+  // ps09 — Foresta 3x3 (6-8)
+  { id:"ps09", world:"foresta", ageMin:6, ageMax:8, size:3,
+    question:"La foresta è in disordine — sistema tutti gli elementi!",
+    emojis:["🌲","🍄","🦋","🐝","🌸","🍓","🌿","🐿️"] },
+].forEach(({ id, world, ageMin, ageMax, size, question, emojis }) => {
+  ALL_CHALLENGES[world].push({ id, format:"puzzle_swap", type:"logica", ageMin, ageMax, emoji:"🧩",
+    question, emojis, size });
+});
+
 const FAMILY_MISSIONS = [
   { id:1, emoji:"🍳", title:"Chef Magico",          desc:"Cucinare insieme! Conta ingredienti, misura le porzioni, segui una ricetta semplice.", skill:"numeri",     dur:"20 min" },
   { id:2, emoji:"🌱", title:"Giardino Segreto",      desc:"Pianta un seme. Disegna come cresce ogni giorno per una settimana!",                   skill:"logica",     dur:"Settimana" },
@@ -2457,6 +2747,20 @@ const SFX = {
   achievement() {
     [[880,0],[1047,.1],[1319,.2],[1047,.35],[1319,.45]].forEach(([f,t]) => playTone(f,'sine',t,0.25,0.18));
   },
+  // UX: sound gentile per risposta errata nei quiz bambini (meno punitivo del wrong)
+  gentle() {
+    playTone(330, 'sine', 0, 0.18, 0.1);
+    playTone(294, 'sine', 0.1, 0.15, 0.08);
+  },
+  // UX: chime per pausa sessione
+  sessionChime() {
+    [[784,0],[659,.15],[523,.3]].forEach(([f,t]) => playTone(f,'sine',t,0.35,0.15));
+  },
+  // UX: milestone celebration (streak 3/7, sigillo completato)
+  milestone() {
+    [[523,0],[659,.06],[784,.12],[1047,.18],[1319,.24],[1568,.30],[1319,.50],[1047,.64],[1319,.78],[1568,.92]].forEach(([f,t]) => playTone(f,'sine',t,0.28,0.2));
+    navigator.vibrate?.([50,30,80,30,120]);
+  },
 };
 
 // ── AMBIENT MUSIC ENGINE ─────────────────────────────────────────────────────
@@ -2551,23 +2855,20 @@ function getLevelProgress(stars) {
 
 // ── COSMETICS ────────────────────────────────────────────────────────────────
 const COSMETICS = [
-  { id:"acc_bow",       emoji:"🎀", name:"Fiocco Magico",      type:"acc",  starsNeeded:5   },
-  { id:"hat_crown",     emoji:"👑", name:"Corona Reale",       type:"hat",  starsNeeded:10  },
-  { id:"acc_glasses",   emoji:"🕶️", name:"Occhiali Cool",      type:"acc",  starsNeeded:20  },
-  { id:"hat_wizard",    emoji:"🎩", name:"Cappello Mago",      type:"hat",  starsNeeded:35  },
-  { id:"acc_rainbow",   emoji:"🌈", name:"Arcobaleno",         type:"acc",  starsNeeded:50  },
-  { id:"aura_fire",     emoji:"🔥", name:"Aura di Fuoco",      type:"aura", starsNeeded:65  },
-  { id:"hat_party",     emoji:"🎉", name:"Cappello Festa",     type:"hat",  starsNeeded:80  },
-  { id:"acc_lightning", emoji:"⚡", name:"Fulmine Elettrico",  type:"acc",  starsNeeded:100 },
-  { id:"aura_ice",      emoji:"❄️", name:"Aura di Ghiaccio",   type:"aura", starsNeeded:130 },
-  { id:"hat_star",      emoji:"🌟", name:"Stella d'Oro",       type:"hat",  starsNeeded:160 },
-  { id:"acc_moon",      emoji:"🌙", name:"Luna d'Argento",     type:"acc",  starsNeeded:190 },
-  { id:"aura_gold",     emoji:"✨", name:"Aura Dorata",        type:"aura", starsNeeded:220 },
-  { id:"aura_legend",   emoji:"🏆", name:"Aura Leggendaria",   type:"aura", starsNeeded:300 },
+  { id:"acc_bow",       emoji:"🎀", name:"Fiocco Magico",      type:"acc",  coinCost:5   },
+  { id:"hat_crown",     emoji:"👑", name:"Corona Reale",       type:"hat",  coinCost:8   },
+  { id:"acc_glasses",   emoji:"🕶️", name:"Occhiali Cool",      type:"acc",  coinCost:15  },
+  { id:"hat_wizard",    emoji:"🎩", name:"Cappello Mago",      type:"hat",  coinCost:20  },
+  { id:"acc_rainbow",   emoji:"🌈", name:"Arcobaleno",         type:"acc",  coinCost:30  },
+  { id:"aura_fire",     emoji:"🔥", name:"Aura di Fuoco",      type:"aura", coinCost:40  },
+  { id:"hat_party",     emoji:"🎉", name:"Cappello Festa",     type:"hat",  coinCost:50  },
+  { id:"acc_lightning", emoji:"⚡", name:"Fulmine Elettrico",  type:"acc",  coinCost:60  },
+  { id:"aura_ice",      emoji:"❄️", name:"Aura di Ghiaccio",   type:"aura", coinCost:80  },
+  { id:"hat_star",      emoji:"🌟", name:"Stella d'Oro",       type:"hat",  coinCost:100 },
+  { id:"acc_moon",      emoji:"🌙", name:"Luna d'Argento",     type:"acc",  coinCost:120 },
+  { id:"aura_gold",     emoji:"✨", name:"Aura Dorata",        type:"aura", coinCost:150 },
+  { id:"aura_legend",   emoji:"🏆", name:"Aura Leggendaria",   type:"aura", coinCost:200 },
 ];
-function getUnlockedCosmetics(stars) {
-  return COSMETICS.filter(c => stars >= c.starsNeeded);
-}
 
 // ── SEASONS / EVENTI ─────────────────────────────────────────────────────────
 function getCurrentSeason() {
@@ -2686,8 +2987,8 @@ function writeParent(data) {
 
 // ── SCREEN NAVIGATION DEPTH MAP (for directional transitions) ─────────────────
 const SCREEN_DEPTH = {
-  consent: 0, onboarding: 0.5, name: 1, age: 2, companion: 3, map: 4,
-  profile_select: 5, skills: 5, family: 5, cosmetics: 5, profile: 5,
+  consent: 0, onboarding: 0.5, name: 1, age: 2, companion: 3, companion_welcome: 3.5, map: 4,
+  profile_select: 5, skills: 5, family: 5, cosmetics: 5, profile: 5, story_book: 5,
   parent: 5, fulmine: 5, coplay_intro: 6, world_intro: 7, school: 6,
   challenge: 8, world_end: 9, session_stats: 9,
 };
@@ -2858,6 +3159,8 @@ export default function MondoMago() {
   const [seqError,     setSeqError]     = useState(false);
   const [sessionStars, setSessionStars] = useState(0);
   const [totalStars,   setTotalStars]   = useState(0);
+  const [coins,        setCoins]        = useState(0);
+  const [ownedCosmetics, setOwnedCosmetics] = useState([]);
   const [skills,       setSkills]       = useState(initSkills());
   const [results,      setResults]      = useState([]);
   const [combo,        setCombo]        = useState(0);
@@ -2904,6 +3207,12 @@ export default function MondoMago() {
   const [mmFlipped,       setMmFlipped]       = useState([]);     // indices of face-up cards
   const [mmMatched,       setMmMatched]       = useState([]);     // indices of matched cards
   const [mmLocked,        setMmLocked]        = useState(false);  // locked while checking pair
+  // color-zones state
+  const [colorZoneColors, setColorZoneColors] = useState({});    // {zoneId: colorHex}
+  const [colorZonePicked, setColorZonePicked] = useState(null);  // selected color hex
+  // puzzle-swap state
+  const [puzzleGrid,      setPuzzleGrid]      = useState(null);  // shuffled tile array (-1=hole)
+  const [puzzleMoves,     setPuzzleMoves]     = useState(0);
   // song lyric ticker
   const [songLyric,       setSongLyric]       = useState(null);
   // tts toggle (persisted)
@@ -2933,9 +3242,15 @@ export default function MondoMago() {
   const [fulminoPool,       setFulminoPool]       = useState([]); // shuffled visual_tap challenges
   const [fulminoRunning,    setFulminoRunning]    = useState(false);
   const [obSlide,           setObSlide]           = useState(0);
+  const [mapSpotDismissed,  setMapSpotDismissed]  = useState(false);
   const [screenFlash,  setScreenFlash]  = useState(null);   // null | "ok" | "bad"
   const [comboPopup,   setComboPopup]   = useState(null);   // null | string
   const [wrongIdx,     setWrongIdx]     = useState(null);   // null | button index
+  const [paused,           setPaused]           = useState(false);
+  const [coinPop,          setCoinPop]          = useState(false);
+  const [coinPopAmt,       setCoinPopAmt]       = useState(0);
+  const [isFirstWorldComplete, setIsFirstWorldComplete] = useState(false);
+  const [perfectBonus,     setPerfectBonus]     = useState(false);
 
   const comp  = COMPANIONS.find(c => c.id === companion);
   const arc   = world ? STORY_ARCS[world.id] : null;
@@ -2965,6 +3280,27 @@ export default function MondoMago() {
     return cards;
   }, [ch?.id]); // eslint-disable-line
 
+  // puzzle_swap — generate shuffled grid via random adjacent swaps (always solvable)
+  const initialPuzzleGrid = useMemo(() => {
+    if (ch?.format !== "puzzle_swap" || !ch?.emojis) return null;
+    const size = ch.size || 2;
+    const total = size * size;
+    const grid = Array.from({ length: total }, (_, i) => i < ch.emojis.length ? i : -1);
+    let emptyIdx = grid.indexOf(-1);
+    for (let iter = 0; iter < 60; iter++) {
+      const adj = [];
+      const row = Math.floor(emptyIdx / size), col = emptyIdx % size;
+      if (row > 0) adj.push(emptyIdx - size);
+      if (row < size - 1) adj.push(emptyIdx + size);
+      if (col > 0) adj.push(emptyIdx - 1);
+      if (col < size - 1) adj.push(emptyIdx + 1);
+      const swap = adj[Math.floor(Math.random() * adj.length)];
+      [grid[emptyIdx], grid[swap]] = [grid[swap], grid[emptyIdx]];
+      emptyIdx = swap;
+    }
+    return grid;
+  }, [ch?.id]); // eslint-disable-line
+
   function resetGame() {
     const remaining = allProfiles.filter(p => p.id !== activeProfileId);
     writeAllProfiles(remaining);
@@ -2976,6 +3312,7 @@ export default function MondoMago() {
     setWrongStreak(0); setShowHint(false); setShowFeedback(false);
     setAchievements([]); setDailyCount(0); setActiveProfileId(null);
     setEquippedCosmetic({}); setSessionLog([]);
+    setCoins(0); setOwnedCosmetics([]);
     setSchoolMode(false); setSchoolCode(""); setSchoolAssigned([]);
     navigate(remaining.length > 0 ? 'profile_select' : 'name');
   }
@@ -2994,7 +3331,7 @@ export default function MondoMago() {
     const actualPts = doubleStar ? pts * 2 : pts;
     if (doubleStar) setDoubleStar(false);
     navigator.vibrate?.(combo >= 4 ? [30,20,30,20,80] : combo >= 2 ? [40,20,60] : [50]);
-    setSessionStars(s => s + actualPts); setTotalStars(s => s + actualPts);
+    setSessionStars(s => s + actualPts); setTotalStars(s => s + actualPts); setCoins(c => c + actualPts);
     setScreenFlash("ok"); setTimeout(() => setScreenFlash(null), 420);
     setCombo(c => {
       const nc = c + 1;
@@ -3007,6 +3344,7 @@ export default function MondoMago() {
     });
     setAutoAdvancing(true);
     setStarPop(true);  setTimeout(() => setStarPop(false),  700);
+    setCoinPopAmt(actualPts); setCoinPop(true); setTimeout(() => setCoinPop(false), 800);
     triggerConfetti();
     setCompAnim("bounce"); setTimeout(() => setCompAnim("float"), 900);
     setTimeout(() => setCompMood("idle"), 2000);
@@ -3019,7 +3357,7 @@ export default function MondoMago() {
         setTimeout(() => {
           setMysteryBox(reward);
           if (reward.includes("Doppia")) setDoubleStar(true);
-          if (reward.includes("stelle bonus")) { setTotalStars(s => s + 3); setSessionStars(s => s + 3); }
+          if (reward.includes("stelle bonus")) { setTotalStars(s => s + 3); setSessionStars(s => s + 3); setCoins(c => c + 3); }
           setTimeout(() => setMysteryBox(null), 3500);
         }, 800);
       }
@@ -3034,6 +3372,21 @@ export default function MondoMago() {
     setTimeout(() => setCardAnim(""), 500);
     setCompAnim("wiggle"); setTimeout(() => setCompAnim("float"), 600);
     setTimeout(() => setCompMood("idle"), 1200);
+  }
+
+  function handlePause() {
+    setPaused(true);
+    setAutoAdvancing(false);
+  }
+  function handleResume() {
+    setPaused(false);
+    // Se l'utente aveva già risposto correttamente, avanza manualmente
+    if (done && isCorrect) setTimeout(() => nextRef.current?.(), 350);
+  }
+  function handlePauseExit() {
+    setPaused(false);
+    stopMusic(); stopSong();
+    navigate("map");
   }
 
   // Answer handlers
@@ -3166,21 +3519,58 @@ export default function MondoMago() {
     setResults(r => [...r, { type: ch.type, ok }]);
   }
 
+  function swapPuzzleTile(idx) {
+    if (done || !puzzleGrid) return;
+    const size = ch.size || 2;
+    const emptyIdx = puzzleGrid.indexOf(-1);
+    const row = Math.floor(emptyIdx / size), col = emptyIdx % size;
+    const tRow = Math.floor(idx / size), tCol = idx % size;
+    const isAdj = (Math.abs(row - tRow) === 1 && col === tCol) || (Math.abs(col - tCol) === 1 && row === tRow);
+    if (!isAdj) return;
+    SFX.tap();
+    const newGrid = [...puzzleGrid];
+    [newGrid[emptyIdx], newGrid[idx]] = [newGrid[idx], newGrid[emptyIdx]];
+    setPuzzleGrid(newGrid);
+    setPuzzleMoves(m => m + 1);
+    // Victory check: emojis in order 0..n-1, hole at end
+    const solved = newGrid.every((val, i) => val === -1 ? i === newGrid.length - 1 : val === i);
+    if (solved) {
+      setSelected(999);
+      const pts = ch.isBoss ? 3 : young ? 1 : 2;
+      triggerOK(pts); setSkills(s => addSkill(s, ch.type || "logica"));
+      setWrongStreak(0);
+      if (comp) { const msg = comp.onCorrect(); setFeedbackMsg(msg); setTimeout(() => { setCompTalking(true); speak(msg, 0.85, () => setCompTalking(false)); }, 400); }
+      setResults(r => [...r, { type: ch.type || "logica", ok: true }]);
+      setTimeout(() => setShowFeedback(true), 280);
+    }
+  }
+
   function next() {
     setAutoAdvancing(false); setBurstPos(null); setGuidedTap(false);
     setFeedbackMsg(""); setShowHint(false); setWrongStreak(0); setShowFeedback(false); setIdleHint(false); setIdleHint(false);
     setDragPicked(null); setDragPlaced({}); setWrongIdx(null); setScreenFlash(null); setComboPopup(null);
     if (ci < challenges.length - 1) {
       setCi(i => i + 1);
-      setSelected(null); setStoryChoice(null); setSeqTaps([]); setSeqError(false); setDragPicked(null); setDragPlaced({}); setMmFlipped([]); setMmMatched([]); setMmLocked(false);
+      setSelected(null); setStoryChoice(null); setSeqTaps([]); setSeqError(false); setDragPicked(null); setDragPlaced({}); setMmFlipped([]); setMmMatched([]); setMmLocked(false); setColorZoneColors({}); setColorZonePicked(null); setPuzzleGrid(null); setPuzzleMoves(0);
     } else {
-      if (arc && !items.find(it => it.emoji === arc.reward_emoji))
+      const firstComplete = arc && !items.find(it => it.emoji === arc.reward_emoji);
+      setIsFirstWorldComplete(!!firstComplete);
+      if (firstComplete) {
         setItems(prev => [...prev, { emoji: arc.reward_emoji, name: arc.reward_name }]);
+        // Celebration escalation: milestone sound per ogni nuovo frammento sigillo
+        const isSignalloFragment = SIGILLO_FRAGMENTS.some(f => f.worldId === world?.id);
+        if (isSignalloFragment) setTimeout(() => SFX.milestone(), 800);
+      }
+      // +5 monete bonus se tutte le risposte sono corrette
+      const allPerfect = results.every(r => r.ok) && isCorrect;
+      if (allPerfect) { setCoins(c => c + 5); setPerfectBonus(true); }
+      else { setPerfectBonus(false); }
       const today = new Date().toISOString().slice(0, 10);
       if (world?.id === "daily") {
         setDailyCompletedDate(today);
         setTotalStars(s => s + 3);
         setSessionStars(s => s + 3);
+        setCoins(c => c + 3);
         setDailyCount(d => d + 1);
       }
       // Log this session for parent report
@@ -3227,9 +3617,9 @@ export default function MondoMago() {
     if (!list.length) return;
     stopMusic(); stopSong();
     setWorld(w); setChallenges(list); setCi(0);
-    setSelected(null); setStoryChoice(null); setSeqTaps([]); setSeqError(false); setDragPicked(null); setDragPlaced({});
+    setSelected(null); setStoryChoice(null); setSeqTaps([]); setSeqError(false); setDragPicked(null); setDragPlaced({}); setColorZoneColors({}); setColorZonePicked(null); setPuzzleGrid(null); setPuzzleMoves(0);
     setFeedbackMsg(""); setShowHint(false); setWrongStreak(0); setShowFeedback(false); setIdleHint(false);
-    setSessionStars(0); setResults([]); setCombo(0);
+    setSessionStars(0); setResults([]); setCombo(0); setSessionAlertShown(false); setShowSessionAlert(false);
     setCompMood("idle"); setCompTalking(false); setAutoAdvancing(false);
     setMysteryBox(null); setDoubleStar(false); setBurstPos(null); setGuidedTap(false); setBossHPAnimated(100);
     setSessionStart(Date.now());
@@ -3241,7 +3631,7 @@ export default function MondoMago() {
     stopMusic(); stopSong();
     setWorld({ id:"daily", name:"Sfida del Giorno", emoji:"🌟", color:"#FFD95A", unlocked:true });
     setChallenges(list); setCi(0);
-    setSelected(null); setStoryChoice(null); setSeqTaps([]); setSeqError(false); setDragPicked(null); setDragPlaced({});
+    setSelected(null); setStoryChoice(null); setSeqTaps([]); setSeqError(false); setDragPicked(null); setDragPlaced({}); setColorZoneColors({}); setColorZonePicked(null); setPuzzleGrid(null); setPuzzleMoves(0);
     setFeedbackMsg(""); setShowHint(false); setWrongStreak(0); setShowFeedback(false); setIdleHint(false);
     setSessionStars(0); setResults([]); setCombo(0);
     setCompMood("idle"); setCompTalking(false); setAutoAdvancing(false);
@@ -3264,6 +3654,8 @@ export default function MondoMago() {
     if (p.dailyCount)                     setDailyCount(p.dailyCount);
     if (p.equippedCosmetic)               setEquippedCosmetic(p.equippedCosmetic);
     if (p.sessionLog)                     setSessionLog(p.sessionLog);
+    if (typeof p.coins === 'number')      setCoins(p.coins);
+    if (p.ownedCosmetics)                 setOwnedCosmetics(p.ownedCosmetics);
     if (p.schoolMode)                     setSchoolMode(p.schoolMode);
     if (p.schoolCode)                     setSchoolCode(p.schoolCode);
     if (p.schoolAssigned)                 setSchoolAssigned(p.schoolAssigned);
@@ -3272,8 +3664,11 @@ export default function MondoMago() {
       const diff = Math.floor((parseDateLocal(today) - parseDateLocal(p.lastDate)) / 86400000);
       const newStreak = diff === 0 ? (p.streak||1) : diff === 1 ? (p.streak||0)+1 : 1;
       setStreak(newStreak);
-      if (diff === 1 && newStreak >= 7 && newStreak % 7 === 0) {
-        setStreakCelebrate(true);
+      if (diff === 1 && newStreak >= 3) {
+        if (newStreak % 7 === 0 || newStreak === 3) {
+          setStreakCelebrate(true);
+          setTimeout(() => SFX.milestone(), 400);
+        }
       }
     }
     setIsReturning(true);
@@ -3292,6 +3687,7 @@ export default function MondoMago() {
     setAchievements([]); setDailyCount(0);
     setEquippedCosmetic({}); setSessionLog([]);
     setSchoolMode(false); setSchoolCode(""); setSchoolAssigned([]);
+    setCoins(0); setOwnedCosmetics([]);
     setIsReturning(false);
     navigate('name');
   }
@@ -3301,6 +3697,8 @@ export default function MondoMago() {
     ch?.format === "sequence_tap" || ch?.format === "code_sequence" ? selected === 999 :
     ch?.format === "drag_drop"     ? selected === 0 :
     ch?.format === "memory_match"  ? selected === 999 :
+    ch?.format === "color_zones"   ? selected === 999 :
+    ch?.format === "puzzle_swap"   ? selected === 999 :
     selected === ch?.correct;
 
   const progressPct = challenges.length ? ((ci + 1) / challenges.length) * 100 : 0;
@@ -3311,7 +3709,7 @@ export default function MondoMago() {
     const onPop = () => {
       window.history.pushState(null, '', window.location.href);
       if (screen === "challenge") setExitConfirm(true);
-      else if (["consent","profile_select","name","age","companion"].includes(screen)) { /* no-op on onboarding */ }
+      else if (["consent","profile_select","name","age","companion","companion_welcome"].includes(screen)) { /* no-op on onboarding */ }
       else if (screen === "map") { /* already home */ }
       else navigate("map");
     };
@@ -3366,7 +3764,7 @@ export default function MondoMago() {
   useEffect(() => {
     if (!childName || !childAge || !companion || !activeProfileId) return;
     const today = new Date().toISOString().slice(0,10);
-    const data = { id: activeProfileId, childName, childAge, companion, totalStars, skills, items, streak, missionsDone, dailyCompletedDate, lastDate: today, achievements, dailyCount, equippedCosmetic, sessionLog, schoolMode, schoolCode, schoolAssigned };
+    const data = { id: activeProfileId, childName, childAge, companion, totalStars, skills, items, streak, missionsDone, dailyCompletedDate, lastDate: today, achievements, dailyCount, equippedCosmetic, sessionLog, schoolMode, schoolCode, schoolAssigned, coins, ownedCosmetics };
     setAllProfiles(prev => {
       const updated = prev.some(p => p.id === activeProfileId)
         ? prev.map(p => p.id === activeProfileId ? data : p)
@@ -3374,7 +3772,7 @@ export default function MondoMago() {
       writeAllProfiles(updated);
       return updated;
     });
-  }, [childName, childAge, companion, totalStars, skills, items, streak, missionsDone, dailyCompletedDate, achievements, dailyCount, equippedCosmetic, sessionLog, schoolMode, schoolCode, schoolAssigned]); // eslint-disable-line
+  }, [childName, childAge, companion, totalStars, skills, items, streak, missionsDone, dailyCompletedDate, achievements, dailyCount, equippedCosmetic, sessionLog, schoolMode, schoolCode, schoolAssigned, coins, ownedCosmetics]); // eslint-disable-line
 
   // Achievement check
   useEffect(() => {
@@ -3476,17 +3874,17 @@ export default function MondoMago() {
     return () => { clearTimeout(t); setIdleHint(false); };
   }, [screen, ci, done]); // eslint-disable-line
 
-  // Cosmetics unlock check
+  // Notify when coins cross a cosmetic's coinCost for the first time
   useEffect(() => {
     if (!childName || !activeProfileId) return;
-    const unlocked = getUnlockedCosmetics(totalStars).map(c => c.id);
-    const prev     = getUnlockedCosmetics(Math.max(0, totalStars - 10)).map(c => c.id);
-    const fresh    = unlocked.filter(id => !prev.includes(id));
-    if (!fresh.length) return;
-    setNewCosmetics(fresh);
+    const newlyAffordable = COSMETICS.filter(c =>
+      !ownedCosmetics.includes(c.id) && coins >= c.coinCost && (coins - 2) < c.coinCost
+    );
+    if (!newlyAffordable.length) return;
+    setNewCosmetics([newlyAffordable[0].id]);
     SFX.achievement();
     setTimeout(() => setNewCosmetics([]), 4000);
-  }, [totalStars]); // eslint-disable-line
+  }, [coins]); // eslint-disable-line
 
   // [C1] Sfida Fulmine — countdown timer
   useEffect(() => {
@@ -3571,12 +3969,26 @@ export default function MondoMago() {
     if (screen !== "parent") setParentUnlocked(false);
   }, [screen]);
 
-  // Tick every 30s for session timer
+  // Tick every 30s for session timer + session intelligence
   useEffect(() => {
-    if (!timeLimit || !sessionStart) return;
+    if (!sessionStart) return;
     const id = setInterval(() => setNowTick(Date.now()), 30000);
     return () => clearInterval(id);
-  }, [timeLimit, sessionStart]);
+  }, [sessionStart]);
+
+  // Session intelligence: proactive rest reminder after 8 minutes
+  const [sessionAlertShown, setSessionAlertShown] = useState(false);
+  const [showSessionAlert, setShowSessionAlert] = useState(false);
+  useEffect(() => {
+    if (!sessionStart || sessionAlertShown || screen !== "challenge") return;
+    const elapsed = (Date.now() - sessionStart) / 60000;
+    if (elapsed >= 8) {
+      setShowSessionAlert(true);
+      setSessionAlertShown(true);
+      SFX.sessionChime();
+      setTimeout(() => setShowSessionAlert(false), 5000);
+    }
+  }, [nowTick, sessionStart, sessionAlertShown, screen]); // eslint-disable-line
 
   // Pre-load voices so getBestVoice() has data on first speak()
   useEffect(() => {
@@ -3626,7 +4038,7 @@ export default function MondoMago() {
   const G = (
     <>
       <AnimationStyles />
-      <InstallBanner />
+      <InstallBanner screen={screen} />
       {newAchievements.length > 0 && (() => {
         const a = ACHIEVEMENTS.find(x => x.id === newAchievements[0]);
         return (
@@ -3662,9 +4074,9 @@ export default function MondoMago() {
             <div className="slide-up" style={{background:"linear-gradient(135deg,#1a0f2e,#2d1b50)",border:"2px solid #C084FC",borderRadius:24,padding:"14px 22px",display:"flex",alignItems:"center",gap:12,maxWidth:340,boxShadow:"0 8px 32px rgba(192,132,252,.3)"}}>
               <span style={{fontSize:34}}>{c?.emoji}</span>
               <div>
-                <div style={{fontFamily:FF,fontSize:13,color:"#C084FC"}}>COSMETICO SBLOCCATO! ✨</div>
+                <div style={{fontFamily:FF,fontSize:13,color:"#C084FC"}}>PUOI ACQUISTARLO! 💎</div>
                 <div style={{fontFamily:FF,fontSize:16,color:"white"}}>{c?.name}</div>
-                <div style={{fontSize:11,color:"rgba(255,255,255,.6)"}}>Equipaggialo in Personalizza!</div>
+                <div style={{fontSize:11,color:"rgba(255,255,255,.6)"}}>Vai in ✨ Personalizza!</div>
               </div>
             </div>
           </div>
@@ -3772,6 +4184,7 @@ export default function MondoMago() {
       </div>
       <label style={{display:"flex",alignItems:"center",gap:10,marginBottom:20,cursor:"pointer",fontSize:13,opacity:.85,maxWidth:340,textAlign:"left"}}>
         <input type="checkbox" checked={consentChecked} onChange={e => setConsentChecked(e.target.checked)}
+          aria-label="Confermo di essere un adulto responsabile dell'utilizzo dell'app"
           style={{width:18,height:18,accentColor:"#667eea",flexShrink:0}} />
         Confermo di essere un adulto e di essere il responsabile dell'utilizzo di questa app da parte del bambino.
       </label>
@@ -3977,7 +4390,7 @@ export default function MondoMago() {
       <p style={{opacity:.6,marginBottom:32,fontSize:13,textAlign:"center"}}>Sarà con te in ogni avventura magica, {childName}</p>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14,width:"100%",maxWidth:420}}>
         {COMPANIONS.map((c,i) => (
-          <button key={c.id} onClick={() => { SFX.tap(); setCompanion(c.id); navigate("map"); }}
+          <button key={c.id} onClick={() => { SFX.tap(); setCompanion(c.id); navigate("companion_welcome"); }}
             className="slide-up pop-in"
             style={{
               background:`linear-gradient(160deg,${c.color}22,${c.color}08)`,
@@ -3997,6 +4410,49 @@ export default function MondoMago() {
       </div>
     </div>
   );
+
+  // ════════════════════ SCREEN: COMPANION WELCOME ══════════════════════════
+  if (screen === "companion_welcome") {
+    const cw = COMPANIONS.find(c => c.id === companion) || COMPANIONS[0];
+    const meetMsg = cw.onMeet ? cw.onMeet(childName || "amico") : `Ciao! Sono ${cw.name}!`;
+    return (
+      <div key="companion_welcome" className={screenAnim}
+        style={{minHeight:"100dvh",background:cw.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"space-between",padding:"52px 28px",paddingBottom:"max(env(safe-area-inset-bottom,0px),52px)",textAlign:"center",color:"white",position:"relative",overflow:"hidden"}}>
+        {G}
+        {/* Floating sparkles */}
+        {[["✨",12,16,2.4,0],["⭐",82,10,3.0,0.4],["💫",22,74,2.7,0.8],["🌟",74,68,2.3,0.2],["✨",48,88,3.4,0.6]].map(([e,l,t,dur,del],i) => (
+          <div key={i} style={{position:"absolute",left:`${l}%`,top:`${t}%`,fontSize:18+i*4,opacity:.45,animation:`float ${dur}s ease-in-out infinite`,animationDelay:`${del}s`,pointerEvents:"none",userSelect:"none"}}>{e}</div>
+        ))}
+        {/* Back link */}
+        <div style={{alignSelf:"flex-start"}}>
+          <button onClick={() => { setCompanion(null); navigate("companion"); }}
+            style={{background:"rgba(255,255,255,.15)",border:"none",color:"rgba(255,255,255,.75)",borderRadius:20,padding:"7px 16px",fontSize:13,cursor:"pointer",fontWeight:700}}>
+            ← Cambia
+          </button>
+        </div>
+        {/* Companion hero */}
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:22,width:"100%",maxWidth:360,flex:1,justifyContent:"center"}}>
+          <div className="pop-in" style={{position:"relative",width:180,height:180,display:"flex",alignItems:"center",justifyContent:"center"}}>
+            {/* Pulsing halo */}
+            <div className="pulse" style={{position:"absolute",inset:-12,borderRadius:"50%",background:`${cw.color}28`,border:`3px solid ${cw.color}55`}} />
+            <div style={{width:176,height:176,borderRadius:"50%",background:`${cw.color}18`,border:`4px solid ${cw.color}99`,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 0 60px ${cw.color}66, 0 0 100px ${cw.color}33`,animation:"float 2.5s ease-in-out infinite",fontSize:104,lineHeight:1}}>
+              {cw.emoji}
+            </div>
+          </div>
+          <h1 style={{fontFamily:FF,fontSize:40,margin:0,textShadow:"0 2px 18px rgba(0,0,0,.4)",letterSpacing:.5}}>{cw.name}!</h1>
+          {/* Speech bubble */}
+          <div className="slide-up" style={{background:"rgba(255,255,255,.2)",border:"2px solid rgba(255,255,255,.38)",borderRadius:24,padding:"18px 24px",fontSize:17,lineHeight:1.65,fontWeight:700,maxWidth:330}}>
+            {meetMsg}
+          </div>
+        </div>
+        {/* CTA */}
+        <button onClick={() => { warmUpAudio(); navigate("map"); }}
+          style={{background:"white",color:cw.color||"#764ba2",border:"none",borderRadius:50,padding:"18px 52px",fontSize:20,fontWeight:900,cursor:"pointer",boxShadow:"0 8px 32px rgba(0,0,0,.25)",width:"100%",maxWidth:340}}>
+          Iniziamo l'avventura! 🚀
+        </button>
+      </div>
+    );
+  }
 
   // ════════════════════ SCREEN: MAP ═════════════════════════════════════════
   if (screen === "map") {
@@ -4087,7 +4543,7 @@ export default function MondoMago() {
       })()}
       {/* ── STATS ROW ── */}
       <div style={{display:"flex",gap:10,marginBottom:12}}>
-        {[{i:"⭐",v:totalStars,l:"stelle",c:"#FFD700"},{i:"🏆",v:items.length,l:"trofei",c:"#C084FC"}].map((s,idx) => (
+        {[{i:"⭐",v:totalStars,l:"stelle",c:"#FFD700"},{i:"🏆",v:items.length,l:"trofei",c:"#C084FC"},{i:"💎",v:coins,l:"monete",c:"#38BDF8"}].map((s,idx) => (
           <div key={idx} style={{flex:1,background:mt.card,borderRadius:20,padding:"14px 8px",textAlign:"center",border:mt.cardBd}}>
             <div style={{fontSize:26}}>{s.i}</div>
             <div style={{fontFamily:FF,fontSize:24,color:s.c,lineHeight:1}}>{s.v}</div>
@@ -4098,14 +4554,28 @@ export default function MondoMago() {
         {(() => {
           const flames = streak >= 7 ? "🔥🔥🔥" : streak >= 3 ? "🔥🔥" : "🔥";
           const today = new Date().toISOString().slice(0,10);
+          const playedToday = sessionLog.some(s => s.date === today) || sessionLog.length > 0;
           const last7 = Array.from({length:7},(_,i) => { const d=new Date(); d.setDate(d.getDate()-6+i); return d.toISOString().slice(0,10); });
           const playedDates = new Set(sessionLog.map(s=>s.date));
           playedDates.add(today);
+          const streakAtRisk = streak >= 2 && !playedToday;
           return (
-            <div style={{flex:1,background:youngBg?"rgba(255,100,0,.1)":"rgba(249,115,22,.1)",borderRadius:20,padding:"14px 8px",textAlign:"center",border:youngBg?"1px solid rgba(255,100,0,.2)":"1px solid rgba(249,115,22,.2)"}}>
-              <div style={{fontSize:22,animation:streak>=3?"pulse 1.4s ease-in-out infinite":"none"}}>{flames}</div>
-              <div style={{fontFamily:FF,fontSize:24,color:"#FB923C",lineHeight:1}}>{streak}</div>
-              <div style={{display:"flex",gap:4,justifyContent:"center",marginTop:6}}>
+            <div style={{
+              flex:1,
+              background:streakAtRisk
+                ?(youngBg?"rgba(239,68,68,.1)":"rgba(239,68,68,.12)")
+                :(youngBg?"rgba(255,100,0,.1)":"rgba(249,115,22,.1)"),
+              borderRadius:20,padding:"10px 8px",textAlign:"center",
+              border:streakAtRisk
+                ?(youngBg?"1px solid rgba(239,68,68,.3)":"1px solid rgba(239,68,68,.3)")
+                :(youngBg?"1px solid rgba(255,100,0,.2)":"1px solid rgba(249,115,22,.2)"),
+            }}>
+              <div className={streak>=3?"streak-flame":""} style={{fontSize:22}}>{flames}</div>
+              <div style={{fontFamily:FF,fontSize:24,color:streakAtRisk?"#F87171":"#FB923C",lineHeight:1}}>{streak}</div>
+              <div style={{fontSize:9,fontWeight:800,color:streakAtRisk?"#F87171":"#FB923C",opacity:.8,marginBottom:3}}>
+                {streakAtRisk?"⚠️ a rischio!":streak>=7?"🏆 LEGGENDA":streak>=3?"⭐ SERIE":streak>=1?"Giorni":""}
+              </div>
+              <div style={{display:"flex",gap:3,justifyContent:"center",marginTop:3}}>
                 {last7.map(d => {
                   const dayLbl = ["D","L","M","M","G","V","S"][new Date(d+"T12:00:00").getDay()];
                   const played = playedDates.has(d);
@@ -4158,6 +4628,71 @@ export default function MondoMago() {
           {schoolAssigned.length > 0 && <span style={{background:"#2563EB",color:"white",borderRadius:10,padding:"2px 8px",fontSize:10,fontWeight:900}}>{schoolAssigned.length} sfide</span>}
         </div>
       )}
+      {/* ── IL SIGILLO MAGICO ── */}
+      {(() => {
+        const completedWorlds = SIGILLO_FRAGMENTS.filter(f =>
+          items.find(it => it.emoji === STORY_ARCS[f.worldId]?.reward_emoji)
+        );
+        const count = completedWorlds.length;
+        const isComplete = count === SIGILLO_FRAGMENTS.length;
+        return (
+          <button onClick={() => navigate("story_book")}
+            style={{
+              width:"100%",marginBottom:12,
+              background:isComplete
+                ?"linear-gradient(135deg,rgba(255,215,0,.22),rgba(255,180,0,.12))"
+                :"rgba(255,255,255,.05)",
+              border:`2px solid ${isComplete?"rgba(255,215,0,.55)":"rgba(255,255,255,.12)"}`,
+              borderRadius:20,padding:"14px 16px",
+              color:"white",cursor:"pointer",
+              display:"flex",alignItems:"center",gap:14,textAlign:"left",
+              boxShadow:isComplete?"0 4px 24px rgba(255,215,0,.2)":"none",
+            }}>
+            {/* Sigillo SVG miniatura */}
+            <svg width={52} height={52} viewBox="0 0 100 100"
+              className={isComplete?"sigillo-glow":""}>
+              <circle cx={50} cy={50} r={44} fill="none"
+                stroke={isComplete?"rgba(255,215,0,.5)":"rgba(255,255,255,.1)"} strokeWidth={2}/>
+              {SIGILLO_FRAGMENTS.map((f, i) => {
+                const rad = (f.angle - 90) * Math.PI / 180;
+                const x = 50 + 32 * Math.cos(rad);
+                const y = 50 + 32 * Math.sin(rad);
+                const active = !!items.find(it => it.emoji === STORY_ARCS[f.worldId]?.reward_emoji);
+                return (
+                  <circle key={i} cx={x} cy={y} r={9}
+                    fill={active ? f.color : "rgba(255,255,255,.08)"}
+                    stroke={active ? `${f.color}88` : "rgba(255,255,255,.12)"}
+                    strokeWidth={1.5}
+                    opacity={active ? 1 : 0.45}
+                  />
+                );
+              })}
+              {/* Centro */}
+              <circle cx={50} cy={50} r={11}
+                fill={isComplete?"rgba(255,215,0,.6)":"rgba(255,255,255,.08)"}
+                stroke={isComplete?"#FFD700":"rgba(255,255,255,.2)"} strokeWidth={2}/>
+              <text x={50} y={55} textAnchor="middle" fontSize={12} fill="white" style={{pointerEvents:"none"}}>
+                {isComplete?"✨":"✦"}
+              </text>
+            </svg>
+            <div style={{flex:1}}>
+              <div style={{fontFamily:FF,fontSize:15,color:isComplete?"#FFD95A":"white",marginBottom:2}}>
+                Il Sigillo Magico {isComplete?"— COMPLETO! ✨":""}
+              </div>
+              <div style={{fontSize:12,opacity:.65}}>
+                {count}/{SIGILLO_FRAGMENTS.length} frammenti · {SIGILLO_STORY[count]?.slice(0,55)}...
+              </div>
+              <div style={{display:"flex",gap:4,marginTop:6,flexWrap:"wrap"}}>
+                {SIGILLO_FRAGMENTS.map((f, i) => {
+                  const active = !!items.find(it => it.emoji === STORY_ARCS[f.worldId]?.reward_emoji);
+                  return <div key={i} style={{width:8,height:8,borderRadius:"50%",background:active?f.color:"rgba(255,255,255,.15)"}} />;
+                })}
+              </div>
+            </div>
+            <div style={{fontSize:20,opacity:.5}}>›</div>
+          </button>
+        );
+      })()}
       {/* ── DAILY CHALLENGE ── */}
       {(() => {
         const today = new Date().toISOString().slice(0,10);
@@ -4299,9 +4834,10 @@ export default function MondoMago() {
           const a   = STORY_ARCS[w.id];
           const has = items.find(it => it.emoji === a?.reward_emoji);
           const locked = !w.unlocked;
+          const isSpot = i === 0 && !isReturning && totalStars === 0 && !mapSpotDismissed;
           return (
-            <button key={w.id} onClick={() => locked ? speak(`Guadagna ancora ${w.starsNeeded - totalStars} stelle per aprire ${w.name}!`) : startWorld(w)}
-              className={`slide-up${locked?"":" world-card-btn"}`}
+            <button key={w.id} onClick={() => { if (isSpot) setMapSpotDismissed(true); locked ? speak(`Guadagna ancora ${w.starsNeeded - totalStars} stelle per aprire ${w.name}!`) : startWorld(w); }}
+              className={`slide-up${locked?"":" world-card-btn"}${isSpot?" pulse":""}`}
               disabled={locked}
               style={{
                 background:locked ? mt.wLocked : mt.wCard,
@@ -4334,7 +4870,10 @@ export default function MondoMago() {
                 display:"flex",alignItems:"center",justifyContent:"center",
                 fontSize:34,position:"relative",zIndex:1,
                 boxShadow:locked?"none":`0 0 20px ${w.color}44`,
-              }}>{locked?"🔒":w.emoji}</div>
+              }}>
+                {locked?"🔒":w.emoji}
+                {has && !locked && <div style={{position:"absolute",bottom:-6,right:-6,fontSize:18,lineHeight:1,filter:"drop-shadow(0 1px 3px rgba(0,0,0,.5))"}}>{a?.reward_emoji}</div>}
+              </div>
               {/* Content */}
               <div style={{flex:1,minWidth:0,position:"relative",zIndex:1}}>
                 <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
@@ -4357,6 +4896,13 @@ export default function MondoMago() {
               </div>
               {/* Arrow */}
               {!locked && <div style={{color:youngBg?w.color:w.color,fontSize:22,opacity:youngBg?.9:.8,flexShrink:0,position:"relative",zIndex:1}}>›</div>}
+              {/* First-visit spotlight tooltip */}
+              {isSpot && (
+                <div className="pop-in" style={{position:"absolute",top:-42,left:"50%",transform:"translateX(-50%)",background:"white",color:"#1a1a2e",borderRadius:20,padding:"6px 16px",fontSize:12,fontWeight:900,whiteSpace:"nowrap",boxShadow:"0 4px 16px rgba(0,0,0,.25)",zIndex:20,pointerEvents:"none"}}>
+                  {comp?.emoji} Inizia da qui! 👆
+                  <div style={{position:"absolute",bottom:-6,left:"50%",transform:"translateX(-50%)",width:0,height:0,borderLeft:"6px solid transparent",borderRight:"6px solid transparent",borderTop:"6px solid white"}} />
+                </div>
+              )}
             </button>
           );
         })}
@@ -4559,6 +5105,11 @@ export default function MondoMago() {
     const isIfElse     = ch.format === "if_else_tap";
     const isDebug      = ch.format === "debug_find";
     const isMemMatch   = ch.format === "memory_match";
+    const isCartoon    = ch.format === "quiz_cartoon";
+    const isColorZone  = ch.format === "color_zones";
+    const isPuzzleSwap = ch.format === "puzzle_swap";
+    // sync initialPuzzleGrid into state when challenge changes
+    if (isPuzzleSwap && puzzleGrid === null && initialPuzzleGrid) setPuzzleGrid(initialPuzzleGrid);
 
     function tapMemCard(idx) {
       if (mmLocked || mmFlipped.length >= 2 || mmFlipped.includes(idx) || mmMatched.includes(idx)) return;
@@ -4640,6 +5191,41 @@ export default function MondoMago() {
             </div>
           </div>
         )}
+        {/* Pause modal */}
+        {paused && (
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.88)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
+            <div style={{background:"#1e1e3a",borderRadius:24,padding:"32px 24px",maxWidth:320,textAlign:"center",boxShadow:"0 20px 60px rgba(0,0,0,.6)",width:"100%"}}>
+              <div style={{fontSize:52,marginBottom:12}}>⏸</div>
+              <h3 style={{color:"white",margin:"0 0 6px",fontSize:22,fontFamily:FF}}>In pausa</h3>
+              <p style={{color:"rgba(255,255,255,.6)",fontSize:13,margin:"0 0 10px",lineHeight:1.5}}>
+                Sfida {ci+1} di {challenges.length}
+              </p>
+              <div style={{background:"rgba(255,255,255,.06)",borderRadius:14,padding:"8px 16px",marginBottom:24,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                <span style={{fontSize:16}}>⭐</span>
+                <span style={{color:"#FFD95A",fontWeight:800,fontSize:15}}>{sessionStars} stelle</span>
+                <span style={{color:"rgba(255,255,255,.3)",fontSize:13,margin:"0 6px"}}>·</span>
+                <span style={{fontSize:16}}>💎</span>
+                <span style={{color:"#38BDF8",fontWeight:800,fontSize:15}}>{coins}</span>
+              </div>
+              {comp && (
+                <div style={{marginBottom:20,display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+                  <CompanionAvatar c={comp} size={64} anim="float" />
+                  <span style={{color:"rgba(255,255,255,.55)",fontSize:12}}>Pronto a riprendere!</span>
+                </div>
+              )}
+              <div style={{display:"flex",gap:10,flexDirection:"column"}}>
+                <button onClick={handleResume}
+                  style={{background:"linear-gradient(135deg,#22C55E,#16A34A)",border:"none",color:"white",borderRadius:50,padding:"16px",cursor:"pointer",fontSize:16,fontWeight:900,boxShadow:"0 4px 16px rgba(34,197,94,.35)"}}>
+                  ▶ Continua!
+                </button>
+                <button onClick={handlePauseExit}
+                  style={{background:"rgba(255,255,255,.1)",border:"none",color:"rgba(255,255,255,.7)",borderRadius:50,padding:"13px",cursor:"pointer",fontSize:14,fontWeight:700}}>
+                  🚪 Esci dal mondo
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         {/* Exit confirmation modal */}
         {exitConfirm && (
           <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.82)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
@@ -4657,6 +5243,22 @@ export default function MondoMago() {
                   Continua!
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+        {/* Session alert: proactive rest reminder after 8 min */}
+        {showSessionAlert && (
+          <div className="session-alert" style={{
+            position:"fixed",top:0,left:0,right:0,zIndex:2000,
+            background:"linear-gradient(135deg,#7C3AED,#4F46E5)",
+            padding:"12px 20px",textAlign:"center",
+            boxShadow:"0 4px 20px rgba(0,0,0,.4)",
+          }}>
+            <div style={{fontSize:15,fontWeight:800,color:"white",marginBottom:2}}>
+              ⏱️ Hai giocato per 8 minuti!
+            </div>
+            <div style={{fontSize:12,color:"rgba(255,255,255,.75)"}}>
+              Riposati gli occhi dopo questa sfida — poi torna per guadagnare ancora! 🌟
             </div>
           </div>
         )}
@@ -4679,13 +5281,22 @@ export default function MondoMago() {
               title="Rileggi la domanda" aria-label="Rileggi la domanda">
               🔊
             </button>
+            <button onClick={handlePause}
+              aria-label="Metti in pausa" style={{background:youngBg?"rgba(0,0,0,.08)":"rgba(255,255,255,.1)",border:"none",color:youngBg?"#444":"white",borderRadius:12,padding:"11px 14px",cursor:"pointer",fontSize:17}}>
+              ⏸
+            </button>
           </div>
-          <div style={{display:"flex",alignItems:"center",gap:10,fontSize:14}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,fontSize:14,position:"relative"}}>
             {world && <span style={{fontFamily:FF,fontSize:12,background:`${worldColor}33`,border:`1px solid ${worldColor}55`,borderRadius:20,padding:"2px 10px",color:worldColor}}>{world.emoji} {world.name}</span>}
             {starPop
               ? <span className="star-pop" style={{fontSize:22,color:"#FFD95A"}}>⭐+{pts}</span>
               : <span style={{fontWeight:800,color:youngBg?"#1a1a2e":"white"}}>⭐ {sessionStars}</span>
             }
+            {coinPop && (
+              <span className="coin-pop" style={{position:"absolute",top:-18,right:0,fontSize:17,color:"#38BDF8",fontWeight:900,pointerEvents:"none"}}>
+                💎+{coinPopAmt}
+              </span>
+            )}
             {combo >= 2 && <span style={{fontSize:12,color:"#F97316",fontWeight:900}}>🔥×{combo}</span>}
           </div>
           {comp && <CompanionAvatar c={comp} size={56} anim={compAnim} talking={compTalking} mood={compMood} worldId={world?.id} />}
@@ -5093,6 +5704,204 @@ export default function MondoMago() {
         )}
         {/* drag-drop feedback handled by unified bottom sheet */}
 
+        {/* ── QUIZ CARTOON ── Indovina l'emoji oscurata ─────────────────────── */}
+        {isCartoon && !done && (
+          <div style={{position:"relative",zIndex:1}}>
+            <div style={{textAlign:"center",marginBottom:20}}>
+              <div style={{fontSize:11,fontWeight:800,letterSpacing:2,opacity:.5,marginBottom:12,
+                color:youngBg?"#666":"rgba(255,255,255,.5)"}}>
+                🔍 INDOVINA CHI È!
+              </div>
+              <div style={{
+                fontSize:110,lineHeight:1,display:"inline-block",
+                filter:"blur(8px) brightness(0.65) saturate(0)",
+                opacity:0.85,
+                transition:"filter .55s cubic-bezier(.34,1.56,.64,1), transform .55s cubic-bezier(.34,1.56,.64,1)",
+                userSelect:"none",
+              }}>
+                {ch.cartoonEmoji}
+              </div>
+              <p style={{fontSize:13,opacity:.55,margin:"10px 0 0",
+                color:youngBg?"#555":"rgba(255,255,255,.7)"}}>
+                Tocca una risposta per scoprirlo!
+              </p>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:youngBg?14:10}}>
+              {ch.options.map((opt, idx) => {
+                let bg = "rgba(255,255,255,.13)", border = "rgba(255,255,255,.22)";
+                if (youngBg) { const yc=["#FF6B9D","#A78BFA","#38BDF8","#34D399"]; bg=yc[idx%4]+"22"; border=yc[idx%4]; }
+                return (
+                  <button key={`${ci}-qc-${idx}`} onClick={e => answerMC(idx, e)}
+                    className={`ans-btn ans-btn-idle ans-enter`}
+                    style={{
+                      animationDelay:`${idx*80}ms`,
+                      background:bg, border:`3px solid ${border}`,
+                      borderRadius:youngBg?22:18, color:youngBg?(["#FF6B9D","#A78BFA","#38BDF8","#34D399"][idx%4]):"white",
+                      fontWeight:youngBg?800:600, cursor:"pointer",
+                      height:youngBg?96:84, fontSize:youngBg?19:17,
+                      display:"flex",alignItems:"center",justifyContent:"center",
+                    }}>
+                    {opt}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+        {isCartoon && done && (
+          <div style={{textAlign:"center",padding:"14px 0 4px"}}>
+            <div className="cartoon-reveal" style={{fontSize:96,lineHeight:1,marginBottom:10}}>
+              {ch.cartoonEmoji}
+            </div>
+            <div style={{fontSize:17,fontFamily:"Fredoka One, sans-serif",
+              color:isCorrect?(youngBg?"#15803D":"#4ade80"):(youngBg?"#DC2626":"#F87171")}}>
+              {isCorrect ? `✓ Era ${ch.options[ch.correct]}!` : `Era ${ch.options[ch.correct]}!`}
+            </div>
+          </div>
+        )}
+
+        {/* ── COLOR ZONES ── Colora le zone nel colore giusto ────────────────── */}
+        {isColorZone && !done && ch.zones && (
+          <div style={{position:"relative",zIndex:1}}>
+            <p style={{textAlign:"center",fontSize:13,opacity:.6,marginBottom:12,
+              color:youngBg?"#555":"rgba(255,255,255,.7)"}}>
+              🎨 Scegli un colore, poi tocca una zona!
+            </p>
+            <div style={{display:"flex",justifyContent:"center",marginBottom:16}}>
+              <svg width={ch.gridWidth||280} height={ch.gridHeight||120}
+                viewBox={`0 0 ${ch.gridWidth||280} ${ch.gridHeight||120}`}
+                style={{borderRadius:14,background:youngBg?"rgba(255,255,255,.92)":"rgba(0,0,0,.18)",
+                  border:`2px solid ${youngBg?"rgba(0,0,0,.1)":"rgba(255,255,255,.18)"}`}}>
+                {ch.zones.map(zone => {
+                  const filled = colorZoneColors[zone.id];
+                  return (
+                    <g key={zone.id} onClick={() => {
+                      if (!colorZonePicked) return;
+                      SFX.tap();
+                      const nc = { ...colorZoneColors, [zone.id]: colorZonePicked };
+                      setColorZoneColors(nc);
+                      setColorZonePicked(null);
+                      if (ch.zones.every(z => nc[z.id] === z.targetColor)) {
+                        setSelected(999);
+                        const pts = ch.isBoss ? 3 : young ? 1 : 2;
+                        triggerOK(pts); setSkills(s => addSkill(s, ch.type||"creativita"));
+                        if (comp) { const msg = comp.onCorrect(); setFeedbackMsg(msg); setTimeout(() => { setCompTalking(true); speak(msg, 0.85, () => setCompTalking(false)); }, 400); }
+                        setResults(r => [...r, { type: ch.type||"creativita", ok: true }]);
+                        setTimeout(() => setShowFeedback(true), 280);
+                      }
+                    }} style={{cursor:colorZonePicked?"pointer":"default"}}>
+                      <circle cx={zone.x+(zone.size/2)} cy={zone.y+(zone.size/2)} r={zone.size/2}
+                        fill={filled||"rgba(200,200,200,.25)"}
+                        stroke={filled===zone.targetColor?"#22C55E":(colorZonePicked&&!filled?"rgba(255,220,0,.7)":"rgba(180,180,180,.4)")}
+                        strokeWidth={filled===zone.targetColor?3:2}
+                        style={{transition:"all .25s"}} />
+                      <text x={zone.x+(zone.size/2)} y={zone.y+(zone.size/2)+5}
+                        textAnchor="middle" fontSize={14} fontWeight="900"
+                        fill={filled?"rgba(255,255,255,.9)":(youngBg?"#888":"rgba(255,255,255,.5)")}
+                        style={{pointerEvents:"none"}}>
+                        {zone.label}
+                      </text>
+                    </g>
+                  );
+                })}
+              </svg>
+            </div>
+            <p style={{fontSize:11,opacity:.45,textAlign:"center",marginBottom:8,
+              color:youngBg?"#666":"rgba(255,255,255,.5)"}}>Scegli un colore:</p>
+            <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap",marginBottom:8}}>
+              {ch.colors.map((color, ci2) => (
+                <button key={ci2} onClick={() => { SFX.tap(); setColorZonePicked(color); }}
+                  style={{
+                    width:56,height:56,borderRadius:16,background:color,cursor:"pointer",
+                    border:`4px solid ${colorZonePicked===color?(youngBg?"#333":"white"):"rgba(255,255,255,.18)"}`,
+                    boxShadow:colorZonePicked===color?`0 0 18px ${color}88`:"0 2px 6px rgba(0,0,0,.2)",
+                    transform:colorZonePicked===color?"scale(1.12)":"scale(1)",
+                    transition:"all .15s",fontSize:11,fontWeight:800,color:"white",
+                    textShadow:"0 1px 3px rgba(0,0,0,.45)",
+                  }}>
+                  {ch.colorNames?.[ci2]?.slice(0,3)||""}
+                </button>
+              ))}
+            </div>
+            <div style={{textAlign:"center",fontSize:12,opacity:.45,
+              color:youngBg?"#555":"rgba(255,255,255,.55)"}}>
+              {Object.keys(colorZoneColors).filter(k=>colorZoneColors[k]===ch.zones.find(z=>z.id===k)?.targetColor).length}/{ch.zones.length} zone corrette
+            </div>
+          </div>
+        )}
+        {isColorZone && done && (
+          <div style={{textAlign:"center",padding:"14px 0 4px",fontSize:17,fontFamily:"Fredoka One, sans-serif",
+            color:youngBg?"#15803D":"#4ade80"}}>
+            🎨 Bellissimo! Sei un artista!
+          </div>
+        )}
+
+        {/* ── PUZZLE SWAP ── Sliding puzzle con emoji ────────────────────────── */}
+        {isPuzzleSwap && puzzleGrid && !done && (
+          <div style={{position:"relative",zIndex:1}}>
+            <p style={{textAlign:"center",fontSize:13,opacity:.6,marginBottom:12,
+              color:youngBg?"#555":"rgba(255,255,255,.7)"}}>
+              🧩 Tocca un pezzo accanto al buco per spostarlo!
+            </p>
+            {(() => {
+              const size = ch.size || 2;
+              const tileSize = size === 2 ? 88 : size === 3 ? 72 : 60;
+              const gap = 8;
+              return (
+                <div style={{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:14}}>
+                  <div style={{
+                    display:"grid",
+                    gridTemplateColumns:`repeat(${size}, ${tileSize}px)`,
+                    gap:`${gap}px`,
+                    padding:12,
+                    background:youngBg?"rgba(255,255,255,.9)":"rgba(0,0,0,.18)",
+                    borderRadius:16,
+                    border:`2px solid ${youngBg?"rgba(0,0,0,.1)":"rgba(255,255,255,.18)"}`,
+                  }}>
+                    {puzzleGrid.map((itemIdx, gridIdx) => {
+                      const isEmpty = itemIdx === -1;
+                      return (
+                        <div key={gridIdx} onClick={() => swapPuzzleTile(gridIdx)}
+                          className={isEmpty?"":"ans-btn"}
+                          style={{
+                            width:tileSize,height:tileSize,borderRadius:12,
+                            background:isEmpty
+                              ?(youngBg?"#f0f0f0":"rgba(255,255,255,.06)")
+                              :(youngBg?"white":"rgba(255,255,255,.12)"),
+                            border:isEmpty
+                              ?`2px dashed ${youngBg?"rgba(0,0,0,.15)":"rgba(255,255,255,.2)"}`
+                              :`2px solid ${youngBg?"rgba(0,0,0,.1)":"rgba(255,255,255,.22)"}`,
+                            display:"flex",alignItems:"center",justifyContent:"center",
+                            fontSize:size===2?46:size===3?34:26,
+                            cursor:isEmpty?"default":"pointer",
+                            transition:"all .15s cubic-bezier(.34,1.56,.64,1)",
+                            boxShadow:isEmpty?"inset 0 2px 4px rgba(0,0,0,.08)":"0 2px 6px rgba(0,0,0,.1)",
+                            userSelect:"none",
+                          }}>
+                          {!isEmpty && ch.emojis[itemIdx]}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div style={{marginTop:10,fontSize:12,opacity:.45,
+                    color:youngBg?"#555":"rgba(255,255,255,.55)"}}>
+                    Mosse: {puzzleMoves}
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        )}
+        {isPuzzleSwap && !puzzleGrid && !done && (
+          <div style={{textAlign:"center",padding:"40px 20px",fontSize:32}}>🧩</div>
+        )}
+        {isPuzzleSwap && done && (
+          <div style={{textAlign:"center",padding:"14px 0 4px",fontSize:17,fontFamily:"Fredoka One, sans-serif",
+            color:youngBg?"#15803D":"#4ade80"}}>
+            🧩 Perfetto in {puzzleMoves} {puzzleMoves===1?"mossa":"mosse"}!
+          </div>
+        )}
+
         {/* Multiple choice / visual tap */}
         {(isMC || isVis || isRhyme || isWordPic || isAlpha) && (
           <div style={{position:"relative",zIndex:1}}>
@@ -5264,11 +6073,40 @@ export default function MondoMago() {
           <div style={{fontFamily:FF,fontSize:20,marginTop:8,color:"#FFD95A"}}>{arc.reward_name}</div>
           <div style={{fontSize:12,opacity:.65,marginTop:4}}>Sbloccato per {comp?.name}!</div>
         </div>
+        {/* Diploma prima volta */}
+        {isFirstWorldComplete && (
+          <div className="pop-in glow" style={{background:"linear-gradient(135deg,rgba(255,215,0,.18),rgba(255,170,0,.1))",borderRadius:24,padding:"16px 24px",marginBottom:18,border:"2px solid rgba(255,215,0,.55)",textAlign:"center",width:"100%",maxWidth:360,animationDelay:"1.25s"}}>
+            <div style={{fontSize:44,marginBottom:4}}>🏅</div>
+            <div style={{fontFamily:FF,fontSize:18,color:"#FFD95A",marginBottom:2}}>Prima volta!</div>
+            <div style={{fontSize:13,color:"rgba(255,255,255,.75)",lineHeight:1.5}}>Hai completato questo mondo per la prima volta. Sei un vero campione!</div>
+          </div>
+        )}
+        {/* Bonus 100% accuratezza */}
+        {perfectBonus && (
+          <div className="pop-in glow" style={{background:"linear-gradient(135deg,rgba(34,197,94,.2),rgba(16,185,129,.1))",borderRadius:20,padding:"12px 24px",marginBottom:14,border:"2px solid rgba(34,197,94,.5)",display:"flex",alignItems:"center",gap:12,width:"100%",maxWidth:360,animationDelay:"1.4s"}}>
+            <span style={{fontSize:32}}>🎯</span>
+            <div style={{textAlign:"left"}}>
+              <div style={{fontFamily:FF,fontSize:16,color:"#4ade80"}}>Punteggio perfetto! +5 💎</div>
+              <div style={{fontSize:12,opacity:.7}}>Tutte le risposte corrette</div>
+            </div>
+          </div>
+        )}
         {world?.id === "daily" && (
           <div className="pop-in glow" style={{background:"rgba(255,213,0,.18)",borderRadius:20,padding:"12px 28px",marginBottom:16,border:"2px solid rgba(255,213,0,.5)",fontSize:16,fontWeight:900,color:"#FFD95A",animationDelay:"1.35s"}}>
             🌟 +3 stelle bonus!
           </div>
         )}
+        <div className="pop-in" style={{background:"rgba(56,189,248,.12)",border:"1px solid rgba(56,189,248,.35)",borderRadius:20,padding:"10px 20px",marginBottom:14,display:"flex",alignItems:"center",gap:10,animationDelay:"1.1s"}}>
+          <span style={{fontSize:28}}>💎</span>
+          <div>
+            <div style={{fontFamily:FF,fontSize:20,color:"#38BDF8",lineHeight:1}}>+{sessionStars + (perfectBonus ? 5 : 0)}</div>
+            <div style={{fontSize:11,opacity:.7}}>monete magiche{perfectBonus ? " (+5 perfetto!)" : ""}</div>
+          </div>
+          <div style={{marginLeft:"auto",textAlign:"right"}}>
+            <div style={{fontSize:11,opacity:.5}}>totale</div>
+            <div style={{fontFamily:FF,fontSize:16,color:"#38BDF8"}}>{coins} 💎</div>
+          </div>
+        </div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:10,marginBottom:20,width:"100%",maxWidth:360}}>
           {[{i:"⭐",v:sessionStars,l:"stelle"},{i:"✅",v:correct,l:"giuste"},{i:"🎯",v:`${pct}%`,l:"precisione"},{i:"🔥",v:combo,l:"combo max"}].map((s,idx) => (
             <div key={idx} className="pop-in" style={{textAlign:"center",background:"rgba(255,255,255,.08)",borderRadius:16,padding:"12px 6px",animationDelay:`${1.55 + idx*.1}s`}}>
@@ -5404,6 +6242,97 @@ export default function MondoMago() {
     empatia:    "Emozioni, gentilezza e amicizia",
     parole:     "Lettura, rime e storie",
   };
+  // ════════════════════ SCREEN: STORIA / SIGILLO ═══════════════════════════════
+  if (screen === "story_book") {
+    const completedCount = SIGILLO_FRAGMENTS.filter(f =>
+      items.find(it => it.emoji === STORY_ARCS[f.worldId]?.reward_emoji)
+    ).length;
+    const isComplete = completedCount === SIGILLO_FRAGMENTS.length;
+    return (
+      <div key="story_book" className={screenAnim}
+        style={{minHeight:"100dvh",background:"linear-gradient(160deg,#1a1a2e,#0f3460,#1a1a2e)",color:"white",padding:24,paddingBottom:"max(env(safe-area-inset-bottom,0px),24px)"}}>
+        {G}
+        <button onClick={() => navigate("map")}
+          style={{background:"rgba(255,255,255,.1)",border:"none",color:"white",borderRadius:50,padding:"8px 16px",cursor:"pointer",marginBottom:20,fontSize:14,fontWeight:700}}>
+          ← Mappa
+        </button>
+        <div style={{textAlign:"center",marginBottom:24}}>
+          <h2 style={{margin:"0 0 6px",fontSize:26,fontWeight:900}}>📖 Il Libro della Storia</h2>
+          <p style={{opacity:.55,fontSize:13,margin:0}}>Il Sigillo Magico si ricompone con ogni mondo completato</p>
+        </div>
+        {/* Sigillo SVG grande */}
+        <div style={{display:"flex",justifyContent:"center",marginBottom:24}}>
+          <svg width={200} height={200} viewBox="0 0 100 100"
+            className={isComplete?"sigillo-glow":""}>
+            <circle cx={50} cy={50} r={44} fill="none"
+              stroke={isComplete?"rgba(255,215,0,.4)":"rgba(255,255,255,.08)"} strokeWidth={1.5}/>
+            {SIGILLO_FRAGMENTS.map((f, i) => {
+              const rad = (f.angle - 90) * Math.PI / 180;
+              const x = 50 + 32 * Math.cos(rad);
+              const y = 50 + 32 * Math.sin(rad);
+              const active = !!items.find(it => it.emoji === STORY_ARCS[f.worldId]?.reward_emoji);
+              return (
+                <g key={i}>
+                  <circle cx={x} cy={y} r={11}
+                    fill={active ? f.color : "rgba(255,255,255,.05)"}
+                    stroke={active ? f.color+"aa" : "rgba(255,255,255,.1)"} strokeWidth={1.5}
+                    opacity={active ? 1 : 0.3}
+                    style={{filter:active?`drop-shadow(0 0 6px ${f.color})`:"none"}}/>
+                  <text x={x} y={y+5} textAnchor="middle" fontSize={10} style={{pointerEvents:"none"}}>
+                    {f.emoji}
+                  </text>
+                </g>
+              );
+            })}
+            <circle cx={50} cy={50} r={14}
+              fill={isComplete?"rgba(255,215,0,.25)":"rgba(255,255,255,.06)"}
+              stroke={isComplete?"#FFD700":"rgba(255,255,255,.2)"} strokeWidth={2}
+              style={{filter:isComplete?"drop-shadow(0 0 8px rgba(255,215,0,.6))":"none"}}/>
+            <text x={50} y={55} textAnchor="middle" fontSize={16} style={{pointerEvents:"none"}}>
+              {isComplete?"✨":"✦"}
+            </text>
+          </svg>
+        </div>
+        {/* Testo narrativo */}
+        <div style={{background:"rgba(255,255,255,.06)",border:"1px solid rgba(255,255,255,.1)",borderRadius:20,padding:"18px 20px",marginBottom:20,textAlign:"center"}}>
+          <div style={{fontSize:14,lineHeight:1.6,color:isComplete?"#FFD95A":"rgba(255,255,255,.85)"}}>
+            {SIGILLO_STORY[completedCount]}
+          </div>
+          <div style={{marginTop:10,fontSize:13,opacity:.5}}>
+            {completedCount}/{SIGILLO_FRAGMENTS.length} frammenti raccolti
+          </div>
+        </div>
+        {/* Lista mondi con stato */}
+        <div style={{display:"flex",flexDirection:"column",gap:10}}>
+          {SIGILLO_FRAGMENTS.map((f, i) => {
+            const arc = STORY_ARCS[f.worldId];
+            const active = !!items.find(it => it.emoji === arc?.reward_emoji);
+            return (
+              <div key={i} style={{
+                display:"flex",alignItems:"center",gap:14,
+                background:active?`${f.color}15`:"rgba(255,255,255,.04)",
+                border:`1px solid ${active?f.color+"44":"rgba(255,255,255,.07)"}`,
+                borderRadius:16,padding:"12px 16px",
+                opacity:active?1:0.55,
+              }}>
+                <div style={{fontSize:28}}>{f.emoji}</div>
+                <div style={{flex:1}}>
+                  <div style={{fontFamily:FF,fontSize:14,color:active?f.color:"rgba(255,255,255,.7)"}}>
+                    {WORLDS.find(w=>w.id===f.worldId)?.name || f.worldId}
+                  </div>
+                  <div style={{fontSize:11,opacity:.6,marginTop:2}}>
+                    {active ? `✓ ${arc?.reward_name}` : "Non ancora completato"}
+                  </div>
+                </div>
+                {active && <div style={{fontSize:20}}>{arc?.reward_emoji}</div>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
   if (screen === "skills") return (
     <div key="skills" className={screenAnim} style={{minHeight:"100dvh",background:"linear-gradient(135deg,#0f0c29,#302b63)",color:"white",padding:24}}>
       {G}
@@ -5484,69 +6413,85 @@ export default function MondoMago() {
 
   // ════════════════════ SCREEN: COSMETICS ══════════════════════════════════
   if (screen === "cosmetics" && comp) {
-    const unlocked = getUnlockedCosmetics(totalStars);
-    const locked   = COSMETICS.filter(c => totalStars < c.starsNeeded);
+    const owned    = COSMETICS.filter(c => ownedCosmetics.includes(c.id));
+    const notOwned = COSMETICS.filter(c => !ownedCosmetics.includes(c.id));
     const equipped = equippedCosmetic[comp.id] || null;
     const equippedObj = COSMETICS.find(c => c.id === equipped) || null;
+    function buyCosmetic(c) {
+      if (coins < c.coinCost) return;
+      setCoins(cx => cx - c.coinCost);
+      setOwnedCosmetics(prev => [...prev, c.id]);
+      setEquippedCosmetic(prev => ({...prev, [comp.id]: c.id}));
+      SFX.achievement();
+    }
     return (
       <div key="cosmetics" className={screenAnim} style={{minHeight:"100dvh",background:`linear-gradient(160deg,#0f0c29,#1a0f2e,#0f0c29)`,color:"white",padding:24}}>
         {G}
-        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
+        {/* Header */}
+        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
           <button onClick={() => navigate("map")} style={{background:"rgba(255,255,255,.1)",border:"none",color:"white",borderRadius:50,padding:"8px 16px",cursor:"pointer",fontSize:14,fontWeight:700}}>← Mappa</button>
-          <h2 style={{margin:0,fontSize:20,fontWeight:900}}>✨ Personalizza</h2>
+          <h2 style={{margin:0,fontSize:20,fontWeight:900,flex:1}}>✨ Personalizza</h2>
+          <div style={{background:"rgba(56,189,248,.15)",border:"1px solid rgba(56,189,248,.4)",borderRadius:20,padding:"6px 14px",display:"flex",alignItems:"center",gap:6}}>
+            <span style={{fontSize:18}}>💎</span>
+            <span style={{fontFamily:FF,fontSize:18,color:"#38BDF8"}}>{coins}</span>
+          </div>
         </div>
         {/* Current look preview */}
-        <div style={{background:"rgba(255,255,255,.07)",borderRadius:24,padding:"22px 20px",marginBottom:20,display:"flex",flexDirection:"column",alignItems:"center",gap:12}}>
-          <div style={{fontSize:12,opacity:.5,letterSpacing:1,fontWeight:800,marginBottom:4}}>IL TUO {comp.name.toUpperCase()} ADESSO</div>
+        <div style={{background:"rgba(255,255,255,.07)",borderRadius:24,padding:"20px",marginBottom:18,display:"flex",flexDirection:"column",alignItems:"center",gap:10}}>
+          <div style={{fontSize:11,opacity:.45,letterSpacing:1,fontWeight:800}}>IL TUO {comp.name.toUpperCase()} ADESSO</div>
           <CompanionAvatar c={comp} size={96} anim="float" cosmetic={equippedObj} showBody />
-          <div style={{fontSize:13,opacity:.7}}>{equippedObj ? `Equipaggiato: ${equippedObj.emoji} ${equippedObj.name}` : "Nessun cosmetico equipaggiato"}</div>
+          <div style={{fontSize:13,opacity:.7}}>{equippedObj ? `${equippedObj.emoji} ${equippedObj.name}` : "Nessun cosmetico equipaggiato"}</div>
           {equipped && (
             <button onClick={() => setEquippedCosmetic(prev => { const n = {...prev}; delete n[comp.id]; return n; })}
               style={{background:"rgba(255,255,255,.1)",border:"none",color:"rgba(255,255,255,.6)",borderRadius:20,padding:"6px 16px",fontSize:12,cursor:"pointer"}}>
-              Rimuovi cosmetico
+              Rimuovi
             </button>
           )}
         </div>
-        {/* Unlocked cosmetics */}
-        {unlocked.length > 0 && (
-          <div style={{marginBottom:20}}>
-            <div style={{fontSize:12,opacity:.5,fontWeight:800,letterSpacing:1,marginBottom:12}}>SBLOCCATI ({unlocked.length})</div>
+        {/* Owned cosmetics */}
+        {owned.length > 0 && (
+          <div style={{marginBottom:18}}>
+            <div style={{fontSize:11,opacity:.45,fontWeight:800,letterSpacing:1,marginBottom:10}}>I TUOI COSMETICI ({owned.length})</div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
-              {unlocked.map(c => {
+              {owned.map(c => {
                 const isEq = equipped === c.id;
                 return (
                   <button key={c.id} onClick={() => setEquippedCosmetic(prev => ({...prev, [comp.id]: isEq ? undefined : c.id}))}
                     className={isEq ? "pulse" : ""}
-                    style={{background:isEq?"rgba(192,132,252,.25)":"rgba(255,255,255,.07)",border:`2px solid ${isEq?"#C084FC":"rgba(255,255,255,.12)"}`,borderRadius:18,padding:"14px 8px",cursor:"pointer",textAlign:"center",color:"white",position:"relative"}}>
+                    style={{background:isEq?"rgba(192,132,252,.25)":"rgba(255,255,255,.08)",border:`2px solid ${isEq?"#C084FC":"rgba(255,255,255,.14)"}`,borderRadius:18,padding:"14px 8px",cursor:"pointer",textAlign:"center",color:"white",position:"relative"}}>
                     {isEq && <div style={{position:"absolute",top:4,right:6,fontSize:10,fontWeight:900,color:"#C084FC"}}>ON</div>}
                     <div style={{fontSize:32,marginBottom:4}}>{c.emoji}</div>
                     <div style={{fontSize:11,fontWeight:700,lineHeight:1.2}}>{c.name}</div>
-                    <div style={{fontSize:9,opacity:.5,marginTop:2}}>{c.type === "hat" ? "Cappello" : c.type === "acc" ? "Accessorio" : "Aura"}</div>
+                    <div style={{fontSize:9,opacity:.5,marginTop:2}}>{isEq?"Equipaggiato":"Tocca per equipaggiare"}</div>
                   </button>
                 );
               })}
             </div>
           </div>
         )}
-        {/* Locked cosmetics */}
-        {locked.length > 0 && (
+        {/* Shop */}
+        {notOwned.length > 0 && (
           <div>
-            <div style={{fontSize:12,opacity:.5,fontWeight:800,letterSpacing:1,marginBottom:12}}>DA SBLOCCARE</div>
+            <div style={{fontSize:11,opacity:.45,fontWeight:800,letterSpacing:1,marginBottom:10}}>🛒 NEGOZIO MAGICO</div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
-              {locked.map(c => (
-                <div key={c.id} style={{background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.08)",borderRadius:18,padding:"14px 8px",textAlign:"center",opacity:.55}}>
-                  <div style={{fontSize:32,marginBottom:4,filter:"grayscale(1)"}}>🔒</div>
-                  <div style={{fontSize:11,fontWeight:700,lineHeight:1.2}}>{c.name}</div>
-                  <div style={{fontSize:9,opacity:.6,marginTop:3}}>⭐ {c.starsNeeded} stelle</div>
-                </div>
-              ))}
+              {notOwned.map(c => {
+                const canAfford = coins >= c.coinCost;
+                return (
+                  <button key={c.id} onClick={() => canAfford && buyCosmetic(c)}
+                    style={{background:canAfford?"rgba(56,189,248,.12)":"rgba(255,255,255,.04)",border:`2px solid ${canAfford?"rgba(56,189,248,.4)":"rgba(255,255,255,.08)"}`,borderRadius:18,padding:"14px 8px",cursor:canAfford?"pointer":"default",textAlign:"center",color:"white",opacity:canAfford?1:.6,transition:"transform .1s",position:"relative"}}>
+                    {canAfford && <div style={{position:"absolute",top:4,left:"50%",transform:"translateX(-50%)",fontSize:8,fontWeight:900,color:"#38BDF8",letterSpacing:.5,whiteSpace:"nowrap"}}>PUOI ACQUISTARE</div>}
+                    <div style={{fontSize:32,marginBottom:4,marginTop:canAfford?8:0,filter:canAfford?"none":"grayscale(.7)"}}>{c.emoji}</div>
+                    <div style={{fontSize:11,fontWeight:700,lineHeight:1.2}}>{c.name}</div>
+                    <div style={{fontSize:10,marginTop:4,color:canAfford?"#38BDF8":"rgba(255,255,255,.4)",fontWeight:700}}>💎 {c.coinCost}</div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
-        {unlocked.length === 0 && (
-          <div style={{textAlign:"center",padding:"40px 20px",opacity:.5}}>
-            <div style={{fontSize:48,marginBottom:12}}>🔒</div>
-            <p style={{fontSize:14}}>Guadagna 5 stelle per sbloccare il tuo primo cosmetico!</p>
+        {owned.length === 0 && (
+          <div style={{textAlign:"center",padding:"20px",opacity:.5,fontSize:13}}>
+            Guadagna 5 💎 per il tuo primo cosmetico!
           </div>
         )}
       </div>
