@@ -2249,6 +2249,156 @@ ALL_CHALLENGES.vulcano = ALL_CHALLENGES.vulcano.concat([
     question, emojis, size });
 });
 
+// ── ESPANSIONE ADATTIVA 2026-06 ──────────────────────────────────────────────
+// Rinforzo fascia 7-8 (sotto-servita), skill creatività (color-mixing) ed empatia (SEL).
+// Ogni oggetto porta il proprio `world`; viene rimosso prima del push per coerenza
+// con la convenzione dei blocchi per-mondo (il mondo è implicito nella chiave array).
+[
+  // ===== FORESTA 🌲 =====
+  { id:"e_for1", world:"foresta", format:"multiple_choice", type:"numeri", ageMin:7, ageMax:8, emoji:"🦊",
+    prompt:"Nel bosco ci sono 4 tane,\ne ogni tana ha 3 cuccioli di volpe.\nQuanti cuccioli in tutto?", options:["7","12","9","10"], correct:1 },
+  { id:"e_for2", world:"foresta", format:"multiple_choice", type:"logica", ageMin:7, ageMax:8, emoji:"🌳",
+    prompt:"Tutti gli alberi del bosco perdono\nle foglie in autunno.\nIl faggio è un albero del bosco.\nIn autunno il faggio...", options:["perde le foglie","fa i frutti","diventa blu","vola via"], correct:0 },
+  { id:"e_for3", world:"foresta", format:"multiple_choice", type:"parole", ageMin:7, ageMax:8, emoji:"📖",
+    prompt:"Qual è il contrario di 'GIORNO'?", options:["notte","sole","luce","mattino"], correct:0 },
+  { id:"e_for4", world:"foresta", format:"multiple_choice", type:"creativita", ageMin:5, ageMax:8, emoji:"🎨",
+    prompt:"Per dipingere le foglie d'autunno\ndi color ARANCIONE,\nquali due colori mescoli?", options:["Rosso e giallo 🍂","Blu e blu","Bianco e nero","Verde e blu"], correct:0 },
+  { id:"e_for5", world:"foresta", format:"story_choice", type:"empatia", ageMin:6, ageMax:8, emoji:"🦌",
+    situation:"Un cerbiatto è rimasto indietro dal suo gruppo e trema di paura. Tu e i tuoi amici cosa fate?",
+    choices:[
+      { text:"🤝 Lo accompagniamo dolcemente fino al suo gruppo", outcome:"Il cerbiatto si sente al sicuro e vi ringrazia con un salto di gioia! La gentilezza scalda il cuore.", correct:true },
+      { text:"🏃 Corriamo via senza badare a lui", outcome:"Il cerbiatto è rimasto solo e spaventato... un piccolo aiuto avrebbe fatto la differenza.", correct:false },
+    ] },
+  { id:"e_for6", world:"foresta", format:"multiple_choice", type:"numeri", ageMin:7, ageMax:8, emoji:"🌰",
+    prompt:"Hai raccolto 12 ghiande\ne ne dai la metà al tuo amico.\nQuante ghiande tieni per te?", options:["4","6","8","3"], correct:1 },
+
+  // ===== CASTELLO 🏰 =====
+  { id:"e_cas1", world:"castello", format:"multiple_choice", type:"numeri", ageMin:7, ageMax:8, emoji:"🏰",
+    prompt:"Il castello ha 5 torri\ne ogni torre ha 6 finestre.\nQuante finestre in tutto?", options:["11","30","25","36"], correct:1 },
+  { id:"e_cas2", world:"castello", format:"multiple_choice", type:"logica", ageMin:7, ageMax:8, emoji:"👑",
+    prompt:"Il Re è più alto della Regina.\nLa Regina è più alta del Principe.\nChi è il PIÙ BASSO?", options:["Il Principe","Il Re","La Regina","Sono uguali"], correct:0 },
+  { id:"e_cas3", world:"castello", format:"multiple_choice", type:"parole", ageMin:7, ageMax:8, emoji:"📖",
+    prompt:"Quale parola significa 'CORAGGIOSO'?", options:["valoroso","pauroso","stanco","piccolo"], correct:0 },
+  { id:"e_cas4", world:"castello", format:"multiple_choice", type:"creativita", ageMin:5, ageMax:8, emoji:"🎨",
+    prompt:"Per dipingere il mantello reale\ndi color VIOLA,\nquali due colori mescoli?", options:["Rosso e blu 👑","Giallo e verde","Bianco e nero","Verde e rosso"], correct:0 },
+  { id:"e_cas5", world:"castello", format:"story_choice", type:"empatia", ageMin:6, ageMax:8, emoji:"🤝",
+    situation:"Durante il torneo, il cavaliere avversario cade da cavallo davanti a tutti. Cosa fai?",
+    choices:[
+      { text:"🤝 Mi fermo e lo aiuto a rialzarsi", outcome:"Tutti applaudono il tuo gesto! Vincere con gentilezza è la vittoria più grande.", correct:true },
+      { text:"😆 Rido di lui e continuo a correre", outcome:"Hai vinto la gara ma perso il rispetto di tutti. La gentilezza vale più di una coppa.", correct:false },
+    ] },
+  { id:"e_cas6", world:"castello", format:"multiple_choice", type:"numeri", ageMin:7, ageMax:8, emoji:"🪑",
+    prompt:"Nel salone ci sono 24 sedie\ndisposte in 4 file uguali.\nQuante sedie per fila?", options:["4","6","8","5"], correct:1 },
+
+  // ===== OCEANO 🌊 =====
+  { id:"e_oce1", world:"oceano", format:"multiple_choice", type:"numeri", ageMin:7, ageMax:8, emoji:"⭐",
+    prompt:"Ci sono 5 stelle marine\ne ogni stella ha 5 braccia.\nQuante braccia in tutto?", options:["10","25","20","15"], correct:1 },
+  { id:"e_oce2", world:"oceano", format:"multiple_choice", type:"logica", ageMin:7, ageMax:8, emoji:"🐬",
+    prompt:"I pesci respirano con le branchie.\nIl delfino respira con i polmoni.\nQuindi il delfino...", options:["non è un pesce","è un pesce","vive sulla terra","non sa nuotare"], correct:0 },
+  { id:"e_oce3", world:"oceano", format:"multiple_choice", type:"parole", ageMin:7, ageMax:8, emoji:"📖",
+    prompt:"Quale parola fa RIMA con 'MARE'?", options:["andare","monte","pesce","blu"], correct:0 },
+  { id:"e_oce4", world:"oceano", format:"multiple_choice", type:"creativita", ageMin:5, ageMax:8, emoji:"🎨",
+    prompt:"Per dipingere il mare al tramonto\ndi color ARANCIONE,\nquali due colori mescoli?", options:["Rosso e giallo 🌅","Blu e verde","Nero e blu","Bianco e blu"], correct:0 },
+  { id:"e_oce5", world:"oceano", format:"story_choice", type:"empatia", ageMin:6, ageMax:8, emoji:"🐢",
+    situation:"Trovi una tartaruga marina impigliata in un sacchetto di plastica sulla spiaggia. Cosa fai?",
+    choices:[
+      { text:"🤲 La libero con delicatezza e butto la plastica", outcome:"La tartaruga torna libera nel mare! Hai aiutato un animale e protetto l'oceano.", correct:true },
+      { text:"📸 Le faccio una foto e me ne vado", outcome:"La tartaruga è rimasta in difficoltà... a volte basta poco per aiutare chi è in pericolo.", correct:false },
+    ] },
+  { id:"e_oce6", world:"oceano", format:"multiple_choice", type:"numeri", ageMin:7, ageMax:8, emoji:"🫧",
+    prompt:"Salgono 20 bolle d'aria,\nne scoppiano 8, poi ne arrivano 5.\nQuante bolle ci sono ora?", options:["12","17","15","20"], correct:1 },
+
+  // ===== MERCATO 🧙 =====
+  { id:"e_mer1", world:"mercato", format:"multiple_choice", type:"numeri", ageMin:7, ageMax:8, emoji:"🧪",
+    prompt:"Una pozione magica costa 8 monete.\nQuanto spendi per 3 pozioni?", options:["11","24","16","21"], correct:1 },
+  { id:"e_mer2", world:"mercato", format:"multiple_choice", type:"logica", ageMin:7, ageMax:8, emoji:"🧙",
+    prompt:"Al mercato la mela costa meno della pera.\nLa pera costa meno dell'uva.\nCosa costa DI PIÙ?", options:["L'uva","La mela","La pera","Costano uguale"], correct:0 },
+  { id:"e_mer3", world:"mercato", format:"multiple_choice", type:"parole", ageMin:7, ageMax:8, emoji:"📖",
+    prompt:"Quale parola significa 'COMPRARE'?", options:["acquistare","vendere","regalare","perdere"], correct:0 },
+  { id:"e_mer4", world:"mercato", format:"multiple_choice", type:"creativita", ageMin:5, ageMax:8, emoji:"🎨",
+    prompt:"Per preparare una pozione\ndi color VERDE,\nquali due colori mescoli?", options:["Giallo e blu 🧪","Rosso e bianco","Nero e grigio","Rosso e giallo"], correct:0 },
+  { id:"e_mer5", world:"mercato", format:"story_choice", type:"empatia", ageMin:6, ageMax:8, emoji:"👵",
+    situation:"Al mercato una signora anziana fatica a portare la sua borsa pesante. Cosa fai?",
+    choices:[
+      { text:"💪 Le offro di aiutarla a portarla", outcome:"La signora ti sorride riconoscente! Aiutare chi ne ha bisogno rende felici tutti e due.", correct:true },
+      { text:"🙈 Faccio finta di non vederla", outcome:"La signora ha faticato da sola... un piccolo gesto avrebbe reso migliore la sua giornata.", correct:false },
+    ] },
+  { id:"e_mer6", world:"mercato", format:"multiple_choice", type:"numeri", ageMin:7, ageMax:8, emoji:"🎩",
+    prompt:"Hai 20 monete e compri\nun cappello magico da 13 monete.\nQuante monete ti restano?", options:["5","7","6","8"], correct:1 },
+
+  // ===== GALASSIA 🌌 =====
+  { id:"e_gal1", world:"galassia", format:"multiple_choice", type:"numeri", ageMin:7, ageMax:8, emoji:"🚀",
+    prompt:"Partono 3 razzi\ne ogni razzo porta 4 astronauti.\nQuanti astronauti in tutto?", options:["7","12","9","16"], correct:1 },
+  { id:"e_gal2", world:"galassia", format:"multiple_choice", type:"logica", ageMin:7, ageMax:8, emoji:"🪐",
+    prompt:"La Terra è più grande della Luna.\nIl Sole è più grande della Terra.\nCosa è il PIÙ GRANDE di tutti?", options:["Il Sole","La Luna","La Terra","Sono uguali"], correct:0 },
+  { id:"e_gal3", world:"galassia", format:"multiple_choice", type:"parole", ageMin:7, ageMax:8, emoji:"📖",
+    prompt:"Come si chiama chi viaggia\nnello spazio?", options:["astronauta","marinaio","autista","giardiniere"], correct:0 },
+  { id:"e_gal4", world:"galassia", format:"multiple_choice", type:"creativita", ageMin:5, ageMax:8, emoji:"🎨",
+    prompt:"Per dipingere un pianeta\ndi color VIOLA,\nquali due colori mescoli?", options:["Rosso e blu 🪐","Giallo e verde","Bianco e giallo","Verde e blu"], correct:0 },
+  { id:"e_gal5", world:"galassia", format:"story_choice", type:"empatia", ageMin:6, ageMax:8, emoji:"👨‍🚀",
+    situation:"Un compagno astronauta ha paura del buio dello spazio e non vuole uscire dalla navicella. Cosa fai?",
+    choices:[
+      { text:"🤝 Gli sto vicino e usciamo insieme tenendoci la mano", outcome:"Insieme la paura diventa più piccola! Il tuo amico trova il coraggio grazie a te.", correct:true },
+      { text:"😤 Lo prendo in giro perché ha paura", outcome:"Il tuo amico si sente solo e ferito... la paura si vince con il sostegno, non con le risate.", correct:false },
+    ] },
+  { id:"e_gal6", world:"galassia", format:"multiple_choice", type:"numeri", ageMin:7, ageMax:8, emoji:"⭐",
+    prompt:"Una stella brilla ogni 2 secondi.\nQuante volte brilla in 10 secondi?", options:["4","5","6","10"], correct:1 },
+
+  // ===== VULCANO 🌋 =====
+  { id:"e_vul1", world:"vulcano", format:"multiple_choice", type:"numeri", ageMin:7, ageMax:8, emoji:"🌋",
+    prompt:"Il vulcano erutta 6 volte ogni ora.\nQuante volte erutta in 3 ore?", options:["9","18","12","15"], correct:1 },
+  { id:"e_vul2", world:"vulcano", format:"multiple_choice", type:"logica", ageMin:7, ageMax:8, emoji:"🔥",
+    prompt:"La lava è molto calda.\nIl ghiaccio è freddo.\nSe la lava tocca il ghiaccio, il ghiaccio...", options:["si scioglie","diventa più freddo","resta uguale","vola via"], correct:0 },
+  { id:"e_vul3", world:"vulcano", format:"multiple_choice", type:"parole", ageMin:7, ageMax:8, emoji:"📖",
+    prompt:"Qual è il contrario di 'CALDO'?", options:["freddo","bollente","fuoco","rosso"], correct:0 },
+  { id:"e_vul4", world:"vulcano", format:"multiple_choice", type:"creativita", ageMin:5, ageMax:8, emoji:"🎨",
+    prompt:"Per dipingere la lava\ndi color ARANCIONE,\nquali due colori mescoli?", options:["Rosso e giallo 🔥","Blu e verde","Nero e grigio","Bianco e blu"], correct:0 },
+  { id:"e_vul5", world:"vulcano", format:"story_choice", type:"empatia", ageMin:6, ageMax:8, emoji:"😨",
+    situation:"Un amico si spaventa per il rumore forte del vulcano e inizia a piangere. Cosa fai?",
+    choices:[
+      { text:"💛 Lo abbraccio e gli spiego che siamo al sicuro", outcome:"Il tuo amico si calma e si sente protetto. Spiegare con calma aiuta a vincere la paura!", correct:true },
+      { text:"😴 Lo lascio piangere e penso ai fatti miei", outcome:"Il tuo amico è rimasto solo con la sua paura... un abbraccio avrebbe cambiato tutto.", correct:false },
+    ] },
+  { id:"e_vul6", world:"vulcano", format:"multiple_choice", type:"numeri", ageMin:7, ageMax:8, emoji:"🪨",
+    prompt:"Ci sono 32 rocce vulcaniche\nda dividere in 4 gruppi uguali.\nQuante rocce per gruppo?", options:["6","8","7","9"], correct:1 },
+
+  // ===== BIBLIOTECA 📖 =====
+  { id:"e_bib1", world:"biblioteca", format:"multiple_choice", type:"parole", ageMin:7, ageMax:8, emoji:"🐱",
+    prompt:"Leggi: «Il gatto dorme sul tappeto.»\nDOVE dorme il gatto?", options:["Sul tappeto","Sul letto","Sulla sedia","Sul tavolo"], correct:0 },
+  { id:"e_bib2", world:"biblioteca", format:"multiple_choice", type:"parole", ageMin:7, ageMax:8, emoji:"📖",
+    prompt:"Quale parola significa 'FELICE'?", options:["contento","triste","stanco","arrabbiato"], correct:0 },
+  { id:"e_bib3", world:"biblioteca", format:"multiple_choice", type:"logica", ageMin:7, ageMax:8, emoji:"🔤",
+    prompt:"Quale lettera viene DOPO la M\nnell'alfabeto?", options:["N","L","O","P"], correct:0 },
+  { id:"e_bib4", world:"biblioteca", format:"multiple_choice", type:"numeri", ageMin:7, ageMax:8, emoji:"📚",
+    prompt:"Un libro ha 30 pagine.\nNe hai già lette 12.\nQuante pagine ti restano da leggere?", options:["18","22","12","20"], correct:0 },
+  { id:"e_bib5", world:"biblioteca", format:"multiple_choice", type:"creativita", ageMin:5, ageMax:8, emoji:"✨",
+    prompt:"Vuoi inventare una storia.\nQuale inizio è il PIÙ FANTASIOSO?", options:["C'era una volta un drago\nche amava cucinare torte 🐲","Un giorno qualcuno\nfece qualcosa","Questa è una storia","E poi finì"], correct:0 },
+  { id:"e_bib6", world:"biblioteca", format:"story_choice", type:"empatia", ageMin:6, ageMax:8, emoji:"📕",
+    situation:"In biblioteca un bambino non riesce a leggere una parola difficile e si vergogna. Cosa fai?",
+    choices:[
+      { text:"😊 Lo aiuto con gentilezza, senza prenderlo in giro", outcome:"Insieme leggete la parola! Il bambino sorride e impara una cosa nuova grazie a te.", correct:true },
+      { text:"🤣 Rido perché non sa leggere", outcome:"Il bambino si sente umiliato e chiude il libro... tutti imparano a ritmi diversi.", correct:false },
+    ] },
+
+  // ===== LABORATORIO 🔬 (Pixel) — amplio numeri/creatività/empatia oltre al coding =====
+  { id:"e_lab1", world:"laboratorio", format:"multiple_choice", type:"condizione", ageMin:6, ageMax:8, emoji:"🤖",
+    prompt:"Il robot ha questa regola:\nSE piove ALLORA prendi l'ombrello.\nOggi piove. Cosa fa il robot?", options:["Prende l'ombrello ☂️","Va al mare","Non fa niente","Si spegne"], correct:0 },
+  { id:"e_lab2", world:"laboratorio", format:"multiple_choice", type:"sequenza", ageMin:6, ageMax:8, emoji:"🍞",
+    prompt:"Il robot deve fare il pane.\nQuale istruzione va per PRIMA?", options:["Impastare la farina","Tagliare il pane","Mangiare il pane","Servire il pane"], correct:0 },
+  { id:"e_lab3", world:"laboratorio", format:"multiple_choice", type:"debug", ageMin:7, ageMax:8, emoji:"🐞",
+    prompt:"Il robot deve andare a DESTRA\nma va sempre a SINISTRA.\nDov'è il bug?", options:["Nell'istruzione di direzione","Nelle ruote","Nel colore","Nell'antenna"], correct:0 },
+  { id:"e_lab4", world:"laboratorio", format:"multiple_choice", type:"numeri", ageMin:7, ageMax:8, emoji:"🔁",
+    prompt:"Un ciclo ripete 'salta' 3 volte,\npoi lo ripete altre 2 volte.\nQuanti salti fa in tutto il robot?", options:["4","5","6","3"], correct:1 },
+  { id:"e_lab5", world:"laboratorio", format:"multiple_choice", type:"creativita", ageMin:5, ageMax:8, emoji:"🎨",
+    prompt:"Il robot deve illuminare lo schermo\ndi color ARANCIONE.\nQuali due luci accende?", options:["Rossa e gialla 🟠","Blu e verde","Bianca e nera","Verde e rossa"], correct:0 },
+  { id:"e_lab6", world:"laboratorio", format:"story_choice", type:"empatia", ageMin:6, ageMax:8, emoji:"🤖",
+    situation:"Il robot Pixel ha fatto un errore nel suo codice e dice: «Mi dispiace, ho sbagliato.» Cosa gli rispondi?",
+    choices:[
+      { text:"💛 «Non importa Pixel, tutti sbagliano e si impara!»", outcome:"Pixel fa BEEP di gioia! Sbagliare fa parte dell'imparare, e un amico gentile lo ricorda.", correct:true },
+      { text:"😠 «Sei un robot inutile e rotto!»", outcome:"Pixel abbassa l'antenna, triste... le parole gentili aiutano ad imparare meglio.", correct:false },
+  ] },
+].forEach(({ world, ...rest }) => { ALL_CHALLENGES[world].push(rest); });
+
 const FAMILY_MISSIONS = [
   { id:1, emoji:"🍳", title:"Chef Magico",          desc:"Cucinare insieme! Conta ingredienti, misura le porzioni, segui una ricetta semplice.", skill:"numeri",     dur:"20 min" },
   { id:2, emoji:"🌱", title:"Giardino Segreto",      desc:"Pianta un seme. Disegna come cresce ogni giorno per una settimana!",                   skill:"logica",     dur:"Settimana" },
@@ -2345,10 +2495,19 @@ function genMathChallenge(worldId, age) {
     prompt:`${tens} + ${add} = ?`, options, correct };
 }
 
-function filterByAge(worldId, age) {
+function filterByAge(worldId, age, skills = null) {
   const all = (ALL_CHALLENGES[worldId] || []).filter(c => age >= c.ageMin && age <= c.ageMax);
   const bosses = all.filter(c => c.isBoss);
-  const normals = all.filter(c => !c.isBoss).sort(() => Math.random() - 0.5);
+  // Selezione ADATTIVA per skill: se sono note le competenze del bambino, le sfide
+  // delle skill più DEBOLI (mastery più basso) hanno più probabilità di uscire.
+  // Random × livello: un livello basso comprime il punteggio → ordina prima = esce di più.
+  // Senza skills → shuffle puro (retrocompatibile, comportamento originale).
+  const normals = skills
+    ? all.filter(c => !c.isBoss)
+         .map(c => ({ c, k: Math.random() * (skills[getSkill(c.type)] ?? 1) }))
+         .sort((a, b) => a.k - b.k)
+         .map(x => x.c)
+    : all.filter(c => !c.isBoss).sort(() => Math.random() - 0.5);
   const boss = bosses[Math.floor(Math.random() * bosses.length)];
   // Inject 1 procedural math challenge per session, swap out 1 normal
   const proc = genMathChallenge(worldId, age);
@@ -3002,6 +3161,7 @@ export default function MondoMago() {
   const [schoolCodeInput,   setSchoolCodeInput]   = useState("");
   const [schoolAssigned,    setSchoolAssigned]    = useState([]);  // challenge ids from teacher
   const [sessionLog,        setSessionLog]        = useState([]); // [{date,stars,world,correct,total}]
+  const [missed,            setMissed]            = useState([]); // SRS: [{id,world,s}] sfide sbagliate da ripassare
   const [showReport,        setShowReport]        = useState(false);
   const [fulminoTime,       setFulminoTime]       = useState(60);  // countdown seconds
   const [fulminoScore,      setFulminoScore]      = useState(0);   // correct answers
@@ -3073,7 +3233,7 @@ export default function MondoMago() {
     writeAllProfiles(remaining);
     setAllProfiles(remaining);
     setChildName(''); setChildAge(null); setCompanion(null);
-    setTotalStars(0); setSkills(initSkills()); setItems([]);
+    setTotalStars(0); setSkills(initSkills()); setItems([]); setMissed([]);
     setCombo(0); setResults([]); setConfirmReset(false); setIsReturning(false); setStreak(1);
     setMissionsDone([]); setDailyCompletedDate('');
     setWrongStreak(0); setShowFeedback(false);
@@ -3094,7 +3254,23 @@ export default function MondoMago() {
 
   // Animation triggers
   const COMBO_MILESTONES = { 3:"🔥 3 di fila!", 5:"⚡ 5 COMBO!", 7:"🌟 7 in serie!", 10:"🏆 10 PERFETTI!" };
+  // ── Ripetizione spaziata (SRS) ──────────────────────────────────────────────
+  // Registra una sfida sbagliata per riproporla in una sessione SUCCESSIVA.
+  // `s` = numero di sessioni completate al momento dell'errore (da sessionLog),
+  // così la sfida torna solo quando sessionLog.length è cresciuto (spacing ≥ 1 sessione).
+  function noteMiss(c) {
+    if (!c?.id || c.isBoss || world?.id === "daily") return;
+    setMissed(prev => prev.some(m => m.id === c.id)
+      ? prev
+      : [...prev.slice(-39), { id: c.id, world: world?.id, s: sessionLog.length }]);
+  }
+  // Sfida superata → rimossa dalla coda di ripasso (competenza acquisita).
+  function clearMiss(c) {
+    if (!c?.id) return;
+    setMissed(prev => prev.some(m => m.id === c.id) ? prev.filter(m => m.id !== c.id) : prev);
+  }
   function triggerOK(pts) {
+    clearMiss(ch);
     const actualPts = doubleStar ? pts * 2 : pts;
     if (doubleStar) setDoubleStar(false);
     navigator.vibrate?.(combo >= 4 ? [30,20,30,20,80] : combo >= 2 ? [40,20,60] : [50]);
@@ -3132,6 +3308,7 @@ export default function MondoMago() {
     });
   }
   function triggerBAD() {
+    noteMiss(ch);
     navigator.vibrate?.([60, 30, 60]);
     SFX.wrong();
     setCombo(0); setAutoAdvancing(false); setCompMood("sad");
@@ -3380,8 +3557,24 @@ export default function MondoMago() {
 
   function startWorld(w) {
     if (!w.unlocked) return;
-    const list = filterByAge(w.id, childAge || 5);
-    if (!list.length) return;
+    const base = filterByAge(w.id, childAge || 5, skills); // selezione adattiva per skill
+    if (!base.length) return;
+    // SRS: anteponi fino a 2 sfide sbagliate in sessioni PRECEDENTI (ripasso spaziato).
+    let list = base;
+    const due = (missed || [])
+      .filter(m => m.world === w.id && sessionLog.length > m.s)
+      .map(m => (ALL_CHALLENGES[w.id] || []).find(c => c.id === m.id))
+      .filter(Boolean)
+      .slice(0, 2);
+    if (due.length) {
+      const present = new Set(base.map(c => c.id));
+      const inject = due.filter(c => !present.has(c.id));
+      if (inject.length) {
+        list = [...inject, ...base];
+        const injectedIds = new Set(inject.map(c => c.id));
+        setMissed(prev => prev.filter(m => !injectedIds.has(m.id)));
+      }
+    }
     stopMusic(); stopSong();
     setWorld(w); setChallenges(list); setCi(0);
     setSelected(null); setStoryChoice(null); setSeqTaps([]); setSeqError(false); setDragPicked(null); setDragPlaced({}); setColorZoneColors({}); setColorZonePicked(null); setPuzzleGrid(null); setPuzzleMoves(0);
@@ -3421,6 +3614,7 @@ export default function MondoMago() {
     if (p.dailyCount)                     setDailyCount(p.dailyCount);
     if (p.equippedCosmetic)               setEquippedCosmetic(p.equippedCosmetic);
     if (p.sessionLog)                     setSessionLog(p.sessionLog);
+    if (p.missed)                         setMissed(p.missed);
     if (typeof p.coins === 'number')      setCoins(p.coins);
     if (p.ownedCosmetics)                 setOwnedCosmetics(p.ownedCosmetics);
     if (p.schoolMode)                     setSchoolMode(p.schoolMode);
@@ -3448,7 +3642,7 @@ export default function MondoMago() {
   function startNewProfile() {
     setActiveProfileId(uid());
     setChildName(''); setChildAge(null); setCompanion(null);
-    setTotalStars(0); setSkills(initSkills()); setItems([]);
+    setTotalStars(0); setSkills(initSkills()); setItems([]); setMissed([]);
     setCombo(0); setResults([]); setStreak(1);
     setMissionsDone([]); setDailyCompletedDate('');
     setAchievements([]); setDailyCount(0);
@@ -3531,7 +3725,7 @@ export default function MondoMago() {
   useEffect(() => {
     if (!childName || !childAge || !companion || !activeProfileId) return;
     const today = new Date().toISOString().slice(0,10);
-    const data = { id: activeProfileId, childName, childAge, companion, totalStars, skills, items, streak, missionsDone, dailyCompletedDate, lastDate: today, achievements, dailyCount, equippedCosmetic, sessionLog, schoolMode, schoolCode, schoolAssigned, coins, ownedCosmetics };
+    const data = { id: activeProfileId, childName, childAge, companion, totalStars, skills, items, streak, missionsDone, dailyCompletedDate, lastDate: today, achievements, dailyCount, equippedCosmetic, sessionLog, missed, schoolMode, schoolCode, schoolAssigned, coins, ownedCosmetics };
     setAllProfiles(prev => {
       const updated = prev.some(p => p.id === activeProfileId)
         ? prev.map(p => p.id === activeProfileId ? data : p)
@@ -3539,7 +3733,7 @@ export default function MondoMago() {
       writeAllProfiles(updated);
       return updated;
     });
-  }, [childName, childAge, companion, totalStars, skills, items, streak, missionsDone, dailyCompletedDate, achievements, dailyCount, equippedCosmetic, sessionLog, schoolMode, schoolCode, schoolAssigned, coins, ownedCosmetics]); // eslint-disable-line
+  }, [childName, childAge, companion, totalStars, skills, items, streak, missionsDone, dailyCompletedDate, achievements, dailyCount, equippedCosmetic, sessionLog, missed, schoolMode, schoolCode, schoolAssigned, coins, ownedCosmetics]); // eslint-disable-line
 
   // Achievement check
   useEffect(() => {
