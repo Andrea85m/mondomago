@@ -6684,6 +6684,26 @@ export default function MondoMago() {
       }
     });
 
+    // ── SRS: coda "da ripassare" (sfide sbagliate riproposte dal motore) ──────
+    const reviewItems = (missed || [])
+      .map(m => {
+        const ch = (ALL_CHALLENGES[m.world] || []).find(c => c.id === m.id);
+        return ch ? { ch, world: m.world, skill: getSkill(ch.type), due: sessionLog.length > m.s } : null;
+      })
+      .filter(Boolean);
+    const reviewBySkill = {};
+    reviewItems.forEach(r => {
+      if (!reviewBySkill[r.skill]) reviewBySkill[r.skill] = { count: 0, due: 0 };
+      reviewBySkill[r.skill].count++;
+      if (r.due) reviewBySkill[r.skill].due++;
+    });
+    const reviewRows = SKILLS
+      .filter(sk => reviewBySkill[sk.id])
+      .map(sk => ({ ...sk, ...reviewBySkill[sk.id] }))
+      .sort((a, b) => b.count - a.count);
+    const reviewExamples = reviewItems.slice(0, 3);
+    const maxReviewCount = reviewRows.length ? reviewRows[0].count : 1;
+
     // ── 20-rule proactive coaching engine ────────────────────────────────────
     const totalCorrect = Object.values(skillAccuracy).reduce((a,v) => a + v.correct, 0);
     const totalAttempts = Object.values(skillAccuracy).reduce((a,v) => a + v.total, 0);
@@ -6841,6 +6861,59 @@ export default function MondoMago() {
               </div>
             );
           })}
+        </div>
+
+        {/* SRS — Da ripassare: sfide sbagliate riproposte dal motore adattivo */}
+        <div style={{background:"rgba(255,255,255,.07)",borderRadius:20,padding:"16px 18px",marginBottom:14}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:reviewItems.length?12:0}}>
+            <div style={{fontSize:11,fontWeight:800,opacity:.5,letterSpacing:1}}>📌 DA RIPASSARE</div>
+            {reviewItems.length > 0 && (
+              <div style={{fontFamily:FF,fontSize:13,color:"#C4B5FD"}}>{reviewItems.length} {reviewItems.length===1?"sfida":"sfide"}</div>
+            )}
+          </div>
+
+          {reviewItems.length === 0 ? (
+            <div style={{textAlign:"center",padding:"6px 0",opacity:.55,fontSize:12}}>
+              🎉 Nessuna sfida in sospeso — {childName} sta consolidando tutto!
+            </div>
+          ) : (
+            <>
+              <p style={{fontSize:11,opacity:.55,margin:"0 0 12px",lineHeight:1.5}}>
+                Argomenti che {childName} sta allenando. Il gioco li ripropone da solo: quelli <b style={{color:"#A78BFA"}}>● in arrivo</b> torneranno alla prossima partita, e spariscono da qui appena li supera.
+              </p>
+
+              {reviewRows.map(sk => (
+                <div key={sk.id} style={{marginBottom:10}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:12,marginBottom:4}}>
+                    <span>{sk.emoji} {sk.name}</span>
+                    <span style={{display:"flex",gap:8,alignItems:"center"}}>
+                      {sk.due > 0 && <span style={{fontSize:10,color:"#A78BFA",fontWeight:700}}>● {sk.due} in arrivo</span>}
+                      <span style={{fontFamily:FF,fontSize:13,color:sk.color}}>{sk.count}</span>
+                    </span>
+                  </div>
+                  <div style={{background:"rgba(255,255,255,.08)",borderRadius:6,height:8}}>
+                    <div style={{background:sk.color,height:"100%",borderRadius:6,width:`${(sk.count/maxReviewCount)*100}%`,transition:"width .7s",opacity:.8}} />
+                  </div>
+                </div>
+              ))}
+
+              <div style={{marginTop:12,paddingTop:12,borderTop:"1px solid rgba(255,255,255,.06)"}}>
+                <div style={{fontSize:10,fontWeight:700,opacity:.4,marginBottom:8,letterSpacing:.5}}>ESEMPI DA RINFORZARE A CASA</div>
+                {reviewExamples.map((r, i) => {
+                  const w = WORLDS.find(w => w.id === r.world);
+                  const label = (r.ch.prompt || "").replace(/\n/g," ").trim();
+                  return (
+                    <div key={i} style={{display:"flex",justifyContent:"space-between",gap:10,alignItems:"center",fontSize:11,marginBottom:i<reviewExamples.length-1?6:0}}>
+                      <span style={{opacity:.8,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                        {r.ch.emoji || "•"} {label.length > 42 ? label.slice(0,42)+"…" : label}
+                      </span>
+                      <span style={{flexShrink:0,opacity:.45,fontSize:10}}>{w ? `${w.emoji} ${w.name.split(" ")[0]}` : ""}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Proactive parent coaching insights */}
