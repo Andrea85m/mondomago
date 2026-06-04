@@ -6,6 +6,25 @@ serve un minimo di disciplina per evitare conflitti git.
 
 ---
 
+## Divisione del lavoro (chi fa cosa)
+
+| Persona | Ambito | File principali |
+|---------|--------|-----------------|
+| **Andrea** | **Contenuti**: mondi, sfide, testi, logica di gioco | `src/MondoMago.jsx` |
+| **Amico** | **Grafica + Audio** | `src/SvgAssets.jsx`, `src/WorldScene.jsx`, `src/App.css`, `src/index.css`, `public/audio/`, `public/*.svg/png`, `public/screenshots/`, `src/ttsMap.json`, `scripts/gen-*` |
+
+Questo split è quasi perfetto per lavorare in parallelo: la grafica e l'audio vivono
+in **file separati** da `MondoMago.jsx`, quindi git non genera conflitti.
+
+⚠️ **Unico punto di contatto:** quando un cambio grafico/audio richiede di aggiornare
+un *riferimento* dentro `MondoMago.jsx` (il file dei contenuti). Casi tipici:
+- `CompanionAvatar` (~riga 480) — se si ridisegnano gli avatar dei companion
+- logica audio/TTS (`startSongAt`, `speakBrowser`, chiamate a `ttsMap.json`) — se si **rinomina** un file audio o si aggiunge una voce nuova
+
+In questi casi: **avvisarsi prima** e mettersi d'accordo su chi tocca quella riga.
+
+---
+
 ## 0. Setup iniziale (una volta sola, per chi clona)
 
 ```bash
@@ -41,8 +60,9 @@ git push -u origin feature/mondo-oceano-sfide
 ```
 
 ### Nomi dei branch (convenzione)
-- `feature/mondo-<nome>-...` → lavoro su un mondo (es. `feature/mondo-galassia-boss`)
-- `feature/<area>-...`       → feature trasversale (es. `feature/dashboard-genitori`)
+- `feature/mondo-<nome>-...` → contenuti di un mondo (es. `feature/mondo-galassia`)
+- `feature/grafica-...`      → lavoro grafico (es. `feature/grafica-companion`)
+- `feature/audio-...`        → lavoro audio (es. `feature/audio-canzoni`)
 - `fix/<cosa>`               → correzione bug (es. `fix/audio-ios`)
 
 ---
@@ -61,26 +81,37 @@ git push -u origin feature/mondo-oceano-sfide
 
 ---
 
-## 3. Mappa del file — chi tocca cosa
+## 3. Mappa di `MondoMago.jsx` — territorio CONTENUTI (Andrea)
 
-`src/MondoMago.jsx` è diviso così (le righe sono indicative, possono spostarsi):
+Questo file è il dominio dei contenuti. L'Amico lo tocca solo nei punti di contatto (vedi §0).
+È diviso così (le righe sono indicative, possono spostarsi):
 
-| Zona | Righe ~ | Rischio | Note |
-|------|---------|---------|------|
-| `CompanionAvatar`, `COMPANIONS`, `WORLDS`, `SKILLS`, `SKILL_MAP`, `WORLD_COSTUMES` | 470–880 | 🔴 **CONDIVISA** | Toccatela solo coordinandovi. Aggiungere un companion/mondo qui impatta entrambi. |
-| `ALL_CHALLENGES.<mondo> = [...]` | 880–1730+ | 🟢 **Sicura per mondo** | Mondi diversi = blocchi diversi = niente conflitti. Lavorate qui in parallelo liberamente. |
-| Componente `App` + logica di render/gioco | 1800+ | 🟡 **Media** | Se modificate lo stesso schermo, coordinatevi. |
-
-**Regola pratica:** finché ognuno aggiunge/modifica sfide nel **proprio mondo**
-(blocco `ALL_CHALLENGES.<mondo>`), git fonde tutto in automatico.
+| Zona | Righe ~ | Note |
+|------|---------|------|
+| `CompanionAvatar`, `COMPANIONS`, `WORLDS`, `SKILLS`, `SKILL_MAP`, `WORLD_COSTUMES` | 470–880 | 🔴 **Punto di contatto col grafico** (avatar). Coordinarsi prima di toccarla. |
+| `ALL_CHALLENGES.<mondo> = [...]` | 880–1730+ | 🟢 Contenuti, dominio Andrea. Mondi diversi = blocchi diversi. |
+| Componente `App` + logica di render/gioco/audio | 1800+ | 🟡 Logica di gioco + chiamate audio/TTS (punto di contatto con l'audio). |
 
 ---
 
-## 4. File a parte (più facili da dividersi)
-- `src/SvgAssets.jsx` — asset SVG
+## 4. Dominio GRAFICA + AUDIO (Amico) — file separati, niente conflitti
+
+🎨 **Grafica**
+- `src/SvgAssets.jsx` — tutti gli asset SVG
 - `src/WorldScene.jsx` — scene dei mondi
-- `src/ttsMap.json` — manifest TTS (occhio: append in fondo per evitare conflitti)
-- `public/audio/` — audio (binari: NON modificabili in parallelo, coordinatevi)
+- `src/App.css`, `src/index.css` — stili
+- `public/favicon.svg`, `public/icons.svg`, `public/icon-192.png`, `public/icon-512.png`, `public/apple-touch-icon.png`
+- `public/screenshots/`
+- `scripts/gen-screenshots.mjs`
+
+🔊 **Audio**
+- `public/audio/` — canzoni (`song_*.mp3`) e voci TTS (`tts_*.mp3`)
+- `src/ttsMap.json` — manifest TTS (aggiungere voci **in fondo** per evitare conflitti)
+- `scripts/gen-songs-musical.py`, `gen-songs.py`, `gen-tts.py`, `suno-prompts.md`
+
+**Regola pratica:** ridisegnare SVG, sostituire/migliorare audio e ritoccare CSS sono
+operazioni libere (file separati). Serve coordinarsi **solo** se si *rinomina* un asset/file
+audio o si aggiunge un companion/scena/voce nuovi → va aggiornato il riferimento in `MondoMago.jsx`.
 
 ---
 
