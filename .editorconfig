@@ -1,0 +1,15 @@
+# EditorConfig — allinea la formattazione tra editor diversi
+# per evitare conflitti git da spazi/indentazione.
+# Supportato nativamente da VS Code, WebStorm, ecc.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
