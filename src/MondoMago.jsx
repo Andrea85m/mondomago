@@ -275,6 +275,39 @@ function AnimationStyles() {
         100% { transform: translateY(-40px); opacity: 0; }
       }
       .session-alert { animation: sessionAlert 4s cubic-bezier(.22,1,.36,1) both; }
+
+      /* ── ACCESSIBILITÀ ──────────────────────────────────────────────────────
+         Toggle device-level dall'area genitori (data-* su <html>) + rispetto
+         della preferenza di sistema. Vedi sezione "♿ Accessibilità". */
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+          animation-duration: 0.001ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.001ms !important;
+        }
+      }
+      html[data-reduce-motion="1"] *,
+      html[data-reduce-motion="1"] *::before,
+      html[data-reduce-motion="1"] *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
+      }
+      html[data-dyslexia="1"],
+      html[data-dyslexia="1"] * {
+        font-family: 'OpenDyslexic', 'Nunito', system-ui, sans-serif !important;
+        letter-spacing: 0.015em;
+      }
+      html[data-contrast="high"] body { background: #000 !important; }
+      html[data-contrast="high"] { filter: contrast(1.18) brightness(1.04); }
+      /* Focus visibile per navigazione da tastiera/switch access */
+      html[data-contrast="high"] button:focus-visible,
+      html[data-contrast="high"] [role="button"]:focus-visible,
+      button:focus-visible, [role="button"]:focus-visible {
+        outline: 3px solid #FFD400 !important;
+        outline-offset: 2px !important;
+      }
     `}</style>
   );
 }
@@ -3143,6 +3176,12 @@ export default function MondoMago() {
   const [songLyric,       setSongLyric]       = useState(null);
   // tts toggle (persisted)
   const [ttsEnabled,      setTtsEnabledState] = useState(() => localStorage.getItem('mondomago_tts') !== '0');
+  // Preferenze di accessibilità (device-level, sopravvivono ai reset profilo)
+  const [a11y, setA11y] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('mondomago_a11y') || 'null') || {}; }
+    catch { return {}; }
+  });
+  const setA11yPref = (patch) => setA11y(prev => ({ ...prev, ...patch }));
   // Fase C — cosmetics, seasons, school, session log
   const [equippedCosmetic,  setEquippedCosmetic]  = useState({});
   const [newCosmetics,      setNewCosmetics]      = useState([]);
@@ -3869,6 +3908,15 @@ export default function MondoMago() {
     _ttsEnabled = ttsEnabled;
     localStorage.setItem('mondomago_tts', ttsEnabled ? '1' : '0');
   }, [ttsEnabled]);
+
+  // Applica le preferenze di accessibilità a <html> e le persiste
+  useEffect(() => {
+    const el = document.documentElement;
+    el.setAttribute('data-reduce-motion', a11y.reducedMotion ? '1' : '0');
+    el.setAttribute('data-contrast', a11y.highContrast ? 'high' : 'normal');
+    el.setAttribute('data-dyslexia', a11y.dyslexiaFont ? '1' : '0');
+    try { localStorage.setItem('mondomago_a11y', JSON.stringify(a11y)); } catch {}
+  }, [a11y]);
 
   // Scheduled notification check — runs every minute when page is visible
   useEffect(() => {
@@ -5511,6 +5559,7 @@ export default function MondoMago() {
             <div style={{display:"flex",flexDirection:"column",gap:8}}>
               {ch.items.map((item, idx) => (
                 <button key={idx} onClick={(e) => answerMC(idx, e)}
+                  aria-label={`Risposta ${idx + 1}: ${item}`}
                   style={{background:youngBg?"rgba(0,0,0,.04)":"rgba(255,255,255,.08)",
                     border:`2px solid ${youngBg?"rgba(0,0,0,.10)":"rgba(255,255,255,.16)"}`,
                     borderRadius:16,padding:"14px 16px",
@@ -5899,6 +5948,7 @@ export default function MondoMago() {
                 }
                 return (
                   <button key={`${ci}-${idx}`} onClick={(e) => answerMC(idx, e)}
+                    aria-label={`Risposta ${idx + 1}: ${opt}`}
                     className={`${(isVis||isWordPic||isAlpha)?"ans-vis":"ans-btn"}${!done?" ans-btn-idle ans-enter":""}${correct?" correct-flash":""}${wrongIdx===idx?" shake":""}`}
                     style={{
                       animationDelay: !done ? `${idx * 80}ms` : undefined,
@@ -6981,6 +7031,35 @@ export default function MondoMago() {
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Accessibilità */}
+        <div style={{background:"rgba(255,255,255,.07)",borderRadius:20,padding:"16px 18px",marginBottom:14}}>
+          <div style={{fontSize:12,fontWeight:800,opacity:.5,marginBottom:10,letterSpacing:1}}>♿ ACCESSIBILITÀ</div>
+          <p style={{fontSize:12,opacity:.6,marginBottom:14}}>Rendi il gioco più accessibile e inclusivo per ogni bambino.</p>
+          {[
+            {key:"reducedMotion", icon:"🎬", title:"Riduci le animazioni", desc:"Meno movimento: utile per chi si distrae o ha sensibilità al movimento."},
+            {key:"highContrast",  icon:"🌗", title:"Alto contrasto",       desc:"Sfondo più scuro e bordi di focus visibili per ipovisione."},
+            {key:"dyslexiaFont",  icon:"🔤", title:"Font per dislessia",   desc:"Usa il carattere OpenDyslexic, più facile da leggere."},
+          ].map(opt => {
+            const on = !!a11y[opt.key];
+            return (
+              <div key={opt.key} style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:14,fontWeight:700}}>{opt.icon} {opt.title}</div>
+                  <div style={{fontSize:11,opacity:.55,marginTop:2}}>{opt.desc}</div>
+                </div>
+                <button
+                  role="switch" aria-checked={on} aria-label={opt.title}
+                  onClick={() => setA11yPref({ [opt.key]: !on })}
+                  style={{flexShrink:0,width:54,height:30,borderRadius:30,border:"none",cursor:"pointer",
+                    background:on?"#A78BFA":"rgba(255,255,255,.18)",position:"relative",transition:"background .2s"}}>
+                  <span style={{position:"absolute",top:3,left:on?27:3,width:24,height:24,borderRadius:"50%",
+                    background:"#fff",transition:"left .2s",boxShadow:"0 1px 3px rgba(0,0,0,.4)"}} />
+                </button>
+              </div>
+            );
+          })}
         </div>
 
         {/* Push notifications */}
