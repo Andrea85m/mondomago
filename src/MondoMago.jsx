@@ -4774,6 +4774,14 @@ export default function MondoMago() {
                       animationDelay:`${i*.05}s`,
                     }}>
                     <span>{w.unlocked?w.emoji:"🔒"}</span>
+                    {w.id === "laboratorio" && !has && (
+                      <div aria-label="Novità: mondo del coding" style={{position:"absolute",top:-13,left:"50%",transform:"translateX(-50%)",
+                        background:"linear-gradient(90deg,#06B6D4,#A855F7)",color:"white",borderRadius:10,
+                        padding:"2px 7px",fontSize:8.5,fontWeight:900,letterSpacing:.3,whiteSpace:"nowrap",
+                        border:"1.5px solid white",boxShadow:"0 2px 8px rgba(168,85,247,.5)",zIndex:3}}>
+                        ✨ NOVITÀ
+                      </div>
+                    )}
                     {has && <div style={{position:"absolute",top:-6,right:-6,background:w.color,borderRadius:"50%",width:20,height:20,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,border:"2px solid white"}}>✓</div>}
                     {!w.unlocked && w.starsNeeded > 0 && (
                       <div style={{position:"absolute",bottom:-10,left:"50%",transform:"translateX(-50%)",
@@ -6808,6 +6816,23 @@ export default function MondoMago() {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* Spotlight: coding (il differenziatore unico) */}
+        <div style={{background:"linear-gradient(135deg,rgba(6,182,212,.18),rgba(168,85,247,.18))",
+          border:"2px solid rgba(6,182,212,.45)",borderRadius:20,padding:"16px 18px",marginBottom:14}}>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+            <span style={{fontSize:22}}>🤖</span>
+            <div style={{fontSize:13,fontWeight:900,letterSpacing:.3}}>Impara a pensare come un computer</div>
+          </div>
+          <p style={{fontSize:12,opacity:.8,lineHeight:1.5,marginBottom:8}}>
+            Nel <b>Laboratorio Logico</b>, con il robot Pixel, tuo figlio sviluppa il <b>pensiero
+            computazionale</b>: sequenze, condizioni e debug, le basi del coding spiegate col gioco.
+          </p>
+          <p style={{fontSize:11,opacity:.6,lineHeight:1.5}}>
+            È ciò che rende MondoMago unico: l'unica app in italiano che insegna a programmare
+            ai più piccoli, adattandosi al loro ritmo.
+          </p>
         </div>
 
         {/* Time analytics */}
