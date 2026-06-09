@@ -299,6 +299,10 @@ function AnimationStyles() {
         font-family: 'OpenDyslexic', 'Nunito', system-ui, sans-serif !important;
         letter-spacing: 0.015em;
       }
+      /* Ingrandimento testo via zoom su #root: l'app usa font-size px inline,
+         quindi il font-size della root non scalerebbe. zoom scala tutto coerentemente. */
+      html[data-text-scale="lg"] #root { zoom: 1.15; }
+      html[data-text-scale="xl"] #root { zoom: 1.30; }
       html[data-contrast="high"] body { background: #000 !important; }
       html[data-contrast="high"] { filter: contrast(1.18) brightness(1.04); }
       /* Focus visibile per navigazione da tastiera/switch access */
@@ -3915,6 +3919,7 @@ export default function MondoMago() {
     el.setAttribute('data-reduce-motion', a11y.reducedMotion ? '1' : '0');
     el.setAttribute('data-contrast', a11y.highContrast ? 'high' : 'normal');
     el.setAttribute('data-dyslexia', a11y.dyslexiaFont ? '1' : '0');
+    el.setAttribute('data-text-scale', a11y.textScale || 'md');
     try { localStorage.setItem('mondomago_a11y', JSON.stringify(a11y)); } catch {}
   }, [a11y]);
 
@@ -5520,6 +5525,7 @@ export default function MondoMago() {
             </div>
             <div style={{display:"flex",flexDirection:"column",gap:12}}>
               <button onClick={(e) => answerMC(0, e)}
+                aria-label="Se vero"
                 style={{background:youngBg?"rgba(34,197,94,.15)":"rgba(34,197,94,.2)",
                   border:"3px solid rgba(34,197,94,.6)",borderRadius:22,
                   padding:"22px 20px",color:youngBg?"#15803D":"#4ade80",
@@ -5530,6 +5536,7 @@ export default function MondoMago() {
                 ✅ SE VERO
               </button>
               <button onClick={(e) => answerMC(1, e)}
+                aria-label="Se falso"
                 style={{background:youngBg?"rgba(239,68,68,.15)":"rgba(239,68,68,.2)",
                   border:"3px solid rgba(239,68,68,.6)",borderRadius:22,
                   padding:"22px 20px",color:youngBg?"#DC2626":"#F87171",
@@ -5598,6 +5605,7 @@ export default function MondoMago() {
                 const isEven    = card.face.length <= 2; // emoji vs text
                 return (
                   <div key={idx} onClick={() => tapMemCard(idx)}
+                    role="button" aria-label={isUp ? `Carta ${idx + 1}: ${card.face}` : `Carta ${idx + 1} coperta`}
                     style={{
                       aspectRatio:"1",
                       borderRadius:youngBg?18:14,
@@ -5640,6 +5648,7 @@ export default function MondoMago() {
           <div style={{display:"flex",flexDirection:"column",gap:12,position:"relative",zIndex:1}}>
             {ch.choices.map((c,idx) => (
               <button key={idx} onClick={() => answerStory(c)}
+                aria-label={`Scelta ${idx + 1}: ${c.text}`}
                 style={{background:"rgba(255,255,255,.09)",border:"2px solid rgba(255,255,255,.18)",borderRadius:22,padding:"20px 22px",color:"white",fontSize:17,fontWeight:700,cursor:"pointer",textAlign:"left",lineHeight:1.45}}>
                 {c.text}
               </button>
@@ -5664,6 +5673,7 @@ export default function MondoMago() {
                 const tapped = tapIdx !== -1;
                 return (
                   <button key={idx} onClick={() => answerSeq(idx)}
+                    aria-label={`Passo: ${item}${tapped ? `, selezionato in posizione ${tapIdx + 1}` : ""}`}
                     style={{background:tapped?"rgba(34,197,94,.3)":seqError?"rgba(239,68,68,.15)":"rgba(255,255,255,.09)",
                       border:`2.5px solid ${tapped?"#22C55E":"rgba(255,255,255,.14)"}`,
                       borderRadius:16,padding:"16px 12px",color:"white",fontSize:15,fontWeight:700,cursor:"pointer",
@@ -5691,6 +5701,7 @@ export default function MondoMago() {
                 const placedItem = dragPlaced[zi] !== undefined ? ch.items[dragPlaced[zi]] : null;
                 return (
                   <div key={zi} onClick={() => { if (dragPicked !== null) answerDrag(zi, dragPicked); }}
+                    role="button" aria-label={`Posizione ${zone}${placedItem ? `: contiene ${placedItem}` : ", vuota"}`}
                     style={{
                       minHeight:90, borderRadius:20,
                       border:`3px dashed ${dragPicked !== null ? (world?.color || "#A78BFA") : "rgba(255,255,255,.25)"}`,
@@ -5716,6 +5727,7 @@ export default function MondoMago() {
                 const isPicked = dragPicked === ii;
                 return (
                   <div key={ii} onClick={() => !isPlaced && answerDrag(-1, ii)}
+                    role="button" aria-label={`Oggetto: ${item}${isPlaced ? ", già posizionato" : ""}`}
                     className="ans-vis"
                     style={{
                       width:72, height:72, borderRadius:18,
@@ -5844,6 +5856,7 @@ export default function MondoMago() {
             <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap",marginBottom:8}}>
               {ch.colors.map((color, ci2) => (
                 <button key={ci2} onClick={() => { SFX.tap(); setColorZonePicked(color); }}
+                  aria-label={`Colore ${ci2 + 1}`} aria-pressed={colorZonePicked === color}
                   style={{
                     width:56,height:56,borderRadius:16,background:color,cursor:"pointer",
                     border:`4px solid ${colorZonePicked===color?(youngBg?"#333":"white"):"rgba(255,255,255,.18)"}`,
@@ -5895,6 +5908,7 @@ export default function MondoMago() {
                       const isEmpty = itemIdx === -1;
                       return (
                         <div key={gridIdx} onClick={() => swapPuzzleTile(gridIdx)}
+                          role="button" aria-label={isEmpty ? "Spazio vuoto" : `Tessera ${gridIdx + 1}`}
                           className={isEmpty?"":"ans-btn"}
                           style={{
                             width:tileSize,height:tileSize,borderRadius:12,
@@ -7060,6 +7074,23 @@ export default function MondoMago() {
               </div>
             );
           })}
+          {/* Dimensione testo */}
+          <div style={{marginTop:4}}>
+            <div style={{fontSize:14,fontWeight:700,marginBottom:6}}>🔠 Dimensione del testo</div>
+            <div role="radiogroup" aria-label="Dimensione del testo" style={{display:"flex",gap:8}}>
+              {[{v:"md",l:"Normale"},{v:"lg",l:"Grande"},{v:"xl",l:"Molto grande"}].map(opt => {
+                const sel = (a11y.textScale || "md") === opt.v;
+                return (
+                  <button key={opt.v} role="radio" aria-checked={sel} aria-label={opt.l}
+                    onClick={() => setA11yPref({ textScale: opt.v })}
+                    style={{flex:1,background:sel?"#A78BFA":"rgba(255,255,255,.08)",border:"none",borderRadius:10,
+                      padding:"10px 4px",color:"white",fontSize:opt.v==="md"?12:opt.v==="lg"?14:16,fontWeight:700,cursor:"pointer"}}>
+                    {opt.l}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
         {/* Push notifications */}
