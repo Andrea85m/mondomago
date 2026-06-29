@@ -4,6 +4,17 @@ import WorldScene from "./WorldScene.jsx";
 import SvgAsset from "./SvgAssets.jsx";
 import canvasConfetti from "canvas-confetti";
 
+// ── MONETIZZAZIONE (impalcatura freemium, OFF) ──────────────────────────────────
+// Strategia: monetizzare il GENITORE, mai il bambino. Tutto il loop educativo
+// (8 mondi, sfide adattive, SRS, TTS, offline) resta SEMPRE gratis per non
+// frenare l'acquisizione. Solo feature parent-facing "avanzate" (report
+// settimanale + export) sono candidate premium "MondoMago Famiglia".
+// Finché MONETIZATION_ENABLED = false NULLA è bloccato: isPremium è true per
+// tutti → zero rischio acquisizione, ma le "cuciture" del gating esistono già.
+// Per attivare il freemium in futuro: mettere il flag a true e collegare un
+// checkout (Stripe sul web / Play Billing su Android) a unlockPremium().
+const MONETIZATION_ENABLED = false;
+
 // ── CSS ANIMATIONS ────────────────────────────────────────────────────────────
 function AnimationStyles() {
   return (
@@ -3186,6 +3197,13 @@ export default function MondoMago() {
     catch { return {}; }
   });
   const setA11yPref = (patch) => setA11y(prev => ({ ...prev, ...patch }));
+  // Entitlement premium (device-level, come a11y: sopravvive ai reset profilo
+  // perché un acquisto è legato al dispositivo/account, non al singolo bambino).
+  const [premium, setPremium] = useState(() => localStorage.getItem('mondomago_premium') === '1');
+  // Quando la monetizzazione è OFF tutto è sbloccato per tutti.
+  const isPremium = !MONETIZATION_ENABLED || premium;
+  // Da collegare a un checkout (Stripe/Play Billing) quando si attiverà il freemium.
+  const unlockPremium = () => { localStorage.setItem('mondomago_premium', '1'); setPremium(true); };
   // Fase C — cosmetics, seasons, school, session log
   const [equippedCosmetic,  setEquippedCosmetic]  = useState({});
   const [newCosmetics,      setNewCosmetics]      = useState([]);
@@ -7229,6 +7247,24 @@ export default function MondoMago() {
             a.click();
             document.body.removeChild(a);
             setTimeout(() => URL.revokeObjectURL(a.href), 150); // C4: Safari needs async revoke
+          }
+          // Gate freemium: il report settimanale + export è feature premium
+          // parent-facing. Con MONETIZATION_ENABLED=false isPremium è true → il
+          // teaser non compare mai e il pannello resta gratis per tutti.
+          if (!isPremium) {
+            return (
+              <div style={{background:"rgba(255,255,255,.07)",borderRadius:20,padding:"16px 18px",marginBottom:14,textAlign:"center"}}>
+                <div style={{fontSize:12,fontWeight:800,opacity:.5,marginBottom:10,letterSpacing:1}}>📊 REPORT SETTIMANALE</div>
+                <div style={{fontSize:34,marginBottom:6}}>🔒</div>
+                <div style={{fontSize:13,opacity:.7,marginBottom:12,lineHeight:1.4}}>
+                  Andamento settimanale, grafici e report scaricabile sono inclusi in <b>MondoMago Famiglia</b>.
+                </div>
+                <button onClick={unlockPremium}
+                  style={{width:"100%",background:"linear-gradient(135deg,#764ba2,#667eea)",border:"none",color:"white",borderRadius:50,padding:"11px",fontSize:13,fontWeight:900,cursor:"pointer"}}>
+                  ✨ Sblocca MondoMago Famiglia
+                </button>
+              </div>
+            );
           }
           return (
             <div style={{background:"rgba(255,255,255,.07)",borderRadius:20,padding:"16px 18px",marginBottom:14}}>
