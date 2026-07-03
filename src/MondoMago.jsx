@@ -5404,7 +5404,7 @@ export default function MondoMago() {
         <div style={{position:"relative",zIndex:1,marginBottom:14,display:"flex",alignItems:"center",gap:10}}>
           <div style={{flex:1,background:youngBg?"rgba(0,0,0,.08)":"rgba(255,255,255,.10)",borderRadius:50,height:youngBg?16:12,overflow:"hidden",boxShadow:"inset 0 1px 3px rgba(0,0,0,.15)"}}>
             <div style={{
-              background:ch.isBoss?"linear-gradient(90deg,#FF4444,#FF8800)":youngBg?`linear-gradient(90deg,${youngColors[0]},${youngColors[2]})`:"linear-gradient(90deg,#22C55E,#4ade80)",
+              background:ch.isBoss?"linear-gradient(90deg,#FF4444,#FF8800)":youngBg?`linear-gradient(90deg,${youngColors[0]},${youngColors[2]})`:"linear-gradient(90deg,#22C55E,#6DE0C6)",
               height:"100%", borderRadius:50,
               width:`${progressPct}%`,
               transition:"width .5s cubic-bezier(.22,1,.36,1)",
@@ -5572,7 +5572,7 @@ export default function MondoMago() {
         )}
         {isLetterTrace && done && (
           <div style={{textAlign:"center",padding:"18px 0 4px",fontSize:18,fontFamily:FF,
-            color:youngBg?"#15803D":"#4ade80"}}>
+            color:youngBg?"#15803D":"#6DE0C6"}}>
             ⭐ Bravissimo! Lettera completata!
           </div>
         )}
@@ -5580,21 +5580,21 @@ export default function MondoMago() {
         {/* If-else tap — two large SE VERO / SE FALSO buttons */}
         {isIfElse && !done && (
           <div style={{position:"relative",zIndex:1,marginBottom:8}}>
-            <div style={{background:"rgba(6,182,212,.15)",border:"1px solid rgba(6,182,212,.4)",
+            <div style={{background:"rgba(109,224,198,.14)",border:"1px solid rgba(109,224,198,.4)",
               borderRadius:16,padding:"10px 16px",marginBottom:14,textAlign:"center",
-              fontSize:youngBg?15:13,fontWeight:800,color:"#06B6D4",letterSpacing:.3}}>
+              fontSize:youngBg?15:13,fontWeight:800,color:"#6DE0C6",letterSpacing:.3}}>
               🔍 {ch.condition}
             </div>
             <div style={{display:"flex",flexDirection:"column",gap:12}}>
               <button onClick={(e) => answerMC(0, e)}
                 aria-label="Se vero"
-                style={{background:youngBg?"rgba(34,197,94,.15)":"rgba(34,197,94,.2)",
-                  border:"3px solid rgba(34,197,94,.6)",borderRadius:22,
-                  padding:"22px 20px",color:youngBg?"#15803D":"#4ade80",
+                style={{background:youngBg?"rgba(109,224,198,.16)":"rgba(109,224,198,.2)",
+                  border:"3px solid rgba(109,224,198,.6)",borderRadius:22,
+                  padding:"22px 20px",color:youngBg?"#0F7A63":"#6DE0C6",
                   fontSize:youngBg?22:20,fontWeight:900,cursor:"pointer",
                   display:"flex",alignItems:"center",justifyContent:"center",gap:10,
                   minHeight:72,transition:"all .15s",
-                  boxShadow:"0 4px 16px rgba(34,197,94,.2)"}}>
+                  boxShadow:"0 4px 16px rgba(109,224,198,.2)"}}>
                 ✅ SE VERO
               </button>
               <button onClick={(e) => answerMC(1, e)}
@@ -5613,7 +5613,7 @@ export default function MondoMago() {
         )}
         {isIfElse && done && (
           <div style={{textAlign:"center",padding:"10px 0 4px",fontSize:16,fontFamily:FF,
-            color:isCorrect?(youngBg?"#15803D":"#4ade80"):(youngBg?"#DC2626":"#F87171")}}>
+            color:isCorrect?(youngBg?"#15803D":"#6DE0C6"):(youngBg?"#DC2626":"#F87171")}}>
             {isCorrect ? "✅ Esatto!" : `La risposta giusta era: ${ch.correct === 0 ? "SE VERO ✅" : "SE FALSO ❌"}`}
           </div>
         )}
@@ -5629,8 +5629,8 @@ export default function MondoMago() {
               {ch.items.map((item, idx) => (
                 <button key={idx} onClick={(e) => answerMC(idx, e)}
                   aria-label={`Risposta ${idx + 1}: ${item}`}
-                  style={{background:youngBg?"rgba(0,0,0,.04)":"rgba(255,255,255,.08)",
-                    border:`2px solid ${youngBg?"rgba(0,0,0,.10)":"rgba(255,255,255,.16)"}`,
+                  style={{background:youngBg?"rgba(0,0,0,.04)":"rgba(246,236,212,.08)",
+                    border:`2px solid ${youngBg?"rgba(0,0,0,.10)":"rgba(255,194,75,.34)"}`,
                     borderRadius:16,padding:"14px 16px",
                     color:youngBg?"#1a1a2e":"white",
                     fontSize:youngBg?16:15,fontWeight:700,cursor:"pointer",
@@ -5643,7 +5643,7 @@ export default function MondoMago() {
         )}
         {isDebug && done && (
           <div style={{textAlign:"center",padding:"10px 0 4px",fontSize:15,fontFamily:FF,
-            color:isCorrect?(youngBg?"#15803D":"#4ade80"):(youngBg?"#DC2626":"#F87171")}}>
+            color:isCorrect?(youngBg?"#15803D":"#6DE0C6"):(youngBg?"#DC2626":"#F87171")}}>
             {isCorrect ? "🐛 Bug trovato! Ottimo lavoro!" : `Il bug era: ${ch.items[ch.correct]}`}
           </div>
         )}
@@ -5672,11 +5672,11 @@ export default function MondoMago() {
                       aspectRatio:"1",
                       borderRadius:youngBg?18:14,
                       background: isOk
-                        ? (youngBg?"rgba(34,197,94,.25)":"rgba(34,197,94,.2)")
+                        ? (youngBg?"rgba(109,224,198,.25)":"rgba(109,224,198,.22)")
                         : isUp
                           ? (youngBg?"rgba(255,255,255,.95)":"rgba(255,255,255,.18)")
                           : (youngBg?`${worldColor}22`:`${worldColor}33`),
-                      border:`2.5px solid ${isOk?"#22C55E":isUp?(youngBg?"rgba(0,0,0,.15)":"rgba(255,255,255,.55)"):(worldColor+"66")}`,
+                      border:`2.5px solid ${isOk?"#6DE0C6":isUp?(youngBg?"rgba(0,0,0,.15)":"rgba(255,255,255,.55)"):(worldColor+"66")}`,
                       display:"flex",alignItems:"center",justifyContent:"center",
                       fontSize: isUp ? (isEven?32:11) : youngBg?26:22,
                       fontWeight: isUp && !isEven ? 800 : undefined,
@@ -5684,7 +5684,7 @@ export default function MondoMago() {
                       cursor: mmLocked || isOk ? "default" : "pointer",
                       transition:"all .22s cubic-bezier(.34,1.56,.64,1)",
                       transform: isUp ? "scale(1.04)" : "scale(0.94)",
-                      boxShadow: isOk ? "0 4px 14px rgba(34,197,94,.35)" : isUp ? "0 4px 12px rgba(0,0,0,.25)" : "none",
+                      boxShadow: isOk ? "0 4px 14px rgba(109,224,198,.4)" : isUp ? "0 4px 12px rgba(0,0,0,.25)" : "none",
                       userSelect:"none",
                       padding: isEven ? 0 : "2px 4px",
                       textAlign:"center",lineHeight:1.2,
@@ -5700,7 +5700,7 @@ export default function MondoMago() {
           </div>
         )}
         {isMemMatch && done && (
-          <div style={{textAlign:"center",padding:"12px 0 4px",fontSize:17,fontFamily:FF,color:youngBg?"#15803D":"#4ade80"}}>
+          <div style={{textAlign:"center",padding:"12px 0 4px",fontSize:17,fontFamily:FF,color:youngBg?"#15803D":"#6DE0C6"}}>
             🃏 Tutte le coppie trovate! Bravissimo!
           </div>
         )}
@@ -5711,7 +5711,7 @@ export default function MondoMago() {
             {ch.choices.map((c,idx) => (
               <button key={idx} onClick={() => answerStory(c)}
                 aria-label={`Scelta ${idx + 1}: ${c.text}`}
-                style={{background:"rgba(255,255,255,.09)",border:"2px solid rgba(255,255,255,.18)",borderRadius:22,padding:"20px 22px",color:"white",fontSize:17,fontWeight:700,cursor:"pointer",textAlign:"left",lineHeight:1.45}}>
+                style={{background:"rgba(246,236,212,.08)",border:"2px solid rgba(255,194,75,.34)",borderRadius:22,padding:"20px 22px",color:"white",fontSize:17,fontWeight:700,cursor:"pointer",textAlign:"left",lineHeight:1.45}}>
                 {c.text}
               </button>
             ))}
@@ -5724,7 +5724,7 @@ export default function MondoMago() {
           <div style={{position:"relative",zIndex:1}}>
             <div style={{display:"flex",gap:6,marginBottom:10,justifyContent:"center"}}>
               {ch.items.map((_,i) => (
-                <div key={i} style={{width:28,height:28,borderRadius:"50%",background:seqTaps.length>i?"#22C55E":"rgba(255,255,255,.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:900,transition:"all .2s"}}>
+                <div key={i} style={{width:28,height:28,borderRadius:"50%",background:seqTaps.length>i?"#6DE0C6":"rgba(246,236,212,.12)",color:seqTaps.length>i?"#0F2E28":"inherit",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:900,transition:"all .2s"}}>
                   {seqTaps.length>i ? "✓" : i+1}
                 </div>
               ))}
@@ -5736,8 +5736,8 @@ export default function MondoMago() {
                 return (
                   <button key={idx} onClick={() => answerSeq(idx)}
                     aria-label={`Passo: ${item}${tapped ? `, selezionato in posizione ${tapIdx + 1}` : ""}`}
-                    style={{background:tapped?"rgba(34,197,94,.3)":seqError?"rgba(239,68,68,.15)":"rgba(255,255,255,.09)",
-                      border:`2.5px solid ${tapped?"#22C55E":"rgba(255,255,255,.14)"}`,
+                    style={{background:tapped?"rgba(109,224,198,.28)":seqError?"rgba(239,68,68,.15)":"rgba(246,236,212,.08)",
+                      border:`2.5px solid ${tapped?"#6DE0C6":"rgba(255,194,75,.34)"}`,
                       borderRadius:16,padding:"16px 12px",color:"white",fontSize:15,fontWeight:700,cursor:"pointer",
                       position:"relative",transition:"all .2s",minHeight:64}}>
                     {tapped&&<span style={{position:"absolute",top:6,right:8,fontSize:11,opacity:.7,fontWeight:900}}>{tapIdx+1}</span>}
@@ -5793,8 +5793,8 @@ export default function MondoMago() {
                     className="ans-vis"
                     style={{
                       width:72, height:72, borderRadius:18,
-                      background: isPicked ? `${world?.color || "#A78BFA"}44` : "rgba(255,255,255,.1)",
-                      border:`3px solid ${isPicked ? (world?.color||"#A78BFA") : "rgba(255,255,255,.2)"}`,
+                      background: isPicked ? `${world?.color || "#A78BFA"}44` : "rgba(246,236,212,.08)",
+                      border:`3px solid ${isPicked ? (world?.color||"#A78BFA") : "rgba(255,194,75,.34)"}`,
                       display:"flex",alignItems:"center",justifyContent:"center",
                       fontSize:36, cursor: isPlaced ? "default" : "pointer",
                       opacity: isPlaced ? 0.25 : 1,
@@ -5835,7 +5835,7 @@ export default function MondoMago() {
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:youngBg?14:10}}>
               {ch.options.map((opt, idx) => {
-                let bg = "rgba(255,255,255,.13)", border = "rgba(255,255,255,.22)";
+                let bg = "rgba(246,236,212,.08)", border = "rgba(255,194,75,.34)";
                 if (youngBg) { const yc=["#FF6B9D","#A78BFA","#38BDF8","#34D399"]; bg=yc[idx%4]+"22"; border=yc[idx%4]; }
                 return (
                   <button key={`${ci}-qc-${idx}`} onClick={e => answerMC(idx, e)}
@@ -5861,7 +5861,7 @@ export default function MondoMago() {
               {ch.cartoonEmoji}
             </div>
             <div style={{fontSize:17,fontFamily:"Fredoka One, sans-serif",
-              color:isCorrect?(youngBg?"#15803D":"#4ade80"):(youngBg?"#DC2626":"#F87171")}}>
+              color:isCorrect?(youngBg?"#15803D":"#6DE0C6"):(youngBg?"#DC2626":"#F87171")}}>
               {isCorrect ? `✓ Era ${ch.options[ch.correct]}!` : `Era ${ch.options[ch.correct]}!`}
             </div>
           </div>
@@ -5878,7 +5878,7 @@ export default function MondoMago() {
               <svg width={ch.gridWidth||280} height={ch.gridHeight||120}
                 viewBox={`0 0 ${ch.gridWidth||280} ${ch.gridHeight||120}`}
                 style={{borderRadius:14,background:youngBg?"rgba(255,255,255,.92)":"rgba(0,0,0,.18)",
-                  border:`2px solid ${youngBg?"rgba(0,0,0,.1)":"rgba(255,255,255,.18)"}`}}>
+                  border:`2px solid ${youngBg?"rgba(0,0,0,.1)":"rgba(255,194,75,.28)"}`}}>
                 {ch.zones.map(zone => {
                   const filled = colorZoneColors[zone.id];
                   return (
@@ -5899,7 +5899,7 @@ export default function MondoMago() {
                     }} style={{cursor:colorZonePicked?"pointer":"default"}}>
                       <circle cx={zone.x+(zone.size/2)} cy={zone.y+(zone.size/2)} r={zone.size/2}
                         fill={filled||"rgba(200,200,200,.25)"}
-                        stroke={filled===zone.targetColor?"#22C55E":(colorZonePicked&&!filled?"rgba(255,220,0,.7)":"rgba(180,180,180,.4)")}
+                        stroke={filled===zone.targetColor?"#6DE0C6":(colorZonePicked&&!filled?"rgba(255,194,75,.75)":"rgba(180,180,180,.4)")}
                         strokeWidth={filled===zone.targetColor?3:2}
                         style={{transition:"all .25s"}} />
                       <text x={zone.x+(zone.size/2)} y={zone.y+(zone.size/2)+5}
@@ -5939,7 +5939,7 @@ export default function MondoMago() {
         )}
         {isColorZone && done && (
           <div style={{textAlign:"center",padding:"14px 0 4px",fontSize:17,fontFamily:"Fredoka One, sans-serif",
-            color:youngBg?"#15803D":"#4ade80"}}>
+            color:youngBg?"#15803D":"#6DE0C6"}}>
             🎨 Bellissimo! Sei un artista!
           </div>
         )}
@@ -5964,7 +5964,7 @@ export default function MondoMago() {
                     padding:12,
                     background:youngBg?"rgba(255,255,255,.9)":"rgba(0,0,0,.18)",
                     borderRadius:16,
-                    border:`2px solid ${youngBg?"rgba(0,0,0,.1)":"rgba(255,255,255,.18)"}`,
+                    border:`2px solid ${youngBg?"rgba(0,0,0,.1)":"rgba(255,194,75,.28)"}`,
                   }}>
                     {puzzleGrid.map((itemIdx, gridIdx) => {
                       const isEmpty = itemIdx === -1;
@@ -5979,7 +5979,7 @@ export default function MondoMago() {
                               :(youngBg?"white":"rgba(255,255,255,.12)"),
                             border:isEmpty
                               ?`2px dashed ${youngBg?"rgba(0,0,0,.15)":"rgba(255,255,255,.2)"}`
-                              :`2px solid ${youngBg?"rgba(0,0,0,.1)":"rgba(255,255,255,.22)"}`,
+                              :`2px solid ${youngBg?"rgba(0,0,0,.1)":"rgba(255,194,75,.32)"}`,
                             display:"flex",alignItems:"center",justifyContent:"center",
                             fontSize:size===2?46:size===3?34:26,
                             cursor:isEmpty?"default":"pointer",
@@ -6006,7 +6006,7 @@ export default function MondoMago() {
         )}
         {isPuzzleSwap && done && (
           <div style={{textAlign:"center",padding:"14px 0 4px",fontSize:17,fontFamily:"Fredoka One, sans-serif",
-            color:youngBg?"#15803D":"#4ade80"}}>
+            color:youngBg?"#15803D":"#6DE0C6"}}>
             🧩 Perfetto in {puzzleMoves} {puzzleMoves===1?"mossa":"mosse"}!
           </div>
         )}
@@ -6087,7 +6087,7 @@ export default function MondoMago() {
               <div style={{flex:1,minWidth:0}}>
                 <div style={{
                   fontFamily:FF, fontSize:youngBg?22:19,
-                  color:isCorrect?(youngBg?"#15803D":"#4ade80"):(youngBg?"#D97706":"#FCD34D"),
+                  color:isCorrect?(youngBg?"#15803D":"#6DE0C6"):(youngBg?"#D97706":"#FCD34D"),
                   marginBottom:3,
                 }}>
                   {isCorrect
@@ -6182,7 +6182,7 @@ export default function MondoMago() {
           <div className="pop-in glow" style={{background:"linear-gradient(135deg,rgba(34,197,94,.2),rgba(16,185,129,.1))",borderRadius:20,padding:"12px 24px",marginBottom:14,border:"2px solid rgba(34,197,94,.5)",display:"flex",alignItems:"center",gap:12,width:"100%",maxWidth:360,animationDelay:"1.4s"}}>
             <span style={{fontSize:32}}>🎯</span>
             <div style={{textAlign:"left"}}>
-              <div style={{fontFamily:FF,fontSize:16,color:"#4ade80"}}>Punteggio perfetto! +5 💎</div>
+              <div style={{fontFamily:FF,fontSize:16,color:"#6DE0C6"}}>Punteggio perfetto! +5 💎</div>
               <div style={{fontSize:12,opacity:.7}}>Tutte le risposte corrette</div>
             </div>
           </div>
@@ -6880,7 +6880,7 @@ export default function MondoMago() {
         const tipArr = tips[sk.id]?.[pct < 55 ? "struggle" : "strong"] || [];
         const tip = tipArr[Math.floor(Math.random() * tipArr.length)];
         if (pct < 55) return [{ emoji: sk.emoji, title: `${childName} fatica un po' con ${sk.name} (${pct}% corretto)`, tip, color: "#FCD34D", priority: 3 }];
-        if (pct >= 85 && acc.total >= 10) return [{ emoji: sk.emoji, title: `${childName} è forte in ${sk.name}! (${pct}%)`, tip, color: "#4ade80", priority: 2 }];
+        if (pct >= 85 && acc.total >= 10) return [{ emoji: sk.emoji, title: `${childName} è forte in ${sk.name}! (${pct}%)`, tip, color: "#6DE0C6", priority: 2 }];
         return [];
       }),
       // ── Habit & behavioral rules (10) ──────────────────────────────────────
@@ -6897,7 +6897,7 @@ export default function MondoMago() {
         ? { emoji:"⏱", title:`Le sessioni di ${childName} sono molto brevi (media ${avgMinPerSession} min).`, tip:`È normale per i bambini 3-5 anni. Prova a giocare insieme: la co-presenza prolunga l'attenzione fino a 3x.`, color:"#C4B5FD", priority:3 }
         : null,
       avgMinPerSession >= 15 && sessionLog.length >= 3
-        ? { emoji:"🎯", title:`${childName} è molto concentrato: sessioni da ${avgMinPerSession} min in media!`, tip:`Ottima capacità attentiva. Assicurati che faccia anche pause fisiche ogni 20-30 minuti.`, color:"#4ade80", priority:3 }
+        ? { emoji:"🎯", title:`${childName} è molto concentrato: sessioni da ${avgMinPerSession} min in media!`, tip:`Ottima capacità attentiva. Assicurati che faccia anche pause fisiche ogni 20-30 minuti.`, color:"#6DE0C6", priority:3 }
         : null,
       overallPct !== null && overallPct < 45 && totalAttempts >= 20
         ? { emoji:"🤔", title:`Precisione generale bassa: ${overallPct}%. Le sfide potrebbero essere troppo difficili.`, tip:`Prova a cambiare la fascia d'età in questa sezione (vai su "Età di ${childName}"). Le sfide si adatteranno automaticamente.`, color:"#FCD34D", priority:1 }
@@ -6912,7 +6912,7 @@ export default function MondoMago() {
         ? { emoji:"🌍", title:`Ha esplorato ${worldsDone} mondi diversi — ottima varietà!`, tip:`La varietà delle attività sviluppa più aree cognitive contemporaneamente. Continua così!`, color:"#60A5FA", priority:3 }
         : null,
       (childAge || 5) <= 4 && totalStars >= 30
-        ? { emoji:"🐣", title:`Per la sua età (3–4 anni), ${childName} ha già guadagnato ${totalStars} stelle — eccellente!`, tip:`I bambini 3-4 anni imparano soprattutto attraverso il gioco visivo. Le sue capacità sono al di sopra della media per questa fascia.`, color:"#4ade80", priority:2 }
+        ? { emoji:"🐣", title:`Per la sua età (3–4 anni), ${childName} ha già guadagnato ${totalStars} stelle — eccellente!`, tip:`I bambini 3-4 anni imparano soprattutto attraverso il gioco visivo. Le sue capacità sono al di sopra della media per questa fascia.`, color:"#6DE0C6", priority:2 }
         : null,
     ].filter(Boolean).sort((a, b) => a.priority - b.priority).slice(0, 4);
 
@@ -6985,7 +6985,7 @@ export default function MondoMago() {
           {SKILLS.map(sk => {
             const acc = skillAccuracy[sk.id];
             const pct = acc.total > 0 ? Math.round((acc.correct / acc.total) * 100) : null;
-            const lvColor = pct === null ? "rgba(255,255,255,.2)" : pct >= 80 ? "#4ade80" : pct >= 55 ? "#FCD34D" : "#F87171";
+            const lvColor = pct === null ? "rgba(255,255,255,.2)" : pct >= 80 ? "#6DE0C6" : pct >= 55 ? "#FCD34D" : "#F87171";
             return (
               <div key={sk.id} style={{marginBottom:10}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:12,marginBottom:4}}>
@@ -7209,7 +7209,7 @@ export default function MondoMago() {
                 <p style={{fontSize:11,color:"#F87171"}}>Notifiche bloccate. Abilitale nelle impostazioni del browser.</p>
               ) : granted ? (
                 <div>
-                  <div style={{display:"flex",alignItems:"center",gap:10,color:"#4ade80",fontSize:13,fontWeight:700,marginBottom:12}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10,color:"#6DE0C6",fontSize:13,fontWeight:700,marginBottom:12}}>
                     <span>✅</span>Promemoria attivo
                   </div>
                   <div style={{fontSize:11,opacity:.5,marginBottom:8}}>Orario promemoria:</div>
