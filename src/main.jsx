@@ -1,6 +1,12 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import '@fontsource/fredoka-one/latin-400.css'
+// Direzione "Sigillo di Stelle": display storybook (Grandstander) + mono dati (DM Mono)
+import '@fontsource/grandstander/400.css'
+import '@fontsource/grandstander/700.css'
+import '@fontsource/grandstander/800.css'
+import '@fontsource/dm-mono/400.css'
+import '@fontsource/dm-mono/500.css'
 import '@fontsource/nunito/latin-400.css'
 import '@fontsource/nunito/latin-600.css'
 import '@fontsource/nunito/latin-700.css'
