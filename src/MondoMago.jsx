@@ -215,7 +215,7 @@ function AnimationStyles() {
       }
       .ans-btn-idle:not(:disabled):hover {
         transform: scale(1.03) !important;
-        box-shadow: 0 0 16px rgba(167,139,250,.35) !important;
+        box-shadow: 0 0 16px rgba(255,194,75,.35) !important;
       }
       @keyframes screenFlashOk {
         0%   { opacity: 0; }
@@ -6016,11 +6016,11 @@ export default function MondoMago() {
           <div style={{position:"relative",zIndex:1}}>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:(isVis||isWordPic)?14:10}}>
               {ch.options.map((opt,idx) => {
-                let bg = "rgba(255,255,255,.13)", border = "rgba(255,255,255,.22)";
+                let bg = "rgba(246,236,212,.08)", border = "rgba(255,194,75,.34)";
                 let correct = false, wrong = false;
                 if (done) {
-                  if (idx === ch.correct)    { bg="rgba(34,197,94,.35)"; border="#22C55E"; correct=true; }
-                  else if (idx === selected) { bg="rgba(239,68,68,.35)"; border="#EF4444"; wrong=true; }
+                  if (idx === ch.correct)    { bg="rgba(109,224,198,.24)"; border="#6DE0C6"; correct=true; }
+                  else if (idx === selected) { bg="rgba(239,68,68,.28)"; border="#F87171"; wrong=true; }
                 }
                 return (
                   <button key={`${ci}-${idx}`} onClick={(e) => answerMC(idx, e)}
@@ -6040,7 +6040,7 @@ export default function MondoMago() {
                       padding: (isVis||isWordPic) ? "10px 4px 8px" : isAlpha ? 0 : "16px 12px",
                       gap: (isVis||isWordPic) ? 4 : 0,
                       transform: wrong ? "scale(0.97)" : correct ? "scale(1.04)" : "scale(1)",
-                      boxShadow: correct ? "0 0 20px rgba(34,197,94,.4)" : (done&&wrong) ? "0 0 18px rgba(239,68,68,.55)" : "none",
+                      boxShadow: correct ? "0 0 22px rgba(109,224,198,.45)" : (done&&wrong) ? "0 0 18px rgba(239,68,68,.5)" : "none",
                       position:"relative",
                       overflow:"hidden",
                     }}>
