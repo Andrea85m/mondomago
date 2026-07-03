@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import TTS_MAP from "./ttsMap.json";
 import WorldScene from "./WorldScene.jsx";
+import { WorldIcon, Icon, SkillIcon } from "./icons.jsx";
 import SvgAsset from "./SvgAssets.jsx";
 import canvasConfetti from "canvas-confetti";
 
@@ -3144,6 +3145,11 @@ const SG_BG    = "radial-gradient(125% 85% at 50% -8%, #2D1B54 0%, #1B1035 52%, 
 const SG_CARD  = "rgba(45,27,84,.55)";              // superficie card indaco caldo
 const SG_BR    = "1px solid rgba(255,194,75,.14)";  // filo d'oro sottile
 const SG_GOLD_GRAD = "linear-gradient(135deg,#FFC24B,#F6A93B)"; // pulsanti primari
+const SG_TILE  = "rgba(20,11,41,.5)";               // riquadri interni più scuri
+// Alias a livello modulo per le schermate (skills/session_stats/…) che usano i
+// token P_* originariamente locali al blocco "parent". Il blocco parent ridefinisce
+// i propri P_* localmente (shadowing legale) → nessun conflitto.
+const P_CARD = SG_CARD, P_BR = SG_BR, P_TILE = SG_TILE;
 
 export default function MondoMago() {
   const [screen,       setScreen]       = useState("name");
@@ -4693,16 +4699,16 @@ export default function MondoMago() {
       })()}
       {/* ── STATS ROW ── */}
       <div style={{display:"flex",gap:10,marginBottom:12}}>
-        {[{i:"⭐",v:totalStars,l:"stelle",c:"#FFC24B"},{i:"🏆",v:items.length,l:"trofei",c:"#C084FC"},{i:"💎",v:coins,l:"monete",c:"#6DE0C6"}].map((s,idx) => (
+        {[{n:"star",v:totalStars,l:"stelle",c:"#FFC24B"},{n:"trophy",v:items.length,l:"trofei",c:"#C084FC"},{n:"coin",v:coins,l:"monete",c:"#6DE0C6"}].map((s,idx) => (
           <div key={idx} style={{flex:1,background:mt.card,borderRadius:20,padding:"14px 8px",textAlign:"center",border:mt.cardBd}}>
-            <div style={{fontSize:26}}>{s.i}</div>
+            <div style={{height:28,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name={s.n} color={s.c} size={26} /></div>
             <div style={{fontFamily:FF_MONO,fontWeight:500,fontSize:24,color:s.c,lineHeight:1}}>{s.v}</div>
             <div style={{fontSize:11,color:mt.fgDim,marginTop:2}}>{s.l}</div>
           </div>
         ))}
         {/* Streak card */}
         {(() => {
-          const flames = streak >= 7 ? "🔥🔥🔥" : streak >= 3 ? "🔥🔥" : "🔥";
+          const flameCount = streak >= 7 ? 3 : streak >= 3 ? 2 : 1;
           const today = new Date().toISOString().slice(0,10);
           const playedToday = sessionLog.some(s => s.date === today) || sessionLog.length > 0;
           const last7 = Array.from({length:7},(_,i) => { const d=new Date(); d.setDate(d.getDate()-6+i); return d.toISOString().slice(0,10); });
@@ -4720,7 +4726,7 @@ export default function MondoMago() {
                 ?(youngBg?"1px solid rgba(239,68,68,.3)":"1px solid rgba(239,68,68,.3)")
                 :(youngBg?"1px solid rgba(255,100,0,.2)":"1px solid rgba(249,115,22,.2)"),
             }}>
-              <div className={streak>=3?"streak-flame":""} style={{fontSize:22}}>{flames}</div>
+              <div className={streak>=3?"streak-flame":""} style={{display:"flex",justifyContent:"center",gap:1,height:24,alignItems:"center"}}>{Array.from({length:flameCount},(_,fi) => <Icon key={fi} name="flame" color={streakAtRisk?"#F87171":"#FB923C"} size={22} />)}</div>
               <div style={{fontFamily:FF_MONO,fontWeight:500,fontSize:24,color:streakAtRisk?"#F87171":"#FB923C",lineHeight:1}}>{streak}</div>
               <div style={{fontSize:9,fontWeight:800,color:streakAtRisk?"#F87171":"#FB923C",opacity:.8,marginBottom:3}}>
                 {streakAtRisk?"⚠️ a rischio!":streak>=7?"🏆 LEGGENDA":streak>=3?"⭐ SERIE":streak>=1?"Giorni":""}
@@ -4795,7 +4801,7 @@ export default function MondoMago() {
               display:"flex",alignItems:"center",gap:16,textAlign:"left",
               boxShadow:done?"none":"0 4px 24px rgba(255,217,90,.15)",
               opacity:done?.6:1}}>
-            <span style={{fontSize:42}}>{done?"✅":"🌟"}</span>
+            <span style={{display:"flex"}}>{done ? <Icon name="check" color="#6DE0C6" size={40} /> : <Icon name="star" color="#FFD95A" size={40} />}</span>
             <div style={{flex:1}}>
               <div style={{fontWeight:900,fontSize:17,marginBottom:3}}>Sfida del Giorno</div>
               <div style={{fontSize:13,opacity:.7}}>{done?"Completata! Torna domani ✨":"3 sfide speciali · +3 stelle bonus"}</div>
@@ -4874,7 +4880,7 @@ export default function MondoMago() {
                       transition:"transform .2s",
                       animationDelay:`${i*.05}s`,
                     }}>
-                    <span>{w.unlocked?w.emoji:"🔒"}</span>
+                    <span style={{display:"flex"}}>{w.unlocked ? <WorldIcon id={w.id} color={w.color} size={40} /> : <Icon name="lock" color={w.color} size={34} />}</span>
                     {w.id === "laboratorio" && !has && (
                       <div aria-label="Novità: mondo del coding" style={{position:"absolute",top:-13,left:"50%",transform:"translateX(-50%)",
                         background:"linear-gradient(90deg,#06B6D4,#A855F7)",color:"white",borderRadius:10,
@@ -4965,7 +4971,7 @@ export default function MondoMago() {
                 fontSize:34,position:"relative",zIndex:1,
                 boxShadow:locked?"none":`0 0 20px ${w.color}44`,
               }}>
-                {locked?"🔒":w.emoji}
+                {locked ? <Icon name="lock" color={w.color} size={34} /> : <WorldIcon id={w.id} color={w.color} size={40} />}
                 {has && !locked && <div style={{position:"absolute",bottom:-6,right:-6,fontSize:18,lineHeight:1,filter:"drop-shadow(0 1px 3px rgba(0,0,0,.5))"}}>{a?.reward_emoji}</div>}
               </div>
               {/* Content */}
@@ -6216,8 +6222,8 @@ export default function MondoMago() {
                 {trained.map(sk => {
                   const s = SKILLS.find(s => s.id === sk);
                   return s ? (
-                    <span key={sk} style={{background:`${s.color}33`,border:`1px solid ${s.color}55`,borderRadius:20,padding:"4px 12px",fontSize:12,fontWeight:700,color:s.color}}>
-                      {s.emoji} {s.name}
+                    <span key={sk} style={{background:`${s.color}33`,border:`1px solid ${s.color}55`,borderRadius:20,padding:"4px 12px",fontSize:12,fontWeight:700,color:s.color,display:"inline-flex",alignItems:"center",gap:6}}>
+                      <SkillIcon id={s.id} color={s.color} size={15} />{s.name}
                     </span>
                   ) : null;
                 })}
@@ -6232,7 +6238,7 @@ export default function MondoMago() {
             {SKILLS.map(sk => (
               <div key={sk.id} style={{marginBottom:8}}>
                 <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:3}}>
-                  <span>{sk.emoji} {sk.name}</span>
+                  <span style={{display:"inline-flex",alignItems:"center",gap:5}}><SkillIcon id={sk.id} color={sk.color} size={15} />{sk.name}</span>
                   <span style={{color:sk.color,fontWeight:800}}>Lv.{skills[sk.id]}</span>
                 </div>
                 <div style={{background:"rgba(255,255,255,.08)",borderRadius:6,height:7}}>
@@ -6288,9 +6294,9 @@ export default function MondoMago() {
           </div>
         )}
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,width:"100%",maxWidth:340,marginBottom:22}}>
-          {[{i:"✅",v:correct,l:"Corrette"},{i:"⭐",v:sessionStars,l:"Stelle"},{i:"🎯",v:`${pct}%`,l:"Precisione"},{i:"🔥",v:combo,l:"Combo"}].map((s,i) => (
+          {[{n:"check",c:"#6DE0C6",v:correct,l:"Corrette"},{n:"star",c:"#FFC24B",v:sessionStars,l:"Stelle"},{n:"target",c:"#C084FC",v:`${pct}%`,l:"Precisione"},{n:"flame",c:"#FB923C",v:combo,l:"Combo"}].map((s,i) => (
             <div key={i} className="pop-in" style={{background:"rgba(255,255,255,.08)",borderRadius:18,padding:"16px 10px",animationDelay:`${i*.07}s`}}>
-              <div style={{fontSize:26}}>{s.i}</div>
+              <div style={{height:28,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name={s.n} color={s.c} size={26} /></div>
               <div style={{fontWeight:900,fontSize:20,marginTop:6}}>{s.v}</div>
               <div style={{fontSize:11,opacity:.55,marginTop:2}}>{s.l}</div>
             </div>
@@ -6438,7 +6444,7 @@ export default function MondoMago() {
             <div key={sk.id} className="slide-up" style={{background:P_CARD,border:P_BR,borderRadius:20,padding:"18px 20px",animationDelay:`${i*.07}s`,border:`1px solid ${sk.color}22`}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
                 <div style={{display:"flex",alignItems:"center",gap:10}}>
-                  <span style={{fontSize:30,background:`${sk.color}22`,borderRadius:12,padding:"6px 8px",lineHeight:1}}>{sk.emoji}</span>
+                  <span style={{background:`${sk.color}22`,borderRadius:12,padding:"7px",lineHeight:1,display:"flex"}}><SkillIcon id={sk.id} color={sk.color} size={28} /></span>
                   <div>
                     <div style={{fontWeight:900,fontSize:16}}>{sk.name}</div>
                     <div style={{fontSize:11,opacity:.5,marginTop:1}}>{SKILL_DESC[sk.id]}</div>
@@ -6446,7 +6452,7 @@ export default function MondoMago() {
                 </div>
                 <div style={{textAlign:"right"}}>
                   <div style={{color:sk.color,fontWeight:900,fontSize:20}}>Lv.{lvl}</div>
-                  <div style={{fontSize:11,opacity:.4}}>{Array(stars).fill("⭐").join("")||"—"}</div>
+                  <div style={{display:"flex",gap:1,justifyContent:"flex-end",minHeight:13,alignItems:"center",opacity:.85}}>{stars>0 ? Array.from({length:stars},(_,si)=><Icon key={si} name="star" color="#FFC24B" size={12} />) : <span style={{opacity:.4,fontSize:11}}>—</span>}</div>
                 </div>
               </div>
               <div style={{background:"rgba(255,255,255,.08)",borderRadius:8,height:10,overflow:"hidden",marginTop:8}}>
@@ -6480,7 +6486,7 @@ export default function MondoMago() {
                   <div style={{fontWeight:800,fontSize:16,marginBottom:4}}>{m.title}</div>
                   <div style={{fontSize:13,opacity:.75,marginBottom:10}}>{m.desc}</div>
                   <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
-                    <span style={{background:sk.color,color:"white",borderRadius:20,padding:"3px 10px",fontSize:11,fontWeight:700}}>{sk.emoji} {sk.name}</span>
+                    <span style={{background:sk.color,color:"white",borderRadius:20,padding:"3px 10px",fontSize:11,fontWeight:700,display:"inline-flex",alignItems:"center",gap:5}}><SkillIcon id={sk.id} color="rgba(255,255,255,.95)" size={14} />{sk.name}</span>
                     <span style={{background:"rgba(0,0,0,.1)",borderRadius:20,padding:"3px 10px",fontSize:11}}>⏱ {m.dur}</span>
                   </div>
                   <div style={{marginTop:10}}>
@@ -6983,7 +6989,7 @@ export default function MondoMago() {
             return (
               <div key={sk.id} style={{marginBottom:10}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:12,marginBottom:4}}>
-                  <span>{sk.emoji} {sk.name}</span>
+                  <span style={{display:"inline-flex",alignItems:"center",gap:5}}><SkillIcon id={sk.id} color={sk.color} size={15} />{sk.name}</span>
                   <span style={{display:"flex",gap:8,alignItems:"center"}}>
                     <span style={{fontFamily:FF_MONO,color:"rgba(246,236,212,.4)",fontSize:10}}>Lv.{skills[sk.id]}</span>
                     <span style={{fontFamily:FF_MONO,fontWeight:700,fontSize:13,color:lvColor}}>
@@ -7031,7 +7037,7 @@ export default function MondoMago() {
               {reviewRows.map(sk => (
                 <div key={sk.id} style={{marginBottom:10}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:12,marginBottom:4}}>
-                    <span>{sk.emoji} {sk.name}</span>
+                    <span style={{display:"inline-flex",alignItems:"center",gap:5}}><SkillIcon id={sk.id} color={sk.color} size={15} />{sk.name}</span>
                     <span style={{display:"flex",gap:8,alignItems:"center"}}>
                       {sk.due > 0 && <span style={{fontFamily:FF_MONO,fontSize:10,color:GOLD,fontWeight:700}}>● {sk.due} in arrivo</span>}
                       <span style={{fontFamily:FF_MONO,fontWeight:700,fontSize:13,color:sk.color}}>{sk.count}</span>
