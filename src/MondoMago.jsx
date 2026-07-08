@@ -287,6 +287,10 @@ function AnimationStyles() {
         100% { transform: translateY(-40px); opacity: 0; }
       }
       .session-alert { animation: sessionAlert 4s cubic-bezier(.22,1,.36,1) both; }
+      @keyframes sealSpin    { from { transform: rotate(0deg); }  to { transform: rotate(360deg); }  }
+      @keyframes sealSpinRev { from { transform: rotate(0deg); }  to { transform: rotate(-360deg); } }
+      .seal-ring     { animation: sealSpin    16s linear infinite; }
+      .seal-ring-rev { animation: sealSpinRev 24s linear infinite; }
 
       /* ── ACCESSIBILITÀ ──────────────────────────────────────────────────────
          Toggle device-level dall'area genitori (data-* su <html>) + rispetto
@@ -397,7 +401,8 @@ function InstallBanner({ screen }) {
 }
 
 // ── CONFETTI ──────────────────────────────────────────────────────────────────
-const CONFETTI_COLORS = ["#FFD700","#FF6B6B","#4ECDC4","#A78BFA","#F97316","#22C55E","#60A5FA"];
+// Confetti "Sigillo di Stelle": due accenti (oro=magia, verde-runa=logica) + pergamena/stelle
+const CONFETTI_COLORS = ["#FFC24B","#6DE0C6","#F6ECD4","#FFD97A","#8CE8D2","#FFFFFF"];
 function triggerConfetti(big = false) {
   if (big) {
     canvasConfetti({ particleCount: 100, spread: 100, origin: { y: 0.52 }, ticks: 280, colors: CONFETTI_COLORS });
@@ -3849,6 +3854,7 @@ export default function MondoMago() {
     if (lastKnownLevel && lastKnownLevel !== current.title) {
       setNewLevel(current);
       SFX.levelUp();
+      triggerConfetti(true);
     }
     setLastKnownLevel(current.title);
   }, [totalStars]); // eslint-disable-line
@@ -4137,13 +4143,27 @@ export default function MondoMago() {
         );
       })()}
       {newLevel && (
-        <div onClick={() => setNewLevel(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.86)",zIndex:700,display:"flex",alignItems:"center",justifyContent:"center",padding:24,cursor:"pointer"}}>
-          <div className="pop-in" style={{background:"linear-gradient(135deg,#2d1b69,#1a1a2e)",border:"2px solid #FFD700",borderRadius:28,padding:"36px 28px",textAlign:"center",maxWidth:320,boxShadow:"0 0 60px rgba(255,215,0,.3)"}}>
-            <div style={{fontSize:72,marginBottom:12}}>{newLevel.emoji}</div>
-            <div style={{fontFamily:FF,fontSize:14,color:"#FFD700",marginBottom:8}}>LIVELLO RAGGIUNTO!</div>
-            <div style={{fontFamily:FF,fontSize:32,color:"white",marginBottom:6}}>{newLevel.title}</div>
-            <p style={{color:"rgba(255,255,255,.7)",fontSize:14,marginBottom:24}}>Continua così! Sei davvero bravo!</p>
-            <button onClick={() => setNewLevel(null)} style={{fontFamily:FF,background:"#FFD700",color:"#1a1a2e",border:"none",borderRadius:50,padding:"13px 36px",fontSize:18,cursor:"pointer"}}>
+        <div onClick={() => setNewLevel(null)} style={{position:"fixed",inset:0,background:"radial-gradient(120% 90% at 50% 38%, rgba(45,27,84,.92), rgba(10,6,25,.96))",zIndex:700,display:"flex",alignItems:"center",justifyContent:"center",padding:24,cursor:"pointer"}}>
+          <div className="pop-in" style={{background:SG_BG,border:`2px solid ${SG_GOLD}`,borderRadius:28,padding:"30px 26px 26px",textAlign:"center",maxWidth:334,width:"100%",boxShadow:"0 0 70px rgba(255,194,75,.35), inset 0 0 44px rgba(255,194,75,.06)",position:"relative"}}>
+            <div style={{fontFamily:FF_MONO,fontSize:12,letterSpacing:3,color:SG_RUNE,textTransform:"uppercase",marginBottom:16}}>Nuovo livello</div>
+            {/* Sigillo che si accende: anelli runici + stelle in orbita + disco d'oro */}
+            <div style={{position:"relative",width:150,height:150,margin:"0 auto 16px",display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <div className="seal-ring" style={{position:"absolute",inset:0,borderRadius:"50%",border:`2px dashed rgba(255,194,75,.4)`}} />
+              <div className="seal-ring-rev" style={{position:"absolute",inset:15,borderRadius:"50%",border:`1px solid rgba(109,224,198,.4)`}} />
+              {[0,1,2,3].map(i => (
+                <div key={i} style={{position:"absolute",top:"50%",left:"50%",width:6,height:6,marginLeft:-3,marginTop:-3,borderRadius:"50%",background:i%2?SG_RUNE:SG_GOLD,boxShadow:`0 0 8px ${i%2?SG_RUNE:SG_GOLD}`,animation:`orbitSpin ${7+i}s linear infinite`,animationDelay:`${i*.5}s`}} />
+              ))}
+              <div className="glow" style={{width:94,height:94,borderRadius:"50%",background:"radial-gradient(circle at 50% 34%, #FFE7A6, #FFC24B 55%, #E7972B)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:52,boxShadow:"inset 0 -6px 14px rgba(120,60,0,.35), inset 0 5px 11px rgba(255,255,255,.6)"}}>{newLevel.emoji}</div>
+            </div>
+            <div style={{fontFamily:FF_DISPLAY,fontSize:34,color:SG_GOLD,lineHeight:1.05,marginBottom:4}}>{newLevel.title}</div>
+            <div style={{fontFamily:FF_MONO,fontSize:13,color:SG_PARCH,opacity:.65,marginBottom:18}}>{totalStars} ⭐ raccolte</div>
+            {comp && (
+              <div style={{display:"flex",alignItems:"center",gap:12,background:SG_CARD,border:SG_BR,borderRadius:18,padding:"11px 14px",marginBottom:22,textAlign:"left"}}>
+                <div className="bounce" style={{flexShrink:0}}><CompanionAvatar c={comp} size={44} /></div>
+                <span style={{fontSize:14,color:SG_PARCH,lineHeight:1.4}}>Che magia, {childName}! Ora sei <b style={{color:SG_GOLD}}>{newLevel.title}</b>. Continuiamo insieme!</span>
+              </div>
+            )}
+            <button onClick={() => setNewLevel(null)} style={{fontFamily:FF_DISPLAY,background:SG_GOLD_GRAD,color:SG_INK,border:"none",borderRadius:50,padding:"14px 40px",fontSize:19,fontWeight:800,cursor:"pointer",boxShadow:"0 6px 20px rgba(255,194,75,.4)"}}>
               Continua! ✨
             </button>
           </div>
@@ -6164,9 +6184,9 @@ export default function MondoMago() {
             <span>{comp.onWorld()}</span>
           </div>
         )}
-        <div className="pop-in glow" style={{background:"rgba(255,215,0,.15)",borderRadius:24,padding:"20px 32px",marginBottom:24,border:"2px solid rgba(255,215,0,.45)",animationDelay:"1.2s"}}>
+        <div className="pop-in glow" style={{background:"rgba(255,194,75,.13)",borderRadius:24,padding:"20px 32px",marginBottom:24,border:"2px solid rgba(255,194,75,.45)",animationDelay:"1.2s"}}>
           <div style={{fontSize:50}}>{arc.reward_emoji}</div>
-          <div style={{fontFamily:FF,fontSize:20,marginTop:8,color:"#FFD95A"}}>{arc.reward_name}</div>
+          <div style={{fontFamily:FF_DISPLAY,fontSize:22,marginTop:8,color:SG_GOLD}}>{arc.reward_name}</div>
           <div style={{fontSize:12,opacity:.65,marginTop:4}}>Sbloccato per {comp?.name}!</div>
         </div>
         {/* Diploma prima volta */}
@@ -6192,15 +6212,15 @@ export default function MondoMago() {
             🌟 +3 stelle bonus!
           </div>
         )}
-        <div className="pop-in" style={{background:"rgba(56,189,248,.12)",border:"1px solid rgba(56,189,248,.35)",borderRadius:20,padding:"10px 20px",marginBottom:14,display:"flex",alignItems:"center",gap:10,animationDelay:"1.1s"}}>
+        <div className="pop-in" style={{background:SG_TILE,border:SG_BR,borderRadius:20,padding:"10px 20px",marginBottom:14,display:"flex",alignItems:"center",gap:10,animationDelay:"1.1s"}}>
           <span style={{fontSize:28}}>💎</span>
           <div>
-            <div style={{fontFamily:FF,fontSize:20,color:"#38BDF8",lineHeight:1}}>+{sessionStars + (perfectBonus ? 5 : 0)}</div>
+            <div style={{fontFamily:FF_MONO,fontSize:20,color:SG_GOLD,lineHeight:1}}>+{sessionStars + (perfectBonus ? 5 : 0)}</div>
             <div style={{fontSize:11,opacity:.7}}>monete magiche{perfectBonus ? " (+5 perfetto!)" : ""}</div>
           </div>
           <div style={{marginLeft:"auto",textAlign:"right"}}>
             <div style={{fontSize:11,opacity:.5}}>totale</div>
-            <div style={{fontFamily:FF,fontSize:16,color:"#38BDF8"}}>{coins} 💎</div>
+            <div style={{fontFamily:FF_MONO,fontSize:16,color:SG_GOLD}}>{coins} 💎</div>
           </div>
         </div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:10,marginBottom:20,width:"100%",maxWidth:360}}>
@@ -6216,7 +6236,7 @@ export default function MondoMago() {
         {(() => {
           const trained = [...new Set(results.map(r => getSkill(r.type)))];
           return trained.length > 0 && (
-            <div className="fade-in" style={{background:"rgba(255,255,255,.07)",borderRadius:18,padding:"12px 18px",marginBottom:20,width:"100%",maxWidth:360,textAlign:"left",animationDelay:"1.9s"}}>
+            <div className="fade-in" style={{background:SG_TILE,border:SG_BR,borderRadius:18,padding:"12px 18px",marginBottom:20,width:"100%",maxWidth:360,textAlign:"left",animationDelay:"1.9s"}}>
               <div style={{fontSize:11,opacity:.5,fontWeight:800,marginBottom:8,letterSpacing:1}}>ABILITÀ ALLENATE OGGI</div>
               <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
                 {trained.map(sk => {
@@ -6233,7 +6253,7 @@ export default function MondoMago() {
         })()}
         <div className="fade-in" style={{width:"100%",maxWidth:360,marginBottom:12,animationDelay:"2.1s"}}>
           {/* Skills breakdown */}
-          <div style={{background:"rgba(255,255,255,.07)",borderRadius:18,padding:"14px 16px",marginBottom:12}}>
+          <div style={{background:SG_TILE,border:SG_BR,borderRadius:18,padding:"14px 16px",marginBottom:12}}>
             <div style={{fontSize:11,opacity:.5,fontWeight:800,marginBottom:10,letterSpacing:1}}>ABILITÀ ALLENATE</div>
             {SKILLS.map(sk => (
               <div key={sk.id} style={{marginBottom:8}}>
@@ -6255,7 +6275,7 @@ export default function MondoMago() {
                 text: `${childName} ha completato "${arc.reward_name}" in MondoMago! ${sessionStars}⭐ guadagnate, ${correct}/${results.length} risposte giuste. Livello: ${getLevel(totalStars).title} ${getLevel(totalStars).emoji}`,
                 url: window.location.href,
               }).catch(() => {});
-            }} style={{width:"100%",background:"linear-gradient(135deg,#667eea,#764ba2)",color:"white",border:"none",borderRadius:50,padding:"14px",fontWeight:800,fontSize:14,cursor:"pointer",boxShadow:"0 4px 16px rgba(102,126,234,.3)",marginBottom:10}}>
+            }} style={{width:"100%",background:SG_CARD,color:SG_GOLD,border:SG_BR,borderRadius:50,padding:"14px",fontWeight:800,fontSize:14,cursor:"pointer",marginBottom:10}}>
               📤 Condividi il risultato!
             </button>
           )}
@@ -6266,11 +6286,11 @@ export default function MondoMago() {
             </button>
           )}
           <button onClick={() => navigate("session_stats")}
-            style={{width:"100%",background:"rgba(255,255,255,.1)",color:"white",border:"1px solid rgba(255,255,255,.2)",borderRadius:50,padding:"13px",fontWeight:800,fontSize:14,cursor:"pointer",marginBottom:10}}>
+            style={{width:"100%",background:SG_TILE,color:SG_PARCH,border:SG_BR,borderRadius:50,padding:"13px",fontWeight:800,fontSize:14,cursor:"pointer",marginBottom:10}}>
             📊 Vedi statistiche dettagliate
           </button>
           <button onClick={() => { navigate("map"); setSessionStars(0); setResults([]); setCombo(0); }}
-            style={{width:"100%",background:"white",color:"#1a1a2e",border:"none",borderRadius:50,padding:"16px",fontWeight:900,fontSize:16,cursor:"pointer",boxShadow:"0 4px 16px rgba(0,0,0,.2)"}}>
+            style={{width:"100%",fontFamily:FF_DISPLAY,background:SG_GOLD_GRAD,color:SG_INK,border:"none",borderRadius:50,padding:"16px",fontWeight:800,fontSize:17,cursor:"pointer",boxShadow:"0 6px 20px rgba(255,194,75,.4)"}}>
             🗺️ Torna ai Mondi
           </button>
         </div>
@@ -6283,46 +6303,46 @@ export default function MondoMago() {
     const correct = results.filter(r => r.ok).length;
     const pct     = results.length ? Math.round((correct/results.length)*100) : 0;
     return (
-      <div key="stats" className={screenAnim} style={{minHeight:"100dvh",background:"linear-gradient(135deg,#1a1a2e,#4A2090)",color:"white",padding:24,display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center"}}>
+      <div key="stats" className={screenAnim} style={{minHeight:"100dvh",background:SG_BG,color:SG_PARCH,padding:24,display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center"}}>
         {G}
         <div className="pop-in" style={{fontSize:60,marginBottom:12}}>{pct===100?"🏆":pct>=60?"⭐":"💪"}</div>
-        <h2 style={{fontSize:24,fontWeight:900,marginBottom:8}}>{pct===100?"Missione perfetta!":pct>=60?"Ottimo lavoro!":"Bel tentativo!"}</h2>
+        <h2 style={{fontFamily:FF_DISPLAY,fontSize:26,color:SG_GOLD,marginBottom:8}}>{pct===100?"Missione perfetta!":pct>=60?"Ottimo lavoro!":"Bel tentativo!"}</h2>
         {comp && (
-          <div style={{background:"rgba(255,255,255,.08)",borderRadius:20,padding:"12px 18px",marginBottom:18,fontSize:13,maxWidth:320,display:"flex",alignItems:"center",gap:12}}>
+          <div style={{background:SG_CARD,border:SG_BR,borderRadius:20,padding:"12px 18px",marginBottom:18,fontSize:13,maxWidth:320,display:"flex",alignItems:"center",gap:12}}>
             <CompanionAvatar c={comp} size={36} />
             <span>{pct>=60?comp.onCorrect():comp.onWrong()}</span>
           </div>
         )}
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,width:"100%",maxWidth:340,marginBottom:22}}>
           {[{n:"check",c:"#6DE0C6",v:correct,l:"Corrette"},{n:"star",c:"#FFC24B",v:sessionStars,l:"Stelle"},{n:"target",c:"#C084FC",v:`${pct}%`,l:"Precisione"},{n:"flame",c:"#FB923C",v:combo,l:"Combo"}].map((s,i) => (
-            <div key={i} className="pop-in" style={{background:"rgba(255,255,255,.08)",borderRadius:18,padding:"16px 10px",animationDelay:`${i*.07}s`}}>
+            <div key={i} className="pop-in" style={{background:SG_TILE,border:SG_BR,borderRadius:18,padding:"16px 10px",animationDelay:`${i*.07}s`}}>
               <div style={{height:28,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name={s.n} color={s.c} size={26} /></div>
-              <div style={{fontWeight:900,fontSize:20,marginTop:6}}>{s.v}</div>
+              <div style={{fontFamily:FF_MONO,fontSize:22,marginTop:6,color:s.c}}>{s.v}</div>
               <div style={{fontSize:11,opacity:.55,marginTop:2}}>{s.l}</div>
             </div>
           ))}
         </div>
-        <div style={{width:"100%",maxWidth:340,background:P_TILE,borderRadius:20,padding:"16px 18px",marginBottom:22,textAlign:"left"}}>
+        <div style={{width:"100%",maxWidth:340,background:SG_TILE,border:SG_BR,borderRadius:20,padding:"16px 18px",marginBottom:22,textAlign:"left"}}>
           <div style={{fontSize:12,fontWeight:800,opacity:.5,marginBottom:12,letterSpacing:1}}>LE TUE ABILITÀ</div>
           {SKILLS.map(sk => (
             <div key={sk.id} style={{marginBottom:11}}>
               <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:4}}>
-                <span>{sk.emoji} {sk.name}</span>
-                <span style={{color:sk.color,fontWeight:800}}>Lv.{skills[sk.id]}</span>
+                <span style={{display:"inline-flex",alignItems:"center",gap:6}}><SkillIcon id={sk.id} color={sk.color} size={15} />{sk.name}</span>
+                <span style={{fontFamily:FF_MONO,color:sk.color,fontWeight:700}}>Lv.{skills[sk.id]}</span>
               </div>
               <div style={{background:"rgba(255,255,255,.08)",borderRadius:6,height:8}}>
-                <div style={{background:sk.color,height:"100%",borderRadius:6,width:`${(skills[sk.id]/10)*100}%`,transition:"width .7s"}} />
+                <div style={{background:sk.color,height:"100%",borderRadius:6,width:`${(skills[sk.id]/10)*100}%`,transition:"width .9s cubic-bezier(.22,1,.36,1)"}} />
               </div>
             </div>
           ))}
         </div>
         <div style={{display:"flex",gap:10,width:"100%",maxWidth:340}}>
           <button onClick={() => navigate(arc ? "world_end" : "map")}
-            style={{flex:1,background:"rgba(255,255,255,.12)",color:"white",border:"1px solid rgba(255,255,255,.2)",borderRadius:50,padding:"14px",fontWeight:800,fontSize:14,cursor:"pointer"}}>
+            style={{flex:1,background:SG_TILE,color:SG_PARCH,border:SG_BR,borderRadius:50,padding:"14px",fontWeight:800,fontSize:14,cursor:"pointer"}}>
             ← Risultati
           </button>
           <button onClick={() => { navigate("map"); setSessionStars(0); setResults([]); setCombo(0); }}
-            style={{flex:2,background:"white",color:"#4A2090",border:"none",borderRadius:50,padding:"14px",fontWeight:900,fontSize:15,cursor:"pointer",boxShadow:"0 4px 20px rgba(0,0,0,.25)"}}>
+            style={{flex:2,fontFamily:FF_DISPLAY,background:SG_GOLD_GRAD,color:SG_INK,border:"none",borderRadius:50,padding:"14px",fontWeight:800,fontSize:16,cursor:"pointer",boxShadow:"0 6px 20px rgba(255,194,75,.4)"}}>
             🗺️ Torna ai Mondi
           </button>
         </div>
