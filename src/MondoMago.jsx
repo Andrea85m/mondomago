@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import TTS_MAP from "./ttsMap.json";
 import WorldScene from "./WorldScene.jsx";
-import { WorldIcon, Icon, SkillIcon } from "./icons.jsx";
+import { WorldIcon, Icon, SkillIcon, RankIcon } from "./icons.jsx";
 import SvgAsset from "./SvgAssets.jsx";
 import canvasConfetti from "canvas-confetti";
 
@@ -4351,7 +4351,7 @@ export default function MondoMago() {
   if (screen === "profile_select") return (
     <div key="profile_select" className={screenAnim} style={{minHeight:"100dvh",background:SG_BG,color:SG_PARCH,padding:28,display:"flex",flexDirection:"column",alignItems:"center",paddingTop:60}}>
       {G}
-      <div className="float" style={{fontSize:56,marginBottom:12}}>👋</div>
+      <div className="float" style={{marginBottom:12,display:"flex",justifyContent:"center"}}><Icon name="wave" color="#FFC24B" size={56} /></div>
       <h2 style={{fontFamily:FF_DISPLAY,fontSize:30,marginBottom:4,color:SG_GOLD}}>Chi gioca oggi?</h2>
       <p style={{opacity:.75,fontSize:14,marginBottom:32}}>Scegli il tuo profilo</p>
       <div style={{width:"100%",maxWidth:360,display:"flex",flexDirection:"column",gap:12}}>
@@ -4419,9 +4419,9 @@ export default function MondoMago() {
         sub:   "Sblocca mondi e personalizza il tuo compagno",
         body: (
           <div style={{display:"flex",gap:12,justifyContent:"center",margin:"20px 0 16px"}}>
-            {[["⭐","Stelle"],["🏆","Trofei"],["✨","Costumi"],["🗺️","Mondi"]].map(([e,l]) => (
+            {[["star","Stelle"],["trophy","Trofei"],["sparkles","Costumi"],["map","Mondi"]].map(([ic,l]) => (
               <div key={l} style={{background:SG_CARD,border:SG_BR,borderRadius:20,padding:"14px 12px",textAlign:"center",minWidth:64}}>
-                <div style={{fontSize:32,marginBottom:4}}>{e}</div>
+                <div style={{marginBottom:4,display:"flex",justifyContent:"center"}}><Icon name={ic} color="#FFC24B" size={30} /></div>
                 <div style={{fontSize:11,fontWeight:700,opacity:.8}}>{l}</div>
               </div>
             ))}
@@ -4489,7 +4489,7 @@ export default function MondoMago() {
       <h1 style={{fontFamily:FF_DISPLAY,fontSize:42,margin:"0 0 6px",color:SG_GOLD,textShadow:"0 2px 18px rgba(255,194,75,.25)"}}>MondoMago</h1>
       <p style={{fontSize:15,opacity:.75,marginBottom:44}}>Il tuo viaggio magico inizia qui! ✨</p>
       <div style={{width:"100%",maxWidth:340}}>
-        <p style={{fontFamily:FF_DISPLAY,fontSize:20,marginBottom:14,color:SG_PARCH}}>Come ti chiami? 👋</p>
+        <p style={{fontFamily:FF_DISPLAY,fontSize:20,marginBottom:14,color:SG_PARCH,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>Come ti chiami? <Icon name="wave" color="#FFC24B" size={20} /></p>
         <input value={childName} onChange={e => setChildName(e.target.value)}
           onKeyDown={e => e.key==="Enter" && childName.trim() && navigate("age")}
           placeholder="Scrivi il tuo nome..."
@@ -4681,8 +4681,8 @@ export default function MondoMago() {
       )}
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:18}}>
         <div style={{flex:1,minWidth:0}}>
-          <div style={{fontSize:12,color:mt.fgDim}}>{isReturning ? `Bentornato, ${childName}!` : `Ciao, ${childName}!`} 👋</div>
-          <h2 style={{fontFamily:FF_DISPLAY,fontWeight:800,margin:0,fontSize:23,letterSpacing:.3}}>🗺️ I Mondi Magici</h2>
+          <div style={{fontSize:12,color:mt.fgDim,display:"flex",alignItems:"center",gap:5}}>{isReturning ? `Bentornato, ${childName}!` : `Ciao, ${childName}!`} <Icon name="wave" color="#FFC24B" size={15} /></div>
+          <h2 style={{fontFamily:FF_DISPLAY,fontWeight:800,margin:0,fontSize:23,letterSpacing:.3,display:"flex",alignItems:"center",gap:8}}><Icon name="map" color="#FFC24B" size={24} /> I Mondi Magici</h2>
         </div>
         {comp && (
           <div onClick={() => navigate("profile")}
@@ -4698,8 +4698,8 @@ export default function MondoMago() {
       {/* Time-of-day greeting */}
       {(() => {
         const h = new Date().getHours();
-        const g = h < 10 ? "☀️ Buongiorno!" : h < 13 ? "🌤️ Buona mattina!" : h < 17 ? "🌤️ Buon pomeriggio!" : h < 21 ? "🌙 Buona sera!" : "🌟 Notte di avventura!";
-        return <div style={{fontSize:12,color:mt.fgDim,marginBottom:12,textAlign:"right",fontWeight:600}}>{g}</div>;
+        const t = h < 10 ? {ic:"sun",tx:"Buongiorno!"} : h < 13 ? {ic:"cloudSun",tx:"Buona mattina!"} : h < 17 ? {ic:"cloudSun",tx:"Buon pomeriggio!"} : h < 21 ? {ic:"moon",tx:"Buona sera!"} : {ic:"nightStars",tx:"Notte di avventura!"};
+        return <div style={{fontSize:12,color:mt.fgDim,marginBottom:12,fontWeight:600,display:"flex",alignItems:"center",justifyContent:"flex-end",gap:6}}><Icon name={t.ic} color="#FFC24B" size={16} />{t.tx}</div>;
       })()}
       {/* ── IL SIGILLO MAGICO (banner di progresso in cima) ── */}
       {(() => {
@@ -4821,7 +4821,7 @@ export default function MondoMago() {
         return (
           <div style={{background:mt.xpBg,border:mt.xpBd,borderRadius:20,padding:"14px 16px",marginBottom:14}}>
             <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:mapToNext ? 10 : 0}}>
-              <span style={{fontSize:30}}>{mapLvl.emoji}</span>
+              <span style={{display:"flex"}}><RankIcon level={PLAYER_LEVELS.indexOf(mapLvl)} color="#FFC24B" size={32} /></span>
               <div style={{flex:1}}>
                 <div style={{fontFamily:FF,fontSize:17,color:"#FFD95A"}}>{mapLvl.title}</div>
                 {mapToNext ? <div style={{fontSize:11,opacity:.5}}>{mapToNext} stelle per <strong>{mapNextTitle}</strong></div>
@@ -4848,7 +4848,7 @@ export default function MondoMago() {
       {/* School mode indicator */}
       {schoolMode && schoolCode && (
         <div style={{background:"rgba(37,99,235,.15)",border:"1px solid rgba(37,99,235,.4)",borderRadius:12,padding:"8px 14px",marginBottom:12,fontSize:12,display:"flex",alignItems:"center",gap:8}}>
-          <span>🏫</span>
+          <span style={{display:"flex"}}><Icon name="school" color="#60A5FA" size={18} /></span>
           <span style={{flex:1}}>Modalità Scuola attiva · Classe <strong>{schoolCode}</strong></span>
           {schoolAssigned.length > 0 && <span style={{background:"#2563EB",color:"white",borderRadius:10,padding:"2px 8px",fontSize:10,fontWeight:900}}>{schoolAssigned.length} sfide</span>}
         </div>
@@ -4892,7 +4892,7 @@ export default function MondoMago() {
           color:"#1a1a2e",cursor:"pointer",
           display:"flex",alignItems:"center",gap:16,textAlign:"left",fontWeight:900,
           boxShadow:"0 6px 28px rgba(251,191,36,.4)"}}>
-        <span style={{fontSize:40}}>⚡</span>
+        <span style={{display:"flex"}}><Icon name="bolt" color="#1a1a2e" size={40} /></span>
         <div style={{flex:1}}>
           <div style={{fontSize:17}}>Sfida Fulmine!</div>
           <div style={{fontSize:12,fontWeight:700,opacity:.65}}>60 secondi · rispondi più che puoi!</div>
@@ -4922,7 +4922,7 @@ export default function MondoMago() {
         ))}
       </div>
       {/* [A2] Visual path map */}
-      <div style={{fontSize:11,fontWeight:800,letterSpacing:1,marginBottom:10,color:mt.sectionLbl}}>🗺️ MONDI</div>
+      <div style={{fontSize:11,fontWeight:800,letterSpacing:1,marginBottom:10,color:mt.sectionLbl,display:"flex",alignItems:"center",gap:6}}><Icon name="map" color="#FFC24B" size={14} /> MONDI</div>
       <div className="h-scroll" style={{overflowX:"auto",overflowY:"visible",paddingBottom:12,marginBottom:4}}>
         <div style={{display:"flex",gap:0,alignItems:"center",minWidth: unlockedWorlds.length * 106 + 40, padding:"16px 12px 8px"}}>
           {unlockedWorlds.map((w, i) => {
@@ -5178,7 +5178,7 @@ export default function MondoMago() {
       return (
         <div key="fulmine-end" className={screenAnim} style={{minHeight:"100dvh",background:SG_BG,color:"#F6ECD4",padding:28,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center"}}>
           {G}
-          <div className="pop-in" style={{fontSize:80,marginBottom:8}}>⚡</div>
+          <div className="pop-in" style={{marginBottom:8,display:"flex",justifyContent:"center"}}><Icon name="bolt" color="#FCD34D" size={80} /></div>
           <h2 className="slide-up" style={{fontFamily:FF_DISPLAY,fontSize:26,fontWeight:900,marginBottom:6,color:SG_GOLD}}>Sfida Fulmine!</h2>
           <div className="fade-in" style={{fontSize:64,fontWeight:900,margin:"16px 0",color:"#FCD34D"}}>{fulminoScore}</div>
           <div style={{opacity:.7,marginBottom:24}}>risposte corrette in 60 secondi</div>
@@ -5198,12 +5198,12 @@ export default function MondoMago() {
               if (starsWon > 0) setTotalStars(s => s + starsWon);
               const pool = [...fulminoPool].sort(() => Math.random() - 0.5);
               setFulminoPool(pool); setFulminoCi(0); setFulminoScore(0); setFulminoTime(60); setFulminoRunning(false);
-            }} style={{flex:1,background:"linear-gradient(135deg,#FBBF24,#F59E0B)",color:"#1a1a2e",border:"none",borderRadius:50,padding:14,cursor:"pointer",fontSize:15,fontWeight:900}}>
-              ⚡ Ancora!
+            }} style={{flex:1,background:"linear-gradient(135deg,#FBBF24,#F59E0B)",color:"#1a1a2e",border:"none",borderRadius:50,padding:14,cursor:"pointer",fontSize:15,fontWeight:900,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+              <Icon name="bolt" color="#1a1a2e" size={16} /> Ancora!
             </button>
             <button onClick={() => { if (starsWon > 0) setTotalStars(s => s + starsWon); navigate("map"); }}
-              style={{flex:1,background:"rgba(255,255,255,.12)",color:"white",border:"none",borderRadius:50,padding:14,cursor:"pointer",fontSize:15,fontWeight:700}}>
-              🗺️ Mappa
+              style={{flex:1,background:"rgba(255,255,255,.12)",color:"white",border:"none",borderRadius:50,padding:14,cursor:"pointer",fontSize:15,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+              <Icon name="map" color="#F6ECD4" size={16} /> Mappa
             </button>
           </div>
         </div>
@@ -5215,19 +5215,19 @@ export default function MondoMago() {
       return (
         <div key="fulmine-ready" className={screenAnim} style={{minHeight:"100dvh",background:SG_BG,color:"#F6ECD4",padding:28,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center"}}>
           {G}
-          <div className="float" style={{fontSize:80,marginBottom:12}}>⚡</div>
+          <div className="float" style={{marginBottom:12,display:"flex",justifyContent:"center"}}><Icon name="bolt" color="#FCD34D" size={80} /></div>
           <h2 className="slide-up" style={{fontFamily:FF_DISPLAY,fontSize:26,fontWeight:900,color:SG_GOLD,marginBottom:10}}>Sfida Fulmine!</h2>
           <p className="fade-in" style={{fontSize:15,lineHeight:1.75,opacity:.85,marginBottom:8,maxWidth:320,animationDelay:".1s"}}>
             Risposta rapida! Tocca la risposta giusta il più veloce possibile.
           </p>
-          <div className="fade-in" style={{background:"rgba(255,255,255,.07)",borderRadius:18,padding:"14px 20px",marginBottom:28,maxWidth:320,fontSize:13,lineHeight:1.7,animationDelay:".2s"}}>
-            <div>⏱️ <strong>60 secondi</strong> di sfide rapide</div>
-            <div>⭐ <strong>1 stella ogni 3</strong> risposte giuste</div>
-            <div>🔥 Vai più veloce che puoi!</div>
+          <div className="fade-in" style={{background:"rgba(255,255,255,.07)",borderRadius:18,padding:"14px 20px",marginBottom:28,maxWidth:320,fontSize:13,lineHeight:1.7,animationDelay:".2s",display:"flex",flexDirection:"column",gap:6}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="clock" color="#FCD34D" size={16} /><span><strong>60 secondi</strong> di sfide rapide</span></div>
+            <div style={{display:"flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="star" color="#FFC24B" size={16} /><span><strong>1 stella ogni 3</strong> risposte giuste</span></div>
+            <div style={{display:"flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="flame" color="#FB923C" size={16} /><span>Vai più veloce che puoi!</span></div>
           </div>
           <button className="pop-in" onClick={() => setFulminoRunning(true)}
-            style={{background:"linear-gradient(135deg,#FBBF24,#F59E0B)",color:"#1a1a2e",border:"none",borderRadius:50,padding:"18px 56px",fontWeight:900,fontSize:20,cursor:"pointer",boxShadow:"0 8px 32px rgba(251,191,36,.45)",animationDelay:".3s"}}>
-            VIA! ⚡
+            style={{background:"linear-gradient(135deg,#FBBF24,#F59E0B)",color:"#1a1a2e",border:"none",borderRadius:50,padding:"18px 56px",fontWeight:900,fontSize:20,cursor:"pointer",boxShadow:"0 8px 32px rgba(251,191,36,.45)",animationDelay:".3s",display:"inline-flex",alignItems:"center",gap:8}}>
+            VIA! <Icon name="bolt" color="#1a1a2e" size={20} />
           </button>
           <button onClick={() => navigate("map")} style={{marginTop:14,background:"none",border:"none",color:"rgba(255,255,255,.4)",cursor:"pointer",fontSize:14}}>← Torna alla mappa</button>
         </div>
@@ -5241,8 +5241,8 @@ export default function MondoMago() {
         {/* Timer bar */}
         <div style={{marginBottom:10}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
-            <span style={{fontWeight:900,fontSize:18,color:timerColor}}>⚡ {fulminoTime}s</span>
-            <span style={{fontSize:14,fontWeight:700,color:"#FCD34D"}}>✅ {fulminoScore}</span>
+            <span style={{fontWeight:900,fontSize:18,color:timerColor,display:"inline-flex",alignItems:"center",gap:5}}><Icon name="bolt" color={timerColor} size={17} /> {fulminoTime}s</span>
+            <span style={{fontSize:14,fontWeight:700,color:"#FCD34D",display:"inline-flex",alignItems:"center",gap:5}}><Icon name="check" color="#6DE0C6" size={15} /> {fulminoScore}</span>
           </div>
           <div style={{background:"rgba(255,255,255,.12)",borderRadius:8,height:10,overflow:"hidden"}}>
             <div style={{background:timerColor,height:"100%",borderRadius:8,width:`${pct}%`,transition:"width 1s linear"}} />
@@ -6333,23 +6333,23 @@ export default function MondoMago() {
                 text: `${childName} ha completato "${arc.reward_name}" in MondoMago! ${sessionStars}⭐ guadagnate, ${correct}/${results.length} risposte giuste. Livello: ${getLevel(totalStars).title} ${getLevel(totalStars).emoji}`,
                 url: window.location.href,
               }).catch(() => {});
-            }} style={{width:"100%",background:SG_CARD,color:SG_GOLD,border:SG_BR,borderRadius:50,padding:"14px",fontWeight:800,fontSize:14,cursor:"pointer",marginBottom:10}}>
-              📤 Condividi il risultato!
+            }} style={{width:"100%",background:SG_CARD,color:SG_GOLD,border:SG_BR,borderRadius:50,padding:"14px",fontWeight:800,fontSize:14,cursor:"pointer",marginBottom:10,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+              <Icon name="share" color="#FFC24B" size={18} /> Condividi il risultato!
             </button>
           )}
           {world?.id && WORLD_SONGS[world.id] && (
             <button onClick={() => { warmUpAudio(); startSong(world.id); }}
               style={{width:"100%",background:`linear-gradient(135deg,${arc.color}44,${arc.color}22)`,color:"white",border:`1px solid ${arc.color}66`,borderRadius:50,padding:"13px",fontWeight:800,fontSize:14,cursor:"pointer",marginBottom:10,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-              🎵 Riascolta la canzone del mondo!
+              <Icon name="music" color="#F6ECD4" size={18} /> Riascolta la canzone del mondo!
             </button>
           )}
           <button onClick={() => navigate("session_stats")}
-            style={{width:"100%",background:SG_TILE,color:SG_PARCH,border:SG_BR,borderRadius:50,padding:"13px",fontWeight:800,fontSize:14,cursor:"pointer",marginBottom:10}}>
-            📊 Vedi statistiche dettagliate
+            style={{width:"100%",background:SG_TILE,color:SG_PARCH,border:SG_BR,borderRadius:50,padding:"13px",fontWeight:800,fontSize:14,cursor:"pointer",marginBottom:10,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+            <Icon name="chart" color="#F6ECD4" size={18} /> Vedi statistiche dettagliate
           </button>
           <button onClick={() => { navigate("map"); setSessionStars(0); setResults([]); setCombo(0); }}
             style={{width:"100%",fontFamily:FF_DISPLAY,background:SG_GOLD_GRAD,color:SG_INK,border:"none",borderRadius:50,padding:"16px",fontWeight:800,fontSize:17,cursor:"pointer",boxShadow:"0 6px 20px rgba(255,194,75,.4)"}}>
-            🗺️ Torna ai Mondi
+            Torna ai Mondi
           </button>
         </div>
       </div>
@@ -6401,7 +6401,7 @@ export default function MondoMago() {
           </button>
           <button onClick={() => { navigate("map"); setSessionStars(0); setResults([]); setCombo(0); }}
             style={{flex:2,fontFamily:FF_DISPLAY,background:SG_GOLD_GRAD,color:SG_INK,border:"none",borderRadius:50,padding:"14px",fontWeight:800,fontSize:16,cursor:"pointer",boxShadow:"0 6px 20px rgba(255,194,75,.4)"}}>
-            🗺️ Torna ai Mondi
+            Torna ai Mondi
           </button>
         </div>
       </div>
@@ -6689,7 +6689,7 @@ export default function MondoMago() {
         {G}
         <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
           <button onClick={() => navigate("parent")} style={{background:"rgba(255,255,255,.1)",border:"none",color:"white",borderRadius:50,padding:"8px 16px",cursor:"pointer",fontSize:14,fontWeight:700}}>← Indietro</button>
-          <h2 style={{fontFamily:FF_DISPLAY,margin:0,fontSize:20,fontWeight:900,color:SG_GOLD}}>🏫 Modalità Scuola</h2>
+          <h2 style={{fontFamily:FF_DISPLAY,margin:0,fontSize:20,fontWeight:900,color:SG_GOLD,display:"flex",alignItems:"center",gap:8}}><Icon name="school" color="#60A5FA" size={20} /> Modalità Scuola</h2>
         </div>
         <p style={{opacity:.6,fontSize:13,marginBottom:20,lineHeight:1.6}}>
           Consente agli insegnanti di assegnare sfide specifiche. Il codice classe collega il bambino alle sfide assegnate (salvate su questo dispositivo).
@@ -6699,7 +6699,7 @@ export default function MondoMago() {
           <div style={{background:"rgba(37,99,235,.15)",border:"2px solid rgba(37,99,235,.4)",borderRadius:20,padding:"18px 20px",marginBottom:16}}>
             <div style={{fontSize:12,opacity:.5,fontWeight:800,letterSpacing:1,marginBottom:10}}>CLASSE ATTIVA</div>
             <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
-              <span style={{fontSize:36}}>🏫</span>
+              <span style={{display:"flex"}}><Icon name="school" color="#60A5FA" size={36} /></span>
               <div>
                 <div style={{fontWeight:900,fontSize:20,letterSpacing:2}}>{schoolCode}</div>
                 <div style={{fontSize:12,opacity:.6}}>{schoolAssigned.length} sfide assegnate</div>
@@ -7426,7 +7426,7 @@ export default function MondoMago() {
         {/* School mode */}
         <button onClick={() => navigate("school")}
           style={{width:"100%",background:"rgba(37,99,235,.12)",border:"1px solid rgba(37,99,235,.3)",color:"white",borderRadius:14,padding:"13px 18px",cursor:"pointer",fontSize:13,fontWeight:700,marginBottom:14,display:"flex",alignItems:"center",gap:10,textAlign:"left"}}>
-          <span style={{fontSize:20}}>🏫</span>
+          <span style={{display:"flex"}}><Icon name="school" color="#60A5FA" size={20} /></span>
           <div style={{flex:1}}>
             <div style={{fontWeight:900}}>Modalità Scuola</div>
             <div style={{fontSize:11,opacity:.6,fontWeight:400}}>{schoolMode && schoolCode ? `Classe: ${schoolCode} attiva` : "Collega al docente con un codice classe"}</div>

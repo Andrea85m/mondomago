@@ -135,6 +135,71 @@ const GLYPH = {
     <circle cx="12" cy="12" r="5" fill="none" stroke={c} strokeWidth="2" opacity=".7" />
     <circle cx="12" cy="12" r="1.8" fill={c} />
   </>),
+  // ── 2ª tornata: chrome/header/decorative ──
+  map: (c) => (<>
+    <path d="M3.5 6.5 L9 4.5 L15 6.5 L20.5 4.5 V17.5 L15 19.5 L9 17.5 L3.5 19.5 Z" fill={PARCH} />
+    <path d="M9 4.7 V17.4 M15 6.6 V19.3" stroke="#241546" strokeWidth=".9" opacity=".3" />
+    <path d="M6 8.5 q2.4 2 1 4.4 M7.2 15 h3.6 q1.8 0 2.8 -1.8" fill="none" stroke={c} strokeWidth="1.3" strokeDasharray="1.6 2" strokeLinecap="round" />
+    <path d="M16 8.6 l2.6 2.6 M18.6 8.6 l-2.6 2.6" stroke={c} strokeWidth="1.7" strokeLinecap="round" />
+  </>),
+  wave: (c) => (<>
+    <path d="M8.6 12.4 V6.4 a1.3 1.3 0 0 1 2.6 0 V10.8 M11.2 10.8 V5.2 a1.3 1.3 0 0 1 2.6 0 V10.8 M13.8 10.8 V6 a1.3 1.3 0 0 1 2.6 0 V11.8 M16.4 11.8 V8.2 a1.3 1.3 0 0 1 2.4 0 v5 a6.2 6.2 0 0 1 -6.2 6.2 a5.6 5.6 0 0 1 -4.3 -2 L5 15 a1.4 1.4 0 0 1 2 -2 l1.6 1.6 Z" fill={PARCH} />
+    <path d="M6 4.6 l-1.5 -1.1 M8.8 3.4 l-.5 -1.7 M11.9 3.7 l.5 -1.7" stroke={c} strokeWidth="1.5" strokeLinecap="round" />
+  </>),
+  sun: (c) => (<>
+    <circle cx="12" cy="12" r="5" fill={c} />
+    {[0,45,90,135,180,225,270,315].map(a => { const r = a*Math.PI/180; return (
+      <line key={a} x1={12+Math.cos(r)*7.4} y1={12+Math.sin(r)*7.4} x2={12+Math.cos(r)*10} y2={12+Math.sin(r)*10} stroke={c} strokeWidth="2" strokeLinecap="round" />
+    ); })}
+  </>),
+  cloudSun: (c) => (<>
+    <circle cx="9" cy="8.6" r="3.4" fill={c} />
+    {[205,240,275,310].map((a,i) => { const r = a*Math.PI/180; return (
+      <line key={i} x1={9+Math.cos(r)*4.6} y1={8.6+Math.sin(r)*4.6} x2={9+Math.cos(r)*6.3} y2={8.6+Math.sin(r)*6.3} stroke={c} strokeWidth="1.6" strokeLinecap="round" />
+    ); })}
+    <path d="M7.5 18.5 a3.1 3.1 0 0 1 .3 -6.2 a4 4 0 0 1 7.6 1 a2.9 2.9 0 0 1 -.4 5.2 Z" fill={PARCH} />
+  </>),
+  moon: (c) => (<>
+    <path d="M15.6 3.6 a8.5 8.5 0 1 0 4.8 15.1 A7 7 0 0 1 15.6 3.6 Z" fill={PARCH} />
+    <path d="M6.4 5.6 l.55 1.7 1.75 .55 -1.75 .55 -.55 1.7 -.55 -1.7 -1.75 -.55 1.75 -.55 Z" fill={c} />
+  </>),
+  nightStars: (c) => (<>
+    <path d="M13 3.8 l1.7 3.5 3.9 .55 -2.8 2.7 .66 3.85 -3.46 -1.82 -3.46 1.82 .66 -3.85 -2.8 -2.7 3.9 -.55 Z" fill={c} />
+    <path d="M6.2 13 l.7 1.5 1.6 .23 -1.15 1.1 .27 1.6 -1.42 -.75 -1.42 .75 .27 -1.6 -1.15 -1.1 1.6 -.23 Z" fill={PARCH} />
+  </>),
+  bolt: (c) => (
+    <path d="M13.6 2.5 L5 13.6 h5 l-1.6 7.9 L19 10 h-5.3 Z" fill={c} />
+  ),
+  school: (c) => (<>
+    <rect x="5" y="11" width="14" height="10" fill={PARCH} />
+    <path d="M12 3.4 L3.2 9.2 h17.6 Z" fill={PARCH} />
+    <rect x="10.4" y="14.6" width="3.2" height="6.4" fill={c} />
+    <path d="M12 4.6 V2.6 h3 v1.8" fill="none" stroke={c} strokeWidth="1.2" strokeLinejoin="round" />
+    <circle cx="12" cy="8.6" r="1.1" fill={c} />
+  </>),
+  share: (c) => (<>
+    <path d="M6 10.5 h2.4 V19 h7.2 V10.5 H18 V21 H6 Z" fill={PARCH} />
+    <path d="M12 3 l3.6 3.8 M12 3 l-3.6 3.8 M12 3 V14" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </>),
+  chart: (c) => (<>
+    <path d="M4.5 20 H19.5" stroke={PARCH} strokeWidth="2" strokeLinecap="round" />
+    <rect x="6" y="12" width="3.2" height="6" rx="1" fill={c} />
+    <rect x="10.4" y="8" width="3.2" height="10" rx="1" fill={PARCH} />
+    <rect x="14.8" y="5" width="3.2" height="13" rx="1" fill={c} />
+  </>),
+  music: (c) => (<>
+    <path d="M9 17 V6 l8.4 -2.1 V15" fill="none" stroke={PARCH} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    <ellipse cx="6.9" cy="17.1" rx="2.5" ry="1.9" fill={c} transform="rotate(-16 6.9 17.1)" />
+    <ellipse cx="15.3" cy="14.9" rx="2.5" ry="1.9" fill={c} transform="rotate(-16 15.3 14.9)" />
+  </>),
+  sparkles: (c) => (<>
+    <path d="M10.5 3 l1.4 4 4 1.4 -4 1.4 -1.4 4 -1.4 -4 -4 -1.4 4 -1.4 Z" fill={c} />
+    <path d="M17.4 13 l.8 2.2 2.2 .8 -2.2 .8 -.8 2.2 -.8 -2.2 -2.2 -.8 2.2 -.8 Z" fill={PARCH} />
+  </>),
+  clock: (c) => (<>
+    <circle cx="12" cy="12" r="8.5" fill={PARCH} />
+    <path d="M12 7 V12 L15.6 14.1" fill="none" stroke={c} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+  </>),
 };
 
 export function Icon({ name, color = GOLD, size = 24, style }) {
@@ -185,6 +250,62 @@ export function SkillIcon({ id, color = GOLD, size = 24, style }) {
     <svg viewBox="0 0 24 24" width={size} height={size} style={style}
       xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
       {draw(color)}
+    </svg>
+  );
+}
+
+// ─── EMBLEMI-RANGO (badge livello giocatore) ────────────────────────────────
+// 8 ranghi in progressione: germoglio → bussola → spade → sfera → cappello-mago
+// → scintille → stella raggiante → coppa. Rimpiazzano 🌱🗺️⚔️🔮🧙✨🌟🏆.
+const RANK_EMBLEM = [
+  (c) => (<> {/* 0 Apprendista — germoglio */}
+    <path d="M12 21 V11.5" stroke={PARCH} strokeWidth="2" strokeLinecap="round" />
+    <path d="M12 13.5 C8 13.5 6 11 6 8 C10 8 12 10.5 12 13.5 Z" fill={c} />
+    <path d="M12 11.5 C12 8.5 14 6 18 6 C18 9 16 11.5 12 11.5 Z" fill={c} opacity=".65" />
+  </>),
+  (c) => (<> {/* 1 Esploratore — bussola */}
+    <circle cx="12" cy="12" r="8.4" fill={PARCH} />
+    <path d="M12 6.5 l2.2 5.5 -2.2 5.5 -2.2 -5.5 Z" fill={c} />
+    <circle cx="12" cy="12" r="1.2" fill="#241546" />
+  </>),
+  (c) => (<> {/* 2 Avventuriero — spade incrociate */}
+    <path d="M4.5 4.5 L15 15 M4.5 4.5 v3 h3" fill="none" stroke={PARCH} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M19.5 4.5 L9 15 M19.5 4.5 v3 h-3" fill="none" stroke={PARCH} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M5.5 16.5 l3.5 3.5 M18.5 16.5 l-3.5 3.5" stroke={c} strokeWidth="2.3" strokeLinecap="round" />
+  </>),
+  (c) => (<> {/* 3 Stregone — sfera magica */}
+    <circle cx="12" cy="9.8" r="6" fill={c} />
+    <circle cx="10" cy="7.8" r="1.8" fill={PARCH} opacity=".85" />
+    <path d="M6.5 17.5 h11 l-1.8 3 H8.3 Z" fill={PARCH} />
+  </>),
+  (c) => (<> {/* 4 Mago — cappello a punta */}
+    <path d="M12 2.5 L5 17.5 h14 Z" fill={PARCH} />
+    <path d="M3.8 17.5 h16.4 v2.4 H3.8 Z" fill={PARCH} />
+    <path d="M12 8 l.85 2.1 2.15 .3 -1.6 1.5 .42 2.1 -1.82 -1.05 -1.82 1.05 .42 -2.1 -1.6 -1.5 2.15 -.3 Z" fill={c} />
+  </>),
+  (c) => (<> {/* 5 Grande Mago — scintille */}
+    <path d="M10 3 l1.35 3.9 3.9 1.35 -3.9 1.35 -1.35 3.9 -1.35 -3.9 -3.9 -1.35 3.9 -1.35 Z" fill={c} />
+    <path d="M17 12.5 l.9 2.5 2.5 .9 -2.5 .9 -.9 2.5 -.9 -2.5 -2.5 -.9 2.5 -.9 Z" fill={PARCH} />
+  </>),
+  (c) => (<> {/* 6 Arcimago — stella raggiante */}
+    <path d="M12 2 l2.6 6.5 6.9 .5 -5.3 4.4 1.7 6.7 -5.9 -3.7 -5.9 3.7 1.7 -6.7 -5.3 -4.4 6.9 -.5 Z" fill={c} />
+    <circle cx="12" cy="11.5" r="1.8" fill={PARCH} opacity=".7" />
+  </>),
+  (c) => (<> {/* 7 Leggenda — coppa */}
+    <path d="M7 4 h10 v4 a5 5 0 0 1 -10 0Z" fill={c} />
+    <path d="M7 5 H4.5 a2.5 2.5 0 0 0 2.8 4" fill="none" stroke={c} strokeWidth="1.6" />
+    <path d="M17 5 H19.5 a2.5 2.5 0 0 1 -2.8 4" fill="none" stroke={c} strokeWidth="1.6" />
+    <rect x="11" y="12.5" width="2" height="3.5" fill={c} />
+    <rect x="8" y="16" width="8" height="2.4" rx="1" fill={PARCH} />
+  </>),
+];
+
+export function RankIcon({ level = 0, color = GOLD, size = 24, style }) {
+  const i = Math.max(0, Math.min(RANK_EMBLEM.length - 1, level | 0));
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} style={style}
+      xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+      {RANK_EMBLEM[i](color)}
     </svg>
   );
 }
