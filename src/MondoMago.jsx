@@ -4900,7 +4900,14 @@ export default function MondoMago() {
                       transition:"transform .2s",
                       animationDelay:`${i*.05}s`,
                     }}>
-                    <span style={{display:"flex"}}>{w.unlocked ? <WorldIcon id={w.id} color={w.color} size={40} /> : <Icon name="lock" color={w.color} size={34} />}</span>
+                    {/* Illustrated scene medallion (a window into the world) */}
+                    {w.unlocked && (
+                      <div className="ws-static" style={{position:"absolute",inset:0,borderRadius:"50%",overflow:"hidden"}} aria-hidden="true">
+                        <WorldScene worldId={w.id} variant="card" />
+                        <div style={{position:"absolute",inset:0,background:`radial-gradient(circle at 50% 40%, transparent 30%, rgba(20,11,41,.35) 72%, rgba(20,11,41,.72) 100%), linear-gradient(0deg, ${w.color}33, transparent 60%)`}} />
+                      </div>
+                    )}
+                    <span style={{display:"flex",position:"relative",zIndex:1,filter:w.unlocked?"drop-shadow(0 1px 4px rgba(0,0,0,.85))":"none"}}>{w.unlocked ? <WorldIcon id={w.id} color="#F6ECD4" size={36} /> : <Icon name="lock" color={w.color} size={34} />}</span>
                     {w.id === "laboratorio" && !has && (
                       <div aria-label="Novità: mondo del coding" style={{position:"absolute",top:-13,left:"50%",transform:"translateX(-50%)",
                         background:"linear-gradient(90deg,#06B6D4,#A855F7)",color:"white",borderRadius:10,
@@ -4960,24 +4967,26 @@ export default function MondoMago() {
               className={`slide-up${locked?"":" world-card-btn"}${isSpot?" pulse":""}`}
               disabled={locked}
               style={{
-                background:locked ? mt.wLocked : mt.wCard,
-                border:`2px solid ${locked?"rgba(0,0,0,.06)":has?w.color+"cc":w.color+"44"}`,
-                borderRadius:28,padding:"18px 20px",
+                background:locked ? "rgba(20,11,41,.55)" : mt.wCard,
+                border:`2px solid ${locked?"rgba(246,236,212,.1)":has?w.color+"cc":w.color+"55"}`,
+                borderRadius:28,padding:"18px 20px",minHeight:96,
                 cursor:locked?"default":"pointer",
                 color:mt.fg,
                 display:"flex",alignItems:"center",gap:18,textAlign:"left",
                 boxShadow:locked?"none":has
                   ? `0 8px 28px ${w.color}44`
                   : `0 4px 20px ${w.color}28`,
-                opacity:locked?.45:1,
+                opacity:locked?.72:1,
                 animationDelay:`${i*.06}s`,
                 position:"relative",overflow:"hidden",
                 transition:"transform .16s ease, box-shadow .16s ease",
               }}>
-              {/* WorldScene illustrated background */}
-              {!locked && <div style={{position:"absolute",inset:0,borderRadius:26,overflow:"hidden",opacity:.22,pointerEvents:"none"}}><WorldScene worldId={w.id} variant="card" /></div>}
-              {/* Gradient overlay left→right for text legibility */}
-              {!locked && <div style={{position:"absolute",inset:0,background:mt.wOvl,borderRadius:26,pointerEvents:"none"}} />}
+              {/* WorldScene illustrated hero — full presence for unlocked, dark mystery preview for locked */}
+              <div style={{position:"absolute",inset:0,borderRadius:26,overflow:"hidden",opacity:locked?.3:.55,pointerEvents:"none",filter:locked?"grayscale(.5) brightness(.7)":"none"}}><WorldScene worldId={w.id} variant="card" /></div>
+              {/* Left→right scrim: text stays crisp on the left, scene glows through on the right */}
+              <div style={{position:"absolute",inset:0,borderRadius:26,pointerEvents:"none",background:locked
+                ? "linear-gradient(90deg, rgba(20,11,41,.82) 0%, rgba(20,11,41,.72) 100%)"
+                : "linear-gradient(90deg, rgba(20,11,41,.92) 0%, rgba(20,11,41,.64) 40%, rgba(20,11,41,.24) 72%, transparent 100%)"}} />
               {/* Shimmer accent for completed */}
               {has && !locked && <div style={{position:"absolute",top:0,right:0,width:60,height:"100%",background:`linear-gradient(90deg,transparent,${w.color}22)`,borderRadius:"0 26px 26px 0",pointerEvents:"none"}} />}
               {/* Animated shimmer sweep */}

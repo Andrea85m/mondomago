@@ -32,6 +32,8 @@ if (typeof document !== "undefined" && !document.getElementById("ws-styles")) {
     @keyframes ws-pennant  { 0%,100%{transform-origin:top left;transform:skewX(0deg)} 50%{transform:skewX(12deg)} }
     @keyframes ws-fish     { 0%,100%{transform:translateX(0)} 50%{transform:translateX(30px)} }
     @keyframes ws-bubble   { 0%{transform:translateY(0) translateX(0);opacity:.7} 100%{transform:translateY(-70px) translateX(6px);opacity:0} }
+    @keyframes ws-dataflow { 0%{stroke-dashoffset:24;opacity:.3} 50%{opacity:1} 100%{stroke-dashoffset:0;opacity:.3} }
+    .ws-static *{animation:none!important}
   `;
   document.head.appendChild(s);
 }
@@ -713,15 +715,131 @@ function SceneBiblioteca({ full }) {
   );
 }
 
+// ─── LABORATORIO LOGICO ───────────────────────────────────────────────────────
+function SceneLaboratorio({ full }) {
+  const glyphs = ["</>", "{ }", "01", "()", "=>", "[ ]"];
+  const motes = Array.from({ length: 10 }, (_, i) => ({
+    x: (i * 41 + 24) % 380,
+    y: 30 + (i * 23) % 170,
+    mx: ((i % 3) - 1) * 16 + "px",
+    my: -(14 + i * 5) + "px",
+    del: i * 0.45,
+    g: glyphs[i % glyphs.length],
+  }));
+  return (
+    <svg viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "100%" }}>
+      <defs>
+        <linearGradient id="fl-bg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#140b29" />
+          <stop offset="55%" stopColor="#1b1035" />
+          <stop offset="100%" stopColor="#251a4a" />
+        </linearGradient>
+        <radialGradient id="fl-glow" cx="50%" cy="45%">
+          <stop offset="0%" stopColor="#6de0c6" stopOpacity="0.4" />
+          <stop offset="100%" stopColor="#2dd4bf" stopOpacity="0" />
+        </radialGradient>
+        <filter id="fl-blur"><feGaussianBlur stdDeviation="5" /></filter>
+        <filter id="fl-glow-sm"><feGaussianBlur stdDeviation="2" /></filter>
+      </defs>
+
+      <rect width="400" height="240" fill="url(#fl-bg)" />
+      {/* Ambient rune glow */}
+      <ellipse cx="200" cy="120" rx="180" ry="110" fill="url(#fl-glow)" filter="url(#fl-blur)" />
+
+      {/* Circuit traces on the floor/back wall — glowing rune-green */}
+      {[
+        "M0 200 H70 V170 H130",
+        "M400 210 H320 V180 H250 V205 H210",
+        "M20 235 V205 H90 V225 H150",
+        "M400 150 H360 V120 H300",
+        "M0 130 H50 V150 H110",
+      ].map((d, i) => (
+        <g key={i}>
+          <path d={d} stroke="#6de0c6" strokeWidth="1.6" fill="none" opacity="0.35" />
+          <path d={d} stroke="#a7f3d9" strokeWidth="1.6" fill="none"
+            strokeDasharray="4 20" style={A("ws-dataflow", 3 + i * 0.6, i * 0.5)} />
+        </g>
+      ))}
+      {/* Circuit nodes */}
+      {[[70,170],[130,170],[250,205],[210,205],[110,150],[300,120],[90,205]].map(([x,y],i) => (
+        <circle key={i} cx={x} cy={y} r={2.4} fill="#6de0c6"
+          filter="url(#fl-glow-sm)" style={A("ws-pulse", 2 + (i % 3) * 0.4, i * 0.3)} />
+      ))}
+
+      {/* Workbench */}
+      <rect x="60" y="188" width="280" height="10" rx="2" fill="#2d1b54" />
+      <rect x="60" y="188" width="280" height="3" fill="#3d2870" opacity="0.7" />
+
+      {/* Central monitor showing code */}
+      <g style={A("ws-float-sm", 6, 0)}>
+        <rect x="150" y="96" width="100" height="72" rx="6" fill="#0d0a1f" stroke="#6de0c6" strokeWidth="2" />
+        <rect x="150" y="96" width="100" height="72" rx="6" fill="none" stroke="#6de0c6" strokeWidth="4" opacity="0.15" filter="url(#fl-glow-sm)" />
+        {/* Code lines */}
+        {[
+          { y: 110, w: 40, c: "#6de0c6" },
+          { y: 120, w: 58, c: "#FFC24B", ind: 8 },
+          { y: 130, w: 30, c: "#a7f3d9", ind: 8 },
+          { y: 140, w: 50, c: "#c4b5fd", ind: 4 },
+          { y: 150, w: 22, c: "#6de0c6" },
+        ].map((l, i) => (
+          <rect key={i} x={160 + (l.ind || 0)} y={l.y} width={l.w} height={3.4} rx={1.7}
+            fill={l.c} opacity="0.85" style={A("ws-flicker", 3 + i * 0.4, i * 0.5)} />
+        ))}
+        {/* Blinking cursor */}
+        <rect x="184" y="150" width="4" height="4" fill="#FFC24B" style={A("ws-twinkle", 1, 0)} />
+        {/* Monitor stand */}
+        <rect x="196" y="168" width="8" height="16" fill="#2d1b54" />
+        <rect x="184" y="184" width="32" height="5" rx="2" fill="#3d2870" />
+      </g>
+
+      {/* Flask left — bubbling rune liquid */}
+      <g style={A("ws-float-sm", 5, 1)}>
+        <path d="M104 150 h14 v10 l9 22 a3 3 0 0 1 -2.8 4.2 H97.8 a3 3 0 0 1 -2.8 -4.2 l9 -22 Z" fill="#0d0a1f" stroke="#6de0c6" strokeWidth="1.6" />
+        <path d="M99.5 172 h23 l4.6 11 a3 3 0 0 1 -2.8 4.2 H97.8 a3 3 0 0 1 -2.8 -4.2 Z" fill="#6de0c6" opacity="0.55" />
+        <circle cx="108" cy="180" r="1.6" fill="#a7f3d9" style={A("ws-bubble", 3, 0)} />
+        <circle cx="114" cy="182" r="1.2" fill="#a7f3d9" style={A("ws-bubble", 3.6, 1)} />
+        <rect x="103" y="147" width="16" height="3" rx="1.5" fill="#3d2870" />
+      </g>
+
+      {/* Flask right — gold potion */}
+      <g style={A("ws-float-sm", 4.5, 2)}>
+        <circle cx="292" cy="176" r="16" fill="#0d0a1f" stroke="#FFC24B" strokeWidth="1.6" />
+        <path d="M279 179 a15 15 0 0 0 26 0 a15 15 0 0 1 -26 0 Z" fill="#FFC24B" opacity="0.5" />
+        <ellipse cx="292" cy="181" rx="12" ry="6" fill="#FFC24B" opacity="0.45" />
+        <rect x="288" y="156" width="8" height="8" fill="#0d0a1f" stroke="#FFC24B" strokeWidth="1.4" />
+        <circle cx="290" cy="176" r="1.4" fill="#FFE3A6" style={A("ws-bubble", 3.2, 0.6)} />
+      </g>
+
+      {/* Floating code glyphs */}
+      {motes.map((m, i) => (
+        <text key={i} x={m.x} y={m.y} fontSize={i % 3 === 0 ? 13 : 10}
+          fontFamily="monospace" fontWeight="700" fill="#6de0c6" opacity="0.5"
+          style={{ "--mx": m.mx, "--my": m.my, ...A("ws-mote", 6 + i * 0.4, m.del) }}>
+          {m.g}
+        </text>
+      ))}
+
+      {/* Binary rain accents (subtle) */}
+      {[40, 340, 200].map((x, i) => (
+        <text key={i} x={x} y={40 + i * 10} fontSize={9} fontFamily="monospace"
+          fill="#FFC24B" opacity="0.3" style={A("ws-rise", 5 + i, i * 0.8)}>
+          {i % 2 === 0 ? "10110" : "01001"}
+        </text>
+      ))}
+    </svg>
+  );
+}
+
 // ─── SCENE MAP ────────────────────────────────────────────────────────────────
 const SCENE_MAP = {
-  foresta:    SceneForesta,
-  castello:   SceneCastello,
-  oceano:     SceneOceano,
-  mercato:    SceneMercato,
-  galassia:   SceneGalassia,
-  vulcano:    SceneVulcano,
-  biblioteca: SceneBiblioteca,
+  foresta:     SceneForesta,
+  castello:    SceneCastello,
+  oceano:      SceneOceano,
+  mercato:     SceneMercato,
+  galassia:    SceneGalassia,
+  vulcano:     SceneVulcano,
+  biblioteca:  SceneBiblioteca,
+  laboratorio: SceneLaboratorio,
 };
 
 // ─── MAIN EXPORT ──────────────────────────────────────────────────────────────
