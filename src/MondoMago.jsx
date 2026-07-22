@@ -41,6 +41,29 @@ function AnimationStyles() {
         0%,100% { transform: translateY(0); }
         50%     { transform: translateY(-10px); }
       }
+      /* Companion "vita": respiro lento + blink simulato (squash) su PNG senza faccia controllabile */
+      @keyframes compIdle {
+        0%   { transform: scale(1,1); }
+        22%  { transform: scale(1.025,1.03); }
+        46%  { transform: scale(1,1); }
+        88%  { transform: scale(1,1); }
+        92%  { transform: scale(1.06,0.84); }
+        96%  { transform: scale(1,1); }
+        100% { transform: scale(1,1); }
+      }
+      /* Companion mentre parla: bob ritmico */
+      @keyframes compTalk {
+        0%   { transform: translateY(0) scale(1,1); }
+        50%  { transform: translateY(-2.5px) scale(1.03,0.97); }
+        100% { transform: translateY(0) scale(1,1); }
+      }
+      /* Companion reazione (happy/excited/celebrating): squash-stretch vivace */
+      @keyframes compPop {
+        0%,100% { transform: scale(1,1) translateY(0); }
+        30%     { transform: scale(1.13,0.88) translateY(0); }
+        55%     { transform: scale(0.94,1.12) translateY(-7px); }
+        78%     { transform: scale(1.05,0.97) translateY(0); }
+      }
       @keyframes slideUp {
         from { transform: translateY(28px); opacity: 0; }
         to   { transform: translateY(0);    opacity: 1; }
@@ -542,7 +565,14 @@ function CompanionAvatar({ c, size = 64, anim = "", cosmetic = null, mood = "idl
   const s = size;
   const auraCols = { "🔥":"#FF6B00","❄️":"#60D0FF","✨":"#FFD700","🏆":"#C084FC" };
   const auraCol  = cosmetic?.type === "aura" ? (auraCols[cosmetic.emoji] || "#C084FC") : null;
-  const celebratingExtras = mood === "celebrating" && size >= 48;
+  const reacting = mood === "excited" || mood === "celebrating";
+  // "vita" del companion (PNG senza faccia): movimento espressivo per stato
+  const lifeAnim = talking  ? "compTalk 0.44s ease-in-out infinite"
+                 : reacting ? "compPop 0.7s ease-in-out infinite"
+                 :            "compIdle 4.6s ease-in-out infinite";
+  // sfasa il blink d'attesa così più companion insieme (es. schermata scelta) non blinkano all'unisono
+  const idleDelay = talking || reacting ? undefined : `${((c.id ? c.id.charCodeAt(0) : 0) % 5) * 0.7}s`;
+  const src = companionCharSrc(c.id);
   return (
     <div className={anim} style={{ position:"relative", width:s, height:showBody && size >= 80 ? Math.round(s*1.2) : s, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center" }}>
       {auraCol && (
@@ -550,25 +580,44 @@ function CompanionAvatar({ c, size = 64, anim = "", cosmetic = null, mood = "idl
           background:`conic-gradient(transparent,${auraCol}66,transparent,${auraCol}44,transparent)`,
           animation:"wiggle 2.4s ease-in-out infinite",pointerEvents:"none",zIndex:0}} />
       )}
-      {(() => {
-        const src = companionCharSrc(c.id);
-        return src ? (
+      <div style={{display:"inline-flex",transformOrigin:"50% 92%",zIndex:1,
+        animation:lifeAnim,animationDelay:idleDelay,willChange:"transform"}}>
+        {src ? (
           <img src={src} alt={c.name} draggable={false}
             style={{width:s,height:s,objectFit:"contain",userSelect:"none",
-              filter:`drop-shadow(0 3px 9px rgba(0,0,0,.45))`,zIndex:1,
-              animation: talking ? "ws-twinkle 0.3s ease-in-out infinite alternate" : undefined}} />
+              filter:`drop-shadow(0 3px 9px rgba(0,0,0,.45))`}} />
         ) : (
           <div style={{fontSize:Math.round(s*0.88),lineHeight:1,userSelect:"none",
-            filter:`drop-shadow(0 2px 8px rgba(0,0,0,.35))`,zIndex:1,textAlign:"center",
-            animation: talking ? "ws-twinkle 0.3s ease-in-out infinite alternate" : undefined}}>
+            filter:`drop-shadow(0 2px 8px rgba(0,0,0,.35))`,textAlign:"center"}}>
             {c.emoji}
           </div>
-        );
-      })()}
-      {celebratingExtras && (
-        <div style={{position:"absolute",top:`-${Math.round(s*.3)}px`,left:"50%",transform:"translateX(-50%)",
-          fontSize:Math.round(s*.32),userSelect:"none",pointerEvents:"none",zIndex:4,
-          animation:"ws-twinkle 0.6s ease-in-out infinite"}}>✨</div>
+        )}
+      </div>
+      {/* Reazione: stelle Sigillo che aumentano con l'intensità (oro=magia, verde=logica) */}
+      {reacting && size >= 40 && (
+        <>
+          <div className="star-pop" style={{position:"absolute",top:`-${Math.round(s*.26)}px`,left:"50%",transform:"translateX(-50%)",pointerEvents:"none",zIndex:4,display:"flex"}}>
+            <Icon name="star" color="#FFC24B" size={Math.round(s*.34)} />
+          </div>
+          {(mood === "excited" || mood === "celebrating") && (
+            <div className="star-pop" style={{position:"absolute",top:`-${Math.round(s*.12)}px`,left:`-${Math.round(s*.08)}px`,pointerEvents:"none",zIndex:4,display:"flex",animationDelay:".1s"}}>
+              <Icon name="star" color="#6DE0C6" size={Math.round(s*.26)} />
+            </div>
+          )}
+          {mood === "celebrating" && (
+            <div className="star-pop" style={{position:"absolute",top:`-${Math.round(s*.1)}px`,right:`-${Math.round(s*.06)}px`,pointerEvents:"none",zIndex:4,display:"flex",animationDelay:".2s"}}>
+              <Icon name="star" color="#F6ECD4" size={Math.round(s*.24)} />
+            </div>
+          )}
+        </>
+      )}
+      {/* Pensiero: bolla pergamena con 3 puntini che pulsano */}
+      {mood === "thinking" && size >= 40 && (
+        <div style={{position:"absolute",top:`-${Math.round(s*.24)}px`,right:`-${Math.round(s*.14)}px`,
+          background:"rgba(246,236,212,.94)",borderRadius:10,padding:"3px 6px",display:"flex",gap:2.5,
+          alignItems:"center",pointerEvents:"none",zIndex:4,boxShadow:"0 2px 6px rgba(0,0,0,.35)"}}>
+          {[0,1,2].map(i => <span key={i} style={{width:3.5,height:3.5,borderRadius:"50%",background:"#1B1035",animation:`twinkle .9s ease-in-out ${i*.2}s infinite`}} />)}
+        </div>
       )}
       {worldId && WORLD_COSTUMES[worldId] && size >= 44 && (
         <div style={{position:"absolute",bottom:0,right:0,fontSize:Math.round(s*0.32),
