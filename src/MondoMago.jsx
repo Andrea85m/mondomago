@@ -4255,12 +4255,12 @@ export default function MondoMago() {
         const c = COSMETICS.find(x => x.id === newCosmetics[0]);
         return (
           <div style={{position:"fixed",bottom:88,left:0,right:0,display:"flex",justifyContent:"center",zIndex:601,pointerEvents:"none"}}>
-            <div className="slide-up" style={{background:"linear-gradient(135deg,#1a0f2e,#2d1b50)",border:"2px solid #C084FC",borderRadius:24,padding:"14px 22px",display:"flex",alignItems:"center",gap:12,maxWidth:340,boxShadow:"0 8px 32px rgba(192,132,252,.3)"}}>
+            <div className="slide-up" style={{background:"linear-gradient(135deg, rgba(26,15,46,.97), rgba(45,27,84,.97))",border:`2px solid ${SG_GOLD}`,borderRadius:24,padding:"14px 22px",display:"flex",alignItems:"center",gap:12,maxWidth:340,boxShadow:"0 8px 32px rgba(255,194,75,.28)"}}>
               <span style={{fontSize:34}}>{c?.emoji}</span>
               <div>
-                <div style={{fontFamily:FF,fontSize:13,color:"#C084FC"}}>PUOI ACQUISTARLO! 💎</div>
-                <div style={{fontFamily:FF,fontSize:16,color:"white"}}>{c?.name}</div>
-                <div style={{fontSize:11,color:"rgba(255,255,255,.6)"}}>Vai in ✨ Personalizza!</div>
+                <div style={{fontFamily:FF_MONO,fontSize:11,letterSpacing:1.5,textTransform:"uppercase",color:SG_GOLD}}><Icon name="coin" color={SG_GOLD} size={13} style={{verticalAlign:"-2px",marginRight:5}} />Puoi acquistarlo!</div>
+                <div style={{fontFamily:FF_DISPLAY,fontSize:16,color:SG_PARCH}}>{c?.name}</div>
+                <div style={{fontSize:11,color:"rgba(246,236,212,.6)"}}>Vai in <Icon name="sparkles" color={SG_RUNE} size={12} style={{verticalAlign:"-2px"}} /> Personalizza!</div>
               </div>
             </div>
           </div>
