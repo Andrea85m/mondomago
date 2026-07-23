@@ -64,6 +64,11 @@ function AnimationStyles() {
         55%     { transform: scale(0.94,1.12) translateY(-7px); }
         78%     { transform: scale(1.05,0.97) translateY(0); }
       }
+      /* SigilloSky — profondità "notte incantata": nebulose a deriva + sigillo + rune */
+      @keyframes nebA   { 0%,100% { transform: translate(0,0) scale(1); }   50% { transform: translate(6%,4%) scale(1.08); } }
+      @keyframes nebB   { 0%,100% { transform: translate(0,0) scale(1); }   50% { transform: translate(-5%,5%) scale(1.06); } }
+      @keyframes sigilPulse { 0%,100% { opacity: .3; }  50% { opacity: .62; } }
+      @keyframes runeUp { 0% { transform: translateY(0) rotate(0deg); opacity: 0; } 12% { opacity: .5; } 85% { opacity: .5; } 100% { transform: translateY(-112vh) rotate(70deg); opacity: 0; } }
       @keyframes slideUp {
         from { transform: translateY(28px); opacity: 0; }
         to   { transform: translateY(0);    opacity: 1; }
@@ -456,23 +461,43 @@ function CorrectBurst({ pos, particles }) {
 }
 
 // ── PREMIUM VISUAL COMPONENTS ────────────────────────────────────────────────
+// (StarField sostituito da SigilloSky — vedi sotto, backdrop "notte incantata")
 
-// 58 deterministic twinkling stars — pure CSS, zero JS overhead
-function StarField() {
+// Costellazione-sigillo deterministica (coord su viewBox 100×60): stelle + linee
+const SIGIL_STARS = [[16,20],[29,12],[43,24],[35,39],[20,43],[8,31],[54,16],[66,29],[78,20]];
+const SIGIL_LINES = [[0,1],[1,2],[2,3],[3,4],[4,5],[5,0],[2,6],[6,7],[7,8]];
+
+// SigilloSky — backdrop "notte incantata" a strati (parallax da velocità diverse):
+// nebulose alla deriva (profonde) · costellazione-sigillo · stelle twinkle · rune fluttuanti.
+function SigilloSky({ zIndex = 0 }) {
   return (
-    <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,overflow:"hidden"}}>
-      {Array.from({length:58}, (_,i) => {
-        const x    = (i * 73.13 + 11.7) % 100;
-        const y    = (i * 47.37 + 23.1) % 100;
-        const size = [1,1,2,2,2,3][i%6];
-        const dur  = 2.2 + (i%7) * 0.38;
-        const del  = (i * 0.21) % 4.2;
+    <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex,overflow:"hidden"}} aria-hidden="true">
+      {/* Nebulose profonde (deriva lenta, colori Sigillo: indaco/oro/verde-runa) */}
+      <div style={{position:"absolute",top:"-14%",left:"-12%",width:"72%",height:"56%",borderRadius:"50%",background:"radial-gradient(circle, rgba(124,58,237,.24), transparent 66%)",filter:"blur(40px)",animation:"nebA 26s ease-in-out infinite"}} />
+      <div style={{position:"absolute",top:"0%",right:"-16%",width:"62%",height:"52%",borderRadius:"50%",background:"radial-gradient(circle, rgba(255,194,75,.13), transparent 64%)",filter:"blur(44px)",animation:"nebB 33s ease-in-out infinite"}} />
+      <div style={{position:"absolute",bottom:"-18%",right:"4%",width:"64%",height:"54%",borderRadius:"50%",background:"radial-gradient(circle, rgba(109,224,198,.11), transparent 64%)",filter:"blur(42px)",animation:"nebA 30s ease-in-out infinite reverse"}} />
+      {/* Costellazione-sigillo (strato medio, confinata nel "cielo" in alto, tenue) */}
+      <svg viewBox="0 0 100 55" preserveAspectRatio="xMidYMid meet" style={{position:"absolute",top:"3%",left:"6%",width:"88%",height:"34%",animation:"sigilPulse 7s ease-in-out infinite"}}>
+        {SIGIL_LINES.map(([a,b],i) => (
+          <line key={i} x1={SIGIL_STARS[a][0]} y1={SIGIL_STARS[a][1]} x2={SIGIL_STARS[b][0]} y2={SIGIL_STARS[b][1]} stroke="#FFC24B" strokeWidth=".35" opacity=".28" />
+        ))}
+        {SIGIL_STARS.map(([x,y],i) => (
+          <circle key={i} cx={x} cy={y} r={i%3===0?1.1:0.75} fill="#FFE3A6" opacity=".8" />
+        ))}
+      </svg>
+      {/* Stelle twinkle (strato vicino) */}
+      {Array.from({length:46}, (_,i) => {
+        const x = (i*73.13+11.7)%100, y = (i*47.37+23.1)%100, size = [1,1,2,2,3][i%5];
+        const dur = 2.2 + (i%7)*0.38, del = (i*0.21)%4.2;
+        return <div key={i} style={{position:"absolute",left:`${x}%`,top:`${y}%`,width:size,height:size,borderRadius:"50%",background:"white",animation:`twinkle ${dur}s ease-in-out ${del}s infinite`}} />;
+      })}
+      {/* Rune/scintille fluttuanti (foreground, molto tenui) */}
+      {Array.from({length:7}, (_,i) => {
+        const x = (i*137.5+9)%92, dur = 14+(i%4)*4, del = i*1.9, sz = 8+(i%3)*4;
         return (
-          <div key={i} style={{
-            position:"absolute", left:`${x}%`, top:`${y}%`,
-            width:size, height:size, borderRadius:"50%", background:"white",
-            animation:`twinkle ${dur}s ease-in-out ${del}s infinite`,
-          }} />
+          <svg key={i} viewBox="0 0 10 10" style={{position:"absolute",left:`${x}%`,bottom:"-8%",width:sz,height:sz,opacity:0,animation:`runeUp ${dur}s linear ${del}s infinite`}}>
+            <path d="M5 0 l1 4 4 1 -4 1 -1 4 -1 -4 -4 -1 4 -1 Z" fill={i%2?"#6DE0C6":"#FFC24B"} />
+          </svg>
         );
       })}
     </div>
@@ -3195,7 +3220,7 @@ const SG_GOLD  = "#FFC24B";   // magia / accento primario
 const SG_RUNE  = "#6DE0C6";   // logica / codice
 const SG_PARCH = "#F6ECD4";   // testo su superfici scure
 const SG_INK   = "#1B1035";   // testo scuro su oro
-const SG_BG    = "radial-gradient(125% 85% at 50% -8%, #2D1B54 0%, #1B1035 52%, #140B29 100%)";
+const SG_BG    = "radial-gradient(120% 80% at 18% 10%, rgba(124,58,237,.26) 0%, transparent 46%), radial-gradient(95% 72% at 86% 6%, rgba(255,194,75,.11) 0%, transparent 42%), radial-gradient(85% 62% at 78% 96%, rgba(109,224,198,.10) 0%, transparent 46%), radial-gradient(125% 85% at 50% -8%, #2D1B54 0%, #1B1035 52%, #140B29 100%)";
 const SG_CARD  = "rgba(45,27,84,.55)";              // superficie card indaco caldo
 const SG_BR    = "1px solid rgba(255,194,75,.14)";  // filo d'oro sottile
 const SG_GOLD_GRAD = "linear-gradient(135deg,#FFC24B,#F6A93B)"; // pulsanti primari
@@ -4323,8 +4348,9 @@ export default function MondoMago() {
 
   // ════════════════════ SCREEN: CONSENT ════════════════════════════════════
   if (screen === "consent") return (
-    <div key="consent" className={screenAnim} style={{minHeight:"100dvh",background:SG_BG,color:SG_PARCH,padding:28,paddingBottom:"max(env(safe-area-inset-bottom,0px),28px)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center"}}>
+    <div key="consent" className={screenAnim} style={{minHeight:"100dvh",background:SG_BG,color:SG_PARCH,padding:28,paddingBottom:"max(env(safe-area-inset-bottom,0px),28px)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center",isolation:"isolate"}}>
       {G}
+      <SigilloSky zIndex={-1} />
       <div className="float" style={{fontSize:72,marginBottom:16}}>👨‍👩‍👧</div>
       <h1 style={{fontFamily:FF_DISPLAY,fontSize:26,fontWeight:900,marginBottom:10,color:SG_GOLD}}>Ciao, genitore!</h1>
       <div style={{background:SG_CARD,border:SG_BR,borderRadius:20,padding:"18px 22px",maxWidth:380,marginBottom:28,fontSize:14,lineHeight:1.8,textAlign:"left"}}>
@@ -4349,8 +4375,9 @@ export default function MondoMago() {
 
   // ════════════════════ SCREEN: PROFILE SELECT ══════════════════════════════
   if (screen === "profile_select") return (
-    <div key="profile_select" className={screenAnim} style={{minHeight:"100dvh",background:SG_BG,color:SG_PARCH,padding:28,display:"flex",flexDirection:"column",alignItems:"center",paddingTop:60}}>
+    <div key="profile_select" className={screenAnim} style={{minHeight:"100dvh",background:SG_BG,color:SG_PARCH,padding:28,display:"flex",flexDirection:"column",alignItems:"center",paddingTop:60,isolation:"isolate"}}>
       {G}
+      <SigilloSky zIndex={-1} />
       <div className="float" style={{marginBottom:12,display:"flex",justifyContent:"center"}}><Icon name="wave" color="#FFC24B" size={56} /></div>
       <h2 style={{fontFamily:FF_DISPLAY,fontSize:30,marginBottom:4,color:SG_GOLD}}>Chi gioca oggi?</h2>
       <p style={{opacity:.75,fontSize:14,marginBottom:32}}>Scegli il tuo profilo</p>
@@ -4477,8 +4504,9 @@ export default function MondoMago() {
 
   // ════════════════════ SCREEN: NAME ════════════════════════════════════════
   if (screen === "name") return (
-    <div key="name" className={screenAnim} style={{minHeight:"var(--vvh,100dvh)",background:SG_BG,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",color:SG_PARCH,padding:24,paddingBottom:"max(env(safe-area-inset-bottom,0px),24px)",textAlign:"center"}}>
+    <div key="name" className={screenAnim} style={{minHeight:"var(--vvh,100dvh)",background:SG_BG,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",color:SG_PARCH,padding:24,paddingBottom:"max(env(safe-area-inset-bottom,0px),24px)",textAlign:"center",isolation:"isolate"}}>
       {G}
+      <SigilloSky zIndex={-1} />
       <div style={{display:"flex",gap:8,justifyContent:"center",marginBottom:16}}>
         {COMPANIONS.map((c,i) => (
           <div key={c.id} style={{animation:"float 3s ease-in-out infinite",animationDelay:`${i*.35}s`}}>
@@ -4509,8 +4537,9 @@ export default function MondoMago() {
 
   // ════════════════════ SCREEN: AGE ═════════════════════════════════════════
   if (screen === "age") return (
-    <div key="age" className={screenAnim} style={{minHeight:"100dvh",background:SG_BG,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",color:SG_PARCH,padding:24,paddingBottom:"max(env(safe-area-inset-bottom,0px),24px)",textAlign:"center",position:"relative"}}>
+    <div key="age" className={screenAnim} style={{minHeight:"100dvh",background:SG_BG,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",color:SG_PARCH,padding:24,paddingBottom:"max(env(safe-area-inset-bottom,0px),24px)",textAlign:"center",position:"relative",isolation:"isolate"}}>
       {G}
+      <SigilloSky zIndex={-1} />
       <button onClick={() => navigate("name")} style={{position:"absolute",top:20,left:20,background:"rgba(255,255,255,.1)",border:"none",color:SG_PARCH,borderRadius:50,padding:"8px 16px",cursor:"pointer",fontSize:14,fontWeight:700}}>← Indietro</button>
       <div style={{marginBottom:14,display:"flex",gap:6,justifyContent:"center"}}>
         {COMPANIONS.map((c,i) => (
@@ -4545,8 +4574,9 @@ export default function MondoMago() {
     pixel:  "Logico e preciso. Trasforma ogni errore in un codice migliore!",
   };
   if (screen === "companion") return (
-    <div key="companion" className={screenAnim} style={{minHeight:"100dvh",background:SG_BG,display:"flex",flexDirection:"column",alignItems:"center",padding:"36px 20px 0",paddingBottom:"max(env(safe-area-inset-bottom,0px),48px)",color:SG_PARCH,position:"relative"}}>
+    <div key="companion" className={screenAnim} style={{minHeight:"100dvh",background:SG_BG,display:"flex",flexDirection:"column",alignItems:"center",padding:"36px 20px 0",paddingBottom:"max(env(safe-area-inset-bottom,0px),48px)",color:SG_PARCH,position:"relative",isolation:"isolate"}}>
       {G}
+      <SigilloSky zIndex={-1} />
       <button onClick={() => navigate("age")} style={{position:"absolute",top:20,left:20,background:"rgba(255,255,255,.1)",border:"none",color:SG_PARCH,borderRadius:50,padding:"8px 16px",cursor:"pointer",fontSize:14,fontWeight:700}}>← Indietro</button>
       <div className="bounce" style={{fontSize:32,marginBottom:10}}>✨</div>
       <h2 style={{fontFamily:FF_DISPLAY,fontSize:28,marginBottom:4,textAlign:"center",color:SG_GOLD}}>Scegli il tuo compagno!</h2>
@@ -4580,12 +4610,9 @@ export default function MondoMago() {
     const meetMsg = cw.onMeet ? cw.onMeet(childName || "amico") : `Ciao! Sono ${cw.name}!`;
     return (
       <div key="companion_welcome" className={screenAnim}
-        style={{minHeight:"100dvh",background:SG_BG,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"space-between",padding:"52px 28px",paddingBottom:"max(env(safe-area-inset-bottom,0px),52px)",textAlign:"center",color:SG_PARCH,position:"relative",overflow:"hidden"}}>
+        style={{minHeight:"100dvh",background:SG_BG,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"space-between",padding:"52px 28px",paddingBottom:"max(env(safe-area-inset-bottom,0px),52px)",textAlign:"center",color:SG_PARCH,position:"relative",overflow:"hidden",isolation:"isolate"}}>
         {G}
-        {/* Floating sparkles */}
-        {[["✨",12,16,2.4,0],["⭐",82,10,3.0,0.4],["💫",22,74,2.7,0.8],["🌟",74,68,2.3,0.2],["✨",48,88,3.4,0.6]].map(([e,l,t,dur,del],i) => (
-          <div key={i} style={{position:"absolute",left:`${l}%`,top:`${t}%`,fontSize:18+i*4,opacity:.45,animation:`float ${dur}s ease-in-out infinite`,animationDelay:`${del}s`,pointerEvents:"none",userSelect:"none"}}>{e}</div>
-        ))}
+        <SigilloSky zIndex={-1} />
         {/* Back link */}
         <div style={{alignSelf:"flex-start"}}>
           <button onClick={() => { setCompanion(null); navigate("companion"); }}
@@ -4648,8 +4675,8 @@ export default function MondoMago() {
     return (
     <div key="map" className={screenAnim} style={{minHeight:"100dvh",background:mt.bg,color:mt.fg,padding:22,paddingBottom:"max(env(safe-area-inset-bottom,0px),22px)",position:"relative"}}>
       {G}
-      {/* StarField — dark mode only, adds cosmic depth */}
-      {!youngBg && <StarField />}
+      {/* SigilloSky — profondità "notte incantata" (nebulose+costellazione+rune) */}
+      {!youngBg && <SigilloSky />}
       {/* Seasonal background particles */}
       {season && (
         <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,overflow:"hidden"}}>
@@ -5096,8 +5123,9 @@ export default function MondoMago() {
 
   // ════════════════════ SCREEN: COPLAY INTRO ═══════════════════════════════
   if (screen === "coplay_intro" && world) return (
-    <div key="coplay" className={screenAnim} style={{minHeight:"100dvh",background:SG_BG,color:"#F6ECD4",padding:28,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center",position:"relative"}}>
+    <div key="coplay" className={screenAnim} style={{minHeight:"100dvh",background:SG_BG,color:"#F6ECD4",padding:28,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center",position:"relative",isolation:"isolate"}}>
       {G}
+      <SigilloSky zIndex={-1} />
       <button onClick={() => navigate("map")} style={{position:"absolute",top:20,left:20,background:"rgba(255,255,255,.1)",border:"none",color:"white",borderRadius:50,padding:"8px 16px",cursor:"pointer",fontSize:14,fontWeight:700}}>← Esci</button>
       <div className="bounce" style={{fontSize:72,marginBottom:12}}>🤝</div>
       <h2 className="slide-up" style={{fontFamily:FF_DISPLAY,fontSize:25,fontWeight:900,marginBottom:10,color:SG_GOLD}}>
@@ -5176,8 +5204,9 @@ export default function MondoMago() {
     // Results screen when time is up
     if (!fulminoRunning && fulminoTime <= 0) {
       return (
-        <div key="fulmine-end" className={screenAnim} style={{minHeight:"100dvh",background:SG_BG,color:"#F6ECD4",padding:28,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center"}}>
+        <div key="fulmine-end" className={screenAnim} style={{minHeight:"100dvh",background:SG_BG,color:"#F6ECD4",padding:28,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center",isolation:"isolate"}}>
           {G}
+          <SigilloSky zIndex={-1} />
           <div className="pop-in" style={{marginBottom:8,display:"flex",justifyContent:"center"}}><Icon name="bolt" color="#FCD34D" size={80} /></div>
           <h2 className="slide-up" style={{fontFamily:FF_DISPLAY,fontSize:26,fontWeight:900,marginBottom:6,color:SG_GOLD}}>Sfida Fulmine!</h2>
           <div className="fade-in" style={{fontSize:64,fontWeight:900,margin:"16px 0",color:"#FCD34D"}}>{fulminoScore}</div>
@@ -5213,8 +5242,9 @@ export default function MondoMago() {
     // Countdown / ready screen
     if (!fulminoRunning) {
       return (
-        <div key="fulmine-ready" className={screenAnim} style={{minHeight:"100dvh",background:SG_BG,color:"#F6ECD4",padding:28,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center"}}>
+        <div key="fulmine-ready" className={screenAnim} style={{minHeight:"100dvh",background:SG_BG,color:"#F6ECD4",padding:28,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center",isolation:"isolate"}}>
           {G}
+          <SigilloSky zIndex={-1} />
           <div className="float" style={{marginBottom:12,display:"flex",justifyContent:"center"}}><Icon name="bolt" color="#FCD34D" size={80} /></div>
           <h2 className="slide-up" style={{fontFamily:FF_DISPLAY,fontSize:26,fontWeight:900,color:SG_GOLD,marginBottom:10}}>Sfida Fulmine!</h2>
           <p className="fade-in" style={{fontSize:15,lineHeight:1.75,opacity:.85,marginBottom:8,maxWidth:320,animationDelay:".1s"}}>
@@ -6230,8 +6260,9 @@ export default function MondoMago() {
     const correct = results.filter(r => r.ok).length;
     const pct     = results.length ? Math.round((correct/results.length)*100) : 0;
     return (
-      <div key="world_end" className={screenAnim} style={{minHeight:"100dvh",background:`linear-gradient(160deg,#1B1035,${arc.color}55,#140B29)`,color:"#F6ECD4",padding:28,paddingBottom:"max(env(safe-area-inset-bottom,0px),28px)",display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center"}}>
+      <div key="world_end" className={screenAnim} style={{minHeight:"100dvh",background:`linear-gradient(160deg,#1B1035,${arc.color}55,#140B29)`,color:"#F6ECD4",padding:28,paddingBottom:"max(env(safe-area-inset-bottom,0px),28px)",display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center",isolation:"isolate"}}>
         {G}
+        <SigilloSky zIndex={-1} />
         <div className="pop-in" style={{fontSize:72,marginBottom:4,animationDelay:"0s"}}>{arc.reward_emoji}</div>
         <div className="bounce" style={{marginBottom:14,animationDelay:".25s",display:"flex"}}><WorldIcon id={world.id} color={world.color} size={64} /></div>
         <h2 className="slide-up" style={{fontFamily:FF_DISPLAY,fontSize:28,color:SG_GOLD,marginBottom:12,animationDelay:".5s"}}> Mondo completato! 🏆</h2>
@@ -6361,8 +6392,9 @@ export default function MondoMago() {
     const correct = results.filter(r => r.ok).length;
     const pct     = results.length ? Math.round((correct/results.length)*100) : 0;
     return (
-      <div key="stats" className={screenAnim} style={{minHeight:"100dvh",background:SG_BG,color:SG_PARCH,padding:24,display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center"}}>
+      <div key="stats" className={screenAnim} style={{minHeight:"100dvh",background:SG_BG,color:SG_PARCH,padding:24,display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center",isolation:"isolate"}}>
         {G}
+        <SigilloSky zIndex={-1} />
         <div className="pop-in" style={{fontSize:60,marginBottom:12}}>{pct===100?"🏆":pct>=60?"⭐":"💪"}</div>
         <h2 style={{fontFamily:FF_DISPLAY,fontSize:26,color:SG_GOLD,marginBottom:8}}>{pct===100?"Missione perfetta!":pct>=60?"Ottimo lavoro!":"Bel tentativo!"}</h2>
         {comp && (
