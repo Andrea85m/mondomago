@@ -124,7 +124,10 @@ function AnimationStyles() {
         from { opacity:0; transform:translateY(18px); }
         to   { opacity:1; transform:translateY(0); }
       }
-      .screen-enter { animation: screenEnter .36s cubic-bezier(.22,1,.36,1) both; }
+      /* fill-mode backwards (not both): after the enter animation the wrapper keeps NO
+         residual transform, so position:fixed celebration modals (level-up/streak/mystery)
+         stay viewport-centered instead of being trapped in the screen's containing block. */
+      .screen-enter { animation: screenEnter .36s cubic-bezier(.22,1,.36,1) backwards; }
       @keyframes feedbackPop {
         0%   { transform: scale(0.6); opacity:0; }
         70%  { transform: scale(1.15); }
@@ -279,8 +282,8 @@ function AnimationStyles() {
         from { transform: translateX(-55%); opacity: 0.55; }
         to   { transform: translateX(0);    opacity: 1; }
       }
-      .screen-enter-fwd { animation: slideInRight .3s cubic-bezier(.22,1,.36,1) both; }
-      .screen-enter-bk  { animation: slideInLeft  .3s cubic-bezier(.22,1,.36,1) both; }
+      .screen-enter-fwd { animation: slideInRight .3s cubic-bezier(.22,1,.36,1) backwards; }
+      .screen-enter-bk  { animation: slideInLeft  .3s cubic-bezier(.22,1,.36,1) backwards; }
       @keyframes cartoonReveal {
         0%   { filter: blur(12px) brightness(0.5) saturate(0); transform: scale(0.85); }
         55%  { filter: blur(3px)  brightness(1.15) saturate(1.2); transform: scale(1.06); }
@@ -4265,15 +4268,20 @@ export default function MondoMago() {
       })()}
       {/* Streak milestone celebration */}
       {streakCelebrate && (
-        <div onClick={() => setStreakCelebrate(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.88)",zIndex:710,display:"flex",alignItems:"center",justifyContent:"center",padding:24,cursor:"pointer"}}>
-          <div className="pop-in" style={{background:"linear-gradient(135deg,#7C2D12,#B45309,#92400E)",border:"2px solid #FCD34D",borderRadius:28,padding:"36px 28px",textAlign:"center",maxWidth:320,boxShadow:"0 0 80px rgba(252,211,77,.4), 0 20px 60px rgba(0,0,0,.6)"}}>
-            <div style={{fontSize:72,marginBottom:4,animation:"wiggle 0.6s ease-in-out infinite"}}>🔥</div>
-            <div style={{fontFamily:FF,fontSize:15,color:"#FCD34D",marginBottom:8}}>STREAK DA CAMPIONE!</div>
-            <div style={{fontFamily:FF,fontSize:40,color:"white",marginBottom:4}}>{streak} giorni</div>
-            <div style={{fontFamily:FF,fontSize:18,color:"#FCD34D",marginBottom:6}}>di fila!</div>
-            <p style={{color:"rgba(255,255,255,.8)",fontSize:14,marginBottom:24,lineHeight:1.6}}>Sei incredibile! Continua così ogni giorno!</p>
-            <button onClick={() => setStreakCelebrate(false)} style={{fontFamily:FF,background:"#FCD34D",color:"#1a1a2e",border:"none",borderRadius:50,padding:"14px 40px",fontSize:18,cursor:"pointer"}}>
-              Continuo! 🔥
+        <div onClick={() => setStreakCelebrate(false)} style={{position:"fixed",inset:0,background:"radial-gradient(120% 90% at 50% 38%, rgba(45,27,84,.92), rgba(10,6,25,.96))",zIndex:710,display:"flex",alignItems:"center",justifyContent:"center",padding:24,cursor:"pointer"}}>
+          <div className="pop-in" style={{background:SG_BG,border:`2px solid ${SG_GOLD}`,borderRadius:28,padding:"32px 26px 26px",textAlign:"center",maxWidth:320,width:"100%",boxShadow:"0 0 70px rgba(255,194,75,.35), inset 0 0 44px rgba(255,194,75,.06)"}}>
+            <div style={{fontFamily:FF_MONO,fontSize:12,letterSpacing:3,color:SG_RUNE,textTransform:"uppercase",marginBottom:12}}>Streak da campione</div>
+            <div style={{marginBottom:6,display:"flex",justifyContent:"center",animation:"wiggle 0.6s ease-in-out infinite"}}><Icon name="flame" color={SG_GOLD} size={76} /></div>
+            <div style={{fontFamily:FF_DISPLAY,fontSize:44,fontWeight:900,color:SG_GOLD,lineHeight:1.02}}>{streak} giorni</div>
+            <div style={{fontFamily:FF_DISPLAY,fontSize:19,color:SG_PARCH,marginBottom:18}}>di fila!</div>
+            {comp && (
+              <div style={{display:"flex",alignItems:"center",gap:12,background:SG_CARD,border:SG_BR,borderRadius:18,padding:"11px 14px",marginBottom:22,textAlign:"left"}}>
+                <div className="bounce" style={{flexShrink:0}}><CompanionAvatar c={comp} size={44} mood="celebrating" /></div>
+                <span style={{fontSize:14,color:SG_PARCH,lineHeight:1.4}}>Sei incredibile, {childName}! Torna domani per tenere accesa la fiamma.</span>
+              </div>
+            )}
+            <button onClick={() => setStreakCelebrate(false)} style={{fontFamily:FF_DISPLAY,background:SG_GOLD_GRAD,color:SG_INK,border:"none",borderRadius:50,padding:"14px 40px",fontSize:19,fontWeight:800,cursor:"pointer",boxShadow:"0 6px 20px rgba(255,194,75,.4)",display:"inline-flex",alignItems:"center",gap:8}}>
+              Continuo! <Icon name="flame" color={SG_INK} size={20} />
             </button>
           </div>
         </div>
@@ -4281,10 +4289,10 @@ export default function MondoMago() {
       {/* [B2] Mystery box reward */}
       {mysteryBox && (
         <div style={{position:"fixed",inset:0,display:"flex",alignItems:"center",justifyContent:"center",zIndex:650,pointerEvents:"none"}}>
-          <div style={{animation:"mysteryOpen .45s cubic-bezier(.34,1.56,.64,1) both",background:"linear-gradient(135deg,#78350f,#92400e)",border:"3px solid #FCD34D",borderRadius:28,padding:"24px 32px",textAlign:"center",boxShadow:"0 0 50px rgba(252,211,77,.5), 0 20px 60px rgba(0,0,0,.6)",maxWidth:300}}>
-            <div style={{fontSize:52,marginBottom:8}}>🎁</div>
-            <div style={{color:"#FCD34D",fontWeight:900,fontSize:13,letterSpacing:1,marginBottom:6}}>MYSTERY BOX!</div>
-            <div style={{color:"white",fontWeight:800,fontSize:18,lineHeight:1.3}}>{mysteryBox}</div>
+          <div style={{animation:"mysteryOpen .45s cubic-bezier(.34,1.56,.64,1) both",background:SG_BG,border:`2px solid ${SG_GOLD}`,borderRadius:28,padding:"24px 32px",textAlign:"center",boxShadow:"0 0 50px rgba(255,194,75,.4), 0 20px 60px rgba(0,0,0,.6)",maxWidth:300}}>
+            <div style={{marginBottom:8,display:"flex",justifyContent:"center"}}><Icon name="gift" color={SG_GOLD} size={54} /></div>
+            <div style={{fontFamily:FF_MONO,color:SG_RUNE,fontWeight:700,fontSize:12,letterSpacing:2,textTransform:"uppercase",marginBottom:6}}>Scrigno magico</div>
+            <div style={{fontFamily:FF_DISPLAY,color:SG_PARCH,fontWeight:800,fontSize:18,lineHeight:1.3}}>{mysteryBox}</div>
           </div>
         </div>
       )}

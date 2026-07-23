@@ -205,6 +205,13 @@ const GLYPH = {
     <path d="M6 3.5 h12 a1.5 1.5 0 0 1 1.5 1.5 V20.5 l-7.5 -4.4 L4.5 20.5 V5 a1.5 1.5 0 0 1 1.5 -1.5 Z" fill={PARCH} />
     <path d="M9 8 h6 M9 11 h4" stroke={c} strokeWidth="1.7" strokeLinecap="round" />
   </>),
+  gift: (c) => (<>
+    <rect x="4.5" y="10.5" width="15" height="9.5" rx="1.4" fill={PARCH} />
+    <rect x="3.4" y="7.2" width="17.2" height="3.6" rx="1" fill={PARCH} />
+    <rect x="10.8" y="7.2" width="2.4" height="12.8" fill={c} />
+    <path d="M12 7.2 C11 4.5 8.5 3.6 7.3 4.6 C6.2 5.5 8 7 12 7.2Z" fill={c} />
+    <path d="M12 7.2 C13 4.5 15.5 3.6 16.7 4.6 C17.8 5.5 16 7 12 7.2Z" fill={c} />
+  </>),
 };
 
 export function Icon({ name, color = GOLD, size = 24, style }) {
