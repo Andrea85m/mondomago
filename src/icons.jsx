@@ -200,6 +200,11 @@ const GLYPH = {
     <circle cx="12" cy="12" r="8.5" fill={PARCH} />
     <path d="M12 7 V12 L15.6 14.1" fill="none" stroke={c} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
   </>),
+  // ── 3ª tornata: micro-chrome rimaste ──
+  bookmark: (c) => (<>
+    <path d="M6 3.5 h12 a1.5 1.5 0 0 1 1.5 1.5 V20.5 l-7.5 -4.4 L4.5 20.5 V5 a1.5 1.5 0 0 1 1.5 -1.5 Z" fill={PARCH} />
+    <path d="M9 8 h6 M9 11 h4" stroke={c} strokeWidth="1.7" strokeLinecap="round" />
+  </>),
 };
 
 export function Icon({ name, color = GOLD, size = 24, style }) {

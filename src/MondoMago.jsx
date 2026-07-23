@@ -3346,7 +3346,7 @@ export default function MondoMago() {
   const [obSlide,           setObSlide]           = useState(0);
   const [mapSpotDismissed,  setMapSpotDismissed]  = useState(false);
   const [screenFlash,  setScreenFlash]  = useState(null);   // null | "ok" | "bad"
-  const [comboPopup,   setComboPopup]   = useState(null);   // null | string
+  const [comboPopup,   setComboPopup]   = useState(null);   // null | { icon, text }
   const [wrongIdx,     setWrongIdx]     = useState(null);   // null | button index
   const [paused,           setPaused]           = useState(false);
   const [coinPop,          setCoinPop]          = useState(false);
@@ -3428,7 +3428,12 @@ export default function MondoMago() {
   }
 
   // Animation triggers
-  const COMBO_MILESTONES = { 3:"🔥 3 di fila!", 5:"⚡ 5 COMBO!", 7:"🌟 7 in serie!", 10:"🏆 10 PERFETTI!" };
+  const COMBO_MILESTONES = {
+    3:  { icon:"flame",  text:"3 di fila!" },
+    5:  { icon:"bolt",   text:"5 COMBO!" },
+    7:  { icon:"star",   text:"7 in serie!" },
+    10: { icon:"trophy", text:"10 PERFETTI!" },
+  };
   // ── Ripetizione spaziata (SRS) ──────────────────────────────────────────────
   // Registra una sfida sbagliata per riproporla in una sessione SUCCESSIVA.
   // `s` = numero di sessioni completate al momento dell'errore (da sessionLog),
@@ -3456,7 +3461,7 @@ export default function MondoMago() {
       if (nc >= 5) { SFX.combo(); setCompMood("excited"); }
       else if (nc >= 3) { SFX.combo(); setCompMood("excited"); }
       else { SFX.correct(); setCompMood("happy"); }
-      const milestone = COMBO_MILESTONES[nc] || (nc >= 10 && nc % 5 === 0 ? `🔥 ${nc} di fila!` : null);
+      const milestone = COMBO_MILESTONES[nc] || (nc >= 10 && nc % 5 === 0 ? { icon:"flame", text:`${nc} di fila!` } : null);
       if (milestone) { setComboPopup(milestone); setTimeout(() => setComboPopup(null), 1700); }
       return nc;
     });
@@ -4297,17 +4302,22 @@ export default function MondoMago() {
       {comboPopup && (
         <div style={{position:"fixed",inset:0,zIndex:510,pointerEvents:"none",display:"flex",alignItems:"center",justifyContent:"center"}}>
           <div style={{
-            fontFamily:"Fredoka One, Nunito, sans-serif",
-            fontSize: youngBg ? 36 : 42,
+            display:"flex", alignItems:"center", gap:14,
+            fontFamily:FF_DISPLAY,
+            fontSize: youngBg ? 32 : 38,
             fontWeight:900,
             color:"white",
-            textShadow:"0 4px 20px rgba(0,0,0,.55), 0 0 40px rgba(249,115,22,.7)",
+            textShadow:"0 4px 20px rgba(0,0,0,.55), 0 0 40px rgba(255,194,75,.7)",
             animation:"comboZoom 1.7s cubic-bezier(.34,1.56,.64,1) both",
-            background:"rgba(0,0,0,.35)",
+            background:"rgba(20,11,41,.6)",
+            border:"1px solid rgba(255,194,75,.42)",
             borderRadius:28,
-            padding:"16px 32px",
+            padding:"16px 30px",
             letterSpacing:1,
-          }}>{comboPopup}</div>
+          }}>
+            <Icon name={comboPopup.icon} color="#FFC24B" size={youngBg ? 40 : 46} />
+            <span>{comboPopup.text}</span>
+          </div>
         </div>
       )}
       {/* [B4] Guided hand — first challenge ever */}
@@ -4852,7 +4862,7 @@ export default function MondoMago() {
               <div style={{flex:1}}>
                 <div style={{fontFamily:FF,fontSize:17,color:"#FFD95A"}}>{mapLvl.title}</div>
                 {mapToNext ? <div style={{fontSize:11,opacity:.5}}>{mapToNext} stelle per <strong>{mapNextTitle}</strong></div>
-                           : <div style={{fontSize:11,color:"#FFD700",opacity:.8}}>Livello massimo! 🏆</div>}
+                           : <div style={{fontSize:11,color:"#FFD700",opacity:.8}}>Livello massimo! <Icon name="trophy" color="#FFC24B" size={13} style={{verticalAlign:"-2px"}} /></div>}
               </div>
               {allProfiles.length > 1 && (
                 <button onClick={() => navigate('profile_select')} style={{background:youngBg?"rgba(0,0,0,.07)":"rgba(255,255,255,.1)",border:youngBg?"1px solid rgba(0,0,0,.14)":"1px solid rgba(255,255,255,.2)",color:mt.fg,borderRadius:20,padding:"6px 14px",fontSize:12,cursor:"pointer",fontWeight:700}}>
@@ -5086,7 +5096,7 @@ export default function MondoMago() {
                   {has && <span style={{background:`${w.color}33`,color:w.color,fontSize:10,fontWeight:900,borderRadius:20,padding:"2px 8px",border:`1px solid ${w.color}55`}}>✓ COMPLETO</span>}
                 </div>
                 {locked
-                  ? <div style={{fontSize:12,color:w.color,opacity:.7,fontWeight:700}}>🔒 Servono {w.starsNeeded} ⭐ per sbloccare</div>
+                  ? <div style={{fontSize:12,color:w.color,opacity:.7,fontWeight:700}}><Icon name="lock" color={w.color} size={12} style={{verticalAlign:"-2px"}} /> Servono {w.starsNeeded} <Icon name="star" color={w.color} size={12} style={{verticalAlign:"-2px"}} /> per sbloccare</div>
                   : has
                     ? <div style={{fontSize:12,color:youngBg?"#D97706":"#FFD95A",fontWeight:700}}>🏆 {a?.reward_name}</div>
                     : <div style={{fontSize:12,color:mt.fgDim}}>🎯 ~6 sfide · {young?"visive":"interattive"}</div>}
@@ -7128,7 +7138,7 @@ export default function MondoMago() {
         {/* SRS — Da ripassare: sfide sbagliate riproposte dal motore adattivo */}
         <div style={{background:P_CARD,border:P_BR,borderRadius:20,padding:"16px 18px",marginBottom:14}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:reviewItems.length?12:0}}>
-            <div style={{fontSize:11,fontWeight:800,opacity:.5,letterSpacing:1}}>📌 DA RIPASSARE</div>
+            <div style={{fontSize:11,fontWeight:800,opacity:.5,letterSpacing:1}}><Icon name="bookmark" color={GOLD} size={13} style={{verticalAlign:"-2px",marginRight:5}} />DA RIPASSARE</div>
             {reviewItems.length > 0 && (
               <div style={{fontFamily:FF_MONO,fontWeight:700,fontSize:13,color:GOLD}}>{reviewItems.length} {reviewItems.length===1?"sfida":"sfide"}</div>
             )}
@@ -7181,7 +7191,7 @@ export default function MondoMago() {
         {/* Proactive parent coaching insights */}
         {insights.length > 0 && (
           <div style={{background:"linear-gradient(135deg,rgba(255,194,75,.13),rgba(45,27,84,.55))",border:"1px solid rgba(255,194,75,.28)",borderRadius:20,padding:"16px 18px",marginBottom:14}}>
-            <div style={{fontSize:11,fontWeight:800,opacity:.9,marginBottom:12,letterSpacing:1,color:GOLD}}>💡 SUGGERIMENTI PER TE</div>
+            <div style={{fontSize:11,fontWeight:800,opacity:.9,marginBottom:12,letterSpacing:1,color:GOLD}}><Icon name="bulb" size={14} style={{verticalAlign:"-3px",marginRight:5}} />SUGGERIMENTI PER TE</div>
             {insights.map((ins, i) => (
               <div key={i} style={{display:"flex",gap:12,marginBottom:i < insights.length-1 ? 12 : 0,paddingBottom:i < insights.length-1 ? 12 : 0,borderBottom:i < insights.length-1 ? "1px solid rgba(255,255,255,.06)" : "none"}}>
                 <div style={{fontSize:24,flexShrink:0,lineHeight:1.2}}>{ins.emoji}</div>
@@ -7199,7 +7209,7 @@ export default function MondoMago() {
         )}
         {insights.length === 0 && sessionLog.length < 3 && (
           <div style={{background:"rgba(255,255,255,.05)",borderRadius:20,padding:"14px 18px",marginBottom:14,textAlign:"center",opacity:.5}}>
-            <div style={{fontSize:11}}>💡 I suggerimenti personalizzati appariranno dopo qualche sessione di gioco.</div>
+            <div style={{fontSize:11}}><Icon name="bulb" size={13} style={{verticalAlign:"-2px",marginRight:4}} />I suggerimenti personalizzati appariranno dopo qualche sessione di gioco.</div>
           </div>
         )}
 
@@ -7409,8 +7419,8 @@ export default function MondoMago() {
           if (!isPremium) {
             return (
               <div style={{background:P_CARD,border:P_BR,borderRadius:20,padding:"16px 18px",marginBottom:14,textAlign:"center"}}>
-                <div style={{fontSize:12,fontWeight:800,opacity:.5,marginBottom:10,letterSpacing:1}}>📊 REPORT SETTIMANALE</div>
-                <div style={{fontSize:34,marginBottom:6}}>🔒</div>
+                <div style={{fontSize:12,fontWeight:800,opacity:.5,marginBottom:10,letterSpacing:1}}><Icon name="chart" color={GOLD} size={14} style={{verticalAlign:"-2px",marginRight:5}} />REPORT SETTIMANALE</div>
+                <div style={{marginBottom:6,display:"flex",justifyContent:"center"}}><Icon name="lock" color={GOLD} size={40} /></div>
                 <div style={{fontSize:13,opacity:.7,marginBottom:12,lineHeight:1.4}}>
                   Andamento settimanale, grafici e report scaricabile sono inclusi in <b>MondoMago Famiglia</b>.
                 </div>
@@ -7423,7 +7433,7 @@ export default function MondoMago() {
           }
           return (
             <div style={{background:P_CARD,border:P_BR,borderRadius:20,padding:"16px 18px",marginBottom:14}}>
-              <div style={{fontSize:12,fontWeight:800,opacity:.5,marginBottom:10,letterSpacing:1}}>📊 REPORT SETTIMANALE</div>
+              <div style={{fontSize:12,fontWeight:800,opacity:.5,marginBottom:10,letterSpacing:1}}><Icon name="chart" color={GOLD} size={14} style={{verticalAlign:"-2px",marginRight:5}} />REPORT SETTIMANALE</div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
                 {[{i:"⭐",v:weekStars,l:"stelle 7gg"},{i:"🎮",v:weekSess,l:"sessioni 7gg"}].map((s,i) => (
                   <div key={i} style={{background:P_TILE,borderRadius:12,padding:"10px",textAlign:"center"}}>
