@@ -2711,6 +2711,10 @@ function getBestVoice() {
 
 function speakBrowser(text, rate = 0.85) {
   if (!window?.speechSynthesis || !text) return;
+  // Chrome deprecates (and will block) speechSynthesis.speak() before any user
+  // gesture. Skip only when we're certain no activation has happened yet — after
+  // the first tap anywhere hasBeenActive stays true and all speech works.
+  if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
   const clean = String(text)
     .replace(/\n/g, ', ')
     .replace(/[^\w\s.,!?àèéìòùÀÈÉÌÒÙ'-]/g, '')

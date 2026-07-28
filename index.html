@@ -106,13 +106,30 @@
     <main id="root"></main>
     <script type="module" src="/src/main.jsx"></script>
     <script>
-      // Hide splash once the page is fully loaded
-      window.addEventListener('load', () => {
-        setTimeout(() => {
-          const s = document.getElementById('mm-splash');
-          if (s) { s.style.opacity = '0'; setTimeout(() => s.remove(), 400); }
-        }, 500);
-      });
+      // Hide splash as soon as React commits its first render — NOT on window.load,
+      // which waits for every subresource (fonts, SW, JS) and would keep the splash
+      // (and its infinite bounce) covering the viewport for many seconds, inflating
+      // LCP/TTI and delaying perceived readiness.
+      (function () {
+        var root = document.getElementById('root');
+        function dismiss() {
+          var s = document.getElementById('mm-splash');
+          if (s) { s.style.opacity = '0'; setTimeout(function () { s.remove(); }, 400); }
+        }
+        function whenPainted() {
+          // double rAF: let the real content paint before fading the splash out
+          requestAnimationFrame(function () { requestAnimationFrame(dismiss); });
+        }
+        if (root && root.childElementCount > 0) { whenPainted(); return; }
+        if (root) {
+          var mo = new MutationObserver(function () {
+            if (root.childElementCount > 0) { mo.disconnect(); whenPainted(); }
+          });
+          mo.observe(root, { childList: true });
+        }
+        // Safety net: never trap the user behind the splash
+        setTimeout(dismiss, 8000);
+      })();
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('./sw.js').then(reg => {
