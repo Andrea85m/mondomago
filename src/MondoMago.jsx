@@ -575,12 +575,12 @@ function NavSparkle({c="currentColor",s=22}){return<svg width={s} height={s} vie
 // Fully inline SVG companions with blink, expressions, and talking animation.
 // mood: "idle" | "happy" | "sad" | "excited" | "thinking" | "celebrating"
 
-// World-themed costume badge shown on companions during gameplay
-const WORLD_COSTUMES = {
-  foresta:    "🌿", cielo:   "⭐", oceano:    "🌊",
-  montagna:   "🍃", giungla: "🌴", vulcano:   "🔥",
-  biblioteca: "📖", laboratorio: "🔬",
-};
+// Il badge-costume del mondo non ha più una sua mappa: usa direttamente gli
+// emblemi di icons.jsx (WORLD_EMBLEM), che sono già uno per ognuno degli 8
+// mondi e restano allineati da soli quando i mondi cambiano.
+// La vecchia WORLD_COSTUMES aveva tre chiavi di mondi che non esistono più
+// (cielo/montagna/giungla) e nessuna per castello/mercato/galassia: in quei
+// tre mondi il companion restava senza costume.
 
 // Render 3D character art (transparent PNG) in place of the companion emoji.
 // Keyed by companion id ("foglia" = Foglia, la volpe). Falls back to emoji if id is unmapped.
@@ -653,10 +653,15 @@ function CompanionAvatar({ c, size = 64, anim = "", cosmetic = null, mood = "idl
           {[0,1,2].map(i => <span key={i} style={{width:3.5,height:3.5,borderRadius:"50%",background:"#1B1035",animation:`twinkle .9s ease-in-out ${i*.2}s infinite`}} />)}
         </div>
       )}
-      {worldId && WORLD_COSTUMES[worldId] && size >= 44 && (
-        <div style={{position:"absolute",bottom:0,right:0,fontSize:Math.round(s*0.32),
-          userSelect:"none",filter:"drop-shadow(0 1px 4px rgba(0,0,0,.7))",lineHeight:1}}>
-          {WORLD_COSTUMES[worldId]}
+      {/* Costume del mondo: piccolo sigillo appuntato sul companion. Disco scuro
+          obbligatorio — i glyph hanno la silhouette PARCH pensata per fondi scuri
+          e sul pelo chiaro dei companion sparirebbero. */}
+      {worldId && size >= 44 && (
+        <div style={{position:"absolute",bottom:0,right:0,width:Math.round(s*.42),height:Math.round(s*.42),
+          borderRadius:"50%",background:"rgba(20,11,41,.92)",border:"1.5px solid rgba(255,194,75,.55)",
+          display:"flex",alignItems:"center",justifyContent:"center",
+          pointerEvents:"none",zIndex:3,boxShadow:"0 2px 6px rgba(0,0,0,.55)"}}>
+          <WorldIcon id={worldId} size={Math.round(s*.26)} />
         </div>
       )}
       {cosmetic?.type === "hat" && (
