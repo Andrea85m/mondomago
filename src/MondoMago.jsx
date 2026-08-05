@@ -3233,6 +3233,12 @@ const FF = "'Fredoka One', cursive";
 // Direzione "Sigillo di Stelle": display storybook + mono per i dati numerici
 const FF_DISPLAY = "'Grandstander', 'Fredoka One', cursive";
 const FF_MONO = "'DM Mono', ui-monospace, 'SFMono-Regular', monospace";
+// Cifre che legge il bambino. DM Mono ha lo zero BARRATO come glifo di default
+// (non è una alternate: font-feature-settings "zero" 0 non lo disattiva, provato),
+// quindi in un'app che insegna a riconoscere i numeri a 3-8 anni ogni "0" arrivava
+// a schermo come "Ø". FF_MONO resta dov'è il sapore-coding e non ci sono cifre da
+// leggere: etichette maiuscolette, tipo del companion, e tutta l'area genitori.
+const FF_NUM = "'Grandstander', 'Nunito', system-ui, sans-serif";
 // Token palette "Sigillo di Stelle" (livello modulo, riusabili in ogni schermata)
 const SG_GOLD  = "#FFC24B";   // magia / accento primario
 const SG_RUNE  = "#6DE0C6";   // logica / codice
@@ -4253,7 +4259,7 @@ export default function MondoMago() {
               <div className="glow" style={{width:94,height:94,borderRadius:"50%",background:"radial-gradient(circle at 50% 34%, #FFE7A6, #FFC24B 55%, #E7972B)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:52,boxShadow:"inset 0 -6px 14px rgba(120,60,0,.35), inset 0 5px 11px rgba(255,255,255,.6)"}}>{newLevel.emoji}</div>
             </div>
             <div style={{fontFamily:FF_DISPLAY,fontSize:34,color:SG_GOLD,lineHeight:1.05,marginBottom:4}}>{newLevel.title}</div>
-            <div style={{fontFamily:FF_MONO,fontSize:13,color:SG_PARCH,opacity:.65,marginBottom:18}}>{totalStars} ⭐ raccolte</div>
+            <div style={{fontFamily:FF_NUM,fontWeight:700,fontSize:13,color:SG_PARCH,opacity:.65,marginBottom:18}}>{totalStars} ⭐ raccolte</div>
             {comp && (
               <div style={{display:"flex",alignItems:"center",gap:12,background:SG_CARD,border:SG_BR,borderRadius:18,padding:"11px 14px",marginBottom:22,textAlign:"left"}}>
                 <div className="bounce" style={{flexShrink:0}}><CompanionAvatar c={comp} size={44} /></div>
@@ -4424,7 +4430,7 @@ export default function MondoMago() {
               <div style={{fontSize:40}}>{lvl.emoji}</div>
               <div style={{flex:1}}>
                 <div style={{fontFamily:FF_DISPLAY,fontSize:20,color:SG_GOLD}}>{p.childName}</div>
-                <div style={{fontFamily:FF_MONO,fontSize:12,opacity:.75}}>{lvl.title} · {p.totalStars||0} ⭐ · età {ageLabel}</div>
+                <div style={{fontFamily:FF_NUM,fontWeight:700,fontSize:12,opacity:.75}}>{lvl.title} · {p.totalStars||0} ⭐ · età {ageLabel}</div>
               </div>
               <span style={{fontSize:22,color:SG_GOLD,opacity:.8}}>→</span>
             </button>
@@ -6337,19 +6343,19 @@ export default function MondoMago() {
         <div className="pop-in" style={{background:SG_TILE,border:SG_BR,borderRadius:20,padding:"10px 20px",marginBottom:14,display:"flex",alignItems:"center",gap:10,animationDelay:"1.1s"}}>
           <span style={{fontSize:28}}>💎</span>
           <div>
-            <div style={{fontFamily:FF_MONO,fontSize:20,color:SG_GOLD,lineHeight:1}}>+{sessionStars + (perfectBonus ? 5 : 0)}</div>
+            <div style={{fontFamily:FF_NUM,fontWeight:700,fontSize:20,color:SG_GOLD,lineHeight:1}}>+{sessionStars + (perfectBonus ? 5 : 0)}</div>
             <div style={{fontSize:11,opacity:.7}}>monete magiche{perfectBonus ? " (+5 perfetto!)" : ""}</div>
           </div>
           <div style={{marginLeft:"auto",textAlign:"right"}}>
             <div style={{fontSize:11,opacity:.5}}>totale</div>
-            <div style={{fontFamily:FF_MONO,fontSize:16,color:SG_GOLD}}>{coins} 💎</div>
+            <div style={{fontFamily:FF_NUM,fontWeight:700,fontSize:16,color:SG_GOLD}}>{coins} 💎</div>
           </div>
         </div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:10,marginBottom:20,width:"100%",maxWidth:360}}>
           {[{n:"star",c:"#FFC24B",v:sessionStars,l:"stelle"},{n:"check",c:"#6DE0C6",v:correct,l:"giuste"},{n:"target",c:"#C084FC",v:`${pct}%`,l:"precisione"},{n:"flame",c:"#FB923C",v:combo,l:"combo max"}].map((s,idx) => (
             <div key={idx} className="pop-in" style={{textAlign:"center",background:SG_TILE,borderRadius:16,padding:"12px 6px",animationDelay:`${1.55 + idx*.1}s`}}>
               <div style={{height:26,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name={s.n} color={s.c} size={24} /></div>
-              <div style={{fontFamily:FF_MONO,fontSize:20,marginTop:4}}>{s.v}</div>
+              <div style={{fontFamily:FF_NUM,fontWeight:700,fontSize:20,marginTop:4}}>{s.v}</div>
               <div style={{opacity:.5,fontSize:10,marginTop:2}}>{s.l}</div>
             </div>
           ))}
@@ -6440,7 +6446,7 @@ export default function MondoMago() {
           {[{n:"check",c:"#6DE0C6",v:correct,l:"Corrette"},{n:"star",c:"#FFC24B",v:sessionStars,l:"Stelle"},{n:"target",c:"#C084FC",v:`${pct}%`,l:"Precisione"},{n:"flame",c:"#FB923C",v:combo,l:"Combo"}].map((s,i) => (
             <div key={i} className="pop-in" style={{background:SG_TILE,border:SG_BR,borderRadius:18,padding:"16px 10px",animationDelay:`${i*.07}s`}}>
               <div style={{height:28,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name={s.n} color={s.c} size={26} /></div>
-              <div style={{fontFamily:FF_MONO,fontSize:22,marginTop:6,color:s.c}}>{s.v}</div>
+              <div style={{fontFamily:FF_NUM,fontWeight:700,fontSize:22,marginTop:6,color:s.c}}>{s.v}</div>
               <div style={{fontSize:11,opacity:.55,marginTop:2}}>{s.l}</div>
             </div>
           ))}
@@ -6451,7 +6457,7 @@ export default function MondoMago() {
             <div key={sk.id} style={{marginBottom:11}}>
               <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:4}}>
                 <span style={{display:"inline-flex",alignItems:"center",gap:6}}><SkillIcon id={sk.id} color={sk.color} size={15} />{sk.name}</span>
-                <span style={{fontFamily:FF_MONO,color:sk.color,fontWeight:700}}>Lv.{skills[sk.id]}</span>
+                <span style={{fontFamily:FF_NUM,color:sk.color,fontWeight:700}}>Lv.{skills[sk.id]}</span>
               </div>
               <div style={{background:"rgba(255,255,255,.08)",borderRadius:6,height:8}}>
                 <div style={{background:sk.color,height:"100%",borderRadius:6,width:`${(skills[sk.id]/10)*100}%`,transition:"width .9s cubic-bezier(.22,1,.36,1)"}} />
