@@ -601,6 +601,9 @@ function CompanionAvatar({ c, size = 64, anim = "", cosmetic = null, mood = "idl
   // sfasa il blink d'attesa così più companion insieme (es. schermata scelta) non blinkano all'unisono
   const idleDelay = talking || reacting ? undefined : `${((c.id ? c.id.charCodeAt(0) : 0) % 5) * 0.7}s`;
   const src = companionCharSrc(c.id);
+  // I companion sono serviti a 512px in due formati (vedi scripts/optimize-characters.mjs):
+  // webp ai browser che lo supportano, png come fallback sullo stesso path di prima.
+  const srcWebp = src ? src.replace(/\.png$/, ".webp") : null;
   return (
     <div className={anim} style={{ position:"relative", width:s, height:showBody && size >= 80 ? Math.round(s*1.2) : s, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center" }}>
       {auraCol && (
@@ -611,9 +614,12 @@ function CompanionAvatar({ c, size = 64, anim = "", cosmetic = null, mood = "idl
       <div style={{display:"inline-flex",transformOrigin:"50% 92%",zIndex:1,
         animation:lifeAnim,animationDelay:idleDelay,willChange:"transform"}}>
         {src ? (
-          <img src={src} alt={c.name} draggable={false}
-            style={{width:s,height:s,objectFit:"contain",userSelect:"none",
-              filter:`drop-shadow(0 3px 9px rgba(0,0,0,.45))`}} />
+          <picture>
+            <source srcSet={srcWebp} type="image/webp" />
+            <img src={src} alt={c.name} draggable={false} width={s} height={s} decoding="async"
+              style={{width:s,height:s,objectFit:"contain",userSelect:"none",
+                filter:`drop-shadow(0 3px 9px rgba(0,0,0,.45))`}} />
+          </picture>
         ) : (
           <div style={{fontSize:Math.round(s*0.88),lineHeight:1,userSelect:"none",
             filter:`drop-shadow(0 2px 8px rgba(0,0,0,.35))`,textAlign:"center"}}>
