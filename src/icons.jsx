@@ -212,6 +212,74 @@ const GLYPH = {
     <path d="M12 7.2 C11 4.5 8.5 3.6 7.3 4.6 C6.2 5.5 8 7 12 7.2Z" fill={c} />
     <path d="M12 7.2 C13 4.5 15.5 3.6 16.7 4.6 C17.8 5.5 16 7 12 7.2Z" fill={c} />
   </>),
+  // ── 4ª tornata: onboarding e chrome di gioco (rimpiazzano le emoji di sistema) ──
+  famiglia: (c) => (<>
+    <circle cx="6.9" cy="6.6" r="2.7" fill={PARCH} />
+    <circle cx="17.1" cy="6.6" r="2.7" fill={PARCH} />
+    <path d="M2 16.6 v-1.7 a4.9 4.9 0 0 1 9.8 0 v1.7Z" fill={PARCH} />
+    <path d="M12.2 16.6 v-1.7 a4.9 4.9 0 0 1 9.8 0 v1.7Z" fill={PARCH} />
+    <circle cx="12" cy="13.6" r="2.4" fill={c} />
+    <path d="M7.6 22.4 v-2 a4.4 4.4 0 0 1 8.8 0 v2Z" fill={c} />
+  </>),
+  stopads: (c) => (<>
+    <path d="M3.6 10.2 h3.4 L13.6 5.8 v12.4 L7 13.8 H3.6 a1 1 0 0 1 -1 -1 v-1.6 a1 1 0 0 1 1 -1Z" fill={PARCH} />
+    <path d="M16.4 8.6 a4.6 4.6 0 0 1 0 6.8" fill="none" stroke={PARCH} strokeWidth="1.9" strokeLinecap="round" opacity=".5" />
+    {/* la sbarra passa sopra il megafono: bordo scuro sotto, cosi resta
+        leggibile anche dove attraversa la silhouette pergamena */}
+    <path d="M4.4 20.4 L20.4 4.4" stroke="#1B1035" strokeWidth="4.6" strokeLinecap="round" />
+    <path d="M4.4 20.4 L20.4 4.4" stroke={c} strokeWidth="2.4" strokeLinecap="round" />
+  </>),
+  dispositivo: (c) => (<>
+    <rect x="6.4" y="2.4" width="11.2" height="19.2" rx="2.4" fill={PARCH} />
+    <rect x="10.2" y="4.3" width="3.6" height="1" rx=".5" fill="#1B1035" opacity=".45" />
+    <path d="M12 8.4 l1.55 3.15 3.45 .5 -2.5 2.45 .6 3.45 -3.1 -1.63 -3.1 1.63 .6 -3.45 -2.5 -2.45 3.45 -.5Z" fill={c} />
+  </>),
+  piu: (c) => (<>
+    <circle cx="12" cy="12" r="9.2" fill="none" stroke={PARCH} strokeWidth="2" />
+    <path d="M12 7.4 V16.6 M7.4 12 H16.6" stroke={c} strokeWidth="2.4" strokeLinecap="round" />
+  </>),
+  immagini: (c) => (<>
+    <rect x="3" y="5" width="18" height="14" rx="2" fill={PARCH} />
+    <circle cx="8.6" cy="9.8" r="1.7" fill={c} />
+    <path d="M4.6 17.4 L10 11.6 l3.4 3.6 2.7 -2.5 3.3 4.7Z" fill={c} opacity=".85" />
+  </>),
+  mano: (c) => (<>
+    <path d="M6.5 14.1 a1.75 1.75 0 0 1 2.7 -2.2 l1.1 1.2 V6.2 a1.8 1.8 0 0 1 3.6 0 v4.3 a1.65 1.65 0 0 1 3.3 0 v.6 a1.65 1.65 0 0 1 3.3 0 v4.7 a5.9 5.9 0 0 1 -5.9 5.9 h-1.8 a5.3 5.3 0 0 1 -4.1 -1.9Z" fill={PARCH} />
+    <rect x="10.3" y="3.1" width="3.6" height="9.4" rx="1.8" fill={c} />
+  </>),
+  audio: (c) => (<>
+    <path d="M3.5 9.6 h3.6 L12.6 5 v14 L7.1 14.4 H3.5 a1 1 0 0 1 -1 -1 v-2.8 a1 1 0 0 1 1 -1Z" fill={PARCH} />
+    <path d="M15.6 8.9 a4.4 4.4 0 0 1 0 6.2 M18.4 6.1 a8.4 8.4 0 0 1 0 11.8" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" />
+  </>),
+  uscita: (c) => (<>
+    <path d="M4 3.6 h9.2 a1 1 0 0 1 1 1 V19.4 a1 1 0 0 1 -1 1 H4Z" fill={PARCH} />
+    <circle cx="11.2" cy="12" r="1.15" fill="#1B1035" opacity=".55" />
+    <path d="M16 12 h5.4 M18.6 8.9 L21.7 12 l-3.1 3.1" fill="none" stroke={c} strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" />
+  </>),
+  // I tre stadi delle fasce d'età: seme → germoglio → albero. Stessa metafora
+  // della crescita che l'app racconta, leggibile anche da chi non sa leggere.
+  seme: (c) => (<>
+    <path d="M12 21.6 C7.7 21.6 5.1 18 5.1 14.2 C5.1 9.7 8.6 6.1 12 3.2 C15.4 6.1 18.9 9.7 18.9 14.2 C18.9 18 16.3 21.6 12 21.6Z" fill={PARCH} />
+    <path d="M12.4 18.8 C10.2 17 9.6 14.1 10.7 11.5" fill="none" stroke={c} strokeWidth="1.9" strokeLinecap="round" />
+  </>),
+  germoglio: (c) => (<>
+    <path d="M11.1 21 V12.2 h1.8 V21Z" fill={PARCH} />
+    <path d="M11.4 13.4 C8 13.4 5.6 11.4 5.6 8.4 C9 8.4 11.4 10.4 11.4 13.4Z" fill={PARCH} />
+    <path d="M12.6 12.6 C12.6 9.2 14.9 6.8 18.4 6.8 C18.4 10.2 16 12.6 12.6 12.6Z" fill={c} />
+  </>),
+  albero: (c) => (<>
+    <rect x="10.9" y="15" width="2.2" height="6.2" rx="1" fill={PARCH} />
+    <path d="M12 2.6 L7.4 9.4 h9.2Z" fill={PARCH} />
+    <path d="M12 7 L5.6 16.4 h12.8Z" fill={PARCH} />
+    <circle cx="12" cy="3.4" r="1.6" fill={c} />
+  </>),
+  insieme: (c) => (<>
+    <circle cx="7.4" cy="6.4" r="2.9" fill={PARCH} />
+    <circle cx="16.6" cy="6.4" r="2.9" fill={PARCH} />
+    <path d="M1.9 17.4 v-2 a5.5 5.5 0 0 1 11 0 v2Z" fill={PARCH} />
+    <path d="M11.1 17.4 v-2 a5.5 5.5 0 0 1 11 0 v2Z" fill={PARCH} />
+    <path d="M12 22.4 c-2.4 -1.7 -4.2 -3.2 -4.2 -5 a2.2 2.2 0 0 1 4.2 -1 a2.2 2.2 0 0 1 4.2 1 c0 1.8 -1.8 3.3 -4.2 5Z" fill={c} />
+  </>),
 };
 
 export function Icon({ name, color = GOLD, size = 24, style }) {

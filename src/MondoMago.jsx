@@ -4373,13 +4373,25 @@ export default function MondoMago() {
     <div key="consent" className={screenAnim} style={{minHeight:"100dvh",background:SG_BG,color:SG_PARCH,padding:28,paddingBottom:"max(env(safe-area-inset-bottom,0px),28px)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center",isolation:"isolate"}}>
       {G}
       <SigilloSky zIndex={-1} />
-      <div className="float" style={{fontSize:72,marginBottom:16}}>👨‍👩‍👧</div>
+      <div className="float" style={{marginBottom:16,display:"flex",justifyContent:"center"}}>
+        <Icon name="famiglia" color={SG_GOLD} size={64} />
+      </div>
       <h1 style={{fontFamily:FF_DISPLAY,fontSize:26,fontWeight:900,marginBottom:10,color:SG_GOLD}}>Ciao, genitore!</h1>
-      <div style={{background:SG_CARD,border:SG_BR,borderRadius:20,padding:"18px 22px",maxWidth:380,marginBottom:28,fontSize:14,lineHeight:1.8,textAlign:"left"}}>
-        <div style={{marginBottom:8}}>🎮 App educativa per bambini <strong>3–8 anni</strong></div>
-        <div style={{marginBottom:8}}>🔒 <strong>Nessun dato personale</strong> raccolto o trasmesso</div>
-        <div style={{marginBottom:8}}>🚫 <strong>Nessuna pubblicità</strong> — zero acquisti in-app</div>
-        <div>💾 I progressi sono salvati solo <strong>su questo dispositivo</strong></div>
+      {/* I bullet erano emoji di sistema: su iOS arrivavano come icone Apple
+          piatte sopra il fondo Sigillo. Ora glyph allineati in colonna, cosi
+          il testo parte tutto dalla stessa x e la promessa si legge in fila. */}
+      <div style={{background:SG_CARD,border:SG_BR,borderRadius:20,padding:"18px 22px",maxWidth:380,marginBottom:28,fontSize:14,lineHeight:1.6,textAlign:"left",display:"flex",flexDirection:"column",gap:12}}>
+        {[
+          ["school",      <>App educativa per bambini <strong>3–8 anni</strong></>],
+          ["lock",        <><strong>Nessun dato personale</strong> raccolto o trasmesso</>],
+          ["stopads",     <><strong>Nessuna pubblicità</strong> — zero acquisti in-app</>],
+          ["dispositivo", <>I progressi sono salvati solo <strong>su questo dispositivo</strong></>],
+        ].map(([ic, txt]) => (
+          <div key={ic} style={{display:"flex",alignItems:"flex-start",gap:12}}>
+            <span style={{flexShrink:0,display:"flex",marginTop:1}}><Icon name={ic} color={SG_GOLD} size={20} /></span>
+            <span>{txt}</span>
+          </div>
+        ))}
       </div>
       <label style={{display:"flex",alignItems:"center",gap:10,marginBottom:20,cursor:"pointer",fontSize:13,opacity:.85,maxWidth:340,textAlign:"left"}}>
         <input type="checkbox" checked={consentChecked} onChange={e => setConsentChecked(e.target.checked)}
@@ -4389,7 +4401,7 @@ export default function MondoMago() {
       </label>
       <button onClick={() => { if(!consentChecked) return; warmUpAudio(); localStorage.setItem('mondomago_consent','1'); navigate('onboarding'); }}
         style={{background:consentChecked?SG_GOLD_GRAD:"rgba(255,255,255,.15)",border:"none",color:consentChecked?SG_INK:"rgba(255,255,255,.6)",borderRadius:50,padding:"16px 44px",fontWeight:900,fontSize:18,cursor:consentChecked?"pointer":"default",marginBottom:14,boxShadow:consentChecked?"0 8px 32px rgba(255,194,75,.35)":"none",transition:"all .3s",opacity:consentChecked?1:.5}}>
-        Inizia! ✨
+        Inizia!
       </button>
       <p style={{fontSize:11,opacity:.35,maxWidth:320}}>Nessun dato personale viene raccolto — tutto rimane sul dispositivo.</p>
     </div>
@@ -4413,7 +4425,7 @@ export default function MondoMago() {
               <div style={{fontSize:40}}>{lvl.emoji}</div>
               <div style={{flex:1}}>
                 <div style={{fontFamily:FF_DISPLAY,fontSize:20,color:SG_GOLD}}>{p.childName}</div>
-                <div style={{fontFamily:FF_MONO,fontSize:12,opacity:.75}}>{lvl.title} · {p.totalStars||0} ⭐ · età {ageLabel}</div>
+                <div style={{fontFamily:FF_MONO,fontSize:12,opacity:.75}}>{lvl.title} · {p.totalStars||0} <Icon name="star" color={SG_GOLD} size={11} style={{verticalAlign:"-1px"}} /> · età {ageLabel}</div>
               </div>
               <span style={{fontSize:22,color:SG_GOLD,opacity:.8}}>→</span>
             </button>
@@ -4422,7 +4434,7 @@ export default function MondoMago() {
         {allProfiles.length < 4 && (
           <button onClick={startNewProfile} className="slide-up"
             style={{background:"rgba(255,255,255,.05)",border:"2px dashed rgba(255,194,75,.35)",borderRadius:22,padding:"16px 20px",color:SG_PARCH,cursor:"pointer",display:"flex",alignItems:"center",gap:14,animationDelay:`${allProfiles.length*.08}s`}}>
-            <div style={{fontSize:40}}>➕</div>
+            <div style={{display:"flex"}}><Icon name="piu" color={SG_GOLD} size={36} /></div>
             <div style={{fontWeight:700,fontSize:16}}>Nuovo giocatore</div>
           </button>
         )}
@@ -4435,7 +4447,7 @@ export default function MondoMago() {
     const OB = [
       {
         bg:    SG_BG,
-        icon:  "✨",
+        icon:  "sparkles",
         title: "Benvenuto in MondoMago!",
         sub:   "Il viaggio magico che fa crescere i bambini",
         body: (
@@ -4447,14 +4459,22 @@ export default function MondoMago() {
       },
       {
         bg:    "radial-gradient(125% 85% at 50% -8%, #16342B 0%, #14243A 45%, #140B29 100%)",
-        icon:  "🧠",
+        icon:  "germoglio",
         title: "Sfide che fanno crescere!",
         sub:   "Calibrate per la tua età, sempre nuove",
         body: (
           <div style={{display:"flex",flexWrap:"wrap",gap:10,justifyContent:"center",margin:"20px 0 16px",maxWidth:320}}>
-            {[["🔢","Numeri"],["📝","Lettura"],["🎵","Ritmo"],["🖼️","Immagini"],["🧠","Logica"]].map(([e,l]) => (
-              <div key={l} style={{background:SG_CARD,border:"1px solid rgba(109,224,198,.28)",borderRadius:16,padding:"10px 14px",fontSize:13,fontWeight:700,display:"flex",flexDirection:"column",alignItems:"center",gap:4,minWidth:72}}>
-                <span style={{fontSize:28}}>{e}</span>{l}
+            {/* Le tre abilità usano il proprio emblema (stesso segno della schermata
+                Abilità), ritmo e immagini i glyph di chrome: cosi il bambino ritrova
+                lo stesso simbolo dove la skill ricompare. */}
+            {[["skill","numeri","Numeri"],["skill","parole","Lettura"],["icon","music","Ritmo"],
+              ["icon","immagini","Immagini"],["skill","logica","Logica"]].map(([kind,name,l]) => (
+              <div key={l} style={{background:SG_CARD,border:"1px solid rgba(109,224,198,.28)",borderRadius:16,padding:"10px 14px",fontSize:13,fontWeight:700,display:"flex",flexDirection:"column",alignItems:"center",gap:6,minWidth:72}}>
+                <span style={{display:"flex"}}>
+                  {kind === "skill"
+                    ? <SkillIcon id={name} color={SG_RUNE} size={26} />
+                    : <Icon name={name} color={SG_RUNE} size={26} />}
+                </span>{l}
               </div>
             ))}
           </div>
@@ -4463,7 +4483,7 @@ export default function MondoMago() {
       },
       {
         bg:    "radial-gradient(125% 85% at 50% -8%, #3A2A12 0%, #241546 48%, #140B29 100%)",
-        icon:  "🏆",
+        icon:  "trophy",
         title: "Guadagna stelle e premi!",
         sub:   "Sblocca mondi e personalizza il tuo compagno",
         body: (
@@ -4497,7 +4517,7 @@ export default function MondoMago() {
           </button>
         </div>
         <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",width:"100%",maxWidth:400}}>
-          <div className="pop-in" style={{fontSize:52,marginBottom:6}}>{sl.icon}</div>
+          <div className="pop-in" style={{marginBottom:6,display:"flex",justifyContent:"center"}}><Icon name={sl.icon} color={SG_GOLD} size={52} /></div>
           <h2 style={{fontFamily:FF_DISPLAY,fontSize:28,margin:"0 0 8px",lineHeight:1.2,color:SG_GOLD}}>{sl.title}</h2>
           <p style={{opacity:.75,fontSize:14,margin:0,maxWidth:300}}>{sl.sub}</p>
           {sl.body}
@@ -4517,7 +4537,7 @@ export default function MondoMago() {
           </div>
           <button onClick={() => obSlide < 2 ? setObSlide(s => s+1) : navigate("name")}
             style={{background:SG_GOLD_GRAD,border:"none",color:SG_INK,borderRadius:50,padding:"16px 48px",fontWeight:900,fontSize:18,cursor:"pointer",boxShadow:"0 8px 32px rgba(255,194,75,.35)"}}>
-            {obSlide < 2 ? "Avanti →" : "Inizia! ✨"}
+            {obSlide < 2 ? "Avanti →" : "Inizia!"}
           </button>
         </div>
       </div>
@@ -4537,7 +4557,7 @@ export default function MondoMago() {
         ))}
       </div>
       <h1 style={{fontFamily:FF_DISPLAY,fontSize:42,margin:"0 0 6px",color:SG_GOLD,textShadow:"0 2px 18px rgba(255,194,75,.25)"}}>MondoMago</h1>
-      <p style={{fontSize:15,opacity:.75,marginBottom:44}}>Il tuo viaggio magico inizia qui! ✨</p>
+      <p style={{fontSize:15,opacity:.75,marginBottom:44}}>Il tuo viaggio magico inizia qui</p>
       <div style={{width:"100%",maxWidth:340}}>
         <p style={{fontFamily:FF_DISPLAY,fontSize:20,marginBottom:14,color:SG_PARCH,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>Come ti chiami? <Icon name="wave" color="#FFC24B" size={20} /></p>
         <input value={childName} onChange={e => setChildName(e.target.value)}
@@ -4551,7 +4571,7 @@ export default function MondoMago() {
           style={{width:"100%",padding:"16px 20px",borderRadius:20,border:"2px solid rgba(255,194,75,.3)",fontSize:18,outline:"none",textAlign:"center",color:"#1a1a2e",boxSizing:"border-box"}} />
         <button onClick={() => childName.trim() && navigate("age")} disabled={!childName.trim()}
           style={{marginTop:14,width:"100%",background:childName.trim()?SG_GOLD_GRAD:"rgba(255,255,255,.15)",color:childName.trim()?SG_INK:"rgba(255,255,255,.6)",border:"none",borderRadius:50,padding:16,fontSize:18,fontWeight:900,cursor:childName.trim()?"pointer":"default",boxShadow:childName.trim()?"0 8px 24px rgba(255,194,75,.35)":"none",transition:"all .3s"}}>
-          Avanti ✨
+          Avanti
         </button>
       </div>
     </div>
@@ -4573,12 +4593,14 @@ export default function MondoMago() {
       <h2 style={{fontFamily:FF_DISPLAY,fontSize:28,marginBottom:8,color:SG_GOLD}}>Quanti anni hai, {childName}?</h2>
       <p style={{opacity:.85,marginBottom:40}}>Sceglierò le sfide perfette per te!</p>
       <div style={{display:"flex",gap:14,width:"100%",maxWidth:420}}>
-        {[{label:"3 – 4",val:4,emoji:"🐣",desc:"Sfide visive e divertenti"},
-          {label:"5 – 6",val:6,emoji:"🚀",desc:"Sfide con testo e numeri"},
-          {label:"7 – 8",val:8,emoji:"🧑‍🚀",desc:"Sfide avanzate"}].map(o => (
+        {/* Seme → germoglio → albero: la stessa metafora di crescita che l'app
+            racconta, e una progressione che si capisce senza saper leggere. */}
+        {[{label:"3 – 4",val:4,icon:"seme",      desc:"Sfide visive e divertenti"},
+          {label:"5 – 6",val:6,icon:"germoglio", desc:"Sfide con testo e numeri"},
+          {label:"7 – 8",val:8,icon:"albero",    desc:"Sfide avanzate"}].map(o => (
           <button key={o.val} onClick={() => { setChildAge(o.val); navigate("companion"); }}
             style={{flex:1,background:SG_CARD,border:SG_BR,borderRadius:24,padding:"20px 10px",cursor:"pointer",color:SG_PARCH,boxShadow:"0 4px 20px rgba(0,0,0,.3)",transition:"all .2s"}}>
-            <div style={{fontSize:44}}>{o.emoji}</div>
+            <div style={{display:"flex",justifyContent:"center"}}><Icon name={o.icon} color={SG_GOLD} size={42} /></div>
             <div style={{fontFamily:FF_DISPLAY,fontSize:24,marginTop:8,color:SG_GOLD}}>{o.label}</div>
             <div style={{fontSize:11,opacity:.85,marginTop:5}}>{o.desc}</div>
           </button>
@@ -4600,7 +4622,7 @@ export default function MondoMago() {
       {G}
       <SigilloSky zIndex={-1} />
       <button onClick={() => navigate("age")} style={{position:"absolute",top:20,left:20,background:"rgba(255,255,255,.1)",border:"none",color:SG_PARCH,borderRadius:50,padding:"8px 16px",cursor:"pointer",fontSize:14,fontWeight:700}}>← Indietro</button>
-      <div className="bounce" style={{fontSize:32,marginBottom:10}}>✨</div>
+      <div className="bounce" style={{marginBottom:10,display:"flex"}}><Icon name="sparkles" color={SG_GOLD} size={30} /></div>
       <h2 style={{fontFamily:FF_DISPLAY,fontSize:28,marginBottom:4,textAlign:"center",color:SG_GOLD}}>Scegli il tuo compagno!</h2>
       <p style={{opacity:.6,marginBottom:32,fontSize:13,textAlign:"center"}}>Sarà con te in ogni avventura magica, {childName}</p>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14,width:"100%",maxWidth:420}}>
@@ -4657,7 +4679,7 @@ export default function MondoMago() {
         {/* CTA */}
         <button onClick={() => { warmUpAudio(); navigate("map"); }}
           style={{background:SG_GOLD_GRAD,color:SG_INK,border:"none",borderRadius:50,padding:"18px 52px",fontSize:20,fontWeight:900,cursor:"pointer",boxShadow:"0 8px 32px rgba(255,194,75,.35)",width:"100%",maxWidth:340}}>
-          Iniziamo l'avventura! 🚀
+          Iniziamo l'avventura!
         </button>
       </div>
     );
