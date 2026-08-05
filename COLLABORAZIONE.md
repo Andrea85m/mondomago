@@ -13,8 +13,8 @@ Come lavorare in due sullo stesso progetto senza pestarsi i piedi.
 
 | Persona | Ambito | Dove |
 |---------|--------|------|
-| **Andrea** | **Contenuti + logica di gioco**: sfide, mondi, motore adattivo, SRS, stato | `ALL_CHALLENGES` e il corpo logico di `MondoMago()` |
-| **Amico** | **Grafica + Audio**: look, animazioni, schermate, icone, scene, suoni | file grafici separati **+ le zone 🎨 dentro `MondoMago.jsx`** |
+| **Andrea** | **Contenuti + logica di gioco**: sfide, mondi, motore adattivo, SRS, stato — **+ la schermata `map`** | `ALL_CHALLENGES`, il corpo logico di `MondoMago()`, il blocco `map` |
+| **Amico** | **Grafica + Audio**: look, animazioni, schermate, icone, scene, suoni | file grafici separati **+ le zone 🎨 dentro `MondoMago.jsx`** (mappa esclusa) |
 
 ⚠️ **La differenza rispetto a prima:** il confine non è più "file diversi" ma **zone di righe
 diverse dentro lo stesso file**. Leggi la §3 prima di scrivere una riga.
@@ -77,15 +77,33 @@ Le righe sono indicative e **si spostano** a ogni modifica: orientati sui **nomi
 | `ALL_CHALLENGES` — 362 sfide, 8 mondi | 1025–3219 | 🟢 **Andrea** | Blocchi per mondo: mondi diversi = zero conflitti |
 | Token `FF_*` / `SG_*` / `P_*` — palette e font | 3221–3238 | 🎨 **Amico** | Design tokens del "Sigillo di Stelle" |
 | Corpo di `MondoMago()`: state, `useEffect`, handler, `triggerOK`/`triggerBAD`, motore adattivo | 3240–4371 | 🟢 **Andrea** | Logica di gioco |
-| **Blocchi di render `if (screen === "...") return (...)`** — TUTTE le schermate | **4372–7528** | 🎨 **Amico** | Il grosso del lavoro grafico |
+| Blocchi di render — schermate di onboarding | 4372–4666 | 🎨 **Amico** | |
+| **Schermata `map` + tab-bar** | **4667–5144** | 🟢 **Andrea** | ⚠️ **Eccezione: la mappa se la tiene Andrea** |
+| Blocchi di render — tutte le altre schermate | 5147–7528 | 🎨 **Amico** | Il grosso del lavoro grafico |
 
-### Le schermate (zona 🎨, tutte contigue da 4372 in poi)
+### Le schermate
 
-`consent` 4372 · `profile_select` 4399 · `onboarding` 4434 · `name` 4528 · `age` 4561 ·
-`companion` 4598 · `companion_welcome` 4630 · **`map` 4667** · `coplay_intro` 5147 ·
+🎨 **Amico** — `consent` 4372 · `profile_select` 4399 · `onboarding` 4434 · `name` 4528 ·
+`age` 4561 · `companion` 4598 · `companion_welcome` 4630 · `coplay_intro` 5147 ·
 `world_intro` 5178 · `fulmine` 5208 · **`challenge` 5326** · `world_end` 6281 ·
 `session_stats` 6413 · `story_book` 6474 · `skills` 6564 · `family` 6604 · `cosmetics` 6643 ·
 `school` 6730 · `profile` 6811 · `parent` 6886
+
+🟢 **Andrea** — **`map` 4667–5144**
+
+### ⚠️ La mappa è di Andrea (deciso il 2026-08-05)
+
+La schermata `map` è l'unica eccezione allo split grafico: **la tiene Andrea**, l'Amico non
+la tocca. È la schermata più densa dell'app e contiene:
+
+Sigillo di progresso · particelle e banner stagionali · saluto ora-del-giorno · stats row ·
+card streak · barra XP + badge rango · indicatore scuola · Sfida del Giorno · Sfida Fulmine ·
+**tab-bar** (4951) · path con i nodi-medaglione illustrati (4973) · world cards con `WorldScene` (5055)
+
+**Punto di contatto:** le icone della tab-bar (`NavMap`/`NavBrain`/`NavFamily`/`NavSparkle`,
+righe 569–572) sono dell'Amico, ma vengono *renderizzate* dentro la mappa, a riga 4953.
+Ridisegnare quegli SVG è libero e **non genera conflitto git** (righe diverse) — cambia però
+l'aspetto della tab-bar di Andrea: **avvisarlo**, non serve chiedere il permesso.
 
 ### ⚠️ Regole per chi lavora nelle zone 🎨 dentro `MondoMago.jsx`
 
