@@ -507,35 +507,34 @@ function SigilloSky({ zIndex = 0 }) {
   );
 }
 
-const WORLD_AMBIENTS = {
-  foresta:     ["🍃","🌿","✨","🍀","🦋"],
-  castello:    ["✨","💫","⭐","🔮","🌙"],
-  oceano:      ["💧","🫧","✨","🐠","🐡"],
-  mercato:     ["🎈","🎊","✨","🎨","🌈"],
-  galassia:    ["⭐","💫","🌟","🪐","✨"],
-  vulcano:     ["🔥","✨","💥","🌋","⬆️"],
-  biblioteca:  ["✨","📖","🔮","💡","📜"],
-  laboratorio: ["⚡","💡","🔮","✨","🤖"],
-};
+// Etichetta breve del nodo-mondo. Prima erano sempre le prime due parole, e
+// due mondi su otto finivano tagliati a meta: "Castello delle", "Mercato dei".
+// Se la seconda parola e una preposizione o un articolo, si tiene solo la prima.
+const NAME_STOPWORDS = new Set(["di","del","dei","della","delle","dello","degli","la","il","lo","le","i","gli","e"]);
+function shortWorldName(name) {
+  const w = name.split(" ");
+  if (w.length > 1 && NAME_STOPWORDS.has(w[1].toLowerCase())) return w[0];
+  return w.slice(0, 2).join(" ");
+}
 
-// Per-world floating ambient particles — gives each world a living identity
+// Ambient per-mondo: prima erano 5 emoji diverse a testa (foglie, farfalle,
+// quadrifogli...) che galleggiavano sopra le risposte a piena opacita e
+// sembravano sporco sullo schermo. Ora e l'emblema del mondo stesso, in oro e
+// verde-runa, appena accennato: atmosfera, non decorazione da leggere.
 function WorldAmbient({ worldId }) {
-  const emojis = WORLD_AMBIENTS[worldId];
-  if (!emojis) return null;
+  if (!worldId) return null;
   return (
     <div style={{position:"fixed",inset:0,overflow:"hidden",pointerEvents:"none",zIndex:0}}>
-      {Array.from({length:12}, (_,i) => {
-        const left = (i * 23.7 + 8) % 91;
-        const dur  = 5.5 + (i%5) * 1.1;
-        const del  = (i * 0.72) % 5;
-        const dx   = -22 + (i%7) * 8;
+      {Array.from({length:9}, (_,i) => {
+        const dur = 5.5 + (i%5) * 1.1;
         return (
           <div key={i} style={{
-            position:"absolute", bottom:`${(i%4)*10+4}%`, left:`${left}%`,
-            fontSize: 13 + (i%3)*5,
-            animation:`ambientRise ${dur}s ease-out ${del}s infinite`,
-            "--dx":`${dx}px`, userSelect:"none",
-          }}>{emojis[i%emojis.length]}</div>
+            position:"absolute", bottom:`${(i%4)*10+4}%`, left:`${(i * 23.7 + 8) % 91}%`,
+            animation:`ambientRise ${dur}s ease-out ${(i * 0.72) % 5}s infinite`,
+            "--dx":`${-22 + (i%7) * 8}px`, opacity:.16, display:"flex",
+          }}>
+            <WorldIcon id={worldId} color={i % 2 ? "#6DE0C6" : "#FFC24B"} size={12 + (i%3)*4} />
+          </div>
         );
       })}
     </div>
@@ -2954,35 +2953,34 @@ const COSMETICS = [
 function getCurrentSeason() {
   const now = new Date();
   const md = now.getMonth() * 100 + now.getDate();
+  // `tint` e una VELATURA che si sovrappone al fondo Sigillo, non un fondo che
+  // lo rimpiazza: prima l'estate portava il viola-indaco su un marrone piatto e
+  // per due mesi e mezzo l'app perdeva la sua identita nella schermata piu vista.
+  // `glyphs` sono nomi da icons.jsx: due accenti (oro/runa), niente emoji.
   if (md >= 1201 || md <= 106) return {
-    id:'natale', name:'Natale 🎅', emoji:'🎄',
-    color:'#CC2200', bg:'linear-gradient(160deg,#0d1a0d,#1a2e1a,#0d1a0d)',
-    accent:'#CC2200', particles:['❄️','🎄','⭐','🎁','🔔','❄️','🎅'],
-    banner:'🎄 Buon Natale! Sfide speciali invernali disponibili! ❄️',
+    color:'#CC2200', glyph:'gift', glyphs:['gift','star','sparkles'],
+    tint:'radial-gradient(120% 70% at 50% -6%, rgba(204,34,0,.16) 0%, transparent 55%)',
+    banner:'Buon Natale! Sfide speciali invernali disponibili',
   };
   if (md >= 315 && md <= 420) return {
-    id:'pasqua', name:'Pasqua 🐣', emoji:'🐰',
-    color:'#84CC16', bg:'linear-gradient(160deg,#0d1a00,#1a2e0a,#0d1a00)',
-    accent:'#84CC16', particles:['🐣','🐰','🌸','🥚','🌷','🌼','🐥'],
-    banner:'🐰 Buona Pasqua! Trova le uova nascoste! 🥚',
+    color:'#84CC16', glyph:'germoglio', glyphs:['seme','germoglio','sparkles'],
+    tint:'radial-gradient(120% 70% at 50% -6%, rgba(132,204,22,.15) 0%, transparent 55%)',
+    banner:'Buona Pasqua! Trova le uova nascoste',
   };
   if (md >= 901 && md <= 915) return {
-    id:'scuola', name:'Inizio Scuola 📚', emoji:'📚',
-    color:'#2563EB', bg:'linear-gradient(160deg,#0a0a2e,#1a1a4e,#0a0a2e)',
-    accent:'#2563EB', particles:['📚','✏️','🎒','📐','🖊️','📏','🔬'],
-    banner:'📚 Bentornato a scuola! Nuove sfide ti aspettano! ✏️',
+    color:'#2563EB', glyph:'bookmark', glyphs:['bookmark','matita','star'],
+    tint:'radial-gradient(120% 70% at 50% -6%, rgba(37,99,235,.16) 0%, transparent 55%)',
+    banner:'Bentornato a scuola! Nuove sfide ti aspettano',
   };
   if (md >= 1025 && md <= 1102) return {
-    id:'halloween', name:'Halloween 🎃', emoji:'🎃',
-    color:'#F97316', bg:'linear-gradient(160deg,#100500,#2d0f00,#100500)',
-    accent:'#F97316', particles:['🎃','👻','🕷️','🦇','🌙','💀','🕸️'],
-    banner:'👻 Buon Halloween! Sfide da brivido! 🎃',
+    color:'#F97316', glyph:'moon', glyphs:['moon','flame','sparkles'],
+    tint:'radial-gradient(120% 70% at 50% -6%, rgba(249,115,22,.16) 0%, transparent 55%)',
+    banner:'Buon Halloween! Sfide da brivido',
   };
   if (md >= 615 && md <= 831) return {
-    id:'estate', name:'Estate ☀️', emoji:'🌞',
-    color:'#FBD423', bg:'linear-gradient(160deg,#1a0e00,#2d1a00,#1a0e00)',
-    accent:'#FBD423', particles:['☀️','🌊','🏖️','🍦','🌺','🐚','🌴'],
-    banner:'☀️ Buona Estate! Avventure estive ti aspettano! 🏖️',
+    color:'#FBD423', glyph:'sun', glyphs:['sun','wave','star'],
+    tint:'radial-gradient(120% 70% at 50% -6%, rgba(251,212,35,.14) 0%, transparent 55%)',
+    banner:'Buona Estate! Avventure estive ti aspettano',
   };
   return null;
 }
@@ -3222,6 +3220,12 @@ const FF = "'Fredoka One', cursive";
 // Direzione "Sigillo di Stelle": display storybook + mono per i dati numerici
 const FF_DISPLAY = "'Grandstander', 'Fredoka One', cursive";
 const FF_MONO = "'DM Mono', ui-monospace, 'SFMono-Regular', monospace";
+// Cifre che legge il bambino. DM Mono ha lo zero BARRATO come glifo di default
+// (non è una alternate: font-feature-settings "zero" 0 non lo disattiva, provato),
+// quindi in un'app che insegna a riconoscere i numeri a 3-8 anni ogni "0" arrivava
+// a schermo come "Ø". FF_MONO resta dov'è il sapore-coding e non ci sono cifre da
+// leggere: etichette maiuscolette, tipo del companion, e tutta l'area genitori.
+const FF_NUM = "'Grandstander', 'Nunito', system-ui, sans-serif";
 // Token palette "Sigillo di Stelle" (livello modulo, riusabili in ogni schermata)
 const SG_GOLD  = "#FFC24B";   // magia / accento primario
 const SG_RUNE  = "#6DE0C6";   // logica / codice
@@ -4242,7 +4246,7 @@ export default function MondoMago() {
               <div className="glow" style={{width:94,height:94,borderRadius:"50%",background:"radial-gradient(circle at 50% 34%, #FFE7A6, #FFC24B 55%, #E7972B)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:52,boxShadow:"inset 0 -6px 14px rgba(120,60,0,.35), inset 0 5px 11px rgba(255,255,255,.6)"}}>{newLevel.emoji}</div>
             </div>
             <div style={{fontFamily:FF_DISPLAY,fontSize:34,color:SG_GOLD,lineHeight:1.05,marginBottom:4}}>{newLevel.title}</div>
-            <div style={{fontFamily:FF_MONO,fontSize:13,color:SG_PARCH,opacity:.65,marginBottom:18}}>{totalStars} ⭐ raccolte</div>
+            <div style={{fontFamily:FF_NUM,fontWeight:700,fontSize:13,color:SG_PARCH,opacity:.65,marginBottom:18}}>{totalStars} ⭐ raccolte</div>
             {comp && (
               <div style={{display:"flex",alignItems:"center",gap:12,background:SG_CARD,border:SG_BR,borderRadius:18,padding:"11px 14px",marginBottom:22,textAlign:"left"}}>
                 <div className="bounce" style={{flexShrink:0}}><CompanionAvatar c={comp} size={44} /></div>
@@ -4425,7 +4429,7 @@ export default function MondoMago() {
               <div style={{fontSize:40}}>{lvl.emoji}</div>
               <div style={{flex:1}}>
                 <div style={{fontFamily:FF_DISPLAY,fontSize:20,color:SG_GOLD}}>{p.childName}</div>
-                <div style={{fontFamily:FF_MONO,fontSize:12,opacity:.75}}>{lvl.title} · {p.totalStars||0} <Icon name="star" color={SG_GOLD} size={11} style={{verticalAlign:"-1px"}} /> · età {ageLabel}</div>
+                <div style={{fontFamily:FF_NUM,fontWeight:700,fontSize:12,opacity:.75}}>{lvl.title} · {p.totalStars||0} <Icon name="star" color={SG_GOLD} size={11} style={{verticalAlign:"-1px"}} /> · età {ageLabel}</div>
               </div>
               <span style={{fontSize:22,color:SG_GOLD,opacity:.8}}>→</span>
             </button>
@@ -4687,7 +4691,9 @@ export default function MondoMago() {
 
   // ════════════════════ SCREEN: MAP ═════════════════════════════════════════
   if (screen === "map") {
-    const mapBg = season ? season.bg : "radial-gradient(125% 85% at 50% -8%, #2D1B54 0%, #1B1035 52%, #140B29 100%)";
+    const SIGILLO_MAP_BG = "radial-gradient(125% 85% at 50% -8%, #2D1B54 0%, #1B1035 52%, #140B29 100%)";
+    // la stagione si SOMMA al Sigillo (prima glielo sostituiva)
+    const mapBg = season ? `${season.tint}, ${SIGILLO_MAP_BG}` : SIGILLO_MAP_BG;
     const equippedForComp = comp ? (COSMETICS.find(c => c.id === equippedCosmetic[comp.id]) || null) : null;
     const { lvl: mapLvl, pct: mapPct, toNext: mapToNext, nextTitle: mapNextTitle } = getLevelProgress(totalStars);
     // L1: light-mode theme tokens for children ≤ 4 years
@@ -4724,7 +4730,7 @@ export default function MondoMago() {
       {/* Seasonal background particles */}
       {season && (
         <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,overflow:"hidden"}}>
-          {season.particles.flatMap((e, pi) =>
+          {season.glyphs.flatMap((name, pi) =>
             [0,1].map(j => {
               const id = pi * 2 + j;
               return (
@@ -4732,12 +4738,13 @@ export default function MondoMago() {
                   position:"absolute",
                   left:`${(id * 13 + 7) % 94}%`,
                   top:`${(id * 19 + 5) % 86}%`,
-                  fontSize: 12 + (id % 3) * 6,
-                  opacity: 0.12 + (id % 3) * 0.05,
+                  opacity: 0.1 + (id % 3) * 0.03,
                   animation:`particleFloat ${3.5 + (id % 4) * 0.8}s ease-in-out infinite`,
                   animationDelay:`${id * 0.4}s`,
-                  userSelect:"none",
-                }}>{e}</div>
+                  display:"flex",
+                }}>
+                  <Icon name={name} color={id % 2 ? SG_RUNE : SG_GOLD} size={13 + (id % 3) * 4} />
+                </div>
               );
             })
           )}
@@ -4747,7 +4754,7 @@ export default function MondoMago() {
       {/* Seasonal banner */}
       {season && (
         <div className="slide-up" style={{background:`${season.color}22`,border:`1px solid ${season.color}55`,borderRadius:14,padding:"10px 14px",marginBottom:14,fontSize:12,textAlign:"center",fontWeight:700,color:mt.fg}}>
-          {season.banner}
+          <span style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name={season.glyph} color={season.color} size={15} />{season.banner}</span>
         </div>
       )}
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:18}}>
@@ -4821,10 +4828,10 @@ export default function MondoMago() {
             </svg>
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontFamily:FF_DISPLAY,fontWeight:800,fontSize:16,color:isComplete?"#FFE3A6":"#FFD9A0",marginBottom:3}}>
-                Il Sigillo Magico {isComplete?"— COMPLETO! ✨":""}
+                Il Sigillo Magico {isComplete?"— COMPLETO!":""}
               </div>
               <div style={{fontSize:12,color:mt.fgDim,lineHeight:1.35}}>
-                <span style={{fontFamily:FF_MONO,color:"#FFC24B"}}>{count}/{SIGILLO_FRAGMENTS.length}</span> frammenti · {SIGILLO_STORY[count]?.slice(0,48)}…
+                <span style={{fontFamily:FF_NUM,fontWeight:700,color:"#FFC24B"}}>{count}/{SIGILLO_FRAGMENTS.length}</span> frammenti · {SIGILLO_STORY[count]?.slice(0,48)}…
               </div>
               <div style={{display:"flex",gap:5,marginTop:7,flexWrap:"wrap"}}>
                 {SIGILLO_FRAGMENTS.map((f, i) => {
@@ -4842,7 +4849,7 @@ export default function MondoMago() {
         {[{n:"star",v:totalStars,l:"stelle",c:"#FFC24B"},{n:"trophy",v:items.length,l:"trofei",c:"#C084FC"},{n:"coin",v:coins,l:"monete",c:"#6DE0C6"}].map((s,idx) => (
           <div key={idx} style={{flex:1,background:mt.card,borderRadius:20,padding:"14px 8px",textAlign:"center",border:mt.cardBd}}>
             <div style={{height:28,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name={s.n} color={s.c} size={26} /></div>
-            <div style={{fontFamily:FF_MONO,fontWeight:500,fontSize:24,color:s.c,lineHeight:1}}>{s.v}</div>
+            <div style={{fontFamily:FF_NUM,fontWeight:700,fontSize:24,color:s.c,lineHeight:1}}>{s.v}</div>
             <div style={{fontSize:11,color:mt.fgDim,marginTop:2}}>{s.l}</div>
           </div>
         ))}
@@ -4867,9 +4874,9 @@ export default function MondoMago() {
                 :(youngBg?"1px solid rgba(255,100,0,.2)":"1px solid rgba(249,115,22,.2)"),
             }}>
               <div className={streak>=3?"streak-flame":""} style={{display:"flex",justifyContent:"center",gap:1,height:24,alignItems:"center"}}>{Array.from({length:flameCount},(_,fi) => <Icon key={fi} name="flame" color={streakAtRisk?"#F87171":"#FB923C"} size={22} />)}</div>
-              <div style={{fontFamily:FF_MONO,fontWeight:500,fontSize:24,color:streakAtRisk?"#F87171":"#FB923C",lineHeight:1}}>{streak}</div>
+              <div style={{fontFamily:FF_NUM,fontWeight:700,fontSize:24,color:streakAtRisk?"#F87171":"#FB923C",lineHeight:1}}>{streak}</div>
               <div style={{fontSize:9,fontWeight:800,color:streakAtRisk?"#F87171":"#FB923C",opacity:.8,marginBottom:3}}>
-                {streakAtRisk?"⚠️ a rischio!":streak>=7?"🏆 LEGGENDA":streak>=3?"⭐ SERIE":streak>=1?"Giorni":""}
+                {streakAtRisk?"a rischio!":streak>=7?"LEGGENDA":streak>=3?"SERIE":streak>=1?"Giorni":""}
               </div>
               <div style={{display:"flex",gap:3,justifyContent:"center",marginTop:3}}>
                 {last7.map(d => {
@@ -4944,9 +4951,9 @@ export default function MondoMago() {
             <span style={{display:"flex"}}>{done ? <Icon name="check" color="#6DE0C6" size={40} /> : <Icon name="star" color="#FFD95A" size={40} />}</span>
             <div style={{flex:1}}>
               <div style={{fontWeight:900,fontSize:17,marginBottom:3}}>Sfida del Giorno</div>
-              <div style={{fontSize:13,opacity:.7}}>{done?"Completata! Torna domani ✨":"3 sfide speciali · +3 stelle bonus"}</div>
+              <div style={{fontSize:13,opacity:.7}}>{done?"Completata! Torna domani":"3 sfide speciali · +3 stelle bonus"}</div>
             </div>
-            {!done && <div style={{background:"linear-gradient(135deg,#FFD95A,#FFB800)",color:"#1a1a2e",borderRadius:20,padding:"6px 14px",fontSize:13,fontWeight:900,whiteSpace:"nowrap"}}>+3 ⭐</div>}
+            {!done && <div style={{background:"linear-gradient(135deg,#FFD95A,#FFB800)",color:"#1a1a2e",borderRadius:20,padding:"6px 14px",fontSize:13,fontWeight:900,whiteSpace:"nowrap",display:"inline-flex",alignItems:"center",gap:4}}>+3 <Icon name="star" color="#1a1a2e" ink="#1a1a2e" size={13} /></div>}
           </button>
         );
       })()}
@@ -5033,7 +5040,7 @@ export default function MondoMago() {
                         background:"linear-gradient(90deg,#06B6D4,#A855F7)",color:"white",borderRadius:10,
                         padding:"2px 7px",fontSize:8.5,fontWeight:900,letterSpacing:.3,whiteSpace:"nowrap",
                         border:"1.5px solid white",boxShadow:"0 2px 8px rgba(168,85,247,.5)",zIndex:3}}>
-                        ✨ NOVITÀ
+                        NOVITÀ
                       </div>
                     )}
                     {has && <div style={{position:"absolute",top:-6,right:-6,background:w.color,borderRadius:"50%",width:20,height:20,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,border:"2px solid white"}}>✓</div>}
@@ -5041,17 +5048,17 @@ export default function MondoMago() {
                       <div style={{position:"absolute",bottom:-10,left:"50%",transform:"translateX(-50%)",
                         background:youngBg?"rgba(255,255,255,.9)":"rgba(0,0,0,.8)",border:`1px solid ${w.color}44`,
                         borderRadius:10,padding:"1px 6px",fontSize:9,color:youngBg?"#333":"rgba(255,255,255,.7)",whiteSpace:"nowrap"}}>
-                        ⭐{w.starsNeeded}
+                        <Icon name="star" color="#FFC24B" size={9} style={{verticalAlign:"-1px",marginRight:3}} />{w.starsNeeded}
                       </div>
                     )}
                   </button>
                   <div style={{fontFamily:FF,fontSize:11,color:w.unlocked?mt.wNodeTxt:mt.wNodeLocked,textAlign:"center",lineHeight:1.2,maxWidth:90}}>
-                    {w.name.split(" ").slice(0,2).join(" ")}
+                    {shortWorldName(w.name)}
                   </div>
                   {/* Stars earned */}
                   <div style={{display:"flex",gap:1,height:12}}>
                     {[0,1,2].map(si => (
-                      <span key={si} style={{fontSize:10,opacity:si < starsEarned ? 1 : 0.2}}>⭐</span>
+                      <span key={si} style={{display:"flex",opacity:si < starsEarned ? 1 : 0.22}}><Icon name="star" color="#FFC24B" size={11} /></span>
                     ))}
                   </div>
                 </div>
@@ -5132,13 +5139,13 @@ export default function MondoMago() {
                 {locked
                   ? <div style={{fontSize:12,color:w.color,opacity:.7,fontWeight:700}}><Icon name="lock" color={w.color} size={12} style={{verticalAlign:"-2px"}} /> Servono {w.starsNeeded} <Icon name="star" color={w.color} size={12} style={{verticalAlign:"-2px"}} /> per sbloccare</div>
                   : has
-                    ? <div style={{fontSize:12,color:youngBg?"#D97706":"#FFD95A",fontWeight:700}}>🏆 {a?.reward_name}</div>
-                    : <div style={{fontSize:12,color:mt.fgDim}}>🎯 ~6 sfide · {young?"visive":"interattive"}</div>}
+                    ? <div style={{fontSize:12,color:youngBg?"#D97706":"#FFD95A",fontWeight:700,display:"flex",alignItems:"center",gap:6}}><Icon name="trophy" color={youngBg?"#D97706":"#FFD95A"} ink={youngBg?"#3A2A10":undefined} size={13} />{a?.reward_name}</div>
+                    : <div style={{fontSize:12,color:mt.fgDim,display:"flex",alignItems:"center",gap:6}}><Icon name="target" color={mt.fgDim} size={13} />~6 sfide · {young?"visive":"interattive"}</div>}
                 {/* Stars */}
                 {!locked && (
                   <div style={{display:"flex",gap:4,marginTop:6}}>
                     {[0,1,2].map(si => (
-                      <span key={si} style={{fontSize:14,opacity:si<(has?3:0)?1:.2,color:"#FFC24B"}}>⭐</span>
+                      <span key={si} style={{display:"flex",opacity:si<(has?3:0)?1:.22}}><Icon name="star" color="#FFC24B" size={14} /></span>
                     ))}
                   </div>
                 )}
@@ -5148,7 +5155,7 @@ export default function MondoMago() {
               {/* First-visit spotlight tooltip */}
               {isSpot && (
                 <div className="pop-in" style={{position:"absolute",top:-42,left:"50%",transform:"translateX(-50%)",background:"white",color:"#1a1a2e",borderRadius:20,padding:"6px 16px",fontSize:12,fontWeight:900,whiteSpace:"nowrap",boxShadow:"0 4px 16px rgba(0,0,0,.25)",zIndex:20,pointerEvents:"none"}}>
-                  {comp?.emoji} Inizia da qui! 👆
+                  Inizia da qui!
                   <div style={{position:"absolute",bottom:-6,left:"50%",transform:"translateX(-50%)",width:0,height:0,borderLeft:"6px solid transparent",borderRight:"6px solid transparent",borderTop:"6px solid white"}} />
                 </div>
               )}
@@ -6358,19 +6365,19 @@ export default function MondoMago() {
         <div className="pop-in" style={{background:SG_TILE,border:SG_BR,borderRadius:20,padding:"10px 20px",marginBottom:14,display:"flex",alignItems:"center",gap:10,animationDelay:"1.1s"}}>
           <span style={{display:"flex"}}><Icon name="coin" color={SG_GOLD} size={28} /></span>
           <div>
-            <div style={{fontFamily:FF_MONO,fontSize:20,color:SG_GOLD,lineHeight:1}}>+{sessionStars + (perfectBonus ? 5 : 0)}</div>
+            <div style={{fontFamily:FF_NUM,fontWeight:700,fontSize:20,color:SG_GOLD,lineHeight:1}}>+{sessionStars + (perfectBonus ? 5 : 0)}</div>
             <div style={{fontSize:11,opacity:.7}}>monete magiche{perfectBonus ? " (+5 perfetto!)" : ""}</div>
           </div>
           <div style={{marginLeft:"auto",textAlign:"right"}}>
             <div style={{fontSize:11,opacity:.5}}>totale</div>
-            <div style={{fontFamily:FF_MONO,fontSize:16,color:SG_GOLD}}>{coins}</div>
+            <div style={{fontFamily:FF_NUM,fontWeight:700,fontSize:16,color:SG_GOLD}}>{coins}</div>
           </div>
         </div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:10,marginBottom:20,width:"100%",maxWidth:360}}>
           {[{n:"star",c:"#FFC24B",v:sessionStars,l:"stelle"},{n:"check",c:"#6DE0C6",v:correct,l:"giuste"},{n:"target",c:"#C084FC",v:`${pct}%`,l:"precisione"},{n:"flame",c:"#FB923C",v:combo,l:"combo max"}].map((s,idx) => (
             <div key={idx} className="pop-in" style={{textAlign:"center",background:SG_TILE,borderRadius:16,padding:"12px 6px",animationDelay:`${1.55 + idx*.1}s`}}>
               <div style={{height:26,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name={s.n} color={s.c} size={24} /></div>
-              <div style={{fontFamily:FF_MONO,fontSize:20,marginTop:4}}>{s.v}</div>
+              <div style={{fontFamily:FF_NUM,fontWeight:700,fontSize:20,marginTop:4}}>{s.v}</div>
               <div style={{opacity:.5,fontSize:10,marginTop:2}}>{s.l}</div>
             </div>
           ))}
@@ -6461,7 +6468,7 @@ export default function MondoMago() {
           {[{n:"check",c:"#6DE0C6",v:correct,l:"Corrette"},{n:"star",c:"#FFC24B",v:sessionStars,l:"Stelle"},{n:"target",c:"#C084FC",v:`${pct}%`,l:"Precisione"},{n:"flame",c:"#FB923C",v:combo,l:"Combo"}].map((s,i) => (
             <div key={i} className="pop-in" style={{background:SG_TILE,border:SG_BR,borderRadius:18,padding:"16px 10px",animationDelay:`${i*.07}s`}}>
               <div style={{height:28,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name={s.n} color={s.c} size={26} /></div>
-              <div style={{fontFamily:FF_MONO,fontSize:22,marginTop:6,color:s.c}}>{s.v}</div>
+              <div style={{fontFamily:FF_NUM,fontWeight:700,fontSize:22,marginTop:6,color:s.c}}>{s.v}</div>
               <div style={{fontSize:11,opacity:.55,marginTop:2}}>{s.l}</div>
             </div>
           ))}
@@ -6472,7 +6479,7 @@ export default function MondoMago() {
             <div key={sk.id} style={{marginBottom:11}}>
               <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:4}}>
                 <span style={{display:"inline-flex",alignItems:"center",gap:6}}><SkillIcon id={sk.id} color={sk.color} size={15} />{sk.name}</span>
-                <span style={{fontFamily:FF_MONO,color:sk.color,fontWeight:700}}>Lv.{skills[sk.id]}</span>
+                <span style={{fontFamily:FF_NUM,color:sk.color,fontWeight:700}}>Lv.{skills[sk.id]}</span>
               </div>
               <div style={{background:"rgba(255,255,255,.08)",borderRadius:6,height:8}}>
                 <div style={{background:sk.color,height:"100%",borderRadius:6,width:`${(skills[sk.id]/10)*100}%`,transition:"width .9s cubic-bezier(.22,1,.36,1)"}} />
