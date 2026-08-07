@@ -39,3 +39,7 @@ lighthouse.*/
 .env
 .env.*
 !.env.example
+
+# Cache Python degli script
+__pycache__/
+*.pyc
