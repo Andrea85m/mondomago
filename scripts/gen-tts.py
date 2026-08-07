@@ -38,6 +38,7 @@ except ImportError:
 
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE = ROOT / "src" / "MondoMago.jsx"
+SOURCE_PUZZLE = ROOT / "src" / "PuzzleMagico.jsx"
 AUDIO_DIR = ROOT / "public" / "audio"
 MAP_OUT = ROOT / "src" / "ttsMap.json"
 
@@ -133,7 +134,19 @@ def collect(jsx: str) -> set[str]:
     for m in re.finditer(r'letter:"([A-ZÀ-Ù])",\s*word:"(\w+)"', jsx):
         add(f"Traccia la lettera {m.group(1)} come in {m.group(2)}!")
 
-    # 7 · Righe fisse dell'interfaccia
+    # 7 · Sezione Puzzle Magico: nomi delle cose, degli adesivi e consegne.
+    #     Il bambino di 3-5 anni non legge le opzioni: le ascolta col tasto
+    #     altoparlante, quindi ogni nome deve avere la sua clip.
+    if SOURCE_PUZZLE.exists():
+        pz = SOURCE_PUZZLE.read_text(encoding="utf-8")
+        for m in re.finditer(r'\["[^"]+",\s*"([^"]+)"\]', pz):      # ["🐻", "Orso"]
+            add(m.group(1))
+        for m in re.finditer(r'nome:\s*"([^"]+)"', pz):             # adesivi, scene, livelli
+            add(m.group(1))
+        for m in re.finditer(r'speak\?\.\(\s*"((?:[^"\\]|\\.)*)"', pz):
+            add(m.group(1))
+
+    # 8 · Righe fisse dell'interfaccia
     found.update({
         "Come ti chiami?",
         "Quanti anni hai?",

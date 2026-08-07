@@ -103,6 +103,17 @@ for (const m of source.matchAll(/onMeet\s*:\s*\(\s*(\w+)\s*\)\s*=>\s*`((?:[^`\\]
   if (!has(t)) errors.push(`presentazione del companion senza voce: "${t.slice(0, 60)}"`);
 }
 
+// ═══ 3b · Sezione Puzzle Magico ══════════════════════════════════════════════
+{
+  const pz = readFileSync(join(ROOT, 'src', 'PuzzleMagico.jsx'), 'utf8');
+  for (const m of pz.matchAll(/\["[^"]+",\s*"([^"]+)"\]/g))          // nomi delle cose
+    if (!has(m[1])) errors.push(`Puzzle · nome senza voce: "${m[1]}"`);
+  for (const m of pz.matchAll(/speak\?\.\(\s*"((?:[^"\\]|\\.)*)"/g))
+    if (!has(unesc(m[1]))) errors.push(`Puzzle · consegna senza voce: "${unesc(m[1]).slice(0, 60)}"`);
+  for (const m of pz.matchAll(/nome:\s*"([^"]+)"/g))                 // adesivi, scene
+    if (!has(m[1])) errors.push(`Puzzle · etichetta senza voce: "${m[1]}"`);
+}
+
 // ═══ 4 · Integrità del manifest ══════════════════════════════════════════════
 const onDisk = new Set(readdirSync(AUDIO).filter(f => /^tts_.*\.mp3$/.test(f)));
 for (const [text, file] of Object.entries(ttsMap)) {

@@ -127,6 +127,10 @@ l'aspetto della tab-bar di Andrea: **avvisarlo**, non serve chiedere il permesso
   *"silhouette pergamena + 1 accento colore"*.
 - `src/WorldScene.jsx` — 8 scene-mondo SVG animate (`SCENE_MAP`)
 - `src/SvgAssets.jsx` — asset SVG delle sfide (usato dal formato `visual_tap`)
+- `src/sigillo.js` — **i token del design system** (colori, font). Erano dentro
+  `MondoMago.jsx`; ora stanno qui perché li usa anche `PuzzleMagico.jsx`.
+- `src/PuzzleMagico.jsx` — **la sezione Puzzle**, quattro giochi in un file solo.
+  Non tocca la logica né i dati: riceve `età`, `speak`, `sfx`, `onExit` come prop.
 - `src/App.css`, `src/index.css`
 - `public/favicon.svg`, `public/icons.svg`, `public/icon-*.png`, `public/apple-touch-icon.png`
 - `public/characters/*_cutout.png` — i 5 companion claymation
@@ -139,6 +143,46 @@ l'aspetto della tab-bar di Andrea: **avvisarlo**, non serve chiedere il permesso
 
 Ridisegnare SVG, ritoccare CSS, sostituire audio = **operazioni libere**.
 Serve coordinarsi **solo** se si *rinomina* un asset → va aggiornato il riferimento in `MondoMago.jsx`.
+
+---
+
+---
+
+## 4-bis. 🔔 Cose entrate nella zona di Andrea (agosto 2026) — da sapere
+
+Tre interventi sono finiti dentro le righe di Andrea perché erano difetti, non scelte
+di contenuto. Sono piccoli e circoscritti, ma **vanno guardati**:
+
+| Dove | Cosa | Perché |
+|---|---|---|
+| `ALL_CHALLENGES` | `correct:` corretto su **fb02 o04 o06 m04 m06 g04 g06** | La risposta segnata giusta non era quella della sequenza. 4 di queste sono boss. |
+| `ALL_CHALLENGES` | **fb10 · ob10 · lab26** ritoccate | Due rime che non rimavano e un "bug" che era la manovra corretta. |
+| `genMathChallenge` | ramo divisione | `72 ÷ 8 = ?` dava per giusto 72. Un terzo delle sfide procedurali 7-8 anni. |
+| schermata `map` | tab-bar da 4 a 5 voci (arriva **Puzzle**) e pool della Sfida Fulmine | A 7-8 anni la Fulmine partiva con zero domande: il pool era solo `visual_tap`, che si ferma a 7. |
+
+`npm run audit` rimette in piedi tutti questi controlli in un colpo solo:
+**exit 1** se una risposta torna sbagliata, se una fascia d'età resta senza sfide,
+o se una frase perde la voce registrata.
+
+---
+
+## 4-ter. 🧩 La sezione Puzzle
+
+Quattro giochi in `src/PuzzleMagico.jsx`, sulla falsariga di *Puzzle Kids — Jigsaw
+Puzzles* di RV AppStudios: **Ombre** (sagome) · **Costruttore** (tessere) ·
+**Indovina** (si scopre poco alla volta) · **Incastro** (puzzle vero con le linguette).
+
+- Le immagini sono le 8 scene di `WorldScene.jsx` e le illustrazioni di
+  `SvgAssets.jsx`: **zero asset nuovi**.
+- Il file è caricato con `lazy()`: 9KB gzip che arrivano solo quando si apre la
+  sezione, così il bundle di avvio non cambia.
+- I progressi (adesivi) stanno in un `localStorage` suo — `mondomago_puzzle_v1` —
+  e non toccano il profilo del bambino.
+- **Da decidere insieme**: se le partite vinte debbano dare stelle o monete
+  nell'economia principale. Oggi no, di proposito: quella è la zona di Andrea.
+
+`npm run smoke` apre l'app in un browser vero, gioca ai quattro giochi, trascina un
+pezzo, lo piazza col doppio tocco e lascia le schermate in `.smoke/`.
 
 ---
 
@@ -156,6 +200,15 @@ Serve coordinarsi **solo** se si *rinomina* un asset → va aggiornato il riferi
 - **Emoji "tofu" (□) negli screenshot Linux headless** = falso allarme, sul telefono si vedono.
 - **`npm run lint` è rotto a monte**: manca `eslint.config.js`. Problema pre-esistente, non è
   colpa tua — non perderci tempo.
+- **Gli id dentro gli SVG devono essere unici per istanza.** `url(#bg)` risolve sul primo
+  elemento con quell'id in *tutto il documento*: con un id fisso, le quattro opzioni di una
+  sfida finivano tutte con lo sfondo della prima. Ora `BgCircle` usa `useId()` — se aggiungi
+  un gradiente o una `clipPath` a un asset, fai lo stesso.
+- **`getBoundingClientRect()` su un `<g>` con `clip-path` restituisce il riquadro
+  NON ritagliato.** Il tocco invece rispetta il ritaglio. Se ti serve il centro di un pezzo
+  di puzzle, calcolalo dal `transform`, non dal riquadro.
+- **Niente `playbackRate` sulle clip vocali**: allungare un mp3 sposta le formanti e la voce
+  diventa metallica. La cadenza si decide in registrazione (`RATE` in `scripts/gen-tts.py`).
 - **Performance**: il sito live è a **Lighthouse 97 / 100 / 100**. Prima di una PR grossa lato
   grafica: `npm run lighthouse` (locale) e non far scendere il punteggio.
 - **Smoke test Playwright** va lanciato **dalla cartella del progetto** (altrove non risolve

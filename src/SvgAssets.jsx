@@ -3,6 +3,17 @@
  * Each component returns a self-contained 100×100 circle illustration.
  * SvgAsset wraps them with drop-shadow and fallback to styled emoji.
  */
+import { useId } from "react";
+
+// Una regola sola, iniettata una volta: in modalità sagoma sparisce il cerchio
+// di fondo e resta la forma della cosa. Non si può fare con uno style inline
+// perché deve colpire un discendente.
+if (typeof document !== "undefined" && !document.getElementById("sa-styles")) {
+  const s = document.createElement("style");
+  s.id = "sa-styles";
+  s.textContent = `.sa-shadow .sa-bg{display:none}`;
+  document.head.appendChild(s);
+}
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 const Eye = ({ x, y, r = 6, iris = "#3b82f6" }) => (
@@ -19,18 +30,30 @@ const Smile = ({ cx, cy, r, stroke = "#333", sw = 2 }) => (
     stroke={stroke} strokeWidth={sw} fill="none" strokeLinecap="round" />
 );
 
-const BgCircle = ({ from, to }) => (
-  <>
-    <defs>
-      <radialGradient id="bg" cx="35%" cy="30%" r="70%">
-        <stop offset="0%" stopColor={from} />
-        <stop offset="100%" stopColor={to} />
-      </radialGradient>
-    </defs>
-    <circle cx="50" cy="50" r="48" fill="url(#bg)" />
-    <circle cx="32" cy="30" r="10" fill="white" opacity="0.18" />
-  </>
-);
+// Il gradiente ha bisogno di un id UNICO per istanza. Con un id fisso ("bg")
+// gli SVG in pagina si rubano la definizione a vicenda: `url(#bg)` risolve sul
+// primo elemento con quell'id in tutto il documento, quindi le quattro opzioni
+// di una sfida finivano tutte con lo sfondo della prima. useId() è la garanzia
+// di React che due istanze non collidano, nemmeno fra render diversi.
+//
+// La classe `sa-bg` serve alla modalità sagoma (state="shadow"): lì lo sfondo
+// va nascosto, altrimenti l'ombra di ogni cosa è lo stesso cerchio nero.
+const BgCircle = ({ from, to }) => {
+  const uid = useId().replace(/:/g, "");
+  const id = `sa-bg-${uid}`;
+  return (
+    <g className="sa-bg">
+      <defs>
+        <radialGradient id={id} cx="35%" cy="30%" r="70%">
+          <stop offset="0%" stopColor={from} />
+          <stop offset="100%" stopColor={to} />
+        </radialGradient>
+      </defs>
+      <circle cx="50" cy="50" r="48" fill={`url(#${id})`} />
+      <circle cx="32" cy="30" r="10" fill="white" opacity="0.18" />
+    </g>
+  );
+};
 
 // ─── ANIMALI TERRESTRI ────────────────────────────────────────────────────────
 const Bear = () => (
@@ -1779,9 +1802,13 @@ export default function SvgAsset({ emoji, size = 80, state = "default" }) {
     correct:  `drop-shadow(0 0 ${Math.round(size * 0.15)}px #22c55e)`,
     wrong:    `drop-shadow(0 0 ${Math.round(size * 0.12)}px #ef4444)`,
     dimmed:   `drop-shadow(0 2px 4px rgba(0,0,0,.3))`,
+    // sagoma: si appiattisce tutto su un unico tono chiaro. Il cerchio di fondo
+    // viene nascosto dalla classe .sa-shadow (vedi lo <style> qui sotto): senza,
+    // l'ombra di ogni cosa sarebbe lo stesso identico cerchio.
+    shadow:   `brightness(0) invert(1)`,
   }[state] || `drop-shadow(0 3px 6px rgba(0,0,0,.45))`;
 
-  const opacity = state === "dimmed" ? 0.4 : 1;
+  const opacity = state === "dimmed" ? 0.4 : state === "shadow" ? 0.42 : 1;
   const scale = state === "selected" ? 1.06 : 1;
 
   const containerStyle = {
@@ -1793,12 +1820,12 @@ export default function SvgAsset({ emoji, size = 80, state = "default" }) {
     filter: shadow,
     opacity,
     transform: `scale(${scale})`,
-    transition: "transform .15s ease, filter .15s ease, opacity .15s ease",
+    transition: "transform .15s ease, filter .35s ease, opacity .35s ease",
   };
 
   if (Component) {
     return (
-      <div style={containerStyle}>
+      <div style={containerStyle} className={state === "shadow" ? "sa-shadow" : undefined}>
         <Component />
       </div>
     );

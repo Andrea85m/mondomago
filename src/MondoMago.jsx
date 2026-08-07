@@ -1,9 +1,17 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
 import TTS_MAP from "./ttsMap.json";
 import WorldScene from "./WorldScene.jsx";
 import { WorldIcon, Icon, SkillIcon, RankIcon } from "./icons.jsx";
 import SvgAsset from "./SvgAssets.jsx";
 import canvasConfetti from "canvas-confetti";
+// Caricato a parte: la sezione Puzzle pesa ~17KB gzip e non serve finché il
+// bambino non la apre. Così il bundle iniziale — quello che decide il tempo di
+// avvio e il punteggio Lighthouse — resta com'era.
+const PuzzleMagico = lazy(() => import("./PuzzleMagico.jsx"));
+import {
+  FF, FF_DISPLAY, FF_MONO, FF_NUM,
+  SG_GOLD, SG_RUNE, SG_PARCH, SG_INK, SG_BG, SG_CARD, SG_BR, SG_GOLD_GRAD, SG_TILE,
+} from "./sigillo.js";
 
 // ── MONETIZZAZIONE (impalcatura freemium, OFF) ──────────────────────────────────
 // Strategia: monetizzare il GENITORE, mai il bambino. Tutto il loop educativo
@@ -568,6 +576,7 @@ function CompanionOrbit({ color }) {
 function NavMap({c="currentColor",s=22}){return<svg width={s} height={s} viewBox="0 0 22 22" fill="none" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 6L8 4L14 7L20 5L20 18L14 20L8 17L2 19Z" fill={c} fillOpacity=".18"/><line x1="8" y1="4" x2="8" y2="17"/><line x1="14" y1="7" x2="14" y2="20"/></svg>;}
 function NavBrain({c="currentColor",s=22}){return<svg width={s} height={s} viewBox="0 0 22 22" fill="none" stroke={c} strokeWidth="1.8" strokeLinecap="round"><path d="M8 6C8 4 10 3 12 5C14 3 17 5 16 8C18 9 18 12 16 13C17 16 15 19 12 18L10 18C7 19 5 16 6 13C4 12 4 9 6 8C5 5 6 3 8 6Z"/><line x1="11" y1="5" x2="11" y2="18" strokeDasharray="2.5 2"/></svg>;}
 function NavFamily({c="currentColor",s=22}){return<svg width={s} height={s} viewBox="0 0 22 22" fill={c} stroke="none"><circle cx="6" cy="6" r="2.4"/><circle cx="16" cy="6" r="2.4"/><circle cx="11" cy="9" r="1.9"/><path d="M2 15C2 12 4 11 6 11C8 11 9.5 12 9.5 13L9.5 20L2 20Z"/><path d="M12.5 15C12.5 12 14 11 16 11C18 11 20 12 20 15L20 20L12.5 20Z"/><path d="M8 16C8 14 9.2 13 11 13C12.8 13 14 14 14 16L14 20L8 20Z"/></svg>;}
+function NavPuzzle({c="currentColor",s=22}){return<svg width={s} height={s} viewBox="0 0 22 22" fill="none" stroke={c} strokeWidth="1.7" strokeLinejoin="round"><path d="M3 4.5A1.5 1.5 0 014.5 3H8a1.6 1.6 0 013.2 0H14.5A1.5 1.5 0 0116 4.5V8a1.6 1.6 0 000 3.2V14.5a1.5 1.5 0 01-1.5 1.5H11a1.6 1.6 0 01-3.2 0H4.5A1.5 1.5 0 013 14.5V11a1.6 1.6 0 000-3.2Z" fill={c} fillOpacity=".16"/><path d="M16 8a1.6 1.6 0 010 3.2" /><circle cx="11.5" cy="17.5" r="1.4" fill={c} stroke="none" opacity=".55"/></svg>;}
 function NavSparkle({c="currentColor",s=22}){return<svg width={s} height={s} viewBox="0 0 22 22" fill={c} stroke="none"><path d="M11 2L12.8 9.2L20 11L12.8 12.8L11 20L9.2 12.8L2 11L9.2 9.2Z"/><circle cx="18" cy="5" r="1.5"/><circle cx="5" cy="16.5" r="1.2"/></svg>;}
 
 // ── COMPANION SVG FACES ───────────────────────────────────────────────────────
@@ -3143,7 +3152,7 @@ function writeParent(data) {
 const SCREEN_DEPTH = {
   consent: 0, onboarding: 0.5, name: 1, age: 2, companion: 3, companion_welcome: 3.5, map: 4,
   profile_select: 5, skills: 5, family: 5, cosmetics: 5, profile: 5, story_book: 5,
-  parent: 5, fulmine: 5, coplay_intro: 6, world_intro: 7, school: 6,
+  parent: 5, fulmine: 5, puzzle: 5, coplay_intro: 6, world_intro: 7, school: 6,
   challenge: 8, world_end: 9, session_stats: 9,
 };
 
@@ -3292,26 +3301,8 @@ function LetterTracer({ letter, onComplete, youngBg }) {
 }
 
 // ── MAIN COMPONENT ────────────────────────────────────────────────────────────
-const FF = "'Fredoka One', cursive";
-// Direzione "Sigillo di Stelle": display storybook + mono per i dati numerici
-const FF_DISPLAY = "'Grandstander', 'Fredoka One', cursive";
-const FF_MONO = "'DM Mono', ui-monospace, 'SFMono-Regular', monospace";
-// Cifre che legge il bambino. DM Mono ha lo zero BARRATO come glifo di default
-// (non è una alternate: font-feature-settings "zero" 0 non lo disattiva, provato),
-// quindi in un'app che insegna a riconoscere i numeri a 3-8 anni ogni "0" arrivava
-// a schermo come "Ø". FF_MONO resta dov'è il sapore-coding e non ci sono cifre da
-// leggere: etichette maiuscolette, tipo del companion, e tutta l'area genitori.
-const FF_NUM = "'Grandstander', 'Nunito', system-ui, sans-serif";
-// Token palette "Sigillo di Stelle" (livello modulo, riusabili in ogni schermata)
-const SG_GOLD  = "#FFC24B";   // magia / accento primario
-const SG_RUNE  = "#6DE0C6";   // logica / codice
-const SG_PARCH = "#F6ECD4";   // testo su superfici scure
-const SG_INK   = "#1B1035";   // testo scuro su oro
-const SG_BG    = "radial-gradient(120% 80% at 18% 10%, rgba(124,58,237,.26) 0%, transparent 46%), radial-gradient(95% 72% at 86% 6%, rgba(255,194,75,.11) 0%, transparent 42%), radial-gradient(85% 62% at 78% 96%, rgba(109,224,198,.10) 0%, transparent 46%), radial-gradient(125% 85% at 50% -8%, #2D1B54 0%, #1B1035 52%, #140B29 100%)";
-const SG_CARD  = "rgba(45,27,84,.55)";              // superficie card indaco caldo
-const SG_BR    = "1px solid rgba(255,194,75,.14)";  // filo d'oro sottile
-const SG_GOLD_GRAD = "linear-gradient(135deg,#FFC24B,#F6A93B)"; // pulsanti primari
-const SG_TILE  = "rgba(20,11,41,.5)";               // riquadri interni più scuri
+// I token del "Sigillo di Stelle" vivono in src/sigillo.js: li usa anche
+// PuzzleMagico, e due copie degli stessi colori divergono al primo ritocco.
 // Alias a livello modulo per le schermate (skills/session_stats/…) che usano i
 // token P_* originariamente locali al blocco "parent". Il blocco parent ridefinisce
 // i propri P_* localmente (shadowing legale) → nessun conflitto.
@@ -4777,6 +4768,26 @@ export default function MondoMago() {
     );
   }
 
+  // ════════════════════ SCREEN: PUZZLE ══════════════════════════════════════
+  // Sezione a sé: vive tutta in src/PuzzleMagico.jsx e non tocca lo stato del
+  // gioco. Riceve solo l'età (per la difficoltà di partenza), la voce e i suoni.
+  if (screen === "puzzle") return (
+    <div key="puzzle" className={screenAnim}>
+      <Suspense fallback={
+        <div style={{minHeight:"var(--vvh,100dvh)",background:SG_BG,display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <div className="pulse"><Icon name="puzzle" color={SG_GOLD} size={44} /></div>
+        </div>
+      }>
+        <PuzzleMagico
+          età={childAge || 5}
+          speak={speak}
+          sfx={SFX}
+          onExit={() => navigate("map")}
+        />
+      </Suspense>
+    </div>
+  );
+
   // ════════════════════ SCREEN: MAP ═════════════════════════════════════════
   if (screen === "map") {
     const SIGILLO_MAP_BG = "radial-gradient(125% 85% at 50% -8%, #2D1B54 0%, #1B1035 52%, #140B29 100%)";
@@ -5072,23 +5083,26 @@ export default function MondoMago() {
         <div style={{background:"rgba(0,0,0,.15)",borderRadius:20,padding:"5px 14px",fontSize:13,fontWeight:900}}>GO!</div>
       </button>
       {/* ── NAV TABS ── */}
-      <div style={{display:"flex",gap:8,marginBottom:20}}>
-        {[[NavMap,"Mondi"],[NavBrain,"Skill"],[NavFamily,"Famiglia"],[NavSparkle,"Look"]].map(([Icon,label],i) => (
+      {/* Da 4 tab a 5 con l'arrivo di Puzzle: spazi e corpo del testo scendono,
+          altrimenti "Famiglia" va a capo su uno schermo da 360px. */}
+      <div style={{display:"flex",gap:6,marginBottom:20}}>
+        {[[NavMap,"Mondi"],[NavPuzzle,"Puzzle"],[NavBrain,"Skill"],[NavFamily,"Famiglia"],[NavSparkle,"Look"]].map(([Icon,label],i) => (
           <button key={i} onClick={() => {
-            if(i===1) navigate("skills");
-            else if(i===2) navigate("family");
-            else if(i===3) navigate("cosmetics");
+            if(i===1) navigate("puzzle");
+            else if(i===2) navigate("skills");
+            else if(i===3) navigate("family");
+            else if(i===4) navigate("cosmetics");
           }}
             style={{
               flex:1,
               background:i===0?mt.tabAct:mt.tabInact,
               border:i===0?mt.tabActBd:mt.tabInactBd,
-              borderRadius:16,padding:"14px 10px",minHeight:58,
+              borderRadius:16,padding:"13px 3px",minHeight:58,
               color:i===0?mt.tabActFg:mt.tabInactFg,
-              fontFamily:FF,fontSize:13,cursor:"pointer",
+              fontFamily:FF,fontSize:10.5,letterSpacing:-.2,whiteSpace:"nowrap",cursor:"pointer",
               display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:3,
             }}>
-            <Icon c={i===0?mt.tabActFg:mt.tabInactFg} s={22}/>
+            <Icon c={i===0?mt.tabActFg:mt.tabInactFg} s={21}/>
             <div>{label}</div>
           </button>
         ))}
