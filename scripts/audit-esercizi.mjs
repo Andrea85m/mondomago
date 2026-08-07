@@ -475,20 +475,28 @@ for (const age of SELECTABLE_AGES) {
 const spokenOf = (c) =>
   c.format === 'story_choice'   ? c.situation
   : c.format === 'word_picture' ? `Trova l'immagine per la parola: ${c.word}`
-  : c.format === 'letter_trace' ? `Quale immagine inizia con la lettera ${c.letter}?`
+  : c.format === 'letter_trace' ? c.prompt          // "Traccia la lettera I come in Isola!"
+  : c.id?.startsWith('ba_') ? `Quale immagine inizia con la lettera ${c.id.replace('ba_', '')}?`
   : c.format === 'rhyme_complete' ? String(c.prompt).replace('___', '...')
   : c.prompt || c.question;
 
-let noTts = 0;
-const noTtsExamples = [];
-for (const c of flatChallenges) {
-  const t = spokenOf(c);
-  if (!t) continue;
-  if (!ttsMap[t]) { noTts++; if (noTtsExamples.length < 8) noTtsExamples.push(`[${c._world}/${c.id}] "${String(t).replace(/\n/g, '⏎').slice(0, 60)}"`); }
+// La copertura della voce ha un controllo suo — `node scripts/check-tts.mjs` —
+// che conosce le regole di normalizzazione della chiave (nome del bambino tolto,
+// spazi doppi ricuciti, filastrocche col buco sostituito). Qui basta un colpo
+// d'occhio: se il divario è grosso, quello è il posto dove guardare.
+{
+  const keys = new Set(Object.keys(ttsMap));
+  const norm = (s) => String(s).replace(/\s+([,.!?;:])/g, '$1').replace(/\s{2,}/g, ' ').trim();
+  const missing = flatChallenges.filter(c => {
+    const t = spokenOf(c);
+    return t && !keys.has(String(t)) && !keys.has(norm(t));
+  });
+  if (missing.length)
+    W('TTS_MISSING', `${missing.length}/${flatChallenges.length} consegne forse senza voce. ` +
+      `Verifica esatta: node scripts/check-tts.mjs`);
+  else
+    N('TTS_OK', `Tutte le ${flatChallenges.length} consegne hanno una voce registrata (${keys.size} clip in totale).`);
 }
-if (noTts) W('TTS_MISSING',
-  `${noTts}/${flatChallenges.length} consegne senza voce registrata → l'app ripiega sulla voce di sistema ` +
-  `(diversa su ogni telefono, spesso robotica). Esempi:\n      ` + noTtsExamples.join('\n      '));
 
 // disegni: quali emoji cadono nel fallback "emoji dentro un cerchio"
 const emojiUsed = new Map();

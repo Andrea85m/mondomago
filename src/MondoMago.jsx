@@ -2724,16 +2724,74 @@ function getBestVoice() {
   return _bestVoice;
 }
 
+// ── Nome del bambino ─────────────────────────────────────────────────────────
+// Il nome non si può pre-registrare, e far entrare la voce di sistema per una
+// sola parola significa cambiare timbro a metà frase. Lo si toglie dal parlato:
+// resta scritto sullo schermo, dove il bambino lo vede.
+// Regola gemella in Python: strip_name() in scripts/lib/tts_text.py.
+let _spokenName = "";
+function setSpokenName(n) { _spokenName = (n || "").trim(); }
+
+function stripName(text) {
+  let t = String(text);
+  if (_spokenName) {
+    const esc = _spokenName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    t = t.replace(new RegExp(`\\b${esc}\\b`, 'gi'), '');
+  }
+  return t
+    .replace(/\s*,\s*(?=[,.!?;:])/g, '')
+    .replace(/([([])\s*[,;]\s*/g, '$1')
+    .replace(/^\s*[,;:!?.]+\s*/, '')
+    .replace(/\s+([,.!?;:])/g, '$1')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
+/** La chiave con cui si cerca la clip registrata: il testo a schermo, nome tolto. */
+function ttsKey(text) { return stripName(text); }
+
+// ── Testo → parlato (solo per la riserva `speechSynthesis`) ──────────────────
+// Il vecchio filtro cancellava ogni simbolo: "3 × 4 = ?" diventava "3 4 ?" e la
+// voce diceva "tre quattro". Gemella di to_speech() in scripts/lib/tts_text.py.
+const SPEECH_DIGITS = { '0️⃣':'zero','1️⃣':'uno','2️⃣':'due','3️⃣':'tre','4️⃣':'quattro','5️⃣':'cinque','6️⃣':'sei','7️⃣':'sette','8️⃣':'otto','9️⃣':'nove','🔟':'dieci' };
+const SPEECH_COUNT_NOUNS = { '🍎':'mele','🍊':'arance','🍋':'limoni','🍓':'fragole','⭐':'stelle','🌟':'stelle','🚀':'razzi','🐟':'pesci','🐠':'pesci','🦋':'farfalle','🌲':'alberi','📚':'libri','🔥':'fiamme','🌋':'vulcani','🍄':'funghi','🌸':'fiori' };
+const SPEECH_SYMBOLS = [
+  [/\s*=\s*\?/g, ' quanto fa?'], [/\s*×\s*/g, ' per '], [/\s*÷\s*/g, ' diviso '],
+  [/(\d)\s*[-−]\s*(?=\d)/g, '$1 meno '], [/(\d)\s*\+\s*(?=\d)/g, '$1 più '],
+  [/\s*>=\s*/g, ' maggiore o uguale a '], [/\s*<=\s*/g, ' minore o uguale a '],
+  [/\s*>\s*/g, ' maggiore di '], [/\s*<\s*/g, ' minore di '], [/\s*=\s*/g, ' uguale a '],
+  [/(\d)\s*%/g, '$1 per cento'], [/(\d)\s*€/g, '$1 euro'], [/€\s*(\d)/g, 'euro $1'],
+  [/(\d)\s*°\s*C\b/g, '$1 gradi'], [/(\d)\s*°/g, '$1 gradi'],
+  [/\bkm\/h\b/g, " chilometri all'ora"], [/\bkm\b/g, ' chilometri'],
+];
+const EMOJI_STRIP = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{1F1E6}-\u{1F1FF}\u{FE0F}\u{20E3}\u{200D}\u{2190}-\u{21FF}]/gu;
+
+function toSpeech(text) {
+  let t = stripName(text);
+  for (const [e, w] of Object.entries(SPEECH_DIGITS)) t = t.split(e).join(w);
+  t = t.replace(/\b(Quant[ei])\s*([\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]+)/gu,
+    (_, q, e) => { const w = SPEECH_COUNT_NOUNS[e] || SPEECH_COUNT_NOUNS[e.replace(/\u{FE0F}/gu, '')]; return w ? `${q} ${w}` : q; });
+  t = t.replace(/([.!?:;,])\s*\n\s*/g, '$1 ').replace(/\s*\n\s*/g, ', ');
+  for (const [re, w] of SPEECH_SYMBOLS) t = t.replace(re, w);
+  t = t.replace(/_{2,}/g, '').replace(EMOJI_STRIP, ' ');
+  return t
+    .replace(/[^\w\s.,!?:;'’"()\-àèéìòùÀÈÉÌÒÙ]/g, ' ')
+    .replace(/\s+([,.!?;:])/g, '$1')
+    .replace(/([,.!?;:])\1+/g, '$1')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/^[,.;:!?\s]+/, '')
+    .replace(/[,;:]\s*$/, '')
+    .replace(/([?!])\s*\.\s*$/, '$1')
+    .trim();
+}
+
 function speakBrowser(text, rate = 0.85) {
   if (!window?.speechSynthesis || !text) return;
   // Chrome deprecates (and will block) speechSynthesis.speak() before any user
   // gesture. Skip only when we're certain no activation has happened yet — after
   // the first tap anywhere hasBeenActive stays true and all speech works.
   if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
-  const clean = String(text)
-    .replace(/\n/g, ', ')
-    .replace(/[^\w\s.,!?àèéìòùÀÈÉÌÒÙ'-]/g, '')
-    .replace(/\s+/g, ' ').trim();
+  const clean = toSpeech(text);
   if (!clean) return;
   const u = new SpeechSynthesisUtterance(clean);
   u.lang   = 'it-IT';
@@ -2754,10 +2812,12 @@ function speak(text, rate = 0.85, onEnd) {
   if (_onTalkingEnd) { _onTalkingEnd(); _onTalkingEnd = null; }
   if (onEnd) _onTalkingEnd = onEnd;
 
-  const file = TTS_MAP[text];
+  const file = TTS_MAP[ttsKey(text)] || TTS_MAP[text];
   if (file) {
     const audio = new Audio(`./audio/${file}`);
-    audio.playbackRate = rate <= 0.78 ? 0.88 : 1.0;
+    // Niente playbackRate: allungare o accorciare un mp3 sposta le formanti e
+    // la voce diventa metallica. La cadenza giusta è già dentro il file
+    // (gen-tts.py registra tutto a rate -10%), quindi si riproduce a 1×.
     _currentAudio = audio;
     audio.onended = () => {
       if (_currentAudio === audio) _currentAudio = null;
@@ -4169,6 +4229,10 @@ export default function MondoMago() {
     }
   }, [nowTick, sessionStart, sessionAlertShown, screen]); // eslint-disable-line
 
+  // Il nome del bambino non è registrabile: speak() lo toglie dal parlato e lo
+  // lascia solo a schermo, così la voce resta una sola per tutta la frase.
+  useEffect(() => { setSpokenName(childName); }, [childName]);
+
   // Pre-load voices so getBestVoice() has data on first speak()
   useEffect(() => {
     if (!window?.speechSynthesis) return;
@@ -5120,7 +5184,7 @@ export default function MondoMago() {
           const locked = !w.unlocked;
           const isSpot = i === 0 && !isReturning && totalStars === 0 && !mapSpotDismissed;
           return (
-            <button key={w.id} onClick={() => { if (isSpot) setMapSpotDismissed(true); locked ? speak(`Guadagna ancora ${w.starsNeeded - totalStars} stelle per aprire ${w.name}!`) : startWorld(w); }}
+            <button key={w.id} onClick={() => { if (isSpot) setMapSpotDismissed(true); locked ? speak(`Questo mondo è ancora chiuso. Guadagna altre stelle per aprire ${w.name}!`) : startWorld(w); }}
               className={`slide-up${locked?"":" world-card-btn"}${isSpot?" pulse":""}`}
               disabled={locked}
               style={{
@@ -6321,8 +6385,14 @@ export default function MondoMago() {
                 </div>
                 {/* Story narrative outcome */}
                 {isStory && storyChoice?.outcome && (
-                  <div style={{fontSize:13,lineHeight:1.5,marginBottom:4,color:youngBg?"#444":"rgba(255,255,255,.88)"}}>
+                  // A 5-6 anni il finale della storia non si legge da soli: è il
+                  // momento che dà senso alla scelta, e va potuto ascoltare.
+                  <div role="button" tabIndex={0}
+                    onClick={() => { SFX.tap(); speak(storyChoice.outcome); }}
+                    onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { SFX.tap(); speak(storyChoice.outcome); } }}
+                    style={{fontSize:13,lineHeight:1.5,marginBottom:4,cursor:"pointer",color:youngBg?"#444":"rgba(255,255,255,.88)"}}>
                     {storyChoice.outcome}
+                    <Icon name="audio" color={youngBg?"#8A6A16":"#FFC24B"} ink={youngBg?"#3A2A10":undefined} size={13} style={{verticalAlign:"-2px",marginLeft:6,opacity:.75}} />
                   </div>
                 )}
                 {/* Correct answer revealed on wrong (MC/visual/rhyme/word) */}
