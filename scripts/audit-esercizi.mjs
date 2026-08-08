@@ -283,8 +283,10 @@ for (const c of flatChallenges) {
       E('PS_TILES', `${tag} ${c.emojis.length} tessere per una griglia ${size}×${size} (ne servono ${size * size - 1}).`);
     if (!PUZZLE_SHOWS_TARGET)
       E('PS_NO_TARGET', `${tag} puzzle scorrevole senza immagine-modello a schermo: l'ordine corretto (${(c.emojis || []).join('')}) è arbitrario e il bambino non può dedurlo → sfida non risolvibile se non per tentativi.`);
-    if (size >= 3 && c.ageMax <= 8)
-      W('PS_HARD', `${tag} griglia ${size}×${size} = puzzle del 15 con 8 tessere: resta impegnativo sotto i 9-10 anni anche col modello a vista.`);
+    // Il 3×3 è il puzzle del 15 con 8 tessere. Col modello a vista è materiale
+    // da 2ª-3ª primaria: sotto i 7 anni resta fuori portata.
+    if (size >= 3 && c.ageMin < 7)
+      W('PS_HARD', `${tag} griglia ${size}×${size} servita da ${c.ageMin} anni: il puzzle scorrevole a 8 tessere richiede una strategia, non solo pazienza.`);
   }
 
   // ── parola/immagine ──
@@ -313,11 +315,16 @@ for (const c of flatChallenges) {
   const lim = LIMITS[band];
   const text = [c.prompt, c.situation, c.condition].filter(Boolean).join(' ');
 
-  // 3.1 carico di lettura
+  // 3.1 carico di lettura.
+  // Doppia codifica: una consegna accompagnata da un'immagine e letta ad alta
+  // voce regge una frase più lunga di una consegna nuda, perché il significato
+  // non passa solo dalle parole. Il limite si alza dove c'è il supporto visivo.
   if (text) {
     const wc = wordCount(text);
-    if (wc > lim.maxPromptWords)
-      W('READING_LOAD', `${tag} ${band}: consegna di ${wc} parole (limite consigliato ${lim.maxPromptWords}) — "${text.replace(/\n/g, ' ').slice(0, 70)}…"`);
+    const conImmagine = Boolean(c.visual) || Array.isArray(c.items);
+    const limite = band === '3-4' && conImmagine ? 12 : lim.maxPromptWords;
+    if (wc > limite)
+      W('READING_LOAD', `${tag} ${band}${conImmagine ? ' (con immagine)' : ''}: consegna di ${wc} parole (limite ${limite}) — "${text.replace(/\n/g, ' ').slice(0, 70)}…"`);
   }
 
   // 3.2 a 3-4 anni non si legge: le opzioni devono essere immagini

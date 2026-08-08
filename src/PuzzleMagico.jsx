@@ -364,7 +364,7 @@ function SceltaLivello({ valore, onCambia }) {
   );
 }
 
-function Vittoria({ testo, adesivo, onAncora, onEsci }) {
+function Vittoria({ testo, adesivo, monete = 0, onAncora, onEsci }) {
   return (
     <div className="fade-in" style={{
       position: "fixed", inset: 0, zIndex: 60, background: "rgba(11,6,25,.86)",
@@ -379,6 +379,14 @@ function Vittoria({ testo, adesivo, onAncora, onEsci }) {
           <Icon name="trophy" color={SG_GOLD} size={52} />
         </div>
         <div style={{ fontFamily: FF_DISPLAY, fontSize: 25, color: SG_GOLD, marginBottom: 6 }}>{testo}</div>
+        {monete > 0 && (
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 7, marginBottom: 10,
+            background: "rgba(109,224,198,.14)", border: "1px solid rgba(109,224,198,.4)",
+            borderRadius: 30, padding: "5px 14px" }}>
+            <Icon name="coin" color={SG_RUNE} size={17} />
+            <span style={{ fontFamily: FF_NUM, fontWeight: 800, fontSize: 16, color: SG_RUNE }}>+{monete}</span>
+          </div>
+        )}
         {adesivo && (
           <>
             <div style={{ fontSize: 12, opacity: .7, marginBottom: 8 }}>Hai vinto un adesivo!</div>
@@ -781,10 +789,16 @@ function GiocoIncastro({ livello, seme, speak, sfx, onVinto, onIndietro, onLivel
     return () => clearTimeout(t);
   }, [speak]);
 
+  // Man mano che i pezzi salgono sul tabellone la vaschetta si accorcia, ma non
+  // può sparire: a puzzle finito tutte le y stanno sopra VASSOIO_Y e senza un
+  // minimo il rettangolo della vaschetta finiva con un'altezza negativa.
   const altezzaVassoio = useMemo(() => {
     const ys = Object.values(dove).map(p => p.y);
-    return ys.length ? Math.max(...ys) + (H / rows) * SCALA_VASSOIO / 2 + 20 : VASSOIO_Y + 120;
-  }, [dove, H, rows]);
+    const bordoBasso = ys.length
+      ? Math.max(...ys) + (H / rows) * SCALA_VASSOIO / 2 + 20
+      : VASSOIO_Y + 120;
+    return Math.max(VASSOIO_Y + 40, bordoBasso);
+  }, [dove, H, rows, VASSOIO_Y]);
 
   const centroCasa = (p) => ({ x: p.ax + p.cw / 2, y: p.ay + p.ch / 2 });
   const SCATTO = Math.max(26, Math.min(W / cols, H / rows) * 0.45);
@@ -950,7 +964,17 @@ const GIOCHI = [
   { id: "incastro",    nome: "Puzzle a incastro",desc: "Il puzzle vero, pezzo per pezzo", icona: "puzzle",   colore: "#F97316" },
 ];
 
-export default function PuzzleMagico({ età = 5, speak, sfx, onExit }) {
+// ── Ricompense: monete sì, stelle no ─────────────────────────────────────────
+// Le stelle aprono i mondi e fanno salire di grado: se le desse anche il puzzle,
+// un bambino potrebbe sbloccare tutti e otto i mondi senza aver mai risolto una
+// sfida, e il motore adattivo — che si taratura su come risponde — resterebbe al
+// buio. Le monete invece comprano solo cosmetici: nessun cancello, nessuna
+// scorciatoia. È la stessa separazione che tiene Duolingo fra XP e gemme.
+// Il tetto giornaliero evita che il puzzle diventi una macchinetta da monete.
+const MONETE_PER_LIVELLO = { facile: 1, medio: 2, difficile: 3, mago: 4 };
+const TETTO_MONETE_AL_GIORNO = 20;
+
+export default function PuzzleMagico({ età = 5, speak, sfx, onExit, onMonete }) {
   const [salvato, setSalvato] = useState(loadSave);
   const [schermo, setSchermo] = useState("hub");
   const [livello, setLivello] = useState(() => livelloPerEtà(età));
@@ -967,14 +991,23 @@ export default function PuzzleMagico({ età = 5, speak, sfx, onExit }) {
     const mancanti = ADESIVI.filter(a => !adesiviVinti.includes(a.id));
     // un adesivo nuovo ogni 2 partite, finché ce ne sono
     const nuovo = mancanti.length && partite % 2 === 1 ? pick(mancanti) : null;
+
+    const oggi = new Date().toISOString().slice(0, 10);
+    const giaOggi = salvato.moneteData === oggi ? (salvato.moneteOggi || 0) : 0;
+    const valore = MONETE_PER_LIVELLO[livello.id] || 2;
+    const monete = Math.max(0, Math.min(valore, TETTO_MONETE_AL_GIORNO - giaOggi));
+
     setSalvato(s => ({
       ...s,
       partite: (s.partite || 0) + 1,
       adesivi: nuovo ? [...adesiviVinti, nuovo.id] : adesiviVinti,
+      moneteData: oggi,
+      moneteOggi: giaOggi + monete,
     }));
+    if (monete) onMonete?.(monete);
     sfx?.victory?.();
     speak?.(nuovo ? "Bravissimo! Hai vinto un adesivo nuovo!" : "Bravissimo! Puzzle completato!");
-    setVittoria({ testo, adesivo: nuovo });
+    setVittoria({ testo, adesivo: nuovo, monete });
   }
 
   const chiudi = () => { setVittoria(null); setSchermo("hub"); };
@@ -1002,7 +1035,7 @@ export default function PuzzleMagico({ età = 5, speak, sfx, onExit }) {
   if (gioco) return (
     <>
       {gioco}
-      {vittoria && <Vittoria testo={vittoria.testo} adesivo={vittoria.adesivo} onAncora={ancora} onEsci={chiudi} />}
+      {vittoria && <Vittoria testo={vittoria.testo} adesivo={vittoria.adesivo} monete={vittoria.monete} onAncora={ancora} onEsci={chiudi} />}
     </>
   );
 

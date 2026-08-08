@@ -1228,8 +1228,8 @@ const ALL_CHALLENGES = {
       ] },
 
     { id:"o12", format:"multiple_choice", type:"logica", ageMin:5, ageMax:6, isBoss:true,
-      prompt:"🦈 Lo Squalo chiede:\n20 pesci nel banco. Metà si nasconde.\nArrivano 3 nuovi. Quanti pesci ci sono?",
-      emoji:"🦈", options:["11","12","13","14"], correct:2 },
+      prompt:"🦈 Lo Squalo chiede:\n20 pesci nel banco. 8 si nascondono.\nArrivano 3 nuovi. Quanti pesci ci sono?",
+      emoji:"🦈", options:["13","14","15","16"], correct:2 },
   ],
 
   mercato: [
@@ -1286,8 +1286,8 @@ const ALL_CHALLENGES = {
       ] },
 
     { id:"m12", format:"multiple_choice", type:"numeri", ageMin:5, ageMax:6, isBoss:true,
-      prompt:"🧙 Il Mago chiede:\nHai 15 caramelle. Le dividi in 3 sacchetti uguali.\nQuante caramelle in ogni sacchetto?",
-      emoji:"🧙", options:["3","4","5","6"], correct:2 },
+      prompt:"🧙 Il Mago chiede:\nHai 15 caramelle. Ne mangi 4 e ne regali 3.\nQuante caramelle ti restano?",
+      emoji:"🧙", options:["6","7","8","9"], correct:2 },
   ],
 
   galassia: [
@@ -1344,8 +1344,8 @@ const ALL_CHALLENGES = {
       ] },
 
     { id:"g12", format:"multiple_choice", type:"logica", ageMin:5, ageMax:6, isBoss:true,
-      prompt:"👽 L'Alieno chiede:\n100 stelle in cielo. Ne esplodono 15, ne nascono 8 nuove.\nQuante stelle ci sono?",
-      emoji:"👽", options:["90","91","92","93"], correct:3 },
+      prompt:"👽 L'Alieno chiede:\n18 stelle in cielo. Ne cadono 5, ne nascono 3 nuove.\nQuante stelle ci sono?",
+      emoji:"👽", options:["14","15","16","17"], correct:2 },
   ],
 };
 
@@ -1493,8 +1493,8 @@ Object.assign(ALL_CHALLENGES, {
   ]),
   mercato: ALL_CHALLENGES.mercato.concat([
     { id:"mb01", format:"visual_tap", type:"conteggio", ageMin:3, ageMax:4,
-      visual:"🍊🍊🍊🍊🍊🍊", prompt:"Quante arance?", emoji:"🍊",
-      options:["4️⃣","5️⃣","6️⃣","7️⃣"], correct:2 },
+      visual:"🍊🍊🍊🍊🍊", prompt:"Quante arance?", emoji:"🍊",
+      options:["3️⃣","4️⃣","5️⃣","6️⃣"], correct:2 },
     { id:"mb02", format:"visual_tap", type:"logica", ageMin:3, ageMax:4,
       visual:"🍎🥦🍇🍓", prompt:"Quale è la verdura?", emoji:"🥗",
       options:["🍎","🥦","🍇","🍓"], correct:1 },
@@ -1537,8 +1537,8 @@ Object.assign(ALL_CHALLENGES, {
   ]),
   galassia: ALL_CHALLENGES.galassia.concat([
     { id:"gb01", format:"visual_tap", type:"conteggio", ageMin:3, ageMax:4,
-      visual:"🌟🌟🌟🌟🌟🌟", prompt:"Quante stelle?", emoji:"🚀",
-      options:["4️⃣","5️⃣","6️⃣","7️⃣"], correct:2 },
+      visual:"🌟🌟🌟🌟🌟", prompt:"Quante stelle?", emoji:"🚀",
+      options:["3️⃣","4️⃣","5️⃣","6️⃣"], correct:2 },
     { id:"gb02", format:"visual_tap", type:"logica", ageMin:3, ageMax:4,
       visual:"⭐🪐☀️🚀", prompt:"Quale è il pianeta?", emoji:"🔭",
       options:["⭐","🪐","☀️","🚀"], correct:1 },
@@ -1576,8 +1576,8 @@ Object.assign(ALL_CHALLENGES, {
         { text:"🚀 Parto — non riesco a capirlo", outcome:"L'alieno è rimasto solo nello spazio... la gentilezza non ha bisogno di parole.", correct:false },
       ] },
     { id:"gb12", format:"multiple_choice", type:"numeri", ageMin:5, ageMax:6, isBoss:true,
-      prompt:"👽 L'Alieno chiede:\nIl razzo ha 4 serbatoi con 25 litri ciascuno.\nQuanti litri in tutto?",
-      emoji:"👽", options:["80","90","100","110"], correct:2 },
+      prompt:"👽 L'Alieno chiede:\nIl razzo ha 4 serbatoi con 5 litri ciascuno.\nQuanti litri in tutto?",
+      emoji:"👽", options:["9","15","20","25"], correct:2 },
   ]),
 });
 
@@ -1708,8 +1708,8 @@ ALL_CHALLENGES.vulcano = [
       { text:"🏃 Scappo, i draghi mi spaventano", outcome:"Il dragone è rimasto solo... a volte le creature più spaventose hanno bisogno di aiuto.", correct:false },
     ] },
   { id:"v12", format:"multiple_choice", type:"numeri", ageMin:5, ageMax:6, isBoss:true,
-    prompt:"🌋 La Fenice chiede:\nIl vulcano erutta ogni 4 ore.\nIn un giorno quante volte erutta?",
-    emoji:"🐦", options:["4","5","6","7"], correct:2 },
+    prompt:"🌋 La Fenice chiede:\nIl vulcano erutta 5 volte di giorno\ne 4 volte di notte. Quante eruzioni in tutto?",
+    emoji:"🐦", options:["7","8","9","10"], correct:2 },
 ];
 
 // ── WORLD: BIBLIOTECA INCANTATA ───────────────────────────────────────────────
@@ -1794,8 +1794,8 @@ ALL_CHALLENGES.biblioteca = [
     prompt:"Quale parola significa il contrario di RUMORE?",
     emoji:"🔇", options:["Silenzio","Suono","Voce","Musica"], correct:0 },
   { id:"b08", format:"multiple_choice", type:"logica", ageMin:5, ageMax:6,
-    prompt:"Una biblioteca ha 5 scaffali con 8 libri ciascuno.\nQuanti libri in tutto?",
-    emoji:"📚", options:["35","38","40","45"], correct:2 },
+    prompt:"Una biblioteca ha 4 scaffali con 5 libri ciascuno.\nQuanti libri in tutto?",
+    emoji:"📚", options:["9","15","20","25"], correct:2 },
   { id:"b09", format:"sequence_tap", type:"parole", ageMin:5, ageMax:6,
     prompt:"Metti le parole in ordine alfabetico!",
     emoji:"🔤",
@@ -1898,6 +1898,36 @@ Object.assign(ALL_CHALLENGES, {
 
 // ── LABORATORIO LOGICO (Mondo 8) ──────────────────────────────────────────────
 ALL_CHALLENGES.laboratorio = [
+  // ── 3-4 anni ────────────────────────────────────────────────────────────────
+  // A quest'età il pensiero computazionale è "se succede questo allora quello"
+  // e "prima, poi, infine": nessuna lettura per rispondere, si tocca l'immagine.
+  // Prima di queste il mondo era di fatto ingiocabile sotto i 5 anni: 5 sfide
+  // sole, cioè sempre le stesse.
+  { id:"lab_a1", format:"visual_tap", type:"condizione", ageMin:3, ageMax:4,
+    visual:"🤖💧", prompt:"Il robot ha sete.\nCosa gli serve?", emoji:"🤖",
+    options:["💧","🪨","⚽","🎸"], correct:0 },
+
+  { id:"lab_a2", format:"visual_tap", type:"sequenza", ageMin:3, ageMax:4,
+    visual:"🌰", prompt:"Dal seme nasce...", emoji:"🌱",
+    options:["🌳","🐟","🏰","🎺"], correct:0 },
+
+  { id:"lab_a3", format:"visual_tap", type:"condizione", ageMin:3, ageMax:4,
+    visual:"🔥", prompt:"Il fuoco scotta!\nCosa lo spegne?", emoji:"🧯",
+    options:["💧","🍞","🎈","👑"], correct:0 },
+
+  { id:"lab_a4", format:"code_sequence", type:"sequenza", ageMin:3, ageMax:4,
+    prompt:"Aiuta Pixel a mangiare una mela!\nMetti in ordine:", emoji:"🍎",
+    items:["🧺 Prendi la mela","💧 Lavala","😋 Mangiala"], correctOrder:[0,1,2] },
+
+  { id:"lab_a5", format:"code_sequence", type:"sequenza", ageMin:3, ageMax:4,
+    prompt:"Come si costruisce una torre?\nMetti in ordine:", emoji:"🧱",
+    items:["🟦 Il primo cubo in basso","🟩 Poi il secondo sopra","⭐ La stella in cima"],
+    correctOrder:[0,1,2] },
+
+  { id:"lab_a6", format:"visual_tap", type:"coding", ageMin:3, ageMax:4, isBoss:true,
+    visual:"🔴🔵🔴🔵", prompt:"🤖 Pixel chiede:\nche colore viene dopo?", emoji:"🤖",
+    options:["🔴","🔵","🟡","🟢"], correct:0 },
+
   // ── 4-5 anni: if_else_tap + code_sequence 3 passi ───────────────────────────
   { id:"lab01", format:"if_else_tap", type:"coding", ageMin:4, ageMax:5,
     emoji:"🐻", condition:"L'orso vede il miele 🍯",
@@ -2399,19 +2429,19 @@ ALL_CHALLENGES.vulcano = ALL_CHALLENGES.vulcano.concat([
     question:"Riordina i pianeti!",
     emojis:["🚀","🪐","⭐"] },
   // ps06 — Vulcano 3x3 (5-6)
-  { id:"ps06", world:"vulcano", ageMin:5, ageMax:6, size:3,
-    question:"Rimetti in ordine il vulcano! 8 pezzi da sistemare.",
-    emojis:["🌋","🔥","💨","🪨","🌡️","🦎","🏜️","⛏️"] },
+  { id:"ps06", world:"vulcano", ageMin:5, ageMax:6, size:2,
+    question:"Rimetti in ordine il vulcano!",
+    emojis:["🌋","🔥","🪨"] },
   // ps07 — Biblioteca 3x3 (5-7)
-  { id:"ps07", world:"biblioteca", ageMin:5, ageMax:7, size:3,
-    question:"Riordina la biblioteca! 8 oggetti al posto giusto.",
-    emojis:["📚","🔭","🎸","📝","🔬","🖊️","📖","🎹"] },
+  { id:"ps07", world:"biblioteca", ageMin:5, ageMax:7, size:2,
+    question:"Riordina la biblioteca!",
+    emojis:["📚","🔭","🎸"] },
   // ps08 — Laboratorio 3x3 (6-8)
-  { id:"ps08", world:"laboratorio", ageMin:6, ageMax:8, size:3,
+  { id:"ps08", world:"laboratorio", ageMin:7, ageMax:8, size:3,
     question:"Rimetti in ordine il laboratorio di Pixel!",
     emojis:["🤖","🔋","💡","🧪","⚙️","🔧","🖥️","📡"] },
   // ps09 — Foresta 3x3 (6-8)
-  { id:"ps09", world:"foresta", ageMin:6, ageMax:8, size:3,
+  { id:"ps09", world:"foresta", ageMin:7, ageMax:8, size:3,
     question:"La foresta è in disordine — sistema tutti gli elementi!",
     emojis:["🌲","🍄","🦋","🐝","🌸","🍓","🌿","🐿️"] },
 ].forEach(({ id, world, ageMin, ageMax, size, question, emojis }) => {
@@ -4782,6 +4812,10 @@ export default function MondoMago() {
           età={childAge || 5}
           speak={speak}
           sfx={SFX}
+          // Monete sì, stelle no: le stelle aprono i mondi e fanno salire di
+          // grado, e un puzzle non deve poter scavalcare le sfide. Le monete
+          // comprano solo cosmetici. Il tetto giornaliero è dentro PuzzleMagico.
+          onMonete={(n) => setCoins(c => c + n)}
           onExit={() => navigate("map")}
         />
       </Suspense>
