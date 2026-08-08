@@ -24,6 +24,9 @@ Thumbs.db
 .idea/
 *.sw?
 
+# Schermate dello smoke test (si rigenerano con `npm run smoke`)
+.smoke/
+
 # Artefatti Lighthouse / spazzatura accidentale
 C:\\Users\\*
 lighthouse-report.html
@@ -36,3 +39,7 @@ lighthouse.*/
 .env
 .env.*
 !.env.example
+
+# Cache Python degli script
+__pycache__/
+*.pyc

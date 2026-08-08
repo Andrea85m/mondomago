@@ -3,6 +3,17 @@
  * Each component returns a self-contained 100×100 circle illustration.
  * SvgAsset wraps them with drop-shadow and fallback to styled emoji.
  */
+import { useId } from "react";
+
+// Una regola sola, iniettata una volta: in modalità sagoma sparisce il cerchio
+// di fondo e resta la forma della cosa. Non si può fare con uno style inline
+// perché deve colpire un discendente.
+if (typeof document !== "undefined" && !document.getElementById("sa-styles")) {
+  const s = document.createElement("style");
+  s.id = "sa-styles";
+  s.textContent = `.sa-shadow .sa-bg{display:none}`;
+  document.head.appendChild(s);
+}
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 const Eye = ({ x, y, r = 6, iris = "#3b82f6" }) => (
@@ -19,18 +30,30 @@ const Smile = ({ cx, cy, r, stroke = "#333", sw = 2 }) => (
     stroke={stroke} strokeWidth={sw} fill="none" strokeLinecap="round" />
 );
 
-const BgCircle = ({ from, to }) => (
-  <>
-    <defs>
-      <radialGradient id="bg" cx="35%" cy="30%" r="70%">
-        <stop offset="0%" stopColor={from} />
-        <stop offset="100%" stopColor={to} />
-      </radialGradient>
-    </defs>
-    <circle cx="50" cy="50" r="48" fill="url(#bg)" />
-    <circle cx="32" cy="30" r="10" fill="white" opacity="0.18" />
-  </>
-);
+// Il gradiente ha bisogno di un id UNICO per istanza. Con un id fisso ("bg")
+// gli SVG in pagina si rubano la definizione a vicenda: `url(#bg)` risolve sul
+// primo elemento con quell'id in tutto il documento, quindi le quattro opzioni
+// di una sfida finivano tutte con lo sfondo della prima. useId() è la garanzia
+// di React che due istanze non collidano, nemmeno fra render diversi.
+//
+// La classe `sa-bg` serve alla modalità sagoma (state="shadow"): lì lo sfondo
+// va nascosto, altrimenti l'ombra di ogni cosa è lo stesso cerchio nero.
+const BgCircle = ({ from, to }) => {
+  const uid = useId().replace(/:/g, "");
+  const id = `sa-bg-${uid}`;
+  return (
+    <g className="sa-bg">
+      <defs>
+        <radialGradient id={id} cx="35%" cy="30%" r="70%">
+          <stop offset="0%" stopColor={from} />
+          <stop offset="100%" stopColor={to} />
+        </radialGradient>
+      </defs>
+      <circle cx="50" cy="50" r="48" fill={`url(#${id})`} />
+      <circle cx="32" cy="30" r="10" fill="white" opacity="0.18" />
+    </g>
+  );
+};
 
 // ─── ANIMALI TERRESTRI ────────────────────────────────────────────────────────
 const Bear = () => (
@@ -1698,6 +1721,210 @@ const Tent = () => (
   </svg>
 );
 
+// ─── I TREDICI CHE MANCAVANO ──────────────────────────────────────────────────
+// Comparivano nelle sfide senza un disegno dedicato, quindi uscivano come emoji
+// di sistema: un aspetto diverso su ogni Android e su ogni iPhone, in mezzo a
+// illustrazioni tutte disegnate. Stesso linguaggio degli altri: cerchio di fondo
+// in gradiente, forme piatte, un accento di colore.
+
+const Tree = () => (
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{width:"100%",height:"100%"}}>
+    <BgCircle from="#86efac" to="#14532d"/>
+    <rect x="45" y="60" width="10" height="28" rx="3" fill="#78350f"/>
+    <path d="M50 62 L28 62 Q26 48 40 44 Q38 28 50 22 Q62 28 60 44 Q74 48 72 62Z" fill="#22C55E"/>
+    <path d="M50 62 L34 62 Q33 50 44 47 Q43 34 50 28Z" fill="#4ADE80"/>
+    <circle cx="38" cy="46" r="3.2" fill="#16A34A"/>
+    <circle cx="62" cy="52" r="2.6" fill="#16A34A"/>
+    <circle cx="52" cy="38" r="2.4" fill="#BBF7D0"/>
+    <ellipse cx="50" cy="88" rx="20" ry="4" fill="#14532d" opacity=".45"/>
+  </svg>
+);
+
+// 🌲 non è 🌳: la Foresta Magica è fatta di conifere, e l'abete è il simbolo
+// che il bambino incontra più spesso in tutta l'app.
+const Pine = () => (
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{width:"100%",height:"100%"}}>
+    <BgCircle from="#86efac" to="#14532d"/>
+    <rect x="45" y="70" width="10" height="20" rx="3" fill="#78350f"/>
+    <polygon points="50,14 70,42 30,42" fill="#22C55E"/>
+    <polygon points="50,30 76,58 24,58" fill="#16A34A"/>
+    <polygon points="50,46 82,74 18,74" fill="#15803D"/>
+    <polygon points="50,14 50,42 30,42" fill="#4ADE80"/>
+    <polygon points="50,30 50,58 24,58" fill="#22C55E"/>
+    <circle cx="50" cy="12" r="4" fill="#FCD34D"/>
+    <circle cx="38" cy="52" r="2.4" fill="#BBF7D0" opacity=".8"/>
+    <circle cx="64" cy="68" r="2.2" fill="#BBF7D0" opacity=".7"/>
+    <ellipse cx="50" cy="90" rx="22" ry="4" fill="#14532d" opacity=".45"/>
+  </svg>
+);
+
+const Sword = () => (
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{width:"100%",height:"100%"}}>
+    <BgCircle from="#cbd5e1" to="#334155"/>
+    <path d="M50 10 L58 24 L58 62 L42 62 L42 24Z" fill="#E2E8F0" stroke="#94A3B8" strokeWidth="1.5"/>
+    <path d="M50 10 L50 62 L42 62 L42 24Z" fill="#F8FAFC"/>
+    <rect x="26" y="62" width="48" height="8" rx="4" fill="#FCD34D" stroke="#B45309" strokeWidth="1.5"/>
+    <rect x="45" y="70" width="10" height="16" rx="3" fill="#92400E"/>
+    <circle cx="50" cy="88" r="5" fill="#FCD34D" stroke="#B45309" strokeWidth="1.5"/>
+    <circle cx="50" cy="66" r="3" fill="#EF4444"/>
+  </svg>
+);
+
+const Astronaut = () => (
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{width:"100%",height:"100%"}}>
+    <BgCircle from="#312e81" to="#0f0628"/>
+    {[[20,20],[80,24],[76,74],[22,72]].map(([x,y],i)=>(<circle key={i} cx={x} cy={y} r="1.6" fill="white" opacity=".6"/>))}
+    <rect x="32" y="62" width="36" height="26" rx="10" fill="#F1F5F9"/>
+    <rect x="24" y="66" width="12" height="9" rx="4.5" fill="#E2E8F0"/>
+    <rect x="64" y="66" width="12" height="9" rx="4.5" fill="#E2E8F0"/>
+    <circle cx="50" cy="42" r="24" fill="#F8FAFC"/>
+    <path d="M32 42 Q32 24 50 24 Q68 24 68 42 Q68 56 50 56 Q32 56 32 42Z" fill="#1E293B"/>
+    <path d="M38 36 Q42 29 52 29" stroke="#7DD3FC" strokeWidth="4" fill="none" strokeLinecap="round" opacity=".8"/>
+    <rect x="44" y="58" width="12" height="6" rx="2" fill="#CBD5E1"/>
+    <circle cx="70" cy="34" r="4" fill="#FCD34D"/>
+  </svg>
+);
+
+const Car = () => (
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{width:"100%",height:"100%"}}>
+    <BgCircle from="#fca5a5" to="#7f1d1d"/>
+    <path d="M14 68 L14 56 Q14 50 22 49 L30 36 Q32 32 38 32 L64 32 Q70 32 72 36 L80 49 Q86 50 86 56 L86 68Z" fill="#EF4444"/>
+    <path d="M34 48 L38 38 Q39 36 42 36 L48 36 L48 48Z" fill="#BAE6FD"/>
+    <path d="M52 48 L52 36 L60 36 Q63 36 64 38 L68 48Z" fill="#BAE6FD"/>
+    <rect x="14" y="62" width="72" height="7" rx="3" fill="#B91C1C"/>
+    <circle cx="30" cy="70" r="11" fill="#1F2937"/><circle cx="30" cy="70" r="5" fill="#9CA3AF"/>
+    <circle cx="70" cy="70" r="11" fill="#1F2937"/><circle cx="70" cy="70" r="5" fill="#9CA3AF"/>
+    <circle cx="82" cy="55" r="3.2" fill="#FDE68A"/>
+  </svg>
+);
+
+const House = () => (
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{width:"100%",height:"100%"}}>
+    <BgCircle from="#bfdbfe" to="#1e3a8a"/>
+    <rect x="24" y="50" width="52" height="38" fill="#FDE68A"/>
+    <path d="M50 16 L86 50 L14 50Z" fill="#DC2626"/>
+    <path d="M50 16 L50 50 L14 50Z" fill="#EF4444"/>
+    <rect x="66" y="24" width="9" height="16" fill="#B91C1C"/>
+    <rect x="42" y="64" width="16" height="24" rx="2" fill="#92400E"/>
+    <circle cx="54" cy="76" r="1.8" fill="#FCD34D"/>
+    <rect x="28" y="58" width="12" height="12" rx="2" fill="#7DD3FC" stroke="#B45309" strokeWidth="1.5"/>
+    <rect x="62" y="58" width="12" height="12" rx="2" fill="#7DD3FC" stroke="#B45309" strokeWidth="1.5"/>
+    <ellipse cx="50" cy="89" rx="30" ry="4" fill="#1e3a8a" opacity=".4"/>
+  </svg>
+);
+
+const Gem = () => (
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{width:"100%",height:"100%"}}>
+    <BgCircle from="#a5f3fc" to="#0e7490"/>
+    <polygon points="50,88 16,42 30,20 70,20 84,42" fill="#22D3EE"/>
+    <polygon points="50,88 16,42 38,42" fill="#0891B2"/>
+    <polygon points="50,88 84,42 62,42" fill="#67E8F9"/>
+    <polygon points="30,20 38,42 16,42" fill="#06B6D4"/>
+    <polygon points="70,20 84,42 62,42" fill="#06B6D4"/>
+    <polygon points="30,20 70,20 62,42 38,42" fill="#A5F3FC"/>
+    <polygon points="50,88 38,42 62,42" fill="#CFFAFE" opacity=".85"/>
+    <circle cx="42" cy="30" r="3" fill="white" opacity=".7"/>
+  </svg>
+);
+
+const Dragon = () => (
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{width:"100%",height:"100%"}}>
+    <BgCircle from="#86efac" to="#14532d"/>
+    <path d="M18 56 Q8 44 20 38 Q26 46 32 48Z" fill="#15803D"/>
+    <path d="M82 56 Q92 44 80 38 Q74 46 68 48Z" fill="#15803D"/>
+    <ellipse cx="50" cy="58" rx="26" ry="24" fill="#22C55E"/>
+    <path d="M34 34 Q30 20 40 22 Q42 28 46 32Z" fill="#16A34A"/>
+    <path d="M66 34 Q70 20 60 22 Q58 28 54 32Z" fill="#16A34A"/>
+    <ellipse cx="50" cy="70" rx="14" ry="10" fill="#4ADE80"/>
+    <ellipse cx="44" cy="68" rx="2" ry="2.6" fill="#14532d"/>
+    <ellipse cx="56" cy="68" rx="2" ry="2.6" fill="#14532d"/>
+    <path d="M42 78 Q50 84 58 78" stroke="#14532d" strokeWidth="2.4" fill="none" strokeLinecap="round"/>
+    <Eye x={40} y={50} r={7} iris="#F59E0B"/>
+    <Eye x={60} y={50} r={7} iris="#F59E0B"/>
+    <path d="M40 84 Q44 92 50 90" fill="#F97316" opacity=".9"/>
+  </svg>
+);
+
+const Bread = () => (
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{width:"100%",height:"100%"}}>
+    <BgCircle from="#fde68a" to="#78350f"/>
+    <path d="M16 62 Q16 34 50 34 Q84 34 84 62 Q84 76 50 76 Q16 76 16 62Z" fill="#D97706"/>
+    <path d="M22 60 Q22 40 50 40 Q78 40 78 60 Q78 70 50 70 Q22 70 22 60Z" fill="#F59E0B"/>
+    <path d="M34 42 Q38 52 34 62" stroke="#B45309" strokeWidth="2.6" fill="none" strokeLinecap="round"/>
+    <path d="M50 39 Q54 52 50 65" stroke="#B45309" strokeWidth="2.6" fill="none" strokeLinecap="round"/>
+    <path d="M66 42 Q70 52 66 62" stroke="#B45309" strokeWidth="2.6" fill="none" strokeLinecap="round"/>
+    <ellipse cx="40" cy="46" rx="7" ry="3" fill="#FEF3C7" opacity=".5"/>
+  </svg>
+);
+
+const Comet = () => (
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{width:"100%",height:"100%"}}>
+    <BgCircle from="#312e81" to="#0f0628"/>
+    {[[22,20],[78,70],[80,26]].map(([x,y],i)=>(<circle key={i} cx={x} cy={y} r="1.6" fill="white" opacity=".55"/>))}
+    <path d="M12 82 Q34 66 52 48 L66 62 Q46 78 12 82Z" fill="#FDE68A" opacity=".55"/>
+    <path d="M20 80 Q38 68 54 54 L60 60 Q44 74 20 80Z" fill="#FBBF24" opacity=".8"/>
+    <circle cx="66" cy="38" r="16" fill="#F97316"/>
+    <circle cx="66" cy="38" r="11" fill="#FBBF24"/>
+    <circle cx="62" cy="34" r="4" fill="#FEF3C7" opacity=".85"/>
+  </svg>
+);
+
+const Balloon = () => (
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{width:"100%",height:"100%"}}>
+    <BgCircle from="#fbcfe8" to="#831843"/>
+    <path d="M50 68 Q50 74 46 80 Q50 84 54 80 Q50 74 50 68Z" fill="#9D174D"/>
+    <path d="M50 84 Q58 88 52 94" stroke="#F9A8D4" strokeWidth="2" fill="none" strokeLinecap="round"/>
+    <ellipse cx="50" cy="40" rx="24" ry="29" fill="#EC4899"/>
+    <path d="M44 68 L56 68 L50 74Z" fill="#BE185D"/>
+    <ellipse cx="41" cy="30" rx="6" ry="9" fill="white" opacity=".38" transform="rotate(-18 41 30)"/>
+    <path d="M32 46 Q34 60 46 66" stroke="#BE185D" strokeWidth="2" fill="none" opacity=".5"/>
+  </svg>
+);
+
+const MusicNote = () => (
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{width:"100%",height:"100%"}}>
+    <BgCircle from="#c4b5fd" to="#2e1065"/>
+    <path d="M40 70 L40 26 L74 18 L74 60" stroke="#8B5CF6" strokeWidth="7" fill="none" strokeLinejoin="round"/>
+    <path d="M40 32 L74 24" stroke="#A78BFA" strokeWidth="7" fill="none"/>
+    <ellipse cx="32" cy="72" rx="12" ry="9" fill="#7C3AED" transform="rotate(-18 32 72)"/>
+    <ellipse cx="66" cy="62" rx="11" ry="8.5" fill="#7C3AED" transform="rotate(-18 66 62)"/>
+    <circle cx="26" cy="68" r="3" fill="#DDD6FE" opacity=".55"/>
+    <circle cx="82" cy="34" r="2.4" fill="#DDD6FE" opacity=".6"/>
+    <circle cx="20" cy="34" r="2" fill="#DDD6FE" opacity=".45"/>
+  </svg>
+);
+
+const Trophy = () => (
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{width:"100%",height:"100%"}}>
+    <BgCircle from="#fde68a" to="#92400e"/>
+    <path d="M32 20 L68 20 L66 48 Q64 62 50 62 Q36 62 34 48Z" fill="#FCD34D" stroke="#B45309" strokeWidth="2"/>
+    <path d="M32 26 Q18 26 18 36 Q18 46 33 48" stroke="#D97706" strokeWidth="4" fill="none" strokeLinecap="round"/>
+    <path d="M68 26 Q82 26 82 36 Q82 46 67 48" stroke="#D97706" strokeWidth="4" fill="none" strokeLinecap="round"/>
+    <rect x="45" y="62" width="10" height="12" fill="#D97706"/>
+    <rect x="34" y="74" width="32" height="8" rx="3" fill="#B45309"/>
+    <rect x="28" y="82" width="44" height="8" rx="3" fill="#92400E"/>
+    <polygon points="50,30 53,38 61,38 55,43 57,51 50,46 43,51 45,43 39,38 47,38" fill="#FEF3C7"/>
+  </svg>
+);
+
+const Robot = () => (
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{width:"100%",height:"100%"}}>
+    <BgCircle from="#a5f3fc" to="#164e63"/>
+    <line x1="50" y1="20" x2="50" y2="30" stroke="#94A3B8" strokeWidth="3"/>
+    <circle cx="50" cy="18" r="5" fill="#F97316"/>
+    <rect x="26" y="30" width="48" height="38" rx="12" fill="#E2E8F0" stroke="#94A3B8" strokeWidth="1.5"/>
+    <rect x="34" y="40" width="32" height="18" rx="8" fill="#0F172A"/>
+    <circle cx="43" cy="49" r="4.5" fill="#22D3EE"/>
+    <circle cx="57" cy="49" r="4.5" fill="#22D3EE"/>
+    <circle cx="41.5" cy="47.5" r="1.6" fill="white" opacity=".8"/>
+    <rect x="42" y="62" width="16" height="3.5" rx="1.75" fill="#94A3B8"/>
+    <rect x="34" y="70" width="32" height="18" rx="6" fill="#CBD5E1"/>
+    <rect x="18" y="72" width="12" height="7" rx="3.5" fill="#94A3B8"/>
+    <rect x="70" y="72" width="12" height="7" rx="3.5" fill="#94A3B8"/>
+    <circle cx="50" cy="79" r="4" fill="#22C55E"/>
+  </svg>
+);
+
 // ─── ASSET MAP ────────────────────────────────────────────────────────────────
 export const ASSET_MAP = {
   // ── Animals (original) ───────────────────────────────────────────────────
@@ -1753,6 +1980,12 @@ export const ASSET_MAP = {
   // ── Numbers ──────────────────────────────────────────────────────────────
   "1️⃣": Num1, "2️⃣": Num2, "3️⃣": Num3, "4️⃣": Num4,
   "5️⃣": Num5, "6️⃣": Num6, "7️⃣": Num7,
+  // ── I tredici che uscivano come emoji di sistema ─────────────────────────
+  "🌳": Tree,      "🌲": Pine,       "🎄": Pine,     "🗡️": Sword,   "🗡": Sword,
+  "👨‍🚀": Astronaut, "🧑‍🚀": Astronaut, "🚗": Car,      "🏠": House,   "🏡": House,
+  "💎": Gem,       "🐲": Dragon,     "🐉": Dragon,   "🍞": Bread,
+  "☄️": Comet,     "☄": Comet,       "🎈": Balloon,  "🎵": MusicNote, "🎶": MusicNote,
+  "🏆": Trophy,    "🤖": Robot,
 };
 
 // ─── MAIN EXPORT ──────────────────────────────────────────────────────────────
@@ -1779,9 +2012,13 @@ export default function SvgAsset({ emoji, size = 80, state = "default" }) {
     correct:  `drop-shadow(0 0 ${Math.round(size * 0.15)}px #22c55e)`,
     wrong:    `drop-shadow(0 0 ${Math.round(size * 0.12)}px #ef4444)`,
     dimmed:   `drop-shadow(0 2px 4px rgba(0,0,0,.3))`,
+    // sagoma: si appiattisce tutto su un unico tono chiaro. Il cerchio di fondo
+    // viene nascosto dalla classe .sa-shadow (vedi lo <style> qui sotto): senza,
+    // l'ombra di ogni cosa sarebbe lo stesso identico cerchio.
+    shadow:   `brightness(0) invert(1)`,
   }[state] || `drop-shadow(0 3px 6px rgba(0,0,0,.45))`;
 
-  const opacity = state === "dimmed" ? 0.4 : 1;
+  const opacity = state === "dimmed" ? 0.4 : state === "shadow" ? 0.42 : 1;
   const scale = state === "selected" ? 1.06 : 1;
 
   const containerStyle = {
@@ -1793,12 +2030,12 @@ export default function SvgAsset({ emoji, size = 80, state = "default" }) {
     filter: shadow,
     opacity,
     transform: `scale(${scale})`,
-    transition: "transform .15s ease, filter .15s ease, opacity .15s ease",
+    transition: "transform .15s ease, filter .35s ease, opacity .35s ease",
   };
 
   if (Component) {
     return (
-      <div style={containerStyle}>
+      <div style={containerStyle} className={state === "shadow" ? "sa-shadow" : undefined}>
         <Component />
       </div>
     );

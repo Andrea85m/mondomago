@@ -127,6 +127,10 @@ l'aspetto della tab-bar di Andrea: **avvisarlo**, non serve chiedere il permesso
   *"silhouette pergamena + 1 accento colore"*.
 - `src/WorldScene.jsx` — 8 scene-mondo SVG animate (`SCENE_MAP`)
 - `src/SvgAssets.jsx` — asset SVG delle sfide (usato dal formato `visual_tap`)
+- `src/sigillo.js` — **i token del design system** (colori, font). Erano dentro
+  `MondoMago.jsx`; ora stanno qui perché li usa anche `PuzzleMagico.jsx`.
+- `src/PuzzleMagico.jsx` — **la sezione Puzzle**, quattro giochi in un file solo.
+  Non tocca la logica né i dati: riceve `età`, `speak`, `sfx`, `onExit` come prop.
 - `src/App.css`, `src/index.css`
 - `public/favicon.svg`, `public/icons.svg`, `public/icon-*.png`, `public/apple-touch-icon.png`
 - `public/characters/*_cutout.png` — i 5 companion claymation
@@ -139,6 +143,67 @@ l'aspetto della tab-bar di Andrea: **avvisarlo**, non serve chiedere il permesso
 
 Ridisegnare SVG, ritoccare CSS, sostituire audio = **operazioni libere**.
 Serve coordinarsi **solo** se si *rinomina* un asset → va aggiornato il riferimento in `MondoMago.jsx`.
+
+---
+
+---
+
+## 4-bis. 🔔 Cose entrate nella zona di Andrea (agosto 2026) — da sapere
+
+Tre interventi sono finiti dentro le righe di Andrea perché erano difetti, non scelte
+di contenuto. Sono piccoli e circoscritti, ma **vanno guardati**:
+
+| Dove | Cosa | Perché |
+|---|---|---|
+| `ALL_CHALLENGES` | `correct:` corretto su **fb02 o04 o06 m04 m06 g04 g06** | La risposta segnata giusta non era quella della sequenza. 4 di queste sono boss. |
+| `ALL_CHALLENGES` | **fb10 · ob10 · lab26** ritoccate | Due rime che non rimavano e un "bug" che era la manovra corretta. |
+| `ALL_CHALLENGES` | **o12 m12 g12 gb12 v12 b08** riscritte | Divisione e numeri oltre il 20 in fascia 5-6. In Italia moltiplicazione e divisione entrano in 2ª primaria: la fascia lavora entro il 20. Stessa struttura, stesso boss, numeri rifatti. |
+| `ALL_CHALLENGES` | **mb01 · gb01**: 6 elementi da contare → 5 | A 3-4 anni si conta con sicurezza fino a 5. |
+| `ALL_CHALLENGES` | **ps06 ps07** da 3×3 a 2×2; **ps08 ps09** ristrette a 7-8 | Il 3×3 è il puzzle del 15: richiede una strategia, non pazienza. |
+| `ALL_CHALLENGES` | **6 sfide nuove `lab_a1…lab_a6`** per la fascia 3-4 | Il Laboratorio a 4 anni aveva 5 sfide in tutto: sempre le stesse. Ora 10 + 2 boss, come gli altri mondi. |
+| `genMathChallenge` | ramo divisione | `72 ÷ 8 = ?` dava per giusto 72. Un terzo delle sfide procedurali 7-8 anni. |
+| schermata `map` | tab-bar da 4 a 5 voci (arriva **Puzzle**) e pool della Sfida Fulmine | A 7-8 anni la Fulmine partiva con zero domande: il pool era solo `visual_tap`, che si ferma a 7. |
+| stato `coins` | `onMonete` dalla sezione Puzzle | Vedi §4-ter: monete sì, stelle no. |
+
+`npm run audit` rimette in piedi tutti questi controlli in un colpo solo:
+**exit 1** se una risposta torna sbagliata, se una fascia d'età resta senza sfide,
+o se una frase perde la voce registrata.
+
+---
+
+## 4-ter. 🧩 La sezione Puzzle
+
+Quattro giochi in `src/PuzzleMagico.jsx`, sulla falsariga di *Puzzle Kids — Jigsaw
+Puzzles* di RV AppStudios: **Ombre** (sagome) · **Costruttore** (tessere) ·
+**Indovina** (si scopre poco alla volta) · **Incastro** (puzzle vero con le linguette).
+
+- Le immagini sono le 8 scene di `WorldScene.jsx` e le illustrazioni di
+  `SvgAssets.jsx`: **zero asset nuovi**.
+- Il file è caricato con `lazy()`: 9KB gzip che arrivano solo quando si apre la
+  sezione, così il bundle di avvio non cambia.
+- I progressi (adesivi) stanno in un `localStorage` suo — `mondomago_puzzle_v1` —
+  e non toccano il profilo del bambino.
+
+### Le ricompense: monete sì, stelle no
+
+Un puzzle vinto paga **monete** (1 Facile → 4 Mago, tetto 20 al giorno) e **non**
+stelle. Non è una scelta di comodo:
+
+- Le **stelle** aprono i mondi e fanno salire di grado. Se le desse anche il puzzle,
+  un bambino potrebbe arrivare al Laboratorio senza aver mai risolto una sfida, e il
+  motore adattivo — che si tara su *come* risponde — resterebbe al buio.
+- Le **monete** comprano solo cosmetici: nessun cancello, nessuna scorciatoia.
+
+È la stessa separazione che Duolingo tiene fra XP e gemme, e il motivo per cui
+Khan Academy Kids fa contare ai mini-giochi i collezionabili ma non il livello.
+*Puzzle Kids*, il gioco di riferimento, non ha affatto un'economia comune: i suoi
+sticker restano dentro i mini-giochi — qui l'album fa esattamente quel mestiere.
+
+Il **tetto giornaliero** esiste perché senza, il puzzle diventa una macchinetta da
+monete e il negozio dei cosmetici perde senso in una settimana.
+
+`npm run smoke` apre l'app in un browser vero, gioca ai quattro giochi, trascina un
+pezzo, lo piazza col doppio tocco e lascia le schermate in `.smoke/`.
 
 ---
 
@@ -156,6 +221,15 @@ Serve coordinarsi **solo** se si *rinomina* un asset → va aggiornato il riferi
 - **Emoji "tofu" (□) negli screenshot Linux headless** = falso allarme, sul telefono si vedono.
 - **`npm run lint` è rotto a monte**: manca `eslint.config.js`. Problema pre-esistente, non è
   colpa tua — non perderci tempo.
+- **Gli id dentro gli SVG devono essere unici per istanza.** `url(#bg)` risolve sul primo
+  elemento con quell'id in *tutto il documento*: con un id fisso, le quattro opzioni di una
+  sfida finivano tutte con lo sfondo della prima. Ora `BgCircle` usa `useId()` — se aggiungi
+  un gradiente o una `clipPath` a un asset, fai lo stesso.
+- **`getBoundingClientRect()` su un `<g>` con `clip-path` restituisce il riquadro
+  NON ritagliato.** Il tocco invece rispetta il ritaglio. Se ti serve il centro di un pezzo
+  di puzzle, calcolalo dal `transform`, non dal riquadro.
+- **Niente `playbackRate` sulle clip vocali**: allungare un mp3 sposta le formanti e la voce
+  diventa metallica. La cadenza si decide in registrazione (`RATE` in `scripts/gen-tts.py`).
 - **Performance**: il sito live è a **Lighthouse 97 / 100 / 100**. Prima di una PR grossa lato
   grafica: `npm run lighthouse` (locale) e non far scendere il punteggio.
 - **Smoke test Playwright** va lanciato **dalla cartella del progetto** (altrove non risolve

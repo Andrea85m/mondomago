@@ -1,9 +1,17 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
 import TTS_MAP from "./ttsMap.json";
 import WorldScene from "./WorldScene.jsx";
 import { WorldIcon, Icon, SkillIcon, RankIcon } from "./icons.jsx";
 import SvgAsset from "./SvgAssets.jsx";
 import canvasConfetti from "canvas-confetti";
+// Caricato a parte: la sezione Puzzle pesa ~17KB gzip e non serve finché il
+// bambino non la apre. Così il bundle iniziale — quello che decide il tempo di
+// avvio e il punteggio Lighthouse — resta com'era.
+const PuzzleMagico = lazy(() => import("./PuzzleMagico.jsx"));
+import {
+  FF, FF_DISPLAY, FF_MONO, FF_NUM,
+  SG_GOLD, SG_RUNE, SG_PARCH, SG_INK, SG_BG, SG_CARD, SG_BR, SG_GOLD_GRAD, SG_TILE,
+} from "./sigillo.js";
 
 // ── MONETIZZAZIONE (impalcatura freemium, OFF) ──────────────────────────────────
 // Strategia: monetizzare il GENITORE, mai il bambino. Tutto il loop educativo
@@ -568,6 +576,7 @@ function CompanionOrbit({ color }) {
 function NavMap({c="currentColor",s=22}){return<svg width={s} height={s} viewBox="0 0 22 22" fill="none" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 6L8 4L14 7L20 5L20 18L14 20L8 17L2 19Z" fill={c} fillOpacity=".18"/><line x1="8" y1="4" x2="8" y2="17"/><line x1="14" y1="7" x2="14" y2="20"/></svg>;}
 function NavBrain({c="currentColor",s=22}){return<svg width={s} height={s} viewBox="0 0 22 22" fill="none" stroke={c} strokeWidth="1.8" strokeLinecap="round"><path d="M8 6C8 4 10 3 12 5C14 3 17 5 16 8C18 9 18 12 16 13C17 16 15 19 12 18L10 18C7 19 5 16 6 13C4 12 4 9 6 8C5 5 6 3 8 6Z"/><line x1="11" y1="5" x2="11" y2="18" strokeDasharray="2.5 2"/></svg>;}
 function NavFamily({c="currentColor",s=22}){return<svg width={s} height={s} viewBox="0 0 22 22" fill={c} stroke="none"><circle cx="6" cy="6" r="2.4"/><circle cx="16" cy="6" r="2.4"/><circle cx="11" cy="9" r="1.9"/><path d="M2 15C2 12 4 11 6 11C8 11 9.5 12 9.5 13L9.5 20L2 20Z"/><path d="M12.5 15C12.5 12 14 11 16 11C18 11 20 12 20 15L20 20L12.5 20Z"/><path d="M8 16C8 14 9.2 13 11 13C12.8 13 14 14 14 16L14 20L8 20Z"/></svg>;}
+function NavPuzzle({c="currentColor",s=22}){return<svg width={s} height={s} viewBox="0 0 22 22" fill="none" stroke={c} strokeWidth="1.7" strokeLinejoin="round"><path d="M3 4.5A1.5 1.5 0 014.5 3H8a1.6 1.6 0 013.2 0H14.5A1.5 1.5 0 0116 4.5V8a1.6 1.6 0 000 3.2V14.5a1.5 1.5 0 01-1.5 1.5H11a1.6 1.6 0 01-3.2 0H4.5A1.5 1.5 0 013 14.5V11a1.6 1.6 0 000-3.2Z" fill={c} fillOpacity=".16"/><path d="M16 8a1.6 1.6 0 010 3.2" /><circle cx="11.5" cy="17.5" r="1.4" fill={c} stroke="none" opacity=".55"/></svg>;}
 function NavSparkle({c="currentColor",s=22}){return<svg width={s} height={s} viewBox="0 0 22 22" fill={c} stroke="none"><path d="M11 2L12.8 9.2L20 11L12.8 12.8L11 20L9.2 12.8L2 11L9.2 9.2Z"/><circle cx="18" cy="5" r="1.5"/><circle cx="5" cy="16.5" r="1.2"/></svg>;}
 
 // ── COMPANION SVG FACES ───────────────────────────────────────────────────────
@@ -1181,7 +1190,7 @@ const ALL_CHALLENGES = {
 
     { id:"o04", format:"visual_tap", type:"pattern",   ageMin:3, ageMax:4,
       visual:"🐟🦀🐟🦀",  prompt:"Cosa viene dopo?\n🐟🦀🐟🦀__", emoji:"🐚",
-      options:["🐟","🦀","🦈","🐙"],   correct:1 },
+      options:["🐟","🦀","🦈","🐙"],   correct:0 },
 
     { id:"o05", format:"visual_tap", type:"logica",    ageMin:3, ageMax:4,
       visual:"🔵🟦💧",     prompt:"Tocca la goccia d'acqua!", emoji:"💧",
@@ -1189,7 +1198,7 @@ const ALL_CHALLENGES = {
 
     { id:"o06", format:"visual_tap", type:"logica",    ageMin:3, ageMax:4, isBoss:true,
       visual:"🐠🐡🐠🐡🐠", prompt:"🦈 Lo Squalo chiede:\ncosa viene dopo? 🐠🐡🐠🐡🐠__", emoji:"🦈",
-      options:["🐡","🐠","🦑","🦞"],   correct:1 },
+      options:["🐡","🐠","🦑","🦞"],   correct:0 },
 
     // ── 5-6 anni ─────────────────────────────────────────────────────────────
     { id:"o07", format:"multiple_choice", type:"numeri", ageMin:5, ageMax:6,
@@ -1219,8 +1228,8 @@ const ALL_CHALLENGES = {
       ] },
 
     { id:"o12", format:"multiple_choice", type:"logica", ageMin:5, ageMax:6, isBoss:true,
-      prompt:"🦈 Lo Squalo chiede:\n20 pesci nel banco. Metà si nasconde.\nArrivano 3 nuovi. Quanti pesci ci sono?",
-      emoji:"🦈", options:["11","12","13","14"], correct:2 },
+      prompt:"🦈 Lo Squalo chiede:\n20 pesci nel banco. 8 si nascondono.\nArrivano 3 nuovi. Quanti pesci ci sono?",
+      emoji:"🦈", options:["13","14","15","16"], correct:2 },
   ],
 
   mercato: [
@@ -1239,7 +1248,7 @@ const ALL_CHALLENGES = {
 
     { id:"m04", format:"visual_tap", type:"pattern",   ageMin:3, ageMax:4,
       visual:"🔴🟡🔴🟡",  prompt:"Cosa viene dopo?\n🔴🟡🔴🟡__", emoji:"🎨",
-      options:["🔴","🟡","🔵","🟢"],   correct:1 },
+      options:["🔴","🟡","🔵","🟢"],   correct:0 },
 
     { id:"m05", format:"visual_tap", type:"logica",    ageMin:3, ageMax:4,
       visual:"🍕🍔🌮🍎",  prompt:"Quale è il cibo più sano?", emoji:"🥗",
@@ -1247,7 +1256,7 @@ const ALL_CHALLENGES = {
 
     { id:"m06", format:"visual_tap", type:"logica",    ageMin:3, ageMax:4, isBoss:true,
       visual:"🍎🍊🍎🍊🍎", prompt:"🧙 Il Mago chiede:\ncosa viene dopo? 🍎🍊🍎🍊🍎__", emoji:"🧙",
-      options:["🍊","🍎","🍋","🍇"],   correct:1 },
+      options:["🍊","🍎","🍋","🍇"],   correct:0 },
 
     // ── 5-6 anni ─────────────────────────────────────────────────────────────
     { id:"m07", format:"multiple_choice", type:"numeri", ageMin:5, ageMax:6,
@@ -1277,8 +1286,8 @@ const ALL_CHALLENGES = {
       ] },
 
     { id:"m12", format:"multiple_choice", type:"numeri", ageMin:5, ageMax:6, isBoss:true,
-      prompt:"🧙 Il Mago chiede:\nHai 15 caramelle. Le dividi in 3 sacchetti uguali.\nQuante caramelle in ogni sacchetto?",
-      emoji:"🧙", options:["3","4","5","6"], correct:2 },
+      prompt:"🧙 Il Mago chiede:\nHai 15 caramelle. Ne mangi 4 e ne regali 3.\nQuante caramelle ti restano?",
+      emoji:"🧙", options:["6","7","8","9"], correct:2 },
   ],
 
   galassia: [
@@ -1297,7 +1306,7 @@ const ALL_CHALLENGES = {
 
     { id:"g04", format:"visual_tap", type:"pattern",   ageMin:3, ageMax:4,
       visual:"🌍🌕🌍🌕",  prompt:"Cosa viene dopo?\n🌍🌕🌍🌕__", emoji:"🔭",
-      options:["🌍","🌕","⭐","🚀"],   correct:1 },
+      options:["🌍","🌕","⭐","🚀"],   correct:0 },
 
     { id:"g05", format:"visual_tap", type:"logica",    ageMin:3, ageMax:4,
       visual:"🌑🌒🌓🌔🌕", prompt:"Quale è la luna piena?", emoji:"🌕",
@@ -1305,7 +1314,7 @@ const ALL_CHALLENGES = {
 
     { id:"g06", format:"visual_tap", type:"logica",    ageMin:3, ageMax:4, isBoss:true,
       visual:"⭐🪐⭐🪐⭐", prompt:"👽 L'Alieno chiede:\ncosa viene dopo? ⭐🪐⭐🪐⭐__", emoji:"👽",
-      options:["🪐","⭐","☀️","🌙"],   correct:1 },
+      options:["🪐","⭐","☀️","🌙"],   correct:0 },
 
     // ── 5-6 anni ─────────────────────────────────────────────────────────────
     { id:"g07", format:"multiple_choice", type:"numeri", ageMin:5, ageMax:6,
@@ -1335,8 +1344,8 @@ const ALL_CHALLENGES = {
       ] },
 
     { id:"g12", format:"multiple_choice", type:"logica", ageMin:5, ageMax:6, isBoss:true,
-      prompt:"👽 L'Alieno chiede:\n100 stelle in cielo. Ne esplodono 15, ne nascono 8 nuove.\nQuante stelle ci sono?",
-      emoji:"👽", options:["90","91","92","93"], correct:3 },
+      prompt:"👽 L'Alieno chiede:\n18 stelle in cielo. Ne cadono 5, ne nascono 3 nuove.\nQuante stelle ci sono?",
+      emoji:"👽", options:["14","15","16","17"], correct:2 },
   ],
 };
 
@@ -1349,7 +1358,7 @@ Object.assign(ALL_CHALLENGES, {
       options:["2️⃣","3️⃣","4️⃣","5️⃣"], correct:2 },
     { id:"fb02", format:"visual_tap", type:"pattern", ageMin:3, ageMax:4,
       visual:"🌷🌿🌷🌿", prompt:"Cosa viene dopo?\n🌷🌿🌷🌿__", emoji:"🌷",
-      options:["🌷","🌿","🌺","🌻"], correct:1 },
+      options:["🌷","🌿","🌺","🌻"], correct:0 },
     { id:"fb03", format:"visual_tap", type:"empatia", ageMin:3, ageMax:4,
       visual:"🐰😊", prompt:"Il coniglietto ha trovato le carote!\nCome si sente?", emoji:"🥕",
       options:["😊","😢","😠","😴"], correct:0 },
@@ -1377,7 +1386,8 @@ Object.assign(ALL_CHALLENGES, {
       correctOrder:[0,1,2,3] },
     { id:"fb10", format:"multiple_choice", type:"parole", ageMin:5, ageMax:6,
       prompt:"Quale parola fa rima con FORESTA?",
-      emoji:"🎶", options:["Montagna","Finestra","Bosco","Fiore"], correct:1 },
+      // "Finestra" (-estra) non rima con "foresta" (-esta): è un'assonanza.
+      emoji:"🎶", options:["Montagna","Festa","Bosco","Fiore"], correct:1 },
     { id:"fb11", format:"story_choice", type:"empatia", ageMin:5, ageMax:6,
       emoji:"🐺",
       situation:"Il lupo viene escluso dal gioco degli altri animali. Sta piangendo da solo sotto un albero. Cosa fai?",
@@ -1467,8 +1477,9 @@ Object.assign(ALL_CHALLENGES, {
       items:["🦐 Gamberetto","🐡 Pesce","🦑 Calamaro","🐳 Balena"],
       correctOrder:[0,1,2,3] },
     { id:"ob10", format:"multiple_choice", type:"parole", ageMin:5, ageMax:6,
-      prompt:"Quale parola fa rima con OCEANO?",
-      emoji:"🎶", options:["Marino","Lontano","Profondo","Azzurro"], correct:1 },
+      // "Oceano" è sdrucciola: nessuna delle opzioni ci rimava davvero.
+      prompt:"Quale parola fa rima con DELFINO?",
+      emoji:"🎶", options:["Marino","Lontano","Profondo","Azzurro"], correct:0 },
     { id:"ob11", format:"story_choice", type:"empatia", ageMin:5, ageMax:6,
       emoji:"🐢",
       situation:"Il piccolo granchio ha perso la sua conchiglia e trema di freddo. Hai trovato una conchiglia bellissima. Cosa fai?",
@@ -1482,8 +1493,8 @@ Object.assign(ALL_CHALLENGES, {
   ]),
   mercato: ALL_CHALLENGES.mercato.concat([
     { id:"mb01", format:"visual_tap", type:"conteggio", ageMin:3, ageMax:4,
-      visual:"🍊🍊🍊🍊🍊🍊", prompt:"Quante arance?", emoji:"🍊",
-      options:["4️⃣","5️⃣","6️⃣","7️⃣"], correct:2 },
+      visual:"🍊🍊🍊🍊🍊", prompt:"Quante arance?", emoji:"🍊",
+      options:["3️⃣","4️⃣","5️⃣","6️⃣"], correct:2 },
     { id:"mb02", format:"visual_tap", type:"logica", ageMin:3, ageMax:4,
       visual:"🍎🥦🍇🍓", prompt:"Quale è la verdura?", emoji:"🥗",
       options:["🍎","🥦","🍇","🍓"], correct:1 },
@@ -1526,8 +1537,8 @@ Object.assign(ALL_CHALLENGES, {
   ]),
   galassia: ALL_CHALLENGES.galassia.concat([
     { id:"gb01", format:"visual_tap", type:"conteggio", ageMin:3, ageMax:4,
-      visual:"🌟🌟🌟🌟🌟🌟", prompt:"Quante stelle?", emoji:"🚀",
-      options:["4️⃣","5️⃣","6️⃣","7️⃣"], correct:2 },
+      visual:"🌟🌟🌟🌟🌟", prompt:"Quante stelle?", emoji:"🚀",
+      options:["3️⃣","4️⃣","5️⃣","6️⃣"], correct:2 },
     { id:"gb02", format:"visual_tap", type:"logica", ageMin:3, ageMax:4,
       visual:"⭐🪐☀️🚀", prompt:"Quale è il pianeta?", emoji:"🔭",
       options:["⭐","🪐","☀️","🚀"], correct:1 },
@@ -1565,8 +1576,8 @@ Object.assign(ALL_CHALLENGES, {
         { text:"🚀 Parto — non riesco a capirlo", outcome:"L'alieno è rimasto solo nello spazio... la gentilezza non ha bisogno di parole.", correct:false },
       ] },
     { id:"gb12", format:"multiple_choice", type:"numeri", ageMin:5, ageMax:6, isBoss:true,
-      prompt:"👽 L'Alieno chiede:\nIl razzo ha 4 serbatoi con 25 litri ciascuno.\nQuanti litri in tutto?",
-      emoji:"👽", options:["80","90","100","110"], correct:2 },
+      prompt:"👽 L'Alieno chiede:\nIl razzo ha 4 serbatoi con 5 litri ciascuno.\nQuanti litri in tutto?",
+      emoji:"👽", options:["9","15","20","25"], correct:2 },
   ]),
 });
 
@@ -1697,8 +1708,8 @@ ALL_CHALLENGES.vulcano = [
       { text:"🏃 Scappo, i draghi mi spaventano", outcome:"Il dragone è rimasto solo... a volte le creature più spaventose hanno bisogno di aiuto.", correct:false },
     ] },
   { id:"v12", format:"multiple_choice", type:"numeri", ageMin:5, ageMax:6, isBoss:true,
-    prompt:"🌋 La Fenice chiede:\nIl vulcano erutta ogni 4 ore.\nIn un giorno quante volte erutta?",
-    emoji:"🐦", options:["4","5","6","7"], correct:2 },
+    prompt:"🌋 La Fenice chiede:\nIl vulcano erutta 5 volte di giorno\ne 4 volte di notte. Quante eruzioni in tutto?",
+    emoji:"🐦", options:["7","8","9","10"], correct:2 },
 ];
 
 // ── WORLD: BIBLIOTECA INCANTATA ───────────────────────────────────────────────
@@ -1783,8 +1794,8 @@ ALL_CHALLENGES.biblioteca = [
     prompt:"Quale parola significa il contrario di RUMORE?",
     emoji:"🔇", options:["Silenzio","Suono","Voce","Musica"], correct:0 },
   { id:"b08", format:"multiple_choice", type:"logica", ageMin:5, ageMax:6,
-    prompt:"Una biblioteca ha 5 scaffali con 8 libri ciascuno.\nQuanti libri in tutto?",
-    emoji:"📚", options:["35","38","40","45"], correct:2 },
+    prompt:"Una biblioteca ha 4 scaffali con 5 libri ciascuno.\nQuanti libri in tutto?",
+    emoji:"📚", options:["9","15","20","25"], correct:2 },
   { id:"b09", format:"sequence_tap", type:"parole", ageMin:5, ageMax:6,
     prompt:"Metti le parole in ordine alfabetico!",
     emoji:"🔤",
@@ -1887,6 +1898,36 @@ Object.assign(ALL_CHALLENGES, {
 
 // ── LABORATORIO LOGICO (Mondo 8) ──────────────────────────────────────────────
 ALL_CHALLENGES.laboratorio = [
+  // ── 3-4 anni ────────────────────────────────────────────────────────────────
+  // A quest'età il pensiero computazionale è "se succede questo allora quello"
+  // e "prima, poi, infine": nessuna lettura per rispondere, si tocca l'immagine.
+  // Prima di queste il mondo era di fatto ingiocabile sotto i 5 anni: 5 sfide
+  // sole, cioè sempre le stesse.
+  { id:"lab_a1", format:"visual_tap", type:"condizione", ageMin:3, ageMax:4,
+    visual:"🤖💧", prompt:"Il robot ha sete.\nCosa gli serve?", emoji:"🤖",
+    options:["💧","🪨","⚽","🎸"], correct:0 },
+
+  { id:"lab_a2", format:"visual_tap", type:"sequenza", ageMin:3, ageMax:4,
+    visual:"🌰", prompt:"Dal seme nasce...", emoji:"🌱",
+    options:["🌳","🐟","🏰","🎺"], correct:0 },
+
+  { id:"lab_a3", format:"visual_tap", type:"condizione", ageMin:3, ageMax:4,
+    visual:"🔥", prompt:"Il fuoco scotta!\nCosa lo spegne?", emoji:"🧯",
+    options:["💧","🍞","🎈","👑"], correct:0 },
+
+  { id:"lab_a4", format:"code_sequence", type:"sequenza", ageMin:3, ageMax:4,
+    prompt:"Aiuta Pixel a mangiare una mela!\nMetti in ordine:", emoji:"🍎",
+    items:["🧺 Prendi la mela","💧 Lavala","😋 Mangiala"], correctOrder:[0,1,2] },
+
+  { id:"lab_a5", format:"code_sequence", type:"sequenza", ageMin:3, ageMax:4,
+    prompt:"Come si costruisce una torre?\nMetti in ordine:", emoji:"🧱",
+    items:["🟦 Il primo cubo in basso","🟩 Poi il secondo sopra","⭐ La stella in cima"],
+    correctOrder:[0,1,2] },
+
+  { id:"lab_a6", format:"visual_tap", type:"coding", ageMin:3, ageMax:4, isBoss:true,
+    visual:"🔴🔵🔴🔵", prompt:"🤖 Pixel chiede:\nche colore viene dopo?", emoji:"🤖",
+    options:["🔴","🔵","🟡","🟢"], correct:0 },
+
   // ── 4-5 anni: if_else_tap + code_sequence 3 passi ───────────────────────────
   { id:"lab01", format:"if_else_tap", type:"coding", ageMin:4, ageMax:5,
     emoji:"🐻", condition:"L'orso vede il miele 🍯",
@@ -2018,7 +2059,8 @@ ALL_CHALLENGES.laboratorio = [
 
   { id:"lab26", format:"debug_find", type:"coding", ageMin:7, ageMax:8,
     emoji:"🚗", prompt:"Trova il BUG nel programma dell'auto:",
-    items:["1. Avvia motore 🔑","2. Premi freno prima di partire 🛑","3. Inserisci marcia ⚙️","4. Accelera 🚀"],
+    // Prima: "premi il freno prima di partire" era marcato come bug, ma è la manovra corretta.
+    items:["1. Avvia motore 🔑","2. Chiudi gli occhi 🙈","3. Inserisci marcia ⚙️","4. Accelera 🚀"],
     correct:1 },
 
   { id:"lab27", format:"code_sequence", type:"coding", ageMin:7, ageMax:8,
@@ -2387,19 +2429,19 @@ ALL_CHALLENGES.vulcano = ALL_CHALLENGES.vulcano.concat([
     question:"Riordina i pianeti!",
     emojis:["🚀","🪐","⭐"] },
   // ps06 — Vulcano 3x3 (5-6)
-  { id:"ps06", world:"vulcano", ageMin:5, ageMax:6, size:3,
-    question:"Rimetti in ordine il vulcano! 8 pezzi da sistemare.",
-    emojis:["🌋","🔥","💨","🪨","🌡️","🦎","🏜️","⛏️"] },
+  { id:"ps06", world:"vulcano", ageMin:5, ageMax:6, size:2,
+    question:"Rimetti in ordine il vulcano!",
+    emojis:["🌋","🔥","🪨"] },
   // ps07 — Biblioteca 3x3 (5-7)
-  { id:"ps07", world:"biblioteca", ageMin:5, ageMax:7, size:3,
-    question:"Riordina la biblioteca! 8 oggetti al posto giusto.",
-    emojis:["📚","🔭","🎸","📝","🔬","🖊️","📖","🎹"] },
+  { id:"ps07", world:"biblioteca", ageMin:5, ageMax:7, size:2,
+    question:"Riordina la biblioteca!",
+    emojis:["📚","🔭","🎸"] },
   // ps08 — Laboratorio 3x3 (6-8)
-  { id:"ps08", world:"laboratorio", ageMin:6, ageMax:8, size:3,
+  { id:"ps08", world:"laboratorio", ageMin:7, ageMax:8, size:3,
     question:"Rimetti in ordine il laboratorio di Pixel!",
     emojis:["🤖","🔋","💡","🧪","⚙️","🔧","🖥️","📡"] },
   // ps09 — Foresta 3x3 (6-8)
-  { id:"ps09", world:"foresta", ageMin:6, ageMax:8, size:3,
+  { id:"ps09", world:"foresta", ageMin:7, ageMax:8, size:3,
     question:"La foresta è in disordine — sistema tutti gli elementi!",
     emojis:["🌲","🍄","🦋","🐝","🌸","🍓","🌿","🐿️"] },
 ].forEach(({ id, world, ageMin, ageMax, size, question, emojis }) => {
@@ -2642,8 +2684,10 @@ function genMathChallenge(worldId, age) {
       prompt:`${a} × ${b} = ?`, options, correct };
   }
   if (type === 1) {
+    // La risposta di "(b×c) ÷ b" è c, non b×c: i distrattori vanno costruiti
+    // intorno al quoziente, altrimenti la sfida marca giusto il dividendo.
     const b = _rnd(2, 9), c = _rnd(2, 9);
-    const { options, correct } = _opts(b * c, 6);
+    const { options, correct } = _opts(c, 4);
     return { id, format:"multiple_choice", type:"numeri", ageMin:7, ageMax:8, emoji:e,
       prompt:`${b * c} ÷ ${b} = ?`, options, correct };
   }
@@ -2719,16 +2763,74 @@ function getBestVoice() {
   return _bestVoice;
 }
 
+// ── Nome del bambino ─────────────────────────────────────────────────────────
+// Il nome non si può pre-registrare, e far entrare la voce di sistema per una
+// sola parola significa cambiare timbro a metà frase. Lo si toglie dal parlato:
+// resta scritto sullo schermo, dove il bambino lo vede.
+// Regola gemella in Python: strip_name() in scripts/lib/tts_text.py.
+let _spokenName = "";
+function setSpokenName(n) { _spokenName = (n || "").trim(); }
+
+function stripName(text) {
+  let t = String(text);
+  if (_spokenName) {
+    const esc = _spokenName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    t = t.replace(new RegExp(`\\b${esc}\\b`, 'gi'), '');
+  }
+  return t
+    .replace(/\s*,\s*(?=[,.!?;:])/g, '')
+    .replace(/([([])\s*[,;]\s*/g, '$1')
+    .replace(/^\s*[,;:!?.]+\s*/, '')
+    .replace(/\s+([,.!?;:])/g, '$1')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
+/** La chiave con cui si cerca la clip registrata: il testo a schermo, nome tolto. */
+function ttsKey(text) { return stripName(text); }
+
+// ── Testo → parlato (solo per la riserva `speechSynthesis`) ──────────────────
+// Il vecchio filtro cancellava ogni simbolo: "3 × 4 = ?" diventava "3 4 ?" e la
+// voce diceva "tre quattro". Gemella di to_speech() in scripts/lib/tts_text.py.
+const SPEECH_DIGITS = { '0️⃣':'zero','1️⃣':'uno','2️⃣':'due','3️⃣':'tre','4️⃣':'quattro','5️⃣':'cinque','6️⃣':'sei','7️⃣':'sette','8️⃣':'otto','9️⃣':'nove','🔟':'dieci' };
+const SPEECH_COUNT_NOUNS = { '🍎':'mele','🍊':'arance','🍋':'limoni','🍓':'fragole','⭐':'stelle','🌟':'stelle','🚀':'razzi','🐟':'pesci','🐠':'pesci','🦋':'farfalle','🌲':'alberi','📚':'libri','🔥':'fiamme','🌋':'vulcani','🍄':'funghi','🌸':'fiori' };
+const SPEECH_SYMBOLS = [
+  [/\s*=\s*\?/g, ' quanto fa?'], [/\s*×\s*/g, ' per '], [/\s*÷\s*/g, ' diviso '],
+  [/(\d)\s*[-−]\s*(?=\d)/g, '$1 meno '], [/(\d)\s*\+\s*(?=\d)/g, '$1 più '],
+  [/\s*>=\s*/g, ' maggiore o uguale a '], [/\s*<=\s*/g, ' minore o uguale a '],
+  [/\s*>\s*/g, ' maggiore di '], [/\s*<\s*/g, ' minore di '], [/\s*=\s*/g, ' uguale a '],
+  [/(\d)\s*%/g, '$1 per cento'], [/(\d)\s*€/g, '$1 euro'], [/€\s*(\d)/g, 'euro $1'],
+  [/(\d)\s*°\s*C\b/g, '$1 gradi'], [/(\d)\s*°/g, '$1 gradi'],
+  [/\bkm\/h\b/g, " chilometri all'ora"], [/\bkm\b/g, ' chilometri'],
+];
+const EMOJI_STRIP = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{1F1E6}-\u{1F1FF}\u{FE0F}\u{20E3}\u{200D}\u{2190}-\u{21FF}]/gu;
+
+function toSpeech(text) {
+  let t = stripName(text);
+  for (const [e, w] of Object.entries(SPEECH_DIGITS)) t = t.split(e).join(w);
+  t = t.replace(/\b(Quant[ei])\s*([\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]+)/gu,
+    (_, q, e) => { const w = SPEECH_COUNT_NOUNS[e] || SPEECH_COUNT_NOUNS[e.replace(/\u{FE0F}/gu, '')]; return w ? `${q} ${w}` : q; });
+  t = t.replace(/([.!?:;,])\s*\n\s*/g, '$1 ').replace(/\s*\n\s*/g, ', ');
+  for (const [re, w] of SPEECH_SYMBOLS) t = t.replace(re, w);
+  t = t.replace(/_{2,}/g, '').replace(EMOJI_STRIP, ' ');
+  return t
+    .replace(/[^\w\s.,!?:;'’"()\-àèéìòùÀÈÉÌÒÙ]/g, ' ')
+    .replace(/\s+([,.!?;:])/g, '$1')
+    .replace(/([,.!?;:])\1+/g, '$1')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/^[,.;:!?\s]+/, '')
+    .replace(/[,;:]\s*$/, '')
+    .replace(/([?!])\s*\.\s*$/, '$1')
+    .trim();
+}
+
 function speakBrowser(text, rate = 0.85) {
   if (!window?.speechSynthesis || !text) return;
   // Chrome deprecates (and will block) speechSynthesis.speak() before any user
   // gesture. Skip only when we're certain no activation has happened yet — after
   // the first tap anywhere hasBeenActive stays true and all speech works.
   if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
-  const clean = String(text)
-    .replace(/\n/g, ', ')
-    .replace(/[^\w\s.,!?àèéìòùÀÈÉÌÒÙ'-]/g, '')
-    .replace(/\s+/g, ' ').trim();
+  const clean = toSpeech(text);
   if (!clean) return;
   const u = new SpeechSynthesisUtterance(clean);
   u.lang   = 'it-IT';
@@ -2749,10 +2851,12 @@ function speak(text, rate = 0.85, onEnd) {
   if (_onTalkingEnd) { _onTalkingEnd(); _onTalkingEnd = null; }
   if (onEnd) _onTalkingEnd = onEnd;
 
-  const file = TTS_MAP[text];
+  const file = TTS_MAP[ttsKey(text)] || TTS_MAP[text];
   if (file) {
     const audio = new Audio(`./audio/${file}`);
-    audio.playbackRate = rate <= 0.78 ? 0.88 : 1.0;
+    // Niente playbackRate: allungare o accorciare un mp3 sposta le formanti e
+    // la voce diventa metallica. La cadenza giusta è già dentro il file
+    // (gen-tts.py registra tutto a rate -10%), quindi si riproduce a 1×.
     _currentAudio = audio;
     audio.onended = () => {
       if (_currentAudio === audio) _currentAudio = null;
@@ -3078,7 +3182,7 @@ function writeParent(data) {
 const SCREEN_DEPTH = {
   consent: 0, onboarding: 0.5, name: 1, age: 2, companion: 3, companion_welcome: 3.5, map: 4,
   profile_select: 5, skills: 5, family: 5, cosmetics: 5, profile: 5, story_book: 5,
-  parent: 5, fulmine: 5, coplay_intro: 6, world_intro: 7, school: 6,
+  parent: 5, fulmine: 5, puzzle: 5, coplay_intro: 6, world_intro: 7, school: 6,
   challenge: 8, world_end: 9, session_stats: 9,
 };
 
@@ -3227,26 +3331,8 @@ function LetterTracer({ letter, onComplete, youngBg }) {
 }
 
 // ── MAIN COMPONENT ────────────────────────────────────────────────────────────
-const FF = "'Fredoka One', cursive";
-// Direzione "Sigillo di Stelle": display storybook + mono per i dati numerici
-const FF_DISPLAY = "'Grandstander', 'Fredoka One', cursive";
-const FF_MONO = "'DM Mono', ui-monospace, 'SFMono-Regular', monospace";
-// Cifre che legge il bambino. DM Mono ha lo zero BARRATO come glifo di default
-// (non è una alternate: font-feature-settings "zero" 0 non lo disattiva, provato),
-// quindi in un'app che insegna a riconoscere i numeri a 3-8 anni ogni "0" arrivava
-// a schermo come "Ø". FF_MONO resta dov'è il sapore-coding e non ci sono cifre da
-// leggere: etichette maiuscolette, tipo del companion, e tutta l'area genitori.
-const FF_NUM = "'Grandstander', 'Nunito', system-ui, sans-serif";
-// Token palette "Sigillo di Stelle" (livello modulo, riusabili in ogni schermata)
-const SG_GOLD  = "#FFC24B";   // magia / accento primario
-const SG_RUNE  = "#6DE0C6";   // logica / codice
-const SG_PARCH = "#F6ECD4";   // testo su superfici scure
-const SG_INK   = "#1B1035";   // testo scuro su oro
-const SG_BG    = "radial-gradient(120% 80% at 18% 10%, rgba(124,58,237,.26) 0%, transparent 46%), radial-gradient(95% 72% at 86% 6%, rgba(255,194,75,.11) 0%, transparent 42%), radial-gradient(85% 62% at 78% 96%, rgba(109,224,198,.10) 0%, transparent 46%), radial-gradient(125% 85% at 50% -8%, #2D1B54 0%, #1B1035 52%, #140B29 100%)";
-const SG_CARD  = "rgba(45,27,84,.55)";              // superficie card indaco caldo
-const SG_BR    = "1px solid rgba(255,194,75,.14)";  // filo d'oro sottile
-const SG_GOLD_GRAD = "linear-gradient(135deg,#FFC24B,#F6A93B)"; // pulsanti primari
-const SG_TILE  = "rgba(20,11,41,.5)";               // riquadri interni più scuri
+// I token del "Sigillo di Stelle" vivono in src/sigillo.js: li usa anche
+// PuzzleMagico, e due copie degli stessi colori divergono al primo ritocco.
 // Alias a livello modulo per le schermate (skills/session_stats/…) che usano i
 // token P_* originariamente locali al blocco "parent". Il blocco parent ridefinisce
 // i propri P_* localmente (shadowing legale) → nessun conflitto.
@@ -3421,6 +3507,13 @@ export default function MondoMago() {
       const swap = adj[Math.floor(Math.random() * adj.length)];
       [grid[emptyIdx], grid[swap]] = [grid[swap], grid[emptyIdx]];
       emptyIdx = swap;
+    }
+    // Il controllo di vittoria scatta solo dentro swapPuzzleTile: se il mescolamento
+    // riconsegna la griglia già risolta, la sfida parte "vinta" ma non lo registra mai.
+    const solved = grid.every((v, i) => (v === -1 ? i === grid.length - 1 : v === i));
+    if (solved && total > 1) {
+      const last = grid.length - 1;
+      [grid[last], grid[last - 1]] = [grid[last - 1], grid[last]];
     }
     return grid;
   }, [ch?.id]); // eslint-disable-line
@@ -4157,6 +4250,10 @@ export default function MondoMago() {
     }
   }, [nowTick, sessionStart, sessionAlertShown, screen]); // eslint-disable-line
 
+  // Il nome del bambino non è registrabile: speak() lo toglie dal parlato e lo
+  // lascia solo a schermo, così la voce resta una sola per tutta la frase.
+  useEffect(() => { setSpokenName(childName); }, [childName]);
+
   // Pre-load voices so getBestVoice() has data on first speak()
   useEffect(() => {
     if (!window?.speechSynthesis) return;
@@ -4191,7 +4288,8 @@ export default function MondoMago() {
         : c.format === "word_picture" ? `Trova l'immagine per la parola: ${c.word}`
         : c.format === "rhyme_complete" ? c.prompt.replace("___", "...")
         : c.id?.startsWith("ba_") ? `Quale immagine inizia con la lettera ${c.id.replace("ba_","")}?`
-        : c.prompt;
+        // quiz_cartoon / color_zones / puzzle_swap scrivono la consegna in `question`
+        : c.prompt || c.question;
       speak(autoText);
     } else if (screen === "world_intro" && arc) {
       startMusic(world?.id);
@@ -4700,6 +4798,30 @@ export default function MondoMago() {
     );
   }
 
+  // ════════════════════ SCREEN: PUZZLE ══════════════════════════════════════
+  // Sezione a sé: vive tutta in src/PuzzleMagico.jsx e non tocca lo stato del
+  // gioco. Riceve solo l'età (per la difficoltà di partenza), la voce e i suoni.
+  if (screen === "puzzle") return (
+    <div key="puzzle" className={screenAnim}>
+      <Suspense fallback={
+        <div style={{minHeight:"var(--vvh,100dvh)",background:SG_BG,display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <div className="pulse"><Icon name="puzzle" color={SG_GOLD} size={44} /></div>
+        </div>
+      }>
+        <PuzzleMagico
+          età={childAge || 5}
+          speak={speak}
+          sfx={SFX}
+          // Monete sì, stelle no: le stelle aprono i mondi e fanno salire di
+          // grado, e un puzzle non deve poter scavalcare le sfide. Le monete
+          // comprano solo cosmetici. Il tetto giornaliero è dentro PuzzleMagico.
+          onMonete={(n) => setCoins(c => c + n)}
+          onExit={() => navigate("map")}
+        />
+      </Suspense>
+    </div>
+  );
+
   // ════════════════════ SCREEN: MAP ═════════════════════════════════════════
   if (screen === "map") {
     const SIGILLO_MAP_BG = "radial-gradient(125% 85% at 50% -8%, #2D1B54 0%, #1B1035 52%, #140B29 100%)";
@@ -4970,7 +5092,13 @@ export default function MondoMago() {
       })()}
       {/* ── SFIDA FULMINE ── */}
       <button onClick={() => {
-        const pool = Object.values(ALL_CHALLENGES).flat().filter(c => c.format === "visual_tap" && c.ageMin <= (childAge||5) && c.ageMax >= (childAge||5));
+        // Solo formati "una domanda, quattro bottoni": la Fulmine renderizza visual+prompt+options.
+        // Le sole visual_tap si fermano a 7 anni → a 8 anni il pool restava vuoto e la sfida
+        // partiva senza domande; multiple_choice copre la fascia alta.
+        const RAPID = new Set(["visual_tap", "multiple_choice"]);
+        const pool = Object.values(ALL_CHALLENGES).flat().filter(c =>
+          RAPID.has(c.format) && Array.isArray(c.options) && c.options.length >= 2 &&
+          c.ageMin <= (childAge||5) && c.ageMax >= (childAge||5));
         const shuffled = [...pool].sort(() => Math.random() - 0.5);
         setFulminoPool(shuffled); setFulminoCi(0); setFulminoScore(0); setFulminoTime(60); setFulminoRunning(false);
         navigate("fulmine");
@@ -4989,23 +5117,26 @@ export default function MondoMago() {
         <div style={{background:"rgba(0,0,0,.15)",borderRadius:20,padding:"5px 14px",fontSize:13,fontWeight:900}}>GO!</div>
       </button>
       {/* ── NAV TABS ── */}
-      <div style={{display:"flex",gap:8,marginBottom:20}}>
-        {[[NavMap,"Mondi"],[NavBrain,"Skill"],[NavFamily,"Famiglia"],[NavSparkle,"Look"]].map(([Icon,label],i) => (
+      {/* Da 4 tab a 5 con l'arrivo di Puzzle: spazi e corpo del testo scendono,
+          altrimenti "Famiglia" va a capo su uno schermo da 360px. */}
+      <div style={{display:"flex",gap:6,marginBottom:20}}>
+        {[[NavMap,"Mondi"],[NavPuzzle,"Puzzle"],[NavBrain,"Skill"],[NavFamily,"Famiglia"],[NavSparkle,"Look"]].map(([Icon,label],i) => (
           <button key={i} onClick={() => {
-            if(i===1) navigate("skills");
-            else if(i===2) navigate("family");
-            else if(i===3) navigate("cosmetics");
+            if(i===1) navigate("puzzle");
+            else if(i===2) navigate("skills");
+            else if(i===3) navigate("family");
+            else if(i===4) navigate("cosmetics");
           }}
             style={{
               flex:1,
               background:i===0?mt.tabAct:mt.tabInact,
               border:i===0?mt.tabActBd:mt.tabInactBd,
-              borderRadius:16,padding:"14px 10px",minHeight:58,
+              borderRadius:16,padding:"13px 3px",minHeight:58,
               color:i===0?mt.tabActFg:mt.tabInactFg,
-              fontFamily:FF,fontSize:13,cursor:"pointer",
+              fontFamily:FF,fontSize:10.5,letterSpacing:-.2,whiteSpace:"nowrap",cursor:"pointer",
               display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:3,
             }}>
-            <Icon c={i===0?mt.tabActFg:mt.tabInactFg} s={22}/>
+            <Icon c={i===0?mt.tabActFg:mt.tabInactFg} s={21}/>
             <div>{label}</div>
           </button>
         ))}
@@ -5101,7 +5232,7 @@ export default function MondoMago() {
           const locked = !w.unlocked;
           const isSpot = i === 0 && !isReturning && totalStars === 0 && !mapSpotDismissed;
           return (
-            <button key={w.id} onClick={() => { if (isSpot) setMapSpotDismissed(true); locked ? speak(`Guadagna ancora ${w.starsNeeded - totalStars} stelle per aprire ${w.name}!`) : startWorld(w); }}
+            <button key={w.id} onClick={() => { if (isSpot) setMapSpotDismissed(true); locked ? speak(`Questo mondo è ancora chiuso. Guadagna altre stelle per aprire ${w.name}!`) : startWorld(w); }}
               className={`slide-up${locked?"":" world-card-btn"}${isSpot?" pulse":""}`}
               disabled={locked}
               style={{
@@ -5350,16 +5481,20 @@ export default function MondoMago() {
           <>
             <div className="pop-in" style={{background:"rgba(255,255,255,.1)",borderRadius:24,padding:"24px 20px",marginBottom:14,textAlign:"center",border:"1px solid rgba(255,255,255,.14)",boxShadow:"0 8px 32px rgba(0,0,0,.4)"}}>
               {fc.visual && <div style={{fontSize:64,letterSpacing:8,marginBottom:10}}>{fc.visual}</div>}
-              <p style={{fontSize:18,fontWeight:700,margin:0}}>{fc.prompt}</p>
+              <p style={{fontSize:18,fontWeight:700,margin:0,whiteSpace:"pre-line"}}>{fc.prompt || fc.question}</p>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-              {fc.options.map((opt, idx) => (
+              {fc.options.map((opt, idx) => {
+                // Le opzioni a 8 anni sono parole, non emoji: 42px le manderebbe fuori dal bottone.
+                const wordy = /[a-zA-ZÀ-ÿ]/.test(String(opt));
+                return (
                 <button key={idx} onClick={() => fulminoAnswer(idx)}
                   className="ans-btn"
-                  style={{background:"rgba(255,255,255,.09)",border:"3px solid rgba(255,255,255,.18)",borderRadius:22,height:88,fontSize:42,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"white"}}>
+                  style={{background:"rgba(255,255,255,.09)",border:"3px solid rgba(255,255,255,.18)",borderRadius:22,minHeight:88,padding:wordy?"10px 12px":0,fontSize:wordy?(String(opt).length>12?15:18):42,fontWeight:wordy?800:400,lineHeight:1.25,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"white"}}>
                   {opt}
                 </button>
-              ))}
+                );
+              })}
             </div>
           </>
         )}
@@ -5553,7 +5688,7 @@ export default function MondoMago() {
                 : ch.format==="word_picture" ? `Trova l'immagine per la parola: ${ch.word}`
                 : ch.id?.startsWith("ba_") ? `Quale immagine inizia con la lettera ${ch.id.replace("ba_","")}?`
                 : ch.format==="rhyme_complete" ? ch.prompt.replace("___","...")
-                : ch.prompt;
+                : ch.prompt || ch.question;
               speak(t);
             }}
               style={{background:youngBg?"rgba(0,0,0,.08)":"rgba(255,255,255,.1)",border:"none",color:youngBg?"#444":"white",borderRadius:12,padding:"11px 14px",cursor:"pointer",fontSize:17}}
@@ -5713,7 +5848,7 @@ export default function MondoMago() {
         ) : (
           <div className={`slide-up ${cardAnim}`}
             style={{background:youngBg?"white":ch.isBoss?"rgba(255,60,60,.13)":"rgba(255,255,255,.10)",borderRadius:youngBg?32:24,padding:youngBg?"24px 22px":"22px 20px",marginBottom:16,border:`1px solid ${youngBg?"rgba(0,0,0,.06)":ch.isBoss?"rgba(255,80,80,.3)":"rgba(255,255,255,.14)"}`,boxShadow:youngBg?"0 6px 30px rgba(0,0,0,.10)":"0 8px 32px rgba(0,0,0,.4)",position:"relative",zIndex:1}}>
-            <div onClick={() => { SFX.tap(); speak(ch.format==="story_choice"?ch.situation:ch.prompt); }}
+            <div onClick={() => { SFX.tap(); speak(ch.format==="story_choice"?ch.situation:(ch.prompt||ch.question)); }}
               style={{fontSize:youngBg?52:40,marginBottom:12,cursor:"pointer",display:"inline-block"}}>{ch.emoji}</div>
             {isVis && (() => {
               const segs = typeof Intl?.Segmenter === "function"
@@ -5730,7 +5865,7 @@ export default function MondoMago() {
             })()}
             {isStory
               ? <p style={{fontSize:youngBg?17:15,lineHeight:1.75,margin:0,color:youngBg?"#333":"inherit"}}>{ch.situation}</p>
-              : <p style={{fontFamily:FF_DISPLAY,fontWeight:700,fontSize:isVis?(youngBg?26:23):youngBg?23:19,lineHeight:1.55,margin:0,whiteSpace:"pre-line",color:youngBg?"#222":"inherit"}}>{ch.prompt}</p>
+              : <p style={{fontFamily:FF_DISPLAY,fontWeight:700,fontSize:isVis?(youngBg?26:23):youngBg?23:19,lineHeight:1.55,margin:0,whiteSpace:"pre-line",color:youngBg?"#222":"inherit"}}>{ch.prompt || ch.question}</p>
             }
           </div>
         )}
@@ -6131,6 +6266,28 @@ export default function MondoMago() {
               color:youngBg?"#555":"rgba(255,255,255,.7)"}}>
               <Icon name="puzzle" color={youngBg?"#C98A06":"#FFC24B"} ink={youngBg?"#3A2A10":undefined} size={16} style={{verticalAlign:"-3px",marginRight:7}} />Tocca un pezzo accanto al buco per spostarlo!
             </p>
+            {/* Modello da raggiungere. La vittoria è "tessere nell'ordine 0..n-1":
+                senza vederlo il bambino non ha modo di sapere quale sia l'ordine giusto. */}
+            {Array.isArray(ch.emojis) && (
+              <div style={{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:14}}>
+                <div style={{fontSize:10,fontWeight:800,letterSpacing:1.5,opacity:.5,marginBottom:6,
+                  color:youngBg?"#666":"rgba(255,255,255,.6)"}}>DEVE VENIRE COSÌ</div>
+                <div style={{
+                  display:"grid",
+                  gridTemplateColumns:`repeat(${ch.size||2}, 30px)`,
+                  gap:4,padding:8,borderRadius:12,
+                  background:youngBg?"rgba(0,0,0,.04)":"rgba(255,255,255,.06)",
+                  border:`1px dashed ${youngBg?"rgba(0,0,0,.14)":"rgba(255,194,75,.3)"}`,
+                }}>
+                  {Array.from({length:(ch.size||2)**2}, (_, i) => (
+                    <div key={i} style={{width:30,height:30,display:"flex",alignItems:"center",
+                      justifyContent:"center",fontSize:19,opacity:ch.emojis[i]?.9:.25}}>
+                      {ch.emojis[i] || "·"}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             {(() => {
               const size = ch.size || 2;
               const tileSize = size === 2 ? 88 : size === 3 ? 72 : 60;
@@ -6276,8 +6433,14 @@ export default function MondoMago() {
                 </div>
                 {/* Story narrative outcome */}
                 {isStory && storyChoice?.outcome && (
-                  <div style={{fontSize:13,lineHeight:1.5,marginBottom:4,color:youngBg?"#444":"rgba(255,255,255,.88)"}}>
+                  // A 5-6 anni il finale della storia non si legge da soli: è il
+                  // momento che dà senso alla scelta, e va potuto ascoltare.
+                  <div role="button" tabIndex={0}
+                    onClick={() => { SFX.tap(); speak(storyChoice.outcome); }}
+                    onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { SFX.tap(); speak(storyChoice.outcome); } }}
+                    style={{fontSize:13,lineHeight:1.5,marginBottom:4,cursor:"pointer",color:youngBg?"#444":"rgba(255,255,255,.88)"}}>
                     {storyChoice.outcome}
+                    <Icon name="audio" color={youngBg?"#8A6A16":"#FFC24B"} ink={youngBg?"#3A2A10":undefined} size={13} style={{verticalAlign:"-2px",marginLeft:6,opacity:.75}} />
                   </div>
                 )}
                 {/* Correct answer revealed on wrong (MC/visual/rhyme/word) */}
