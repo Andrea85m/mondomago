@@ -319,6 +319,26 @@ async function main() {
     await scatta(page, 'sfida-del-giorno');
   });
 
+  // ── l'app installata parte anche senza rete ──────────────────────────────
+  // Solo sul build: nel server di sviluppo i moduli di Vite non sono in cache.
+  // È il passo che ha scoperto il service worker che offline non apriva ?source=pwa.
+  await passo("offline: l'app installata si apre e la scorciatoia funziona", async () => {
+    const dev = await page.evaluate(() => !!document.querySelector('script[src*="@vite/client"]'));
+    if (dev) return;
+    await page.waitForFunction(() => navigator.serviceWorker?.controller, null, { timeout: 15000 });
+    await page.context().setOffline(true);
+    try {
+      for (const [q, atteso] of [['source=pwa', 'text=I Mondi Magici'], ['action=daily', 'text=Sfida del Giorno']]) {
+        const u = new globalThis.URL(URL);
+        u.search = q;
+        await page.goto(u.href, { waitUntil: 'domcontentloaded' });
+        await page.waitForSelector(atteso, { timeout: 10000 });
+      }
+    } finally {
+      await page.context().setOffline(false);
+    }
+  });
+
   // ── la rete di sicurezza: un errore di render mostra una schermata, non il vuoto ──
   // Pagina a parte: l'errore è voluto e non deve finire fra i problemi.
   await passo('un crash mostra la schermata d\'errore, non una pagina vuota', async () => {
