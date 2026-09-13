@@ -2297,6 +2297,7 @@ export default function MondoMago() {
         Inizia!
       </button>
       <p style={{fontSize:11,opacity:.35,maxWidth:320}}>Nessun dato personale viene raccolto — tutto rimane sul dispositivo.</p>
+      <a href="privacy-policy.html" target="_blank" rel="noopener" style={{fontSize:12,color:SG_PARCH,opacity:.75,marginTop:10,textDecoration:"underline",textUnderlineOffset:2}}>Leggi l'informativa privacy</a>
     </div>
   );
 
@@ -4928,6 +4929,7 @@ export default function MondoMago() {
             </button>
           ))}
         </div>
+        <a href="privacy-policy.html" target="_blank" rel="noopener" style={{marginTop:26,fontSize:12,color:PARCH,opacity:.7,textDecoration:"underline",textUnderlineOffset:2}}>Informativa privacy</a>
       </div>
     );
 

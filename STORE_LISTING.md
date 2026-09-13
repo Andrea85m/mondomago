@@ -1,149 +1,122 @@
-# MondoMago — Store Listing Copy
+# MondoMago — Scheda Google Play
 
-## App Name
-**MondoMago — Giochi Educativi**
-
----
-
-## SHORT DESCRIPTION (80 chars max — Google Play)
-IT: Avventure educative per bambini 3-8 anni. Offline. Senza pubblicità.
-EN: Educational adventures for kids 3-8. Fully offline. Zero ads.
+> Aggiornata il 2026-09-13. **Ogni numero qui sotto è verificato sul codice** (368 sfide,
+> 15 tipi, 14 traguardi, 13 cosmetici, 10 missioni famiglia, 6 lettere): se cambia il gioco,
+> va ricontrollato. Google Play rifiuta affermazioni non dimostrabili ("il primo", "il migliore",
+> "n.1") ed emoji nel titolo e nella descrizione breve.
 
 ---
 
-## FULL DESCRIPTION — ITALIANO (4000 chars max)
+## Titolo (max 30 caratteri)
+**MondoMago: giochi educativi** — 27 caratteri
 
-🧙‍♂️ **MondoMago** — Il gioco educativo magico per bambini italiani da 3 a 8 anni!
-
-Esplora 8 mondi incantati, risolvi sfide di logica, numeri, parole e coding, e guadagna stelle con il tuo compagno magico!
-
-### ✨ 8 Mondi da Scoprire
-- 🌲 **Foresta Magica** — Logica e natura per iniziare l'avventura
-- 🏰 **Castello delle Nuvole** — Enigmi del regno incantato
-- 🌊 **Oceano Luminoso** — Scoperte acquatiche e conteggio
-- 🎪 **Mercato dei Colori** — Colori, forme e creatività
-- 🌌 **Galassia Stellare** — Matematica e scienza spaziale
-- 🌋 **Vulcano Magico** — Sfide di fuoco per i più coraggiosi
-- 📚 **Biblioteca Incantata** — Lettura, rime e tracciamento lettere
-- 🔬 **Laboratorio Logico** — Pensiero computazionale e coding per bambini!
-
-### 🎮 10 Formati di Sfida
-Scelta multipla, tap visivi, sequenze, trascinamento, filastrocche, abbinamento parole, tracciamento lettere, if-else, debug e sequenze di codice. Mai monotono!
-
-### 🤖 5 Compagni Magici
-Fiamma il Drago 🐉, Luna l'Unicorno 🦄, Onde il Delfino 🐬, Foglia la Volpe 🦊 e Pixel il Robot 🤖 ti accompagnano con messaggi di incoraggiamento personalizzati.
-
-### 💻 Coding per Bambini (novità!)
-Il Laboratorio Logico introduce il pensiero computazionale in italiano: sequenze di istruzioni, condizioni SE/ALLORA, debug di errori. Primo nel suo genere in Italia!
-
-### 🌟 Perché MondoMago?
-- ✅ **100% offline** — funziona senza internet
-- ✅ **Zero pubblicità** — esperienza pulita e sicura
-- ✅ **COPPA compliant** — nessun dato personale raccolto
-- ✅ **Voci italiane** — sintesi vocale pre-registrata su ogni sfida
-- ✅ **Multi-profilo** — fino a 4 bambini sullo stesso dispositivo
-- ✅ **Controlli genitori** — limiti di tempo, modalità scuola, report progressi
-- ✅ **Adaptive learning** — sfide calibrate per fascia d'età (3-4, 5-6, 7-8 anni)
-- ✅ **Tracciamento lettere** — impara A, E, I, O, U, M con animazioni SVG
-
-### 📊 Competenze sviluppate
-Logica 🧩 · Numeri 🔢 · Creatività 🎨 · Empatia 💛 · Parole 📖 · Coding 💻
-
-### 🏆 Sistema di Motivazione
-200+ sfide · Stelle e XP · 14 achievement · 13 cosmetici sbloccabili · Sfida del giorno · Streak tracker
-
-### 👨‍👩‍👧 Dashboard Genitori
-Report dettagliato scaricabile: accuratezza per abilità, tempo di gioco, giorni attivi, suggerimenti di coaching personalizzati. Nessun account richiesto.
-
-MondoMago è sviluppato con amore in Italia per bambini italiani. Nessun in-app purchase, nessuna pubblicità, nessun abbonamento. Una volta installata, è tua per sempre.
+## Descrizione breve (max 80 caratteri)
+**Logica, numeri, parole e coding per bambini da 3 a 8 anni. Senza pubblicità.** — 78 caratteri
 
 ---
 
-## FULL DESCRIPTION — ENGLISH (4000 chars max)
+## Descrizione completa — italiano (max 4000 caratteri)
 
-🧙‍♂️ **MondoMago** — The magical educational game for Italian-speaking kids aged 3 to 8!
+MondoMago è un gioco educativo in italiano per bambini dai 3 agli 8 anni. Insieme a un compagno magico il bambino esplora otto mondi, risolve sfide di logica, numeri, parole ed empatia e muove i primi passi nel coding.
 
-Explore 8 enchanted worlds, solve challenges in logic, numbers, words and coding, and earn stars with your magical companion!
+OTTO MONDI DA SCOPRIRE
+Foresta Magica, Castello delle Nuvole, Oceano Luminoso, Mercato dei Colori, Galassia Stellare, Vulcano Magico, Biblioteca Incantata e Laboratorio Logico. Ogni mondo ha la sua storia, le sue musiche e le sue sfide boss.
 
-### ✨ 8 Worlds to Discover
-Enchanted Forest · Cloud Castle · Luminous Ocean · Color Market · Star Galaxy · Magic Volcano · Enchanted Library · Logic Laboratory
+368 SFIDE, 15 MODI DI GIOCARE
+Tocca l'immagine giusta, metti in ordine, trascina, completa la filastrocca, abbina parole e figure, trova le coppie, colora le zone, ricomponi il puzzle, traccia le lettere. Nel Laboratorio Logico si scrivono sequenze di istruzioni, si scelgono le condizioni SE/ALLORA e si trovano i bug.
 
-### 🎮 10 Challenge Formats
-Multiple choice, visual tap, sequences, drag & drop, rhymes, word pictures, letter tracing, if-else conditions, debug challenges, code sequences. Never boring!
+SI ADATTA AL BAMBINO
+Le sfide sono calibrate per tre fasce d'età (3-4, 5-6, 7-8 anni). Il gioco propone più spesso le abilità da rinforzare e ripresenta, a distanza di tempo, le sfide sbagliate.
 
-### 🤖 5 Magical Companions
-Fiamma the Dragon, Luna the Unicorn, Onde the Dolphin, Foglia the Fox, and Pixel the Robot provide personalized encouragement after every answer.
+PUZZLE MAGICO
+Quattro giochi in più: ombre da abbinare, immagini da ricostruire, oggetti da indovinare scoprendo un pezzo alla volta e veri puzzle a incastro, da trascinare col dito o da piazzare con due tocchi.
 
-### 💻 Coding for Kids (new!)
-The Logic Laboratory introduces computational thinking in Italian: instruction sequences, IF/THEN conditions, bug-finding. First of its kind in Italy!
+CINQUE COMPAGNI MAGICI
+Fiamma il drago, Luna l'unicorno, Onde il delfino, Foglia la volpe e Pixel il robot incoraggiano il bambino a ogni risposta, con una voce italiana registrata.
 
-### 🌟 Why MondoMago?
-- ✅ **100% offline** — works without internet after install
-- ✅ **Zero ads** — clean, safe experience
-- ✅ **COPPA & GDPR compliant** — no personal data collected
-- ✅ **Italian voices** — pre-recorded TTS on every challenge
-- ✅ **Multi-profile** — up to 4 children per device
-- ✅ **Parental controls** — time limits, school mode, progress reports
-- ✅ **Adaptive** — challenges calibrated for age groups 3-4, 5-6, 7-8
-- ✅ **Letter tracing** — learn vowels + M with animated SVG guides
+PER I GENITORI
+- Area genitori protetta da PIN
+- Limite di tempo per sessione e promemoria giornaliero facoltativo
+- Report dei progressi per abilità, con consigli pratici da fare a casa
+- Dieci missioni da fare insieme, nella vita reale
+- Più profili sullo stesso dispositivo
+- Modalità scuola per l'uso in classe
 
-No in-app purchases. No ads. No subscriptions. Install once, yours forever.
+ACCESSIBILE
+Testo più grande, alto contrasto, carattere ad alta leggibilità per la dislessia e animazioni ridotte.
 
----
+SICURO PER DAVVERO
+- Nessuna pubblicità, nessun acquisto nell'app, nessun abbonamento
+- Nessun account e nessun dato personale raccolto: i progressi restano sul dispositivo
+- Dopo il primo avvio si gioca anche senza connessione
 
-## KEYWORDS (Google Play — comma separated)
-IT: giochi bambini, educativo bambini, app scuola, logica bambini, imparare numeri, coding bambini, italiano bambini, app senza internet, giochi offline, 3 anni, 4 anni, 5 anni, imparare lettere, materna, primaria
-EN: kids learning, educational game, offline kids app, coding for kids, italian learning, preschool, kindergarten, letter tracing, logic puzzle kids
-
----
-
-## CATEGORY
-Primary: **Education**
-Tags: Children, Offline, Educational Games
+Motivazione senza pressione: stelle, 8 gradi da mago, 14 traguardi, 13 accessori per il compagno, la Sfida del Giorno e la serie dei giorni di gioco.
 
 ---
 
-## CONTENT RATING (IARC questionnaire answers)
-- Violence: None
-- Sexual content: None
-- Profanity: None
-- Controlled substances: None
-- Gambling: None
-- **Target age group: 3-8 years**
-- **Directed at children under 13: YES**
-- Data collected: None (answer NO to all data collection questions)
-→ Expected rating: **PEGI 3 / Everyone**
+## Full description — English (secondary listing, max 4000)
+
+MondoMago is an Italian-language educational game for children aged 3 to 8. With a magical companion, kids explore eight worlds, solve logic, number, word and empathy challenges, and take their first steps in coding.
+
+- 8 worlds, 368 challenges, 15 ways to play, each world with its own story and boss challenges
+- Adapts to three age groups (3-4, 5-6, 7-8) and brings back the challenges a child found hard
+- Puzzle Magico: shadows, picture builder, guess-the-object and real jigsaw puzzles
+- 5 companions with recorded Italian voice
+- Parents: PIN-protected area, session time limit, progress report, 10 family missions, multiple profiles, school mode
+- Accessibility: larger text, high contrast, dyslexia-friendly font, reduced motion
+- No ads, no in-app purchases, no account, no personal data collected. Plays offline after the first launch
 
 ---
 
-## WHAT'S NEW (v1.0.0 — first release)
-IT: Prima versione di MondoMago! 8 mondi, 200+ sfide, 5 compagni magici incluso Pixel il Robot con il Laboratorio Logico — il primo mondo di coding in italiano per bambini!
+## Categoria e pubblico
 
-EN: MondoMago first release! 8 worlds, 200+ challenges, 5 magical companions including Pixel the Robot with the all-new Logic Laboratory — Italy's first coding world for kids!
+| Campo Play Console | Valore |
+|---|---|
+| Tipo | App (non gioco) → categoria **Istruzione** |
+| Fasce d'età target | **5 anni e meno** · **6-8 anni** |
+| Rivolta anche a adulti? | No |
+| Programma Famiglie | Sì (obbligatorio con pubblico sotto i 13 anni) |
+| Annunci | **No**, l'app non contiene annunci |
+| Acquisti in-app | Nessuno |
+
+## Sicurezza dei dati (Data safety)
+
+| Domanda | Risposta | Motivo |
+|---|---|---|
+| L'app raccoglie o condivide dati utente? | **No** | Nome, età e progressi restano nel localStorage del dispositivo e non vengono mai trasmessi |
+| I dati sono crittografati in transito? | Non applicabile | Nessun dato trasmesso |
+| Si può chiedere la cancellazione? | Sì, dall'app | Profilo del compagno → *Ricomincia da capo*; oppure disinstallando |
+
+## Classificazione dei contenuti (questionario IARC)
+
+Violenza, contenuti sessuali, linguaggio volgare, sostanze, gioco d'azzardo, acquisti digitali,
+interazione tra utenti, condivisione della posizione: **tutti No** → atteso **PEGI 3**.
+
+## Accesso all'app (per chi revisiona)
+
+> Tutte le funzioni sono disponibili senza login. L'area genitori chiede un PIN a 4 cifre
+> che si sceglie al primo accesso: basta inserire quattro cifre qualsiasi, e da lì in poi
+> quelle stesse quattro cifre aprono l'area.
 
 ---
 
-## SCREENSHOTS NEEDED (1080×1920 recommended)
-1. **Mappa dei mondi** — tutti e 8 i mondi visibili
-2. **Sfida visiva** — bambino 3-4 anni con compagno
-3. **Sfida multipla** — bambino 6-7 anni con companion
-4. **Tracciamento lettera** — schermata LetterTracer
-5. **Laboratorio Logico** — sfida if_else_tap con Pixel
-6. **Dashboard genitori** — report progressi
-7. **Companion selection** — tutti i 5 compagni
-8. **World end reward** — stella e premio missione
+## Grafica
 
-**Feature graphic** (1024×500): logo + "MondoMago" + tagline + tutti i companion emoji
+| Asset | File | Requisito Play |
+|---|---|---|
+| Icona 512×512 | `public/icon-512.png` | PNG 32 bit, ≤ 1 MB ✓ |
+| Feature graphic 1024×500 | `public/screenshots/feature-graphic.png` | PNG/JPEG senza trasparenza ✓ |
+| Screenshot telefono (2-8) | `public/screenshots/screen-*.png` — mappa, sfida, introduzione mondo, abilità, puzzle, vittoria | 1080×1920, senza trasparenza ✓ |
 
----
+Si rigenerano con `node scripts/gen-screenshots.mjs` (vedi DEPLOY_GUIDE §3).
 
-## PRIVACY POLICY URL
-https://[tuodominio].it/privacy-policy.html
-(oppure usa GitHub Pages: https://[utente].github.io/mondomago/privacy-policy.html)
+## Novità della versione (1.0.0)
 
----
+**IT:** Prima versione di MondoMago: 8 mondi, 368 sfide, 5 compagni magici e il Puzzle Magico.
+**EN:** First release of MondoMago: 8 worlds, 368 challenges, 5 magical companions and Puzzle Magico.
 
-## DEVELOPER DETAILS
-Name: [nome/azienda]
-Email: afphotographyflickr@gmail.com
-Website: [sito opzionale]
+## Link
+
+- Privacy policy: https://andrea85m.github.io/mondomago/privacy-policy.html
+- Email di contatto (pubblica sulla scheda): afphotographyflickr@gmail.com
+- Nome sviluppatore: *da scegliere* (appare sotto il titolo)

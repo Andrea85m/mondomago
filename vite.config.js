@@ -14,6 +14,9 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) return 'vendor'
+          // Sfide e mondi: dati puri che cambiano meno spesso del codice. In un chunk
+          // loro il principale scende sotto i 500 KB e resta in cache fra un deploy e l'altro.
+          if (id.includes('/src/data/')) return 'dati'
         },
       },
     },
