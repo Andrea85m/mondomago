@@ -2,14 +2,14 @@
   "id": "/mondomago/",
   "name": "MondoMago — Giochi per bambini",
   "short_name": "MondoMago",
-  "description": "Avventure educative per bambini 3-8 anni: logica, numeri, parole e coding. Offline, senza pubblicità, 8 mondi e 4 compagni magici.",
+  "description": "Avventure educative per bambini 3-8 anni: logica, numeri, parole e coding. Offline, senza pubblicità, 8 mondi e 5 compagni magici.",
   "start_url": "/mondomago/?source=pwa",
   "scope": "/mondomago/",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait",
-  "background_color": "#1a1a2e",
-  "theme_color": "#1a1a2e",
+  "background_color": "#1B1035",
+  "theme_color": "#1B1035",
   "icons": [
     {
       "src": "/mondomago/icon-192.png",
@@ -24,7 +24,7 @@
       "purpose": "any"
     },
     {
-      "src": "/mondomago/icon-512.png",
+      "src": "/mondomago/icon-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
@@ -64,7 +64,7 @@
       "label": "Mappa dei mondi magici"
     },
     {
-      "src": "/mondomago/screenshots/screen-challenge-visual.png",
+      "src": "/mondomago/screenshots/screen-challenge.png",
       "sizes": "1080x1920",
       "type": "image/png",
       "form_factor": "narrow",
@@ -75,7 +75,14 @@
       "sizes": "1080x1920",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "Ricompense e stelle"
+      "label": "Puzzle completato: monete e adesivi"
+    },
+    {
+      "src": "/mondomago/screenshots/screen-puzzle.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Puzzle a incastro"
     }
   ]
 }

@@ -6,106 +6,26 @@
     <link rel="apple-touch-icon" href="/mondomago/apple-touch-icon.png" />
     <link rel="manifest" href="/mondomago/manifest.json" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#1a1a2e" />
+    <meta name="description" content="Gioco educativo per bambini da 3 a 8 anni: logica, numeri, parole e coding in 8 mondi magici. In italiano, senza pubblicità, anche offline." />
+    <meta name="theme-color" content="#1B1035" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="MondoMago" />
     <title>MondoMago</title>
-    <style>
-      :root { --font-display: 'Fredoka One', cursive; }
-      :root {
-        --sat: env(safe-area-inset-top, 0px);
-        --sar: env(safe-area-inset-right, 0px);
-        --sab: env(safe-area-inset-bottom, 0px);
-        --sal: env(safe-area-inset-left, 0px);
-      }
-      *, *::before, *::after {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-        -webkit-tap-highlight-color: transparent;
-        -webkit-touch-callout: none;
-      }
-      html {
-        height: 100%;
-        /* prevent elastic scroll bounce on iOS */
-        overscroll-behavior: none;
-      }
-      body {
-        font-family: 'Nunito', system-ui, sans-serif;
-        background: #1a1a2e;
-        overscroll-behavior: none;
-        /* block pull-to-refresh and overscroll glow */
-        overscroll-behavior-y: none;
-        /* safe-area aware padding for notch phones */
-        padding-top: var(--sat);
-        padding-left: var(--sal);
-        padding-right: var(--sar);
-        /* DO NOT add padding-bottom here — screens handle it individually */
-        min-height: 100dvh;
-        min-height: 100vh; /* fallback for older browsers */
-        /* prevent iOS text size adjustment */
-        -webkit-text-size-adjust: 100%;
-        text-size-adjust: 100%;
-      }
-      #root {
-        min-height: 100dvh;
-        min-height: 100vh;
-        isolation: isolate;
-      }
-      /* Prevent text selection across all game UI */
-      * {
-        -webkit-user-select: none;
-        user-select: none;
-      }
-      /* Re-enable selection only for text inputs */
-      input, textarea {
-        -webkit-user-select: text;
-        user-select: text;
-      }
-      button, [role="button"] {
-        font-family: 'Nunito', system-ui, sans-serif;
-        cursor: pointer;
-        touch-action: manipulation;
-        -webkit-tap-highlight-color: transparent;
-        border: none;
-        background: none;
-      }
-      input {
-        font-family: 'Nunito', system-ui, sans-serif;
-        /* 16px minimum prevents iOS auto-zoom on focus */
-        font-size: 16px;
-      }
-      /* Smooth scrolling for any scrollable containers */
-      [data-scroll] {
-        -webkit-overflow-scrolling: touch;
-        scroll-behavior: smooth;
-      }
-      /* iOS safe area bottom padding helper class */
-      .safe-bottom {
-        padding-bottom: max(var(--sab), 16px);
-      }
-      /* Full-screen helper using dynamic viewport */
-      .screen-full {
-        min-height: 100dvh;
-        min-height: 100vh;
-        /* bottom padding so content isn't hidden behind home indicator */
-        padding-bottom: max(var(--sab), 0px);
-      }
-    </style>
-    <script type="module" crossorigin src="/mondomago/assets/index-NKlsps11.js"></script>
-    <link rel="modulepreload" crossorigin href="/mondomago/assets/rolldown-runtime-pRHcBP7x.js">
-    <link rel="modulepreload" crossorigin href="/mondomago/assets/vendor-BehzViaP.js">
+    <style>:root{--sat:env(safe-area-inset-top,0px);--sar:env(safe-area-inset-right,0px);--sab:env(safe-area-inset-bottom,0px);--sal:env(safe-area-inset-left,0px)}*,:before,:after{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;margin:0;padding:0}html{overscroll-behavior:none;height:100%}body{overscroll-behavior:none;overscroll-behavior-y:none;padding-top:var(--sat);padding-left:var(--sal);padding-right:var(--sar);-webkit-text-size-adjust:100%;-moz-text-size-adjust:100%;text-size-adjust:100%;background:#1b1035;min-height:100vh;font-family:Nunito,system-ui,sans-serif}#root{isolation:isolate;min-height:100vh}*{-webkit-user-select:none;user-select:none}input,textarea{-webkit-user-select:text;user-select:text}button,[role=button]{cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;background:0 0;border:none;font-family:Nunito,system-ui,sans-serif}input{font-family:Nunito,system-ui,sans-serif;font-size:16px}[data-scroll]{-webkit-overflow-scrolling:touch;scroll-behavior:smooth}.safe-bottom{padding-bottom:max(var(--sab), 16px)}.screen-full{min-height:100vh;padding-bottom:max(var(--sab), 0px)}</style>
+    <script type="module" crossorigin src="/mondomago/assets/index-BMnZZhGC.js"></script>
+    <link rel="modulepreload" crossorigin href="/mondomago/assets/vendor-BezxsjhG.js">
+    <link rel="modulepreload" crossorigin href="/mondomago/assets/dati-ChEnf6vg.js">
     <link rel="stylesheet" crossorigin href="/mondomago/assets/vendor-CBpqWe82.css">
   </head>
   <body>
     <!-- Branded splash: shown until React mounts, removes itself -->
-    <div id="mm-splash" style="position:fixed;inset:0;background:#1a1a2e;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .35s ease">
-      <div style="font-size:80px;animation:bounce 1s ease-in-out infinite">🧙‍♂️</div>
-      <div style="font-family:'Fredoka One',cursive;font-size:34px;color:white;margin-top:14px;letter-spacing:0.5px">MondoMago</div>
-      <div style="font-family:'Nunito',system-ui,sans-serif;font-size:14px;color:rgba(255,255,255,.45);margin-top:6px">Il mondo magico ti aspetta ✨</div>
-      <style>@keyframes bounce{0%,100%{transform:translateY(0)}40%{transform:translateY(-18px)}70%{transform:translateY(-8px)}}</style>
+    <div id="mm-splash" style="position:fixed;inset:0;background:radial-gradient(125% 85% at 50% -8%,#2D1B54 0%,#1B1035 52%,#140B29 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .35s ease">
+      <svg width="96" height="96" viewBox="0 0 64 64" aria-hidden="true" style="animation:mmFloat 2.4s ease-in-out infinite"><circle cx="32" cy="32" r="30" fill="none" stroke="#FFC24B" stroke-opacity=".5" stroke-width="1.6" stroke-dasharray="4 3"/><circle cx="32" cy="32" r="26" fill="none" stroke="#6DE0C6" stroke-opacity=".45" stroke-width="1"/><circle cx="32" cy="32" r="20" fill="#FFC24B"/><path d="M32.0,20.0L35.2,28.6L44.4,29.0L37.1,34.7L39.6,43.5L32.0,38.4L24.4,43.5L26.9,34.7L19.6,29.0L28.8,28.6Z" fill="#2D1B54" stroke="#2D1B54" stroke-width="1.4" stroke-linejoin="round"/></svg>
+      <div style="font-family:'Grandstander','Fredoka One',system-ui,sans-serif;font-weight:800;font-size:34px;color:#FFC24B;margin-top:16px;letter-spacing:0.5px">MondoMago</div>
+      <div style="font-family:'Nunito',system-ui,sans-serif;font-size:14px;color:rgba(246,236,212,.6);margin-top:6px">Il mondo magico ti aspetta</div>
+      <style>@keyframes mmFloat{0%,to{transform:translateY(0)}50%{transform:translateY(-10px)}}@media (prefers-reduced-motion:reduce){#mm-splash svg{animation:none!important}}</style>
     </div>
     <main id="root"></main>
     <script>
@@ -140,10 +60,11 @@
               const nw = reg.installing;
               nw.addEventListener('statechange', () => {
                 if (nw.state === 'installed' && navigator.serviceWorker.controller) {
-                  const b = document.createElement('div');
+                  const b = document.createElement('button');
                   b.id = 'mm-update-banner';
-                  b.style.cssText = 'position:fixed;bottom:env(safe-area-inset-bottom,0px);left:0;right:0;background:#6C63FF;color:white;text-align:center;padding:12px;font-family:Nunito,sans-serif;font-size:14px;font-weight:700;z-index:99999;cursor:pointer';
-                  b.textContent = '✨ Aggiornamento disponibile — tocca per ricaricare';
+                  b.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:linear-gradient(135deg,#FFC24B,#F6A93B);color:#1B1035;text-align:center;padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px));font-family:Nunito,system-ui,sans-serif;font-size:15px;font-weight:800;z-index:99999;cursor:pointer;border:0;width:100%';
+                  b.type = 'button';
+                  b.textContent = 'Aggiornamento disponibile — tocca per ricaricare';
                   b.onclick = () => { nw.postMessage({type:'SKIP_WAITING'}); location.reload(); };
                   document.body.appendChild(b);
                 }
