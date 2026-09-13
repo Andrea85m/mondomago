@@ -149,7 +149,7 @@ print(json.dumps([tts_key(c) for c in json.loads(sys.argv[1])]))
 `, JSON.stringify(CASES)], { encoding: 'utf8' });
   const pyKeys = JSON.parse(py);
   CASES.forEach((c, i) => {
-    const jsKey = stripName(c.replace(/\x00NAME\x00/g, ''));
+    const jsKey = stripName(c.replaceAll('\x00NAME\x00', ''));
     if (jsKey !== pyKeys[i])
       errors.push(`regole disallineate su "${c.slice(0, 34)}": JS → "${jsKey}" · Python → "${pyKeys[i]}"`);
   });

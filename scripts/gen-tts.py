@@ -37,7 +37,8 @@ except ImportError:
     sys.exit("edge-tts non trovato. Esegui: pip3 install edge-tts")
 
 ROOT = Path(__file__).resolve().parent.parent
-SOURCE = ROOT / "src" / "MondoMago.jsx"
+# Il testo parlato sta nel gioco e nei suoi dati (compagni, mondi, sfide)
+SOURCES = [ROOT / "src" / "MondoMago.jsx", ROOT / "src" / "data" / "mondi.js", ROOT / "src" / "data" / "sfide.js"]
 SOURCE_PUZZLE = ROOT / "src" / "PuzzleMagico.jsx"
 AUDIO_DIR = ROOT / "public" / "audio"
 MAP_OUT = ROOT / "src" / "ttsMap.json"
@@ -223,7 +224,7 @@ async def main():
         print(f"\nAscoltale e scegli. La voce attiva è {VOICE} (costante VOICE in questo file).")
         return
 
-    jsx = SOURCE.read_text(encoding="utf-8")
+    jsx = "\n".join(p.read_text(encoding="utf-8") for p in SOURCES)
     texts = collect(jsx)
 
     # chiave = testo a schermo col nome tolto; più testi diversi possono

@@ -1600,11 +1600,9 @@ const Dizzy = () => (
   <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{width:"100%",height:"100%"}}>
     <BgCircle from="#FDE68A" to="#D97706"/>
     <circle cx="50" cy="50" r="8" fill="#FBBF24"/>
-    {[0,60,120,180,240,300].map((deg,i) => {
+    {[0,60,120,180,240,300].map(deg => {
       const r = 25, a = deg*Math.PI/180;
       const x = 50+r*Math.cos(a), y = 50+r*Math.sin(a);
-      const x2 = 50+(r-10)*Math.cos(a+(i%2?0.4:-0.4));
-      const y2 = 50+(r-10)*Math.sin(a+(i%2?0.4:-0.4));
       return <line key={deg} x1={50+10*Math.cos(a)} y1={50+10*Math.sin(a)} x2={x} y2={y} stroke="#F59E0B" strokeWidth={4} strokeLinecap="round"/>;
     })}
   </svg>
@@ -1926,6 +1924,7 @@ const Robot = () => (
 );
 
 // ─── ASSET MAP ────────────────────────────────────────────────────────────────
+// eslint-disable-next-line react-refresh/only-export-components -- la mappa serve anche a PuzzleMagico e all'audit
 export const ASSET_MAP = {
   // ── Animals (original) ───────────────────────────────────────────────────
   "🐻": Bear,    "🐸": Frog,      "🐶": Dog,       "🐱": Cat,
@@ -2042,7 +2041,7 @@ export default function SvgAsset({ emoji, size = 80, state = "default" }) {
   }
 
   // Strip invisible control characters (ZWJ U+200D, VS U+FE0F) before display
-  const displayEmoji = emoji.replace(/[‍️︎]/g, '').trim();
+  const displayEmoji = emoji.replace(/\u200D|\uFE0F|\uFE0E/g, '').trim();
   if (!displayEmoji) return null;
 
   // Fallback — emoji in a styled gradient circle

@@ -25,3 +25,35 @@ export const SG_CARD  = "rgba(45,27,84,.55)";              // superficie card in
 export const SG_BR    = "1px solid rgba(255,194,75,.14)";  // filo d'oro sottile
 export const SG_GOLD_GRAD = "linear-gradient(135deg,#FFC24B,#F6A93B)"; // pulsanti primari
 export const SG_TILE  = "rgba(20,11,41,.5)";               // riquadri interni più scuri
+
+// ── Contrasto (WCAG 2.1) ──────────────────────────────────────────────────────
+// Il colore del testo si sceglie coi numeri, non a occhio: 4.5:1 è la soglia AA
+// per il testo normale. Servono #RRGGBB.
+
+function luminanza(hex) {
+  const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255)
+    .map(c => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+/** Rapporto di contrasto fra due colori, da 1 a 21. */
+export function contrasto(a, b) {
+  const [x, y] = [luminanza(a), luminanza(b)].sort((p, q) => q - p);
+  return (x + 0.05) / (y + 0.05);
+}
+
+function scurisci(hex, t) {
+  return "#" + [1, 3, 5].map(i => Math.round(parseInt(hex.slice(i, i + 2), 16) * (1 - t))
+    .toString(16).padStart(2, "0")).join("");
+}
+
+/**
+ * Etichetta piena nel colore dato, sempre leggibile: testo inchiostro se basta,
+ * altrimenti testo bianco sul colore scurito quanto serve (non di più).
+ */
+export function etichettaLeggibile(colore, minimo = 4.5) {
+  if (contrasto(colore, SG_INK) >= minimo) return { sfondo: colore, testo: SG_INK };
+  let t = 0, sfondo = colore;
+  while (contrasto(sfondo, "#FFFFFF") < minimo && t < 0.9) { t += 0.02; sfondo = scurisci(colore, t); }
+  return { sfondo, testo: "#FFFFFF" };
+}

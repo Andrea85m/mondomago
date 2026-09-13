@@ -132,7 +132,7 @@ function SceneForesta({ full }) {
 }
 
 // ─── CASTELLO DELLE NUVOLE ────────────────────────────────────────────────────
-function SceneCastello({ full }) {
+function SceneCastello() {
   return (
     <svg viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "100%" }}>
       <defs>
@@ -229,7 +229,7 @@ function SceneCastello({ full }) {
 }
 
 // ─── OCEANO LUMINOSO ──────────────────────────────────────────────────────────
-function SceneOceano({ full }) {
+function SceneOceano() {
   return (
     <svg viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "100%" }}>
       <defs>
@@ -323,7 +323,7 @@ function SceneOceano({ full }) {
 }
 
 // ─── MERCATO DEI COLORI ───────────────────────────────────────────────────────
-function SceneMercato({ full }) {
+function SceneMercato() {
   return (
     <svg viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "100%" }}>
       <defs>
@@ -428,7 +428,7 @@ function SceneMercato({ full }) {
 }
 
 // ─── GALASSIA STELLARE ────────────────────────────────────────────────────────
-function SceneGalassia({ full }) {
+function SceneGalassia() {
   const stars = Array.from({ length: 55 }, (_, i) => ({
     x: (i * 137.508) % 400,
     y: (i * 89.733) % 180,
@@ -512,7 +512,7 @@ function SceneGalassia({ full }) {
 }
 
 // ─── VULCANO MAGICO ───────────────────────────────────────────────────────────
-function SceneVulcano({ full }) {
+function SceneVulcano() {
   const embers = Array.from({ length: 14 }, (_, i) => ({
     x: 170 + (i % 5 - 2) * 12,
     y: 88,
@@ -609,7 +609,7 @@ function SceneVulcano({ full }) {
 }
 
 // ─── BIBLIOTECA INCANTATA ─────────────────────────────────────────────────────
-function SceneBiblioteca({ full }) {
+function SceneBiblioteca() {
   const bookColors = [
     "#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6",
     "#8b5cf6", "#ec4899", "#14b8a6", "#f43f5e", "#6366f1",
@@ -716,7 +716,7 @@ function SceneBiblioteca({ full }) {
 }
 
 // ─── LABORATORIO LOGICO ───────────────────────────────────────────────────────
-function SceneLaboratorio({ full }) {
+function SceneLaboratorio() {
   const glyphs = ["</>", "{ }", "01", "()", "=>", "[ ]"];
   const motes = Array.from({ length: 10 }, (_, i) => ({
     x: (i * 41 + 24) % 380,
@@ -848,7 +848,7 @@ const SCENE_MAP = {
  * variant="bg"     → absolute overlay, z-index 0, low opacity (challenge bg)
  * variant="full"   → 100%×100%, full opacity (world_intro / world_end)
  */
-export default function WorldScene({ worldId, variant = "bg", animated = true }) {
+export default function WorldScene({ worldId, variant = "bg" }) {
   const Scene = SCENE_MAP[worldId];
   if (!Scene) return null;
 

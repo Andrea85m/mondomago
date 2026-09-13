@@ -53,7 +53,7 @@ const RENDERED_FORMATS = new Set(
 );
 
 // ── Utility linguistiche ─────────────────────────────────────────────────────
-const EMOJI_RE = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}\u{20E3}\u{200D}\u{1F1E6}-\u{1F1FF}\u{2190}-\u{21FF}\u{2B05}\u{2B06}\u{2B07}]/u;
+const EMOJI_RE = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{1F1E6}-\u{1F1FF}\u{2190}-\u{21FF}\u{2B05}\u{2B06}\u{2B07}]|\u{FE0F}|\u{20E3}|\u{200D}/u;
 const isEmojiOnly = (s) => {
   const t = String(s).replace(/\s/g, '');
   if (!t) return false;
@@ -61,7 +61,7 @@ const isEmojiOnly = (s) => {
       || /^[0-9]\u{FE0F}?\u{20E3}$/u.test(t); // 1️⃣ 2️⃣ …
 };
 const stripEmoji = (s) => String(s).replace(
-  /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}\u{20E3}\u{200D}\u{1F1E6}-\u{1F1FF}]/gu, ' ');
+  /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{1F1E6}-\u{1F1FF}]|\u{FE0F}|\u{20E3}|\u{200D}/gu, ' ');
 const wordCount = (s) => stripEmoji(s).split(/[\s\n]+/).filter(w => /[a-zA-ZÀ-ÿ]/.test(w)).length;
 
 /** Fascia reale in cui la sfida può essere servita, viste le età selezionabili. */

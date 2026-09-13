@@ -1,6 +1,6 @@
 // Test della logica ADATTIVA (selezione per skill) e della RIPETIZIONE SPAZIATA (SRS).
 // Replica gli algoritmi di filterByAge (pesatura per skill) e dell'iniezione SRS di startWorld,
-// li esegue contro i dati reali estratti da MondoMago.jsx e verifica le proprietà attese.
+// li esegue contro i dati reali estratti da src/data/sfide.js e verifica le proprietà attese.
 //
 // Uso:  node scripts/test-adaptive.mjs   (exit 1 se un'asserzione fallisce)
 
@@ -9,12 +9,12 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const text = readFileSync(join(__dirname, '..', 'src', 'MondoMago.jsx'), 'utf8');
+const text = readFileSync(join(__dirname, '..', 'src', 'data', 'sfide.js'), 'utf8');
 const lines = text.split('\n');
 const start = lines.findIndex(l => l.includes('const ALL_CHALLENGES = {'));
-const end = lines.findIndex((l, i) => i > start && l.includes('const FAMILY_MISSIONS'));
+const end = lines.length;
 // Input fidato: solo sorgente versionato del progetto.
-const ALL_CHALLENGES = new Function(`${lines.slice(start, end).join('\n')}\nreturn ALL_CHALLENGES;`)();
+const ALL_CHALLENGES = new Function(`${lines.slice(start, end).join('\n').replace(/^export /, '')}\nreturn ALL_CHALLENGES;`)();
 
 const SKILL_MAP = {
   logica: ['logica', 'pattern', 'geometria', 'memoria'], numeri: ['numeri', 'conteggio'],

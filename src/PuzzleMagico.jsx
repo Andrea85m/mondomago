@@ -18,7 +18,7 @@
 // staccabile e non crea dipendenze incrociate.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useState, useEffect, useMemo, useRef, useCallback, useId } from "react";
+import { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback, useId } from "react";
 import WorldScene from "./WorldScene.jsx";
 import SvgAsset, { ASSET_MAP } from "./SvgAssets.jsx";
 import { Icon } from "./icons.jsx";
@@ -234,6 +234,7 @@ function useScenaRasterizzata(worldId, W, H) {
   const [url, setUrl] = useState(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- via la scena vecchia mentre si disegna la nuova
     setUrl(null);
     const svg = nascosto.current?.querySelector("svg");
     if (!svg) return;
@@ -267,7 +268,7 @@ function useScenaRasterizzata(worldId, W, H) {
   // il contenitore nascosto serve solo a far esistere l'SVG da serializzare
   const sorgente = (
     <div ref={nascosto} aria-hidden style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", opacity: 0, pointerEvents: "none" }}>
-      <WorldScene worldId={worldId} variant="full" animated={false} />
+      <WorldScene worldId={worldId} variant="full" />
     </div>
   );
   return [url, sorgente];
@@ -279,10 +280,11 @@ function useScenaRasterizzata(worldId, W, H) {
 // pezzo, tocca dove va. Sotto i 5 anni il trascinamento continuo è ancora
 // incerto, e il doppio tocco salva la partita.
 // ═══════════════════════════════════════════════════════════════════════════
-function usaTrascinamento(svgRef, onRilascio) {
+function useTrascinamento(svgRef, onRilascio) {
   const [preso, setPreso] = useState(null);   // { id, dx, dy, x, y }
   const presoRef = useRef(null);
-  presoRef.current = preso;
+  // allineato a ogni commit, prima che arrivi il prossimo evento del dito
+  useLayoutEffect(() => { presoRef.current = preso; }, [preso]);
 
   const puntoSvg = useCallback((e) => {
     const svg = svgRef.current;
@@ -334,7 +336,7 @@ function Cornice({ titolo, sottotitolo, onIndietro, azione, children }) {
           ←
         </button>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontFamily: FF_DISPLAY, fontSize: 20, color: SG_GOLD, lineHeight: 1.15 }}>{titolo}</div>
+          <h1 style={{ fontFamily: FF_DISPLAY, fontSize: 20, fontWeight: 400, margin: 0, color: SG_GOLD, lineHeight: 1.15 }}>{titolo}</h1>
           {sottotitolo && <div style={{ fontSize: 12, opacity: .7, marginTop: 2 }}>{sottotitolo}</div>}
         </div>
         {azione}
@@ -413,6 +415,7 @@ function Vittoria({ testo, adesivo, monete = 0, onAncora, onEsci }) {
 // propria ombra. È il gioco d'ingresso: nessuna lettura, nessun numero.
 // ═══════════════════════════════════════════════════════════════════════════
 function GiocoOmbre({ livello, seme, speak, sfx, onVinto, onIndietro, onLivello }) {
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- seme cambia apposta: nuovo giro, cose nuove
   const cose = useMemo(() => shuffle(TUTTE_LE_COSE).slice(0, livello.ombre), [livello, seme]);
   const vassoio = useMemo(() => shuffle(cose), [cose]);
   const [posati, setPosati] = useState({});     // emoji → true
@@ -420,6 +423,7 @@ function GiocoOmbre({ livello, seme, speak, sfx, onVinto, onIndietro, onLivello 
   const [sbagliato, setSbagliato] = useState(null);
   const fatto = Object.keys(posati).length === cose.length;
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- nuovo giro: tabellone vuoto
   useEffect(() => { setPosati({}); setPreso(null); }, [cose]);
   useEffect(() => {
     const t = setTimeout(() => speak?.("Metti ogni cosa sulla sua ombra!"), 350);
@@ -509,6 +513,7 @@ function GiocoOmbre({ livello, seme, speak, sfx, onVinto, onIndietro, onLivello 
 // ═══════════════════════════════════════════════════════════════════════════
 function GiocoCostruttore({ livello, seme, speak, sfx, onVinto, onIndietro, onLivello }) {
   const [cols, rows] = livello.costruttore;
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- seme cambia apposta: nuova immagine
   const scena = useMemo(() => pick(SCENES), [seme]);
   const LATO = 300, ALTO = Math.round(LATO * 240 / 400);
   const [url, sorgente] = useScenaRasterizzata(scena.id, LATO * 2, ALTO * 2);
@@ -522,6 +527,7 @@ function GiocoCostruttore({ livello, seme, speak, sfx, onVinto, onIndietro, onLi
   const [preso, setPreso] = useState(null);
   const [errore, setErrore] = useState(null);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- immagine o griglia nuova: tessere rimescolate
   useEffect(() => { setVassoio(shuffle(caselle)); setMessi({}); setPreso(null); }, [caselle, scena]);
   useEffect(() => {
     const t = setTimeout(() => speak?.("Rimetti a posto i pezzi dell'immagine!"), 350);
@@ -630,12 +636,15 @@ function GiocoIndovina({ livello, seme, speak, sfx, onVinto, onIndietro, onLivel
     const s = pick(TUTTE_LE_COSE);
     const altri = shuffle(TUTTE_LE_COSE.filter(c => c.nome !== s.nome)).slice(0, 3);
     return { soluzione: s, opzioni: shuffle([s, ...altri]) };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- seme cambia apposta: nuova cosa da indovinare
   }, [seme]);
 
   const [scoperte, setScoperte] = useState([]);
   const [risposta, setRisposta] = useState(null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- seme cambia apposta: ordine degli indizi nuovo
   const ordine = useMemo(() => shuffle(Array.from({ length: cols * rows }, (_, i) => i)), [cols, rows, seme]);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- nuova soluzione: si ricopre tutto
   useEffect(() => { setScoperte([]); setRisposta(null); }, [soluzione]);
   useEffect(() => {
     const t = setTimeout(() => speak?.("Cosa si nasconde? Scopri un pezzetto alla volta!"), 350);
@@ -747,6 +756,7 @@ function GiocoIndovina({ livello, seme, speak, sfx, onVinto, onIndietro, onLivel
 // ═══════════════════════════════════════════════════════════════════════════
 function GiocoIncastro({ livello, seme, speak, sfx, onVinto, onIndietro, onLivello, onNuovaImmagine }) {
   const [cols, rows] = livello.incastro;
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- seme cambia apposta: nuova immagine
   const scena = useMemo(() => pick(SCENES), [seme]);
 
   const W = 360, H = Math.round(W * 240 / 400);
@@ -755,7 +765,8 @@ function GiocoIncastro({ livello, seme, speak, sfx, onVinto, onIndietro, onLivel
   const [url, sorgente] = useScenaRasterizzata(scena.id, W * 2, H * 2);
   const clipId = useId().replace(/:/g, "");
 
-  const pezzi = useMemo(() => tagliaPuzzle(cols, rows, W, H), [cols, rows, seme]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- seme cambia apposta: tagli nuovi
+  const pezzi = useMemo(() => tagliaPuzzle(cols, rows, W, H), [cols, rows, H, seme]);
   const [posti, setPosti] = useState({});          // id → true
   const [dove, setDove] = useState({});            // id → {x,y} nel vassoio
   const [selezionato, setSelezionato] = useState(null);
@@ -779,10 +790,11 @@ function GiocoIncastro({ livello, seme, speak, sfx, onVinto, onIndietro, onLivel
         y: VASSOIO_Y + Math.floor(i / perRiga) * cellaH + cellaH / 2,
       };
     });
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- pezzi nuovi: si ridispone la vaschetta
     setDove(d);
     setPosti({});
     setSelezionato(null);
-  }, [pezzi, cols, rows]);
+  }, [pezzi, cols, rows, H, VASSOIO_Y]);
 
   useEffect(() => {
     const t = setTimeout(() => speak?.("Trascina ogni pezzo al suo posto!"), 350);
@@ -821,7 +833,7 @@ function GiocoIncastro({ livello, seme, speak, sfx, onVinto, onIndietro, onLivel
     }
   }, [pezzi, SCATTO, sfx, onVinto, scena, altezzaVassoio]);
 
-  const { preso, inizia, muovi, finisci } = usaTrascinamento(svgRef, rilascia);
+  const { preso, inizia, muovi, finisci } = useTrascinamento(svgRef, rilascia);
 
   // due tocchi: pezzo selezionato + tocco sul tabellone
   function toccaTabellone(e) {
@@ -982,6 +994,7 @@ export default function PuzzleMagico({ età = 5, speak, sfx, onExit, onMonete })
   const [seme, setSeme] = useState(0);   // cambiarlo rimescola soggetti e tagli
 
   useEffect(() => { writeSave(salvato); }, [salvato]);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- cambia il bambino: il livello riparte dalla sua età
   useEffect(() => { setLivello(livelloPerEtà(età)); }, [età]);
 
   const adesiviVinti = salvato.adesivi || [];
@@ -1051,7 +1064,7 @@ export default function PuzzleMagico({ età = 5, speak, sfx, onExit, onMonete })
           ←
         </button>
         <div style={{ flex: 1 }}>
-          <div style={{ fontFamily: FF_DISPLAY, fontSize: 26, color: SG_GOLD, lineHeight: 1.1 }}>Puzzle Magico</div>
+          <h1 style={{ fontFamily: FF_DISPLAY, fontSize: 26, fontWeight: 400, margin: 0, color: SG_GOLD, lineHeight: 1.1 }}>Puzzle Magico</h1>
           <div style={{ fontSize: 12, opacity: .7 }}>Quattro giochi per costruire, incastrare e indovinare</div>
         </div>
       </div>

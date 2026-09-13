@@ -1,5 +1,5 @@
 // Validatore + analizzatore delle sfide di MondoMago.
-// Estrae il blocco dati ALL_CHALLENGES da src/MondoMago.jsx (oggetti puri, niente JSX),
+// Estrae il blocco dati ALL_CHALLENGES da src/data/sfide.js (oggetti puri, niente JSX),
 // lo valuta in isolamento e produce: gap analysis (mondo × fascia età × skill) + controlli di integrità.
 //
 // Uso:  node scripts/validate-challenges.mjs
@@ -10,22 +10,22 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const SRC = join(__dirname, '..', 'src', 'MondoMago.jsx');
+const SRC = join(__dirname, '..', 'src', 'data', 'sfide.js');
 
 const text = readFileSync(SRC, 'utf8');
 const lines = text.split('\n');
 
 // Trova i confini del blocco dati in modo robusto (non hardcodato sui numeri di riga).
 const start = lines.findIndex(l => l.includes('const ALL_CHALLENGES = {'));
-const endMarker = lines.findIndex((l, i) => i > start && l.includes('const FAMILY_MISSIONS'));
+const endMarker = lines.length;
 if (start < 0 || endMarker < 0) {
   console.error('❌ Impossibile trovare i confini di ALL_CHALLENGES nel sorgente.');
   process.exit(1);
 }
-const block = lines.slice(start, endMarker).join('\n');
+const block = lines.slice(start, endMarker).join('\n').replace(/^export /, '');
 
 // Valuta il blocco in un contesto isolato.
-// NB: l'input è ESCLUSIVAMENTE il sorgente versionato del progetto (src/MondoMago.jsx),
+// NB: l'input è ESCLUSIVAMENTE il sorgente versionato del progetto (src/data/sfide.js),
 // non input esterno/non fidato — quindi new Function() qui è sicuro. Non usare questo
 // script per valutare contenuti provenienti da fonti non fidate.
 let ALL_CHALLENGES;
