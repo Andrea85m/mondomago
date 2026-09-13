@@ -1,154 +1,139 @@
-# MondoMago — Deploy Guide
+# MondoMago — Guida al deploy e alla pubblicazione
 
-## Step 1: Host the app (required before Play Store)
+> Aggiornata il 2026-09-13. Il deploy di tutti i giorni è il passo 1; i passi
+> 4-6 servono solo per pubblicare l'app su Google Play.
 
-The app must be served from HTTPS. Options:
+## 1. Pubblicare il sito (GitHub Pages)
 
-### Option A — GitHub Pages (free, recommended to start)
 ```bash
-# 1. Build
-npm run build
-
-# 2. Push dist/ to gh-pages branch
-npx gh-pages -d dist
-
-# 3. In GitHub repo Settings → Pages → Source: gh-pages branch
-# URL: https://[utente].github.io/mondomago/
+git checkout master && git pull origin master
+npm run deploy
 ```
 
-### Option B — Netlify (free tier)
-1. Drag & drop `dist/` folder to netlify.com/drop
-2. Get a URL like `https://mondomago.netlify.app`
+`npm run deploy` fa, in ordine:
 
-### Option C — VPS / dominio proprio
+1. `npm run verifica` — lint, audit di esercizi e voce, build. Se qualcosa fallisce **si ferma e non pubblica**.
+2. build con base `/mondomago/`;
+3. `gh-pages -d dist --dotfiles --nojekyll` — push sul branch `gh-pages`.
+
+I due flag non sono decorativi: senza `--dotfiles` la cartella `.well-known/`
+non arriva sul branch, e senza `--nojekyll` GitHub Pages la nasconderebbe comunque.
+
+Prima di pubblicare, con `npm run dev` acceso in un altro terminale:
+
 ```bash
-npm run build
-rsync -av dist/ user@server:/var/www/mondomago/
+npm run smoke     # l'app in un browser vero, dall'onboarding ai puzzle
+npm run a11y      # accessibilità su tutte le schermate principali
 ```
 
----
+Gli stessi controlli girano da soli su GitHub a ogni push e a ogni Pull Request
+(`.github/workflows/ci.yml`).
 
-## Step 2: Apple Touch Icon (iOS homescreen)
+URL live: https://andrea85m.github.io/mondomago/
 
-Create `public/apple-touch-icon.png` at 180×180 pixels.
+## 2. Icone
 
-**Quickest way** — resize the existing icon:
+Tutte le icone escono da un solo disegno, il Sigillo di Stelle:
+
 ```bash
-# Requires imagemagick
-convert public/icon-512.png -resize 180x180 public/apple-touch-icon.png
+node scripts/gen-icons.mjs
 ```
-Or open `public/icon-512.png` in any image editor, resize to 180×180, save as `apple-touch-icon.png`.
 
----
+Genera `favicon.svg`, `icon-192.png`, `icon-512.png`, `icon-maskable-512.png`
+(Android adattiva, contenuto nell'80% centrale) e `apple-touch-icon.png` (iOS, 180×180).
+Per cambiare il simbolo si modifica lo script, non i PNG.
 
-## Step 3: Screenshots for Play Store
-
-Take 6-8 screenshots at 1080×1920 using Chrome DevTools:
-1. Open `npm run dev` (or production URL)
-2. Chrome DevTools (F12) → Toggle Device Toolbar → Dimensions: 1080×1920
-3. Navigate to each screen and screenshot (Ctrl+Shift+P → "Capture screenshot")
-
-Save to `public/screenshots/`:
-- `screen-map.png` — mappa mondi
-- `screen-challenge.png` — sfida in corso
-- `screen-reward.png` — schermata ricompensa
-
----
-
-## Step 4: Android TWA with Bubblewrap
+## 3. Screenshot per lo store e per l'installazione Android
 
 ```bash
-# Install Bubblewrap
+npm run dev                          # in un altro terminale
+node scripts/gen-screenshots.mjs
+```
+
+Apre l'app vera con un profilo dimostrativo e scatta a 1080×1920 in
+`public/screenshots/`: mappa, abilità, introduzione di un mondo, sfida, puzzle,
+vittoria, più la feature graphic 1024×500. La casualità è fissata, quindi due
+esecuzioni danno le stesse immagini. Vanno rigenerati dopo ogni cambio grafico
+visibile.
+
+## 4. App Android (TWA con Bubblewrap)
+
+```bash
 npm install -g @bubblewrap/cli
-
-# Init TWA project (run from a new folder)
 mkdir mondomago-twa && cd mondomago-twa
-bubblewrap init --manifest https://[tuo-url]/manifest.json
-
-# Follow prompts:
-# - Application ID: com.mondomago.app
-# - App name: MondoMago
-# - Signing key: create new keystore
-
-# Build APK / AAB
-bubblewrap build
-
-# Output: app-release-bundle.aab (upload to Play Store)
+bubblewrap init --manifest https://andrea85m.github.io/mondomago/manifest.json
+#   Application ID: com.mondomago.app · App name: MondoMago
+bubblewrap build          # → app-release-bundle.aab
 ```
 
-### Get SHA-256 fingerprint for assetlinks.json
+### assetlinks.json — ⚠️ va sul dominio, non nella sottocartella
+
+Android verifica il collegamento app ↔ sito leggendo **sempre**
+`https://<dominio>/.well-known/assetlinks.json`, cioè dalla radice del dominio.
+Il nostro sito vive in `/mondomago/`, quindi il file che sta in
+`public/.well-known/` finisce su `andrea85m.github.io/mondomago/.well-known/`,
+dove Android **non lo cerca**. Due strade:
+
+- **Repo `Andrea85m.github.io`** (gratis): un secondo repository che pubblica solo
+  `.well-known/assetlinks.json` alla radice di `andrea85m.github.io`.
+- **Dominio proprio** (es. `mondomago.it`) puntato su GitHub Pages: il sito passa
+  alla radice e il file in `public/.well-known/` basta così. In questo caso va
+  tolto `base: '/mondomago/'` da `vite.config.js` e aggiornati i percorsi del manifest.
+
+L'impronta da incollare al posto di `SOSTITUISCI_CON_SHA256_DEL_TUO_KEYSTORE`:
+
 ```bash
-keytool -list -v -keystore android.keystore -alias android -storepass [password]
-# Copy the SHA-256 value and paste it in:
-# public/.well-known/assetlinks.json → sha256_cert_fingerprints
+keytool -list -v -keystore android.keystore -alias android
 ```
 
-Then redeploy so `https://[tuo-url]/.well-known/assetlinks.json` is accessible.
+Se l'app firma con **Play App Signing** (il default), l'impronta giusta è quella
+della chiave di firma dell'app in *Play Console → Configurazione → Integrità dell'app*,
+non quella del keystore locale. Si possono mettere entrambe nell'array.
+
+Senza il file verificato l'app funziona lo stesso, ma mostra la barra degli
+indirizzi di Chrome in alto.
+
+## 5. Google Play Console
+
+1. https://play.google.com/console → Crea app → MondoMago
+2. Scheda dello store: testi da `STORE_LISTING.md`
+3. Privacy policy: `https://andrea85m.github.io/mondomago/privacy-policy.html`
+4. Target e contenuti: app rivolta a bambini sotto i 13 anni → programma *Famiglie*
+5. Questionario IARC: tutte le domande su violenza/sesso/sostanze → No (atteso PEGI 3)
+6. Screenshot e feature graphic da `public/screenshots/`
+7. Carica `app-release-bundle.aab` → test interno → test chiuso → produzione
+
+## 6. iPhone e iPad
+
+Nessun App Store necessario: da Safari, *Condividi → Aggiungi alla schermata Home*.
+L'icona è `apple-touch-icon.png`.
 
 ---
 
-## Step 5: Google Play Console
+## Checklist prima del lancio su Play
 
-1. Vai su https://play.google.com/console
-2. Create new app → MondoMago
-3. Fill store listing:
-   - Copy/paste from `STORE_LISTING.md`
-   - Privacy Policy URL: `https://[tuo-url]/privacy-policy.html`
-4. Content rating → IARC questionnaire:
-   - All violence/sexual/substance questions: NO
-   - Directed at children under 13: YES
-   → Risultato atteso: PEGI 3
-5. Upload screenshots + feature graphic
-6. Upload `app-release-bundle.aab`
-7. Internal testing → Closed testing → Production
+- [ ] `npm run verifica`, `npm run smoke`, `npm run a11y` verdi
+- [ ] Screenshot rigenerati dall'ultima versione
+- [ ] `assetlinks.json` raggiungibile alla radice del dominio, con l'impronta giusta
+- [ ] AAB firmato e caricato
+- [ ] Scheda store e questionario IARC completi
+- [ ] Provata su un Android vero e su un iPhone vero
 
----
+## Checklist sui dispositivi veri
 
-## Step 6: iOS (PWA install — no App Store needed)
+**Android (Chrome)**
+- [ ] Installazione come app dalla barra degli indirizzi
+- [ ] Wi-Fi spento: l'app si apre e si gioca
+- [ ] La voce parte su tutti i tipi di sfida
+- [ ] Tracciamento delle lettere col dito
+- [ ] Tasto indietro: chiede conferma dentro una sfida, non chiude l'app
+- [ ] Pressione lunga sull'icona → "Sfida del Giorno" apre la sfida
 
-iOS users can add MondoMago to homescreen from Safari:
-- Share → "Aggiungi alla schermata Home"
-- Requires `apple-touch-icon.png` (Step 2) for proper icon
+**iPhone / iPad (Safari)**
+- [ ] Aggiunta alla schermata Home, si apre senza barre del browser
+- [ ] L'audio parte dopo il primo tocco
+- [ ] Trascinamento dei pezzi del puzzle
+- [ ] Notch e barra in basso non coprono i bottoni
 
-For App Store submission: requires Xcode + Apple Developer Account ($99/year).
-Recommended: ship Android first, then evaluate iOS.
-
----
-
-## Pre-launch checklist
-
-- [ ] App hosted on HTTPS
-- [ ] `apple-touch-icon.png` created (180×180)
-- [ ] 6+ screenshots ready
-- [ ] Feature graphic 1024×500 ready
-- [ ] `privacy-policy.html` publicly accessible
-- [ ] `.well-known/assetlinks.json` deployed with correct SHA-256
-- [ ] Bubblewrap AAB built and signed
-- [ ] Play Console store listing complete
-- [ ] IARC rating completed (PEGI 3)
-- [ ] Tested on real Android device
-- [ ] Tested on iOS Safari (PWA install)
-
----
-
-## Real device testing checklist
-
-### Android Chrome
-- [ ] Install as PWA (omit bar → "Aggiungi a schermata Home")
-- [ ] Offline mode: disable wifi → app still works
-- [ ] Audio TTS plays on all challenge types
-- [ ] Touch targets comfortable (44px+)
-- [ ] Letter tracing works with finger
-- [ ] Companion animations smooth (60fps)
-- [ ] Back button shows exit confirm, doesn't close app
-
-### iOS Safari
-- [ ] Add to homescreen works
-- [ ] Standalone mode (no browser chrome)
-- [ ] Audio plays after first tap (iOS autoplay policy)
-- [ ] Drag-drop works (iOS cursor:pointer)
-- [ ] Safe area padding correct (iPhone notch)
-
-### Tablet (768px+)
-- [ ] Layout doesn't break on wide screens
-- [ ] Cards not too wide
+**Tablet (768px e oltre)**
+- [ ] Layout che non si rompe, card non troppo larghe

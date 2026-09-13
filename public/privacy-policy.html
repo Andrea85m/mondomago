@@ -3,85 +3,122 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Privacy Policy — MondoMago</title>
+  <meta name="description" content="Informativa privacy di MondoMago: nessun dato personale raccolto, tutto resta sul dispositivo.">
+  <meta name="theme-color" content="#1B1035">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <title>Privacy — MondoMago</title>
   <style>
-    body { font-family: system-ui, sans-serif; max-width: 760px; margin: 0 auto; padding: 24px 20px 60px; color: #1a1a2e; line-height: 1.7; }
-    h1 { font-size: 26px; margin-bottom: 4px; }
-    h2 { font-size: 18px; margin-top: 36px; color: #6C63FF; }
-    .meta { color: #666; font-size: 13px; margin-bottom: 32px; }
+    :root { --ink: #1B1035; --indaco: #4A2F8F; --oro: #E08E26; --pergamena: #FBF6EA; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--pergamena); color: var(--ink);
+      font-family: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      line-height: 1.7; font-size: 16px;
+    }
+    header {
+      background: radial-gradient(125% 85% at 50% -8%, #2D1B54 0%, #1B1035 52%, #140B29 100%);
+      color: #F6ECD4; padding: 36px 20px 30px;
+    }
+    header .wrap { display: flex; align-items: center; gap: 16px; }
+    header svg { flex-shrink: 0; }
+    main, header .wrap { max-width: 760px; margin: 0 auto; }
+    main { padding: 8px 20px 64px; }
+    h1 { font-size: 26px; line-height: 1.2; margin: 0 0 4px; color: #FFC24B; }
+    .meta { font-size: 13px; margin: 0; opacity: .8; }
+    h2 { font-size: 18px; margin: 36px 0 8px; color: var(--indaco); }
     ul { padding-left: 22px; }
     li { margin-bottom: 6px; }
-    .highlight { background: #F0F4FF; border-left: 4px solid #6C63FF; padding: 12px 16px; border-radius: 4px; margin: 16px 0; }
-    a { color: #6C63FF; }
+    .breve {
+      background: #FFF1D6; border-left: 4px solid var(--oro); border-radius: 6px;
+      padding: 14px 18px; margin: 28px 0 8px;
+    }
+    a { color: var(--indaco); text-underline-offset: 2px; }
+    a:focus-visible { outline: 3px solid var(--oro); outline-offset: 2px; border-radius: 2px; }
   </style>
 </head>
 <body>
-  <h1>🧙‍♂️ Privacy Policy — MondoMago</h1>
-  <p class="meta">Ultimo aggiornamento: Maggio 2026</p>
+  <header>
+    <div class="wrap">
+      <svg width="52" height="52" viewBox="0 0 64 64" aria-hidden="true">
+        <circle cx="32" cy="32" r="30" fill="none" stroke="#FFC24B" stroke-opacity=".5" stroke-width="2" stroke-dasharray="4 3"/>
+        <circle cx="32" cy="32" r="22" fill="#FFC24B"/>
+        <path d="M32 18.7 L35.5 28.3 L45.8 28.7 L37.7 35 L40.5 44.8 L32 39.1 L23.5 44.8 L26.3 35 L18.2 28.7 L28.5 28.3Z" fill="#2D1B54"/>
+      </svg>
+      <div>
+        <h1>Privacy di MondoMago</h1>
+        <p class="meta">Ultimo aggiornamento: 13 settembre 2026</p>
+      </div>
+    </div>
+  </header>
 
-  <div class="highlight">
-    <strong>In breve:</strong> MondoMago non raccoglie, non trasmette e non condivide dati personali. Tutti i dati di gioco sono salvati esclusivamente sul dispositivo. L'app non contiene pubblicità.
-  </div>
+  <main>
+    <div class="breve">
+      <strong>In breve:</strong> MondoMago non raccoglie, non invia e non condivide dati personali.
+      Tutto quello che il gioco ricorda resta sul dispositivo. Nessuna pubblicità, nessun account,
+      nessuno strumento di analisi.
+    </div>
 
-  <h2>1. Chi siamo</h2>
-  <p>MondoMago è un'applicazione educativa per bambini sviluppata da un privato. Per domande sulla privacy scrivere a: <a href="mailto:afphotographyflickr@gmail.com">afphotographyflickr@gmail.com</a></p>
+    <h2>1. Chi siamo</h2>
+    <p>MondoMago è un gioco educativo per bambini dai 3 agli 8 anni, sviluppato da privati.
+      Per qualsiasi domanda sulla privacy: <a href="mailto:afphotographyflickr@gmail.com">afphotographyflickr@gmail.com</a>.</p>
 
-  <h2>2. Dati raccolti</h2>
-  <p><strong>MondoMago non raccoglie alcun dato personale.</strong></p>
-  <ul>
-    <li>Non richiede registrazione o account</li>
-    <li>Non raccoglie nomi reali, email, numeri di telefono o altri identificativi personali</li>
-    <li>Non utilizza servizi di analisi (Google Analytics, Firebase, ecc.)</li>
-    <li>Non utilizza cookie di tracciamento</li>
-    <li>Non contiene pubblicità di nessun tipo</li>
-  </ul>
+    <h2>2. Dati raccolti</h2>
+    <p><strong>Nessuno.</strong> In particolare MondoMago:</p>
+    <ul>
+      <li>non chiede registrazione, account, email o numero di telefono;</li>
+      <li>non usa servizi di analisi (Google Analytics, Firebase o simili);</li>
+      <li>non usa cookie, né di profilazione né tecnici;</li>
+      <li>non mostra pubblicità e non contiene acquisti.</li>
+    </ul>
 
-  <h2>3. Dati salvati localmente</h2>
-  <p>L'app salva sul dispositivo (localStorage del browser) esclusivamente dati di gioco:</p>
-  <ul>
-    <li>Nickname del giocatore (inserito dall'utente)</li>
-    <li>Età selezionata (fascia: 3-4, 5-6, 7-8 anni)</li>
-    <li>Progressi di gioco: stelle, mondi completati, achievement</li>
-    <li>Impostazioni: companion scelto, cosmetici, modalità scuola</li>
-    <li>Statistiche di sessione: tempo di gioco, sfide completate (solo localmente)</li>
-  </ul>
-  <p>Questi dati <strong>non lasciano mai il dispositivo</strong> e possono essere cancellati in qualsiasi momento dalle impostazioni del browser o dell'app.</p>
+    <h2>3. Cosa resta salvato sul dispositivo</h2>
+    <p>Per ricordare i progressi, il gioco salva nella memoria locale del browser (<em>localStorage</em>):</p>
+    <ul>
+      <li>il nome o il soprannome inserito, l'età scelta e il compagno magico;</li>
+      <li>i progressi: stelle, monete, mondi aperti, traguardi, abilità e sfide da ripassare;</li>
+      <li>la sezione Puzzle Magico: adesivi vinti, partite giocate, monete guadagnate nel giorno;</li>
+      <li>le impostazioni dell'area genitori: PIN, limite di tempo, orario del promemoria, modalità scuola;</li>
+      <li>le preferenze di voce e di accessibilità (testo più grande, alto contrasto, font per la dislessia, meno animazioni);</li>
+      <li>le statistiche delle sessioni (giorno, durata, risposte giuste) mostrate solo al genitore.</li>
+    </ul>
+    <p>Questi dati <strong>non lasciano mai il dispositivo</strong>: nessuno, nemmeno chi ha sviluppato l'app, può vederli.</p>
 
-  <h2>4. Conformità COPPA e GDPR</h2>
-  <p>MondoMago è progettata per bambini sotto i 13 anni e rispetta pienamente:</p>
-  <ul>
-    <li><strong>COPPA</strong> (Children's Online Privacy Protection Act): nessuna raccolta di dati da minori</li>
-    <li><strong>GDPR</strong> (Regolamento UE 2016/679): nessun dato personale trattato</li>
-    <li><strong>LGPD</strong> (Brasil): nessun dato personale trattato</li>
-  </ul>
-  <p>L'app include una schermata di consenso iniziale rivolta ai genitori/tutori per confermare che un adulto autorizza l'uso dell'app.</p>
+    <h2>4. Bambini, COPPA e GDPR</h2>
+    <p>MondoMago è pensato per bambini sotto i 13 anni. Poiché non tratta dati personali dei suoi utenti,
+      non ricade negli obblighi di consenso verificabile del COPPA (USA) e non effettua trattamenti ai sensi
+      del GDPR (Regolamento UE 2016/679). Al primo avvio una schermata chiede a un adulto di confermare che
+      è lui a mettere l'app nelle mani del bambino.</p>
 
-  <h2>5. Accesso a internet</h2>
-  <p>MondoMago funziona completamente offline dopo il primo caricamento. Non effettua richieste di rete durante il gioco. La funzione di sintesi vocale (TTS) utilizza file audio pre-registrati inclusi nell'app — nessuna chiamata a API esterne.</p>
+    <h2>5. Connessione a internet</h2>
+    <p>Al primo avvio l'app si scarica dal sito che la ospita; da quel momento funziona anche offline.
+      Le voci registrate si scaricano dallo stesso sito la prima volta che servono e poi restano sul dispositivo.
+      Font, immagini e voci sono tutti inclusi nell'app: nessuna richiesta parte verso servizi esterni.</p>
 
-  <h2>6. Permessi richiesti</h2>
-  <p>L'app non richiede permessi speciali del dispositivo (fotocamera, microfono, posizione, rubrica, ecc.).</p>
-  <p>Opzionalmente, se l'utente lo consente, l'app può inviare notifiche locali per ricordare la sfida del giorno. Nessun server è coinvolto in queste notifiche.</p>
+    <h2>6. Ospitalità del sito</h2>
+    <p>Il sito è ospitato da GitHub Pages. Come qualunque server web, GitHub può registrare dati tecnici
+      delle richieste, come l'indirizzo IP, per motivi di sicurezza e funzionamento. Questi dati non sono
+      accessibili a MondoMago. Maggiori dettagli nell'<a href="https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement" rel="noopener">informativa di GitHub</a>.</p>
 
-  <h2>7. Servizi di terze parti</h2>
-  <p>MondoMago non utilizza SDK di terze parti, servizi di analisi, reti pubblicitarie o piattaforme di social media.</p>
+    <h2>7. Permessi</h2>
+    <p>L'app non usa fotocamera, microfono, posizione né rubrica. Solo se il genitore lo attiva,
+      può mostrare una notifica locale per ricordare la sfida del giorno: nessun server è coinvolto.</p>
 
-  <h2>8. Sicurezza</h2>
-  <p>Poiché non trasferiamo dati a nessun server, il rischio di violazioni dei dati è strutturalmente assente. I dati locali sono protetti dalle misure di sicurezza standard del browser/sistema operativo del dispositivo.</p>
+    <h2>8. Servizi di terze parti</h2>
+    <p>Nessun SDK di terze parti, rete pubblicitaria o collegamento a social network.</p>
 
-  <h2>9. Cancellazione dei dati</h2>
-  <p>Puoi cancellare tutti i dati di gioco in qualsiasi momento:</p>
-  <ul>
-    <li><strong>In-app</strong>: Impostazioni genitori → Reimposta dati</li>
-    <li><strong>Browser/Android</strong>: Impostazioni → App → MondoMago → Cancella dati</li>
-    <li><strong>iOS/Safari</strong>: Impostazioni → Safari → Avanzate → Dati sito web</li>
-  </ul>
+    <h2>9. Cancellare i dati</h2>
+    <ul>
+      <li><strong>Nell'app</strong>: area genitori → <em>Ricomincia da capo</em> azzera i progressi.</li>
+      <li><strong>Tutto, su Android</strong>: Chrome → Impostazioni → Impostazioni sito → Tutti i siti → andrea85m.github.io → Cancella.</li>
+      <li><strong>Tutto, su iPhone e iPad</strong>: se l'app è sulla schermata Home, eliminarla cancella anche i suoi dati; dal browser, Impostazioni → Safari → Avanzate → Dati dei siti web.</li>
+    </ul>
 
-  <h2>10. Modifiche a questa policy</h2>
-  <p>Eventuali modifiche a questa policy saranno pubblicate su questa pagina con la data di aggiornamento. Non raccogliendo dati di contatto, non possiamo notificare individualmente gli utenti di cambiamenti.</p>
+    <h2>10. Modifiche</h2>
+    <p>Eventuali modifiche saranno pubblicate su questa pagina, con la data aggiornata in alto.
+      Non avendo contatti degli utenti, non possiamo avvisare nessuno individualmente.</p>
 
-  <h2>11. Contatti</h2>
-  <p>Per domande o richieste riguardanti questa privacy policy:<br>
-  Email: <a href="mailto:afphotographyflickr@gmail.com">afphotographyflickr@gmail.com</a></p>
+    <h2>11. Contatti</h2>
+    <p>Email: <a href="mailto:afphotographyflickr@gmail.com">afphotographyflickr@gmail.com</a></p>
+  </main>
 </body>
 </html>
