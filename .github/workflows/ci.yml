@@ -1,0 +1,68 @@
+# Controlli automatici su ogni push e ogni Pull Request.
+# Se uno fallisce la PR diventa rossa: il difetto si vede qui, non sul
+# telefono di un bambino. Gli stessi comandi girano in locale (vedi
+# COLLABORAZIONE.md, "Prima di ogni PR").
+name: Controlli
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  controlli:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Dipendenze
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Esercizi e voce
+        run: npm run audit
+
+      - name: Build di produzione
+        run: npm run build
+
+      - name: Browser per lo smoke test
+        run: npx playwright install --with-deps chromium
+
+      - name: Smoke test sul build di produzione
+        run: |
+          npx vite preview --port 4173 --strictPort &
+          for i in $(seq 1 30); do curl -sf http://localhost:4173/ >/dev/null && break; sleep 1; done
+          npm run smoke -- --url http://localhost:4173/
+
+      - name: Smoke test in sviluppo (schermata d'errore compresa)
+        run: |
+          npx vite --port 5173 --strictPort &
+          for i in $(seq 1 30); do curl -sf http://localhost:5173/ >/dev/null && break; sleep 1; done
+          npm run smoke
+
+      - name: Accessibilità (axe-core, WCAG 2.1 AA)
+        run: npm run a11y -- --url http://localhost:4173/
+
+      - name: Schermate dello smoke test
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-screenshots
+          path: .smoke/
+          retention-days: 7

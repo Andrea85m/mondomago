@@ -11,19 +11,39 @@ if (urlFlagIdx !== -1) {
   URL = arg.startsWith('--url=') ? arg.slice(6) : (args[urlFlagIdx + 1] || URL);
 }
 
-// WSL: Playwright Chromium first (native Linux, no cross-WSL issues), then system installs
+// Ordine: CHROME_PATH esplicito → Chrome di sistema (macOS, Linux) → Chromium
+// scaricato da Playwright (qualsiasi versione, anche su WSL).
+const HOME = process.env.HOME || '';
 const CHROME_PATHS = [
-  `${process.env.HOME}/.cache/ms-playwright/chromium-1223/chrome-linux64/chrome`,
-  `${process.env.HOME}/.cache/ms-playwright/chromium-1217/chrome-linux64/chrome`,
+  process.env.CHROME_PATH,
+  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  '/Applications/Chromium.app/Contents/MacOS/Chromium',
+  '/usr/bin/google-chrome-stable',
+  '/usr/bin/google-chrome',
   '/usr/bin/chromium-browser',
   '/usr/bin/chromium',
-  '/usr/bin/google-chrome',
-  '/usr/bin/google-chrome-stable',
-];
+].filter(Boolean);
 
 async function findChromePath() {
-  const { existsSync } = await import('fs');
-  return CHROME_PATHS.find(p => existsSync(p)) || null;
+  const { existsSync, readdirSync } = await import('fs');
+  const found = CHROME_PATHS.find(p => existsSync(p));
+  if (found) return found;
+  for (const cache of [`${HOME}/Library/Caches/ms-playwright`, `${HOME}/.cache/ms-playwright`]) {
+    if (!existsSync(cache)) continue;
+    const builds = readdirSync(cache).filter(d => /^chromium-\d+$/.test(d)).sort().reverse();
+    for (const b of builds) {
+      for (const rel of [
+        'chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing',
+        'chrome-mac/Chromium.app/Contents/MacOS/Chromium',
+        'chrome-linux64/chrome',
+        'chrome-linux/chrome',
+      ]) {
+        const p = `${cache}/${b}/${rel}`;
+        if (existsSync(p)) return p;
+      }
+    }
+  }
+  return null;
 }
 
 // WSL: inject extracted libs so Playwright Chromium can find libnspr4/libnss3

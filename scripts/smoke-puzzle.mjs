@@ -104,6 +104,17 @@ async function main() {
     await scatta(page, 'mappa');
   });
 
+  // ── il profilo sopravvive a un ricaricamento ──────────────────────────────
+  // Senza questo passo nessuno si era accorto che al primo avvio il profilo
+  // non veniva mai salvato: ricaricando, il bambino ripartiva da "Come ti chiami?".
+  await passo('ricaricando la pagina il profilo resta', async () => {
+    await page.reload({ waitUntil: 'networkidle' });
+    await page.waitForSelector('text=I Mondi Magici', { timeout: 10000 });
+    const salvati = await page.evaluate(() => JSON.parse(localStorage.getItem('mondomago_profiles_v1') || '[]'));
+    if (salvati.length !== 1) throw new Error(`profili salvati: ${salvati.length} invece di 1`);
+    if (salvati[0].childName !== 'Sofia') throw new Error(`nome salvato: ${salvati[0].childName}`);
+  });
+
   // ── la tab Puzzle ─────────────────────────────────────────────────────────
   await passo('la tab-bar mostra 5 voci senza andare a capo', async () => {
     const tabs = page.locator('button', { hasText: /^(Mondi|Puzzle|Skill|Famiglia|Look)$/ });
@@ -294,6 +305,37 @@ async function main() {
     const testo = await page.evaluate(() => document.body.innerText);
     if (!/\?|Tocca|ordine|Metti|Abbina|Colora|Traccia|Trova/i.test(testo))
       throw new Error('nessuna consegna visibile nella schermata sfida');
+  });
+
+  // ── la scorciatoia "Sfida del Giorno" dell'icona dell'app ─────────────────
+  await passo('la scorciatoia ?action=daily apre la Sfida del Giorno', async () => {
+    const base = new globalThis.URL(URL);
+    base.searchParams.set('action', 'daily');
+    await page.goto(base.href, { waitUntil: 'networkidle' });
+    await page.waitForSelector('text=Sfida del Giorno', { timeout: 10000 });
+    await page.waitForTimeout(400);
+    if (page.url().includes('action=daily'))
+      throw new Error("il parametro resta nell'indirizzo: ricaricando ripartirebbe la sfida");
+    await scatta(page, 'sfida-del-giorno');
+  });
+
+  // ── la rete di sicurezza: un errore di render mostra una schermata, non il vuoto ──
+  // Pagina a parte: l'errore è voluto e non deve finire fra i problemi.
+  await passo('un crash mostra la schermata d\'errore, non una pagina vuota', async () => {
+    const crash = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    const u = new globalThis.URL(URL);
+    u.searchParams.set('crash', '1');
+    await crash.goto(u.href, { waitUntil: 'networkidle' });
+    const schermata = await crash.locator('text=La magia si è inceppata').count();
+    if (!schermata) {
+      // nel build di produzione il crash di prova non esiste: si verifica solo che l'app parta
+      const vuota = await crash.evaluate(() => document.getElementById('root').innerText.trim().length < 5);
+      if (vuota) throw new Error('pagina vuota');
+    } else {
+      if (!(await crash.getByRole('button', { name: 'Riprova' }).count())) throw new Error('manca il bottone Riprova');
+      await crash.screenshot({ path: join(OUT, `${String(++shot).padStart(2, '0')}-errore.png`) });
+    }
+    await crash.close();
   });
 
   await browser.close();
