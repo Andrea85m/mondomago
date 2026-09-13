@@ -1,1 +1,0 @@
-Se vuoi rigenerare in futuro (es. dopo modifiche all'UI): node scripts/gen-screenshots.mjs.
