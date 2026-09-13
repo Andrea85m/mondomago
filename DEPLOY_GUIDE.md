@@ -110,14 +110,31 @@ L'icona è `apple-touch-icon.png`.
 
 ---
 
-## Checklist prima del lancio su Play
+## Checklist prima del lancio su Play — stato al 2026-09-13
 
-- [ ] `npm run verifica`, `npm run smoke`, `npm run a11y` verdi
-- [ ] Screenshot rigenerati dall'ultima versione
-- [ ] `assetlinks.json` raggiungibile alla radice del dominio, con l'impronta giusta
-- [ ] AAB firmato e caricato
-- [ ] Scheda store e questionario IARC completi
-- [ ] Provata su un Android vero e su un iPhone vero
+**Pronto e verificato sul sito live**
+- [x] Controlli verdi: lint, audit, smoke 20/20 (avvio offline compreso), accessibilità 0 violazioni, CI GitHub
+- [x] Chrome la considera installabile, manifest senza errori, service worker attivo
+- [x] Lighthouse mobile sul sito live: Performance 90-93 · Accessibilità 100 · Best Practices 100
+- [x] Icona 512, feature graphic 1024×500 e 6 screenshot 1080×1920 senza trasparenza
+- [x] Privacy policy pubblica e raggiungibile dall'app (consenso e PIN genitori)
+- [x] Nessun annuncio, nessun acquisto, nessun dato raccolto → Data safety "No" (`STORE_LISTING.md`)
+- [x] Testi della scheda con numeri verificati (`STORE_LISTING.md`)
+- [x] Bubblewrap 1.25 genera app con `targetSdkVersion 36`, il minimo per le app nuove dal 31 ago 2026
+
+**Da fare — serve una decisione o un account**
+- [ ] Account Google Play Console (25 $, verifica identità). Se **personale** creato dopo il 13 nov 2023:
+      test chiuso con **almeno 12 tester per 14 giorni di fila** prima di poter chiedere la produzione
+- [ ] `assetlinks.json` alla **radice del dominio** (§4): repo `Andrea85m.github.io` oppure dominio proprio
+- [ ] Keystore di upload creato e custodito in due posti; impronta SHA-256 (e quella di Play App Signing) nel file
+- [ ] AAB generato con Bubblewrap, caricato in test interno, poi test chiuso
+- [ ] Scheda, pubblico target (5 e meno · 6-8), Data safety, IARC, accesso app compilati in Play Console
+- [ ] Nome sviluppatore pubblico
+- [ ] Prova su almeno un Android vero, anche vecchio o tablet economico (è lì che giocano i bambini)
+
+**Da valutare con Andrea (non bloccanti)**
+- [ ] *Ricomincia da capo* sta nel profilo del compagno: il bambino può cancellare i progressi senza PIN
+- [ ] Su tablet (≥ 768px) le card si allargano a tutto schermo: un `maxWidth` sulla mappa renderebbe meglio
 
 ## Checklist sui dispositivi veri
 

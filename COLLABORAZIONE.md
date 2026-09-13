@@ -173,6 +173,9 @@ Serve coordinarsi **solo** se si *rinomina* un asset → va aggiornato il riferi
 | tab Famiglia | etichette e bottone con contrasto ≥ 4.5:1 | Testo bianco su ambra a 2.1:1: illeggibile per chi vede poco. |
 | titoli delle schermate | `h2` → `h1` (aspetto identico) | Il lettore di schermo non trovava il titolo della pagina. |
 | `eslint-disable` con motivo | una trentina, ognuno col perché dopo `--` | Pattern voluti (reset di stato, casualità una volta per sfida): React Compiler non è in uso. |
+| `public/sw.js` — navigazioni | la shell dell'app si serve dalla cache anche con `?source=pwa` / `?action=daily` | **Bug grave**: offline, l'app installata non si apriva (cercava `'/'`, che sotto `/mondomago/` è la radice del dominio). Trovato sul sito live; lo smoke ora lo prova sul build. |
+| schermata di consenso e PIN genitori | link all'informativa privacy | Richiesto da Google Play per le app per bambini, in posti che il bambino non tocca. |
+| `vite.config.js` | sfide e mondi in un chunk `dati` | Il chunk principale scende da 543 a 444 KB. Con l'aggiornamento di sicurezza di Vite l'hash di `vendor` è cambiato una volta. |
 | `ALL_CHALLENGES`, `WORLDS`, … | spostati in `src/data/` **senza cambiare una virgola** | Verificato: HTML identico carattere per carattere su 8 schermate, stesse 697 frasi registrate, stesso audit. |
 
 `npm run audit` rimette in piedi i controlli sugli esercizi: **exit 1** se una risposta torna
@@ -216,6 +219,8 @@ esiste perché senza, il puzzle diventa una macchinetta da monete.
   `position:fixed` → le modali-celebrazione si centrano nel container invece che nel viewport.
 - **Non rimettere `!activeProfileId` nella guardia del salvataggio automatico**: è il bug
   che per mesi ha fatto perdere i progressi al primo avvio.
+- **Service worker, navigazioni**: mai `cache.match('/')`. Sotto GitHub Pages `'/'` è la radice
+  del dominio, non l'app. La shell si cerca con `self.registration.scope` e `ignoreSearch`.
 - **`Icon` è shadowato nella tab-bar**: dentro `[[NavMap,"Mondi"],...].map(([Icon,label]) => ...)`
   il nome `Icon` copre quello importato. Non usare `<Icon name="..."/>` dentro quel `.map`.
 - **Glyph su fondi chiari**: i glyph hanno silhouette `PARCH` pensata per fondi **scuri**.
