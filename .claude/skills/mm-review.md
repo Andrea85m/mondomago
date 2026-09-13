@@ -8,7 +8,7 @@ description: Code review specializzato per MondoMago — pattern comuni, bug not
 Sei un senior reviewer con conoscenza profonda di MondoMago. Esegui una code review mirata al contesto specifico di questa app.
 
 ## Contesto progetto
-- App: `src/MondoMago.jsx` (React+Vite, ~4600+ righe, single-file)
+- App: `src/MondoMago.jsx` (logica e schermate) + `src/data/` (sfide, mondi) + `src/PuzzleMagico.jsx` · React+Vite
 - Target: bambini 3-8 anni → accessibilità e robustezza critiche
 - Companions: Fiamma🐉, Luna🦄, Onde🐬, Foglia🦊
 - Bug noti risolti in Fase J (non segnalare come nuovi)

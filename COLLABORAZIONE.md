@@ -2,10 +2,11 @@
 
 Come lavorare in due sullo stesso progetto senza pestarsi i piedi.
 
-> **Aggiornata il 2026-08-05.** La versione precedente (giugno) diceva che "la grafica vive
-> in file separati, quindi git non genera conflitti". **Non è più vero**: da luglio tutto il
-> design system *"Sigillo di Stelle"* è **dentro `src/MondoMago.jsx`**. Le regole qui sotto
-> sostituiscono quelle vecchie.
+> **Aggiornata il 2026-09-13.** `src/MondoMago.jsx` non è più un file unico da 7.700 righe:
+> sfide, mondi e animazioni stanno in file propri (vedi §3). Il confine fra le zone resta
+> quello di agosto, ma adesso buona parte coincide con file diversi, quindi i conflitti git
+> sono molti meno. Da questa versione lint, audit, smoke test e accessibilità girano da soli
+> su GitHub a ogni push (§6).
 
 ---
 
@@ -13,11 +14,8 @@ Come lavorare in due sullo stesso progetto senza pestarsi i piedi.
 
 | Persona | Ambito | Dove |
 |---------|--------|------|
-| **Andrea** | **Contenuti + logica di gioco**: sfide, mondi, motore adattivo, SRS, stato — **+ la schermata `map`** | `ALL_CHALLENGES`, il corpo logico di `MondoMago()`, il blocco `map` |
+| **Andrea** | **Contenuti + logica di gioco**: sfide, mondi, motore adattivo, SRS, stato — **+ la schermata `map`** | `src/data/sfide.js`, il corpo logico di `MondoMago()`, il blocco `map` |
 | **Amico** | **Grafica + Audio**: look, animazioni, schermate, icone, scene, suoni | file grafici separati **+ le zone 🎨 dentro `MondoMago.jsx`** (mappa esclusa) |
-
-⚠️ **La differenza rispetto a prima:** il confine non è più "file diversi" ma **zone di righe
-diverse dentro lo stesso file**. Leggi la §3 prima di scrivere una riga.
 
 ---
 
@@ -26,8 +24,9 @@ diverse dentro lo stesso file**. Leggi la §3 prima di scrivere una riga.
 ```bash
 git clone https://github.com/Andrea85m/mondomago.git
 cd mondomago
-npm install          # node_modules non è nel repo
-npm run dev          # http://localhost:5173
+npm install                        # node_modules non è nel repo
+npx playwright install chromium    # il browser per smoke test e accessibilità
+npm run dev                        # http://localhost:5173
 ```
 
 Il branch di lavoro è **`master`** (è anche il default del repo).
@@ -45,7 +44,7 @@ git checkout master && git pull origin master   # 1. parti da master aggiornato
 git checkout -b feature/grafica-schermata-skill # 2. branch nuovo
 git add -A && git commit -m "Skill: card a Sigillo"  # 3. commit piccoli
 git push -u origin feature/grafica-schermata-skill   # 4. push
-# 5. apri la Pull Request su GitHub
+# 5. apri la Pull Request su GitHub: i controlli partono da soli
 ```
 
 **Nomi branch:** `feature/grafica-...` · `feature/audio-...` · `feature/mondo-<nome>-...` · `fix/<cosa>`
@@ -61,113 +60,123 @@ git push -u origin feature/grafica-schermata-skill   # 4. push
 
 ---
 
-## 3. 🗺️ Mappa delle zone di `src/MondoMago.jsx` (7528 righe)
+## 3. 🗺️ Mappa dei file e delle zone
 
-Le righe sono indicative e **si spostano** a ogni modifica: orientati sui **nomi**, non sui numeri.
+### I file
 
-| Zona | Righe ~ | Owner | Note |
-|------|---------|-------|------|
-| `import` | 1–6 | ⚪ raro | Coordinarsi solo se si aggiunge un modulo |
-| `AnimationStyles()` — tutte le `@keyframes` + CSS globale | 20–464 | 🎨 **Amico** | Cuore delle animazioni |
-| `SigilloSky()` — backdrop notte incantata, parallax | 475–566 | 🎨 **Amico** | |
-| `NavMap/NavBrain/NavFamily/NavSparkle` — icone tab-bar | 569–578 | 🎨 **Amico** | |
-| `WORLD_COSTUMES`, `COMPANION_IMG` | 579–590 | 🔴 **condivisa** | `COMPANION_IMG` mappa `foglia→volpe`: **non rinominare** |
-| `CompanionAvatar()` | 592–673 | 🎨 **Amico** | Vedi avvertenza sotto |
-| `COMPANIONS`, `WORLDS`, `SKILLS`, `SKILL_MAP` | 676–1024 | 🔴 **condivisa** | Config: nomi, colori-mondo, testi companion |
-| `ALL_CHALLENGES` — 362 sfide, 8 mondi | 1025–3219 | 🟢 **Andrea** | Blocchi per mondo: mondi diversi = zero conflitti |
-| Token `FF_*` / `SG_*` / `P_*` — palette e font | 3221–3238 | 🎨 **Amico** | Design tokens del "Sigillo di Stelle" |
-| Corpo di `MondoMago()`: state, `useEffect`, handler, `triggerOK`/`triggerBAD`, motore adattivo | 3240–4371 | 🟢 **Andrea** | Logica di gioco |
-| Blocchi di render — schermate di onboarding | 4372–4666 | 🎨 **Amico** | |
-| **Schermata `map` + tab-bar** | **4667–5144** | 🟢 **Andrea** | ⚠️ **Eccezione: la mappa se la tiene Andrea** |
-| Blocchi di render — tutte le altre schermate | 5147–7528 | 🎨 **Amico** | Il grosso del lavoro grafico |
+| File | Cosa contiene | Owner |
+|------|---------------|-------|
+| `src/data/sfide.js` | `ALL_CHALLENGES` — 368 sfide, 8 mondi | 🟢 **Andrea** |
+| `src/data/mondi.js` | `COMPANIONS` (con le battute), `STORY_ARCS`, `WORLDS`, `SIGILLO_FRAGMENTS`, `SIGILLO_STORY`, `SKILLS`, `SKILL_MAP` | 🔴 **condivisa** |
+| `src/MondoMago.jsx` (~5.500 righe) | il componente `MondoMago()`: stato, logica, tutte le schermate | zone miste, vedi sotto |
+| `src/AnimationStyles.jsx` | tutte le `@keyframes` e il CSS globale | 🎨 **Amico** |
+| `src/sigillo.js` | token del design system (colori, font) + calcolo del contrasto WCAG | 🎨 **Amico** |
+| `src/PuzzleMagico.jsx` | la sezione Puzzle, quattro giochi | 🎨 **Amico** |
+| `src/icons.jsx`, `src/WorldScene.jsx`, `src/SvgAssets.jsx` | glyph, scene dei mondi, illustrazioni delle sfide | 🎨 **Amico** |
+| `src/ErrorBoundary.jsx` | la schermata "Ops! La magia si è inceppata" | ⚪ raro |
+| `src/util.js` | `pick()` e altri aiuti condivisi | ⚪ raro |
 
-### Le schermate
+### Le zone dentro `src/MondoMago.jsx`
 
-🎨 **Amico** — `consent` 4372 · `profile_select` 4399 · `onboarding` 4434 · `name` 4528 ·
-`age` 4561 · `companion` 4598 · `companion_welcome` 4630 · `coplay_intro` 5147 ·
-`world_intro` 5178 · `fulmine` 5208 · **`challenge` 5326** · `world_end` 6281 ·
-`session_stats` 6413 · `story_book` 6474 · `skills` 6564 · `family` 6604 · `cosmetics` 6643 ·
-`school` 6730 · `profile` 6811 · `parent` 6886
+I numeri di riga cambiano a ogni commit: orientati sui **nomi** (cercali con ⌘F).
 
-🟢 **Andrea** — **`map` 4667–5144**
+| Zona (in ordine nel file) | Owner | Note |
+|------|-------|------|
+| `import`, `MONETIZATION_ENABLED`, `TASTIERA` | ⚪ raro | `TASTIERA` rende usabili da tastiera i `div` cliccabili |
+| `InstallBanner`, `triggerConfetti`, `CorrectBurst`, `SigilloSky`, `WorldAmbient`, `CompanionOrbit` | 🎨 **Amico** | |
+| `NavMap/NavBrain/NavFamily/NavPuzzle/NavSparkle` — icone tab-bar | 🎨 **Amico** | |
+| `COMPANION_IMG`, `CompanionAvatar()` | 🔴 condivisa / 🎨 | `COMPANION_IMG` mappa `foglia→volpe`: **non rinominare** |
+| `FAMILY_MISSIONS`, `getSkill`, `SKILL_TIPS`, motore (`_rnd` … `getDailyChallenges`) | 🟢 **Andrea** | l'audit valuta questo codice vero: i nomi `function _rnd(min, max)` e `function initSkills()` non vanno cambiati |
+| Voce e suoni (`speak`, `SFX`, musica, canzoni) | 🎨 **Amico** | |
+| `PLAYER_LEVELS`, `COSMETICS`, `ACHIEVEMENTS`, salvataggi | 🟢 **Andrea** | |
+| `LETTER_DATA`, `LetterTracer` | 🟢 / 🎨 | |
+| Corpo di `MondoMago()`: state, `useEffect`, handler, `triggerOK`/`triggerBAD` | 🟢 **Andrea** | |
+| Render — onboarding (`consent` … `companion_welcome`) | 🎨 **Amico** | |
+| **Render — `map` + tab-bar** | 🟢 **Andrea** | ⚠️ **eccezione: la mappa se la tiene Andrea** |
+| Render — tutte le altre schermate | 🎨 **Amico** | il grosso del lavoro grafico |
 
 ### ⚠️ La mappa è di Andrea (deciso il 2026-08-05)
 
 La schermata `map` è l'unica eccezione allo split grafico: **la tiene Andrea**, l'Amico non
-la tocca. È la schermata più densa dell'app e contiene:
+la tocca. Contiene: Sigillo di progresso · particelle e banner stagionali · saluto ora-del-giorno ·
+stats row · card streak · barra XP + badge rango · Sfida del Giorno · Sfida Fulmine · **tab-bar** ·
+percorso con i nodi dei mondi · card dei mondi con `WorldScene`.
 
-Sigillo di progresso · particelle e banner stagionali · saluto ora-del-giorno · stats row ·
-card streak · barra XP + badge rango · indicatore scuola · Sfida del Giorno · Sfida Fulmine ·
-**tab-bar** (4951) · path con i nodi-medaglione illustrati (4973) · world cards con `WorldScene` (5055)
-
-**Punto di contatto:** le icone della tab-bar (`NavMap`/`NavBrain`/`NavFamily`/`NavSparkle`,
-righe 569–572) sono dell'Amico, ma vengono *renderizzate* dentro la mappa, a riga 4953.
-Ridisegnare quegli SVG è libero e **non genera conflitto git** (righe diverse) — cambia però
-l'aspetto della tab-bar di Andrea: **avvisarlo**, non serve chiedere il permesso.
+**Punto di contatto:** le icone della tab-bar (`NavMap` …) sono dell'Amico ma vengono
+*renderizzate* dentro la mappa. Ridisegnarle è libero e non genera conflitto: **avvisare** Andrea.
 
 ### ⚠️ Regole per chi lavora nelle zone 🎨 dentro `MondoMago.jsx`
 
 - **Cambia come appare, non cosa fa.** Nei blocchi di render puoi toccare `style`, classi,
   markup, icone, animazioni. **Non** rinominare variabili di stato, handler (`onClick={...}`)
   o chiavi del profilo: quelli sono la zona di Andrea.
-- **Serve un nuovo pezzo di stato** (es. una variabile per una nuova animazione)? **Chiedi ad
-  Andrea** invece di aggiungerlo da solo: sta nelle sue righe e genera conflitto.
-- **`CompanionAvatar`**: le prop `mood` / `talking` / `anim` sono **pilotate dalla logica**
-  (`triggerOK`, `triggerBAD`, level-up, timer idle). Puoi cambiare *come* si esprimono, non i
-  nomi dei valori (`idle/happy/excited/sad/celebrating/thinking`).
-- I companion sono **PNG claymation senza faccia controllabile** (la SVG-face fu rimossa di
-  proposito): la vita si dà col **movimento**, non riaprendo la faccia.
+- **Serve un nuovo pezzo di stato?** Chiedi ad Andrea invece di aggiungerlo da solo.
+- **`CompanionAvatar`**: `mood` / `talking` / `anim` sono pilotate dalla logica. Puoi cambiare
+  *come* si esprimono, non i nomi dei valori (`idle/happy/excited/sad/celebrating/thinking`).
+- I companion sono **PNG claymation senza faccia controllabile**: la vita si dà col **movimento**.
+- **Un `div` cliccabile** vuole `role="button"`, un nome (`aria-label` o testo) e `{...TASTIERA}`.
+  `npm run a11y` lo controlla.
 
 ---
 
 ## 4. File 100% grafica/audio (nessun conflitto possibile)
 
 🎨 **Grafica**
-- `src/icons.jsx` — **33 glyph custom + `WorldIcon`/`Icon`/`SkillIcon`/`RankIcon`**. Linguaggio:
+- `src/AnimationStyles.jsx` — `@keyframes` e CSS globale
+- `src/icons.jsx` — glyph custom + `WorldIcon`/`Icon`/`SkillIcon`/`RankIcon`. Linguaggio:
   *"silhouette pergamena + 1 accento colore"*.
 - `src/WorldScene.jsx` — 8 scene-mondo SVG animate (`SCENE_MAP`)
-- `src/SvgAssets.jsx` — asset SVG delle sfide (usato dal formato `visual_tap`)
-- `src/sigillo.js` — **i token del design system** (colori, font). Erano dentro
-  `MondoMago.jsx`; ora stanno qui perché li usa anche `PuzzleMagico.jsx`.
-- `src/PuzzleMagico.jsx` — **la sezione Puzzle**, quattro giochi in un file solo.
-  Non tocca la logica né i dati: riceve `età`, `speak`, `sfx`, `onExit` come prop.
-- `src/App.css`, `src/index.css`
-- `public/favicon.svg`, `public/icons.svg`, `public/icon-*.png`, `public/apple-touch-icon.png`
-- `public/characters/*_cutout.png` — i 5 companion claymation
-- `public/screenshots/`, `scripts/gen-screenshots.mjs`
+- `src/SvgAssets.jsx` — asset SVG delle sfide (formato `visual_tap`)
+- `src/sigillo.js` — token del design system. `etichettaLeggibile(colore)` restituisce
+  sfondo e testo di un'etichetta piena con contrasto ≥ 4.5:1
+- `src/PuzzleMagico.jsx` — la sezione Puzzle. Riceve `età`, `speak`, `sfx`, `onExit` come prop.
+- `public/favicon.svg`, `public/icon-*.png`, `public/apple-touch-icon.png` —
+  **si rigenerano** con `node scripts/gen-icons.mjs`, non si ritoccano a mano
+- `public/characters/*_cutout.*` — i 5 companion claymation
+- `public/screenshots/` — **si rigenerano** con `node scripts/gen-screenshots.mjs` (app vera, non mockup)
 
 🔊 **Audio**
 - `public/audio/` — `song_*.mp3`, `tts_*.mp3`
-- `src/ttsMap.json` — manifest TTS (**aggiungere voci in fondo** per evitare conflitti)
+- `src/ttsMap.json` — manifest TTS (lo scrive `npm run voce`)
 - `scripts/gen-songs-musical.py`, `gen-songs.py`, `gen-tts.py`, `suno-prompts.md`
 
-Ridisegnare SVG, ritoccare CSS, sostituire audio = **operazioni libere**.
-Serve coordinarsi **solo** se si *rinomina* un asset → va aggiornato il riferimento in `MondoMago.jsx`.
+Serve coordinarsi **solo** se si *rinomina* un asset → va aggiornato il riferimento nel codice.
 
 ---
 
----
+## 4-bis. 🔔 Cose entrate nella zona di Andrea — da sapere
 
-## 4-bis. 🔔 Cose entrate nella zona di Andrea (agosto 2026) — da sapere
-
-Tre interventi sono finiti dentro le righe di Andrea perché erano difetti, non scelte
-di contenuto. Sono piccoli e circoscritti, ma **vanno guardati**:
+### Agosto 2026
 
 | Dove | Cosa | Perché |
 |---|---|---|
 | `ALL_CHALLENGES` | `correct:` corretto su **fb02 o04 o06 m04 m06 g04 g06** | La risposta segnata giusta non era quella della sequenza. 4 di queste sono boss. |
 | `ALL_CHALLENGES` | **fb10 · ob10 · lab26** ritoccate | Due rime che non rimavano e un "bug" che era la manovra corretta. |
-| `ALL_CHALLENGES` | **o12 m12 g12 gb12 v12 b08** riscritte | Divisione e numeri oltre il 20 in fascia 5-6. In Italia moltiplicazione e divisione entrano in 2ª primaria: la fascia lavora entro il 20. Stessa struttura, stesso boss, numeri rifatti. |
+| `ALL_CHALLENGES` | **o12 m12 g12 gb12 v12 b08** riscritte | Divisione e numeri oltre il 20 in fascia 5-6. |
 | `ALL_CHALLENGES` | **mb01 · gb01**: 6 elementi da contare → 5 | A 3-4 anni si conta con sicurezza fino a 5. |
 | `ALL_CHALLENGES` | **ps06 ps07** da 3×3 a 2×2; **ps08 ps09** ristrette a 7-8 | Il 3×3 è il puzzle del 15: richiede una strategia, non pazienza. |
-| `ALL_CHALLENGES` | **6 sfide nuove `lab_a1…lab_a6`** per la fascia 3-4 | Il Laboratorio a 4 anni aveva 5 sfide in tutto: sempre le stesse. Ora 10 + 2 boss, come gli altri mondi. |
-| `genMathChallenge` | ramo divisione | `72 ÷ 8 = ?` dava per giusto 72. Un terzo delle sfide procedurali 7-8 anni. |
-| schermata `map` | tab-bar da 4 a 5 voci (arriva **Puzzle**) e pool della Sfida Fulmine | A 7-8 anni la Fulmine partiva con zero domande: il pool era solo `visual_tap`, che si ferma a 7. |
+| `ALL_CHALLENGES` | **6 sfide nuove `lab_a1…lab_a6`** per la fascia 3-4 | Il Laboratorio a 4 anni aveva 5 sfide in tutto. |
+| `genMathChallenge` | ramo divisione | `72 ÷ 8 = ?` dava per giusto 72. |
+| schermata `map` | tab-bar da 4 a 5 voci (arriva **Puzzle**) e pool della Sfida Fulmine | A 7-8 anni la Fulmine partiva con zero domande. |
 | stato `coins` | `onMonete` dalla sezione Puzzle | Vedi §4-ter: monete sì, stelle no. |
 
-`npm run audit` rimette in piedi tutti questi controlli in un colpo solo:
-**exit 1** se una risposta torna sbagliata, se una fascia d'età resta senza sfide,
-o se una frase perde la voce registrata.
+### Settembre 2026
+
+| Dove | Cosa | Perché |
+|---|---|---|
+| salvataggio automatico del profilo | se manca `activeProfileId` lo assegna e salva | **Bug grave**: al primo avvio, e dopo "Ricomincia da capo", il profilo non veniva **mai** salvato. Ricaricando, il bambino ripartiva da "Come ti chiami?". Verificato anche sul sito live. Lo smoke test ora ricarica la pagina apposta. |
+| nuovo `useEffect` "scorciatoia Sfida del Giorno" | legge `?action=daily` e avvia `startDaily()` | La scorciatoia del manifest (pressione lunga sull'icona) apriva l'app senza fare niente. |
+| notifica giornaliera | icona con `import.meta.env.BASE_URL` | `/icon-192.png` su GitHub Pages dava 404. |
+| stato iniziale | PIN, limite di tempo, orario promemoria, tutorial e stagione letti con `useState(() => …)` | Prima un effetto li leggeva dopo il primo render e scriveva i valori di default nel localStorage per un istante. |
+| `nextRef.current = next` | ora in `useLayoutEffect` | Scrivere una ref durante il render è vietato da React 19; il comportamento è identico. |
+| consiglio ai genitori | uno al giorno invece che estratto a ogni render | Il testo cambiava sotto le dita mentre il genitore toccava le impostazioni. |
+| tab Famiglia | etichette e bottone con contrasto ≥ 4.5:1 | Testo bianco su ambra a 2.1:1: illeggibile per chi vede poco. |
+| titoli delle schermate | `h2` → `h1` (aspetto identico) | Il lettore di schermo non trovava il titolo della pagina. |
+| `eslint-disable` con motivo | una trentina, ognuno col perché dopo `--` | Pattern voluti (reset di stato, casualità una volta per sfida): React Compiler non è in uso. |
+| `ALL_CHALLENGES`, `WORLDS`, … | spostati in `src/data/` **senza cambiare una virgola** | Verificato: HTML identico carattere per carattere su 8 schermate, stesse 697 frasi registrate, stesso audit. |
+
+`npm run audit` rimette in piedi i controlli sugli esercizi: **exit 1** se una risposta torna
+sbagliata, se una fascia d'età resta senza sfide, o se una frase perde la voce registrata.
 
 ---
 
@@ -180,72 +189,76 @@ Puzzles* di RV AppStudios: **Ombre** (sagome) · **Costruttore** (tessere) ·
 - Le immagini sono le 8 scene di `WorldScene.jsx` e le illustrazioni di
   `SvgAssets.jsx`: **zero asset nuovi**.
 - Il file è caricato con `lazy()`: 9KB gzip che arrivano solo quando si apre la
-  sezione, così il bundle di avvio non cambia.
+  sezione, così il bundle di avvio non cambia. Se si rompe, un `ErrorBoundary`
+  riporta alla mappa invece di spegnere tutta l'app.
 - I progressi (adesivi) stanno in un `localStorage` suo — `mondomago_puzzle_v1` —
   e non toccano il profilo del bambino.
 
 ### Le ricompense: monete sì, stelle no
 
 Un puzzle vinto paga **monete** (1 Facile → 4 Mago, tetto 20 al giorno) e **non**
-stelle. Non è una scelta di comodo:
+stelle:
 
 - Le **stelle** aprono i mondi e fanno salire di grado. Se le desse anche il puzzle,
   un bambino potrebbe arrivare al Laboratorio senza aver mai risolto una sfida, e il
   motore adattivo — che si tara su *come* risponde — resterebbe al buio.
 - Le **monete** comprano solo cosmetici: nessun cancello, nessuna scorciatoia.
 
-È la stessa separazione che Duolingo tiene fra XP e gemme, e il motivo per cui
-Khan Academy Kids fa contare ai mini-giochi i collezionabili ma non il livello.
-*Puzzle Kids*, il gioco di riferimento, non ha affatto un'economia comune: i suoi
-sticker restano dentro i mini-giochi — qui l'album fa esattamente quel mestiere.
-
-Il **tetto giornaliero** esiste perché senza, il puzzle diventa una macchinetta da
-monete e il negozio dei cosmetici perde senso in una settimana.
-
-`npm run smoke` apre l'app in un browser vero, gioca ai quattro giochi, trascina un
-pezzo, lo piazza col doppio tocco e lascia le schermate in `.smoke/`.
+È la stessa separazione che Duolingo tiene fra XP e gemme. Il **tetto giornaliero**
+esiste perché senza, il puzzle diventa una macchinetta da monete.
 
 ---
 
 ## 5. 🚧 Trappole note (leggere prima di perderci un pomeriggio)
 
-- **`.screen-enter` deve restare `backwards`, NON `both`** (righe 130, 285-286). Con `both` il
-  fill-mode lascia un transform residuo che crea un *containing block* per i `position:fixed`
-  → tutte le modali-celebrazione si centrano nel container-schermata invece che nel viewport
-  (appaiono in fondo). Bug già corretto: **non tornare indietro.**
-- **`Icon` è shadowato a riga 4953**: dentro `[[NavMap,"Mondi"],...].map(([Icon,label]) => ...)`
+- **`.screen-enter` deve restare `backwards`, NON `both`** (in `AnimationStyles.jsx`). Con
+  `both` il fill-mode lascia un transform residuo che crea un *containing block* per i
+  `position:fixed` → le modali-celebrazione si centrano nel container invece che nel viewport.
+- **Non rimettere `!activeProfileId` nella guardia del salvataggio automatico**: è il bug
+  che per mesi ha fatto perdere i progressi al primo avvio.
+- **`Icon` è shadowato nella tab-bar**: dentro `[[NavMap,"Mondi"],...].map(([Icon,label]) => ...)`
   il nome `Icon` copre quello importato. Non usare `<Icon name="..."/>` dentro quel `.map`.
-- **Glyph su fondi chiari**: i glyph hanno silhouette `PARCH` hardcoded (pensata per fondi
-  **scuri**). Su un CTA oro pieno renderebbero cream-su-oro = contrasto basso. Usa un glyph a
-  fill unico scuro, oppure togli l'icona.
+- **Glyph su fondi chiari**: i glyph hanno silhouette `PARCH` pensata per fondi **scuri**.
+  Su un CTA oro pieno usa un glyph a fill unico scuro, oppure togli l'icona.
 - **Emoji "tofu" (□) negli screenshot Linux headless** = falso allarme, sul telefono si vedono.
-- **`npm run lint` è rotto a monte**: manca `eslint.config.js`. Problema pre-esistente, non è
-  colpa tua — non perderci tempo.
+- **`npm run lint` è severo** (`--max-warnings 0`). Se un pattern è voluto, si scrive
+  `// eslint-disable-next-line <regola> -- il motivo`: senza motivo non passa la revisione.
+- **I dati in `src/data/` li leggono anche gli script** (audit, voce): restano letterali puri,
+  con `import` su una riga sola e niente JSX.
 - **Gli id dentro gli SVG devono essere unici per istanza.** `url(#bg)` risolve sul primo
-  elemento con quell'id in *tutto il documento*: con un id fisso, le quattro opzioni di una
-  sfida finivano tutte con lo sfondo della prima. Ora `BgCircle` usa `useId()` — se aggiungi
-  un gradiente o una `clipPath` a un asset, fai lo stesso.
+  elemento con quell'id in *tutto il documento*. Se aggiungi un gradiente o una `clipPath`,
+  usa `useId()`.
 - **`getBoundingClientRect()` su un `<g>` con `clip-path` restituisce il riquadro
-  NON ritagliato.** Il tocco invece rispetta il ritaglio. Se ti serve il centro di un pezzo
-  di puzzle, calcolalo dal `transform`, non dal riquadro.
-- **Niente `playbackRate` sulle clip vocali**: allungare un mp3 sposta le formanti e la voce
-  diventa metallica. La cadenza si decide in registrazione (`RATE` in `scripts/gen-tts.py`).
-- **Performance**: il sito live è a **Lighthouse 97 / 100 / 100**. Prima di una PR grossa lato
-  grafica: `npm run lighthouse` (locale) e non far scendere il punteggio.
-- **Smoke test Playwright** va lanciato **dalla cartella del progetto** (altrove non risolve
-  `playwright`).
+  NON ritagliato.** Il centro di un pezzo di puzzle va calcolato dal `transform`.
+- **Niente `playbackRate` sulle clip vocali**: la voce diventa metallica. La cadenza si decide
+  in registrazione (`RATE` in `scripts/gen-tts.py`).
+- **Performance**: prima di una PR grossa lato grafica, `npm run lighthouse` (con
+  `npm run preview` acceso). Su macOS la varianza è alta: **3 misure e si guarda la mediana**.
+  Il dato che non mente è la dimensione dei chunk in `dist/assets/`.
 
 ---
 
-## 6. Deploy — lo fa UNA persona sola
+## 6. Controlli e deploy
+
+### Prima di ogni PR
 
 ```bash
-gh auth setup-git     # una volta sola, serve a gh-pages
-npm run deploy        # build + push su gh-pages
+npm run verifica   # lint + audit esercizi e voce + build
+npm run smoke      # con npm run dev acceso: l'app in un browser vero
+npm run a11y       # con npm run dev acceso: accessibilità WCAG 2.1 AA
+```
+
+Su GitHub gli stessi controlli partono da soli a ogni push e a ogni PR
+(`.github/workflows/ci.yml`). Una PR rossa non si mergia.
+
+### Deploy — lo fa UNA persona sola
+
+```bash
+npm run deploy     # verifica → build → push su gh-pages
 ```
 
 - Si deploya **solo da `master` aggiornato**, dopo aver mergiato le PR. Mai da un branch.
-- **Una persona alla volta.** Non si "sceglie quale lavoro tenere": si mergiano entrambi.
+- Se `verifica` fallisce, il deploy **non parte**.
 - Il bundle è splittato in `index-*.js` (app) + `vendor-*.js` (React+confetti). L'hash di
   `vendor` **deve restare stabile** tra i deploy: cambia solo se si tocca React o le dipendenze.
   È ciò che fa risparmiare ~200KB a ogni aggiornamento agli utenti PWA.
@@ -255,6 +268,8 @@ npm run deploy        # build + push su gh-pages
   git checkout gh-pages && git commit --allow-empty -m "force rebuild" \
     && git push origin gh-pages && git checkout master
   ```
+
+Pubblicazione su Google Play, icone e screenshot: **`DEPLOY_GUIDE.md`**.
 
 ---
 
@@ -277,4 +292,4 @@ In caso di dubbio su una sfida: **due sfide diverse si tengono entrambe**, non s
 - [ ] `git checkout master && git pull origin master`
 - [ ] `git checkout -b feature/...`
 - [ ] So in quale **zona** lavoro (§3) e l'altro lo sa
-- [ ] Commit piccoli → push → PR
+- [ ] Commit piccoli → `npm run verifica` → push → PR verde

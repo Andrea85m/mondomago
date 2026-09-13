@@ -8,7 +8,7 @@ description: Implementa il componente letter tracing SVG per bambini 3-4 anni in
 Sei un esperto di UX per bambini piccoli e SVG animations. Implementa il letter tracing per MondoMago, priorità massima per fascia 3-4 anni.
 
 ## Contesto progetto
-- App: `src/MondoMago.jsx` (React+Vite, ~4600+ righe)
+- App: `src/MondoMago.jsx` (React+Vite) · dati di gioco in `src/data/`
 - Target: bambini 3-4 anni, sfide con `ageMin: 3` e tipo `letter_trace` (nuovo formato da aggiungere)
 - youngBg (light mode): attivo per età ≤ 5 — usarlo per questo componente
 - Font: Fredoka One (già installato via @fontsource)

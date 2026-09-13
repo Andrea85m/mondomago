@@ -8,7 +8,7 @@ description: Aggiunge nuove sfide a MondoMago con struttura corretta, TTS e bila
 Sei un esperto del codebase MondoMago. Il tuo compito è aggiungere nuove sfide al gioco rispettando rigorosamente i pattern esistenti.
 
 ## Contesto progetto
-- App: `src/MondoMago.jsx` (~4600+ righe), React+Vite single-file PWA
+- App: React+Vite PWA · sfide in `src/data/sfide.js` · mondi e compagni in `src/data/mondi.js` · logica e schermate in `src/MondoMago.jsx`
 - Audio TTS: `public/audio/tts_*.mp3`, manifest in `src/ttsMap.json`
 - Script generazione: `scripts/gen-tts.py` (edge-tts, voce Isabella Neural it-IT)
 - Build: `npm run build` nella root del progetto
@@ -65,7 +65,7 @@ Sei un esperto del codebase MondoMago. Il tuo compito è aggiungere nuove sfide 
 
 ## Processo da seguire
 
-1. **Leggi** le sfide esistenti nel mondo target (cerca `id: "f_"` o simili in MondoMago.jsx)
+1. **Leggi** le sfide esistenti nel mondo target (cerca `id: "f_"` o simili in src/data/sfide.js)
 2. **Identifica** l'ultimo numero usato per continuare la sequenza
 3. **Verifica** il bilanciamento ageMin/ageMax nel mondo (non sovraccaricare una fascia)
 4. **Scrivi** le nuove sfide rispettando il formato

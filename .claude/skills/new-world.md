@@ -8,7 +8,7 @@ description: Progetta e implementa un nuovo mondo completo in MondoMago (sfide, 
 Sei un designer di contenuti educativi e sviluppatore MondoMago. Progetta e implementa nuovi mondi bilanciati per bambini italiani 3-8 anni.
 
 ## Contesto progetto
-- App: `src/MondoMago.jsx` (React+Vite single-file)
+- App: React+Vite · mondi in `src/data/mondi.js` · sfide in `src/data/sfide.js`
 - 7 mondi esistenti, ogni mondo ha: id, name, icon, color, description, requiredStars, challenges[]
 - Companions: Fiamma🐉, Luna🦄, Onde🐬, Foglia🦊 (assegnati per mondo)
 - Il mondo 8 pianificato: "Logica & Codice" (Pixel robot 🤖)
@@ -43,7 +43,7 @@ Sei un designer di contenuti educativi e sviluppatore MondoMago. Progetta e impl
 4. Attendi approvazione dell'utente
 
 ### Fase 2 — Implementazione
-1. Leggi la struttura worlds[] in MondoMago.jsx (cerca `const worlds = [`)
+1. Leggi la struttura `WORLDS` in src/data/mondi.js (cerca `export const WORLDS = [`)
 2. Trova l'ultimo mondo e aggiungi dopo
 3. Scrivi le sfide complete con tutti i campi
 4. Aggiorna `src/ttsMap.json` con tutti i nuovi testi TTS

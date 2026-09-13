@@ -8,7 +8,7 @@ SYSTEM_PROMPT = """Sei un senior developer esperto in React 18, Vite, PWA e app 
 Conosci a fondo MondoMago: una single-page PWA React+Vite per bambini italiani 3-8 anni.
 
 Stack tecnico del progetto:
-- React 18 + Vite (single file: src/MondoMago.jsx ~5000 righe)
+- React 19 + Vite · src/MondoMago.jsx (logica e schermate) + src/data/ (sfide, mondi)
 - PWA: manifest.json, sw.js v3 (cache separata core/audio)
 - CSS inline + classi globali in index.html
 - 319 TTS MP3 + ttsMap.json manifest
