@@ -1,6 +1,6 @@
 # MondoMago — Guida al deploy e alla pubblicazione
 
-> Aggiornata il 2026-09-13. Il deploy di tutti i giorni è il passo 1; i passi
+> Aggiornata il 2026-09-19. Il deploy di tutti i giorni è il passo 1; i passi
 > 4-6 servono solo per pubblicare l'app su Google Play.
 
 ## 1. Pubblicare il sito (GitHub Pages)
@@ -58,50 +58,105 @@ visibile.
 
 ## 4. App Android (TWA con Bubblewrap)
 
-```bash
-npm install -g @bubblewrap/cli
-mkdir mondomago-twa && cd mondomago-twa
-bubblewrap init --manifest https://andrea85m.github.io/mondomago/manifest.json
-#   Application ID: com.mondomago.app · App name: MondoMago
-bubblewrap build          # → app-release-bundle.aab
-```
+L'app Android è il sito dentro Chrome (Trusted Web Activity): ogni `npm run deploy`
+aggiorna anche l'app, senza passare da Play. Si ricarica su Play solo se cambiano
+nome, icona, indirizzo o permessi.
 
-### assetlinks.json — ⚠️ va sul dominio, non nella sottocartella
-
-Android verifica il collegamento app ↔ sito leggendo **sempre**
-`https://<dominio>/.well-known/assetlinks.json`, cioè dalla radice del dominio.
-Il nostro sito vive in `/mondomago/`, quindi il file che sta in
-`public/.well-known/` finisce su `andrea85m.github.io/mondomago/.well-known/`,
-dove Android **non lo cerca**. Due strade:
-
-- **Repo `Andrea85m.github.io`** (gratis): un secondo repository che pubblica solo
-  `.well-known/assetlinks.json` alla radice di `andrea85m.github.io`.
-- **Dominio proprio** (es. `mondomago.it`) puntato su GitHub Pages: il sito passa
-  alla radice e il file in `public/.well-known/` basta così. In questo caso va
-  tolto `base: '/mondomago/'` da `vite.config.js` e aggiornati i percorsi del manifest.
-
-L'impronta da incollare al posto di `SOSTITUISCI_CON_SHA256_DEL_TUO_KEYSTORE`:
+### Strumenti (una volta sola, già fatto sul Mac di Emilio il 2026-09-19)
 
 ```bash
-keytool -list -v -keystore android.keystore -alias android
+npm install -g @bubblewrap/cli          # 1.25: targetSdk 36
+# JDK 17 in ~/.bubblewrap/jdk, Android SDK in ~/.bubblewrap/android_sdk
+bubblewrap doctor                       # deve dire "valid"
 ```
 
-Se l'app firma con **Play App Signing** (il default), l'impronta giusta è quella
-della chiave di firma dell'app in *Play Console → Configurazione → Integrità dell'app*,
-non quella del keystore locale. Si possono mettere entrambe nell'array.
+⚠️ In `~/.bubblewrap/android_sdk/platforms/` deve esserci **una sola** cartella
+`android-36`. Con un doppione (`android-36-2`) Gradle fallisce con *Failed to find
+target with hash string 'android-36'*, e il messaggio non lo dice.
 
-Senza il file verificato l'app funziona lo stesso, ma mostra la barra degli
-indirizzi di Chrome in alto.
+### La chiave di firma — ⚠️ non si perde
 
-## 5. Google Play Console
+`../mondomago-android-segreti/` (fuori dal repo, mai su git):
+`upload-keystore.jks` + `password.env`. È la **chiave di caricamento**: con Play App
+Signing la firma finale la mette Google. Va copiata in **due posti** (es. chiavetta +
+gestore password). Se si perde, si chiede il reset al supporto Play (giorni di attesa).
 
-1. https://play.google.com/console → Crea app → MondoMago
-2. Scheda dello store: testi da `STORE_LISTING.md`
-3. Privacy policy: `https://andrea85m.github.io/mondomago/privacy-policy.html`
-4. Target e contenuti: app rivolta a bambini sotto i 13 anni → programma *Famiglie*
-5. Questionario IARC: tutte le domande su violenza/sesso/sostanze → No (atteso PEGI 3)
-6. Screenshot e feature graphic da `public/screenshots/`
-7. Carica `app-release-bundle.aab` → test interno → test chiuso → produzione
+Impronta SHA-256 della chiave di caricamento:
+`12:18:70:F5:FB:0B:F8:62:CA:09:6D:91:30:68:60:5A:53:4B:49:4A:D6:D2:F2:C3:F9:C9:48:0D:8F:D6:EA:84`
+
+### Generare APK e AAB
+
+```bash
+node scripts/android-twa.mjs                 # android/ per l'indirizzo attuale
+node scripts/android-twa.mjs --versione 2    # dal secondo caricamento su Play in poi
+cd android
+set -a; . ../../mondomago-android-segreti/password.env; set +a
+BUBBLEWRAP_KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD BUBBLEWRAP_KEY_PASSWORD=$KEY_PASSWORD \
+  bubblewrap build --skipPwaValidation
+```
+
+Escono `app-release-bundle.aab` (**questo va su Play**) e `app-release-signed.apk`
+(da installare a mano su un telefono per provarlo). L'indirizzo lo decide
+`public/CNAME`: se c'è, l'app punta al dominio; se no, a `andrea85m.github.io/mondomago/`.
+
+### assetlinks.json — deve stare alla radice del dominio
+
+Android lo cerca **sempre** in `https://<dominio>/.well-known/assetlinks.json`. Sotto
+`/mondomago/` non lo trova, e l'app mostra la barra degli indirizzi di Chrome in alto.
+`public/.well-known/assetlinks.json` ha già l'impronta della chiave di caricamento; dopo
+il primo caricamento su Play va **aggiunta** quella di *Play Console → Test e rilascio →
+Configurazione → Integrità dell'app → Firma dell'app* (Play firma con la sua chiave).
+
+### Passare al dominio proprio
+
+1. Comprare il dominio (es. `mondomago.it`) e nel suo DNS creare:
+   `A` @ → `185.199.108.153`, `185.199.109.153`, `185.199.110.153`, `185.199.111.153`
+   e `CNAME` www → `andrea85m.github.io`.
+2. `echo mondomago.it > public/CNAME` → `npm run deploy`. Base, manifest e service worker
+   passano alla radice da soli (`vite.config.js`).
+3. Repo GitHub → Settings → Pages → Custom domain = `mondomago.it`, poi **Enforce HTTPS**
+   (serve che il DNS sia propagato: da qualche minuto a qualche ora).
+4. Verifica: `curl -I https://mondomago.it/` → 200 e
+   `curl https://mondomago.it/.well-known/assetlinks.json` → il JSON con l'impronta.
+5. `node scripts/android-twa.mjs` e build come sopra: l'app ora punta al dominio.
+6. Aggiornare l'indirizzo della privacy in `STORE_LISTING.md` e `lighthouse:live` in `package.json`.
+
+⚠️ **Il dominio è un'origine nuova**: i progressi salvati su `andrea85m.github.io` non lo
+seguono. Chi gioca già dal browser riparte da zero (GitHub reindirizza il vecchio indirizzo
+al nuovo). Meglio farlo **prima** di mandare l'app ai tester.
+
+## 5. Google Play Console — passo per passo
+
+Account **personale** → prima della produzione serve un **test chiuso con almeno 12 tester
+che restano iscritti per 14 giorni di fila**. Il conto parte quando il dodicesimo accetta.
+
+1. **Crea app**: nome `MondoMago: giochi educativi`, lingua predefinita Italiano, **App**
+   (non gioco), **Senza costi**. Le dichiarazioni sulle norme: sì.
+2. **Configura l'app** (la dashboard le elenca), risposte già pronte in `STORE_LISTING.md`:
+   - Privacy policy → l'URL della privacy (§ Link di `STORE_LISTING.md`)
+   - Accesso all'app → *Tutte le funzionalità sono disponibili senza restrizioni*, più la nota
+     sul PIN (§ Accesso all'app)
+   - Annunci → **No** · ID pubblicità → **No** (l'app non lo usa)
+   - Classificazione dei contenuti → questionario IARC, categoria *Tutte le altre app*, tutto No
+   - Pubblico di destinazione → **5 anni e meno** e **6-8 anni**; attrae i bambini: sì
+   - App di notizie: No · Tracciamento dei contatti COVID: No · App governative: No ·
+     Funzionalità finanziarie: nessuna · App per la salute: nessuna
+   - Sicurezza dei dati → **Nessun dato raccolto né condiviso**
+   - Categoria **Istruzione**, email di contatto, tag
+   - Scheda dello store: titolo, descrizioni, icona 512, feature graphic, screenshot
+3. **Test interno** (subito, senza revisione lunga): crea release → carica
+   `app-release-bundle.aab` → accetta **Play App Signing** → aggiungi i tester interni
+   (fino a 100 email). Serve a provarlo sui vostri telefoni dal Play Store vero.
+4. Copia l'impronta SHA-256 di *Integrità dell'app → Firma dell'app* in
+   `public/.well-known/assetlinks.json` (accanto a quella che c'è) → `npm run deploy`.
+   Da qui la barra di Chrome sparisce anche nell'app scaricata da Play.
+5. **Test chiuso**: crea traccia → stessa release → elenco tester = un Gruppo Google o
+   una lista di email (almeno 12, meglio 15-20: se uno esce il conteggio si ferma) →
+   invia per la revisione. Ai tester si manda il link di adesione della traccia.
+6. Dopo 14 giorni con 12+ tester: **Richiedi l'accesso alla produzione** (domande su come
+   è andato il test) → revisione, di solito qualche giorno per le app per bambini.
+
+Dal secondo caricamento: `--versione 2`, `3`, … (Play rifiuta un numero già usato).
 
 ## 6. iPhone e iPad
 
@@ -110,31 +165,31 @@ L'icona è `apple-touch-icon.png`.
 
 ---
 
-## Checklist prima del lancio su Play — stato al 2026-09-13
 
-**Pronto e verificato sul sito live**
-- [x] Controlli verdi: lint, audit, smoke 20/20 (avvio offline compreso), accessibilità 0 violazioni, CI GitHub
+## Checklist prima del lancio su Play — stato al 2026-09-19
+
+**Pronto e verificato**
+- [x] Controlli verdi: lint, audit, smoke (avvio offline compreso), accessibilità 0 violazioni, CI GitHub
 - [x] Chrome la considera installabile, manifest senza errori, service worker attivo
 - [x] Lighthouse mobile sul sito live: Performance 90-93 · Accessibilità 100 · Best Practices 100
 - [x] Icona 512, feature graphic 1024×500 e 6 screenshot 1080×1920 senza trasparenza
 - [x] Privacy policy pubblica e raggiungibile dall'app (consenso e PIN genitori)
-- [x] Nessun annuncio, nessun acquisto, nessun dato raccolto → Data safety "No" (`STORE_LISTING.md`)
-- [x] Testi della scheda con numeri verificati (`STORE_LISTING.md`)
-- [x] Bubblewrap 1.25 genera app con `targetSdkVersion 36`, il minimo per le app nuove dal 31 ago 2026
+- [x] Nessun annuncio, nessun acquisto, nessuna chiamata di rete nel codice → Data safety "No"
+- [x] *Ricomincia da capo* spostato nell'area genitori, dietro PIN (19 set)
+- [x] Su tablet il contenuto sta in una colonna di 600px, sfondo a tutto schermo (19 set)
+- [x] Chiave di caricamento creata, fuori dal repo; impronta in `assetlinks.json`
+- [x] AAB e APK firmati: `com.mondomago.app`, versione 1.0.0 (1), targetSdk 36, solo permesso notifiche
+- [x] Build pronta per il dominio proprio: basta `public/CNAME` (§4)
 
-**Da fare — serve una decisione o un account**
-- [ ] Account Google Play Console (25 $, verifica identità). Se **personale** creato dopo il 13 nov 2023:
-      test chiuso con **almeno 12 tester per 14 giorni di fila** prima di poter chiedere la produzione
-- [ ] `assetlinks.json` alla **radice del dominio** (§4): repo `Andrea85m.github.io` oppure dominio proprio
-- [ ] Keystore di upload creato e custodito in due posti; impronta SHA-256 (e quella di Play App Signing) nel file
-- [ ] AAB generato con Bubblewrap, caricato in test interno, poi test chiuso
-- [ ] Scheda, pubblico target (5 e meno · 6-8), Data safety, IARC, accesso app compilati in Play Console
-- [ ] Nome sviluppatore pubblico
-- [ ] Prova su almeno un Android vero, anche vecchio o tablet economico (è lì che giocano i bambini)
+**Da fare — serve un account o un acquisto**
+- [ ] Copia della chiave di firma in due posti
+- [ ] Dominio comprato e collegato (§4 "Passare al dominio proprio"), poi AAB rigenerato
+- [ ] Play Console: scheda, contenuti, Data safety (§5 punto 2)
+- [ ] Nome sviluppatore pubblico ed email di contatto verificata dall'account Play
+- [ ] Test interno → impronta di Play App Signing in `assetlinks.json` → deploy
+- [ ] 12+ tester nel test chiuso per 14 giorni, poi richiesta di produzione
+- [ ] Prova su almeno un Android vero, anche vecchio o tablet economico
 
-**Da valutare con Andrea (non bloccanti)**
-- [ ] *Ricomincia da capo* sta nel profilo del compagno: il bambino può cancellare i progressi senza PIN
-- [ ] Su tablet (≥ 768px) le card si allargano a tutto schermo: un `maxWidth` sulla mappa renderebbe meglio
 
 ## Checklist sui dispositivi veri
 

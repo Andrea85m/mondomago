@@ -85,7 +85,7 @@ MondoMago is an Italian-language educational game for children aged 3 to 8. With
 |---|---|---|
 | L'app raccoglie o condivide dati utente? | **No** | Nome, età e progressi restano nel localStorage del dispositivo e non vengono mai trasmessi |
 | I dati sono crittografati in transito? | Non applicabile | Nessun dato trasmesso |
-| Si può chiedere la cancellazione? | Sì, dall'app | Profilo del compagno → *Ricomincia da capo*; oppure disinstallando |
+| Si può chiedere la cancellazione? | Sì, dall'app | Area Genitori (con PIN) → *Ricomincia da capo* |
 
 ## Classificazione dei contenuti (questionario IARC)
 
@@ -120,3 +120,12 @@ Si rigenerano con `node scripts/gen-screenshots.mjs` (vedi DEPLOY_GUIDE §3).
 - Privacy policy: https://andrea85m.github.io/mondomago/privacy-policy.html
 - Email di contatto (pubblica sulla scheda): afphotographyflickr@gmail.com
 - Nome sviluppatore: *da scegliere* (appare sotto il titolo)
+
+## Messaggio per i tester del test chiuso
+
+> Ciao! Stiamo pubblicando MondoMago, un gioco educativo per bambini 3-8 anni, su Google Play.
+> Prima dell'uscita Google chiede che almeno 12 persone lo provino per 14 giorni. Ti basta:
+> 1) aprire questo link dal telefono Android e toccare "Diventa un tester": <LINK DELLA TRACCIA>
+> 2) installare l'app dal Play Store che si apre;
+> 3) **tenerla installata per 14 giorni** (non serve usarla tutti i giorni).
+> Se hai figli piccoli e vuoi dirci cosa ne pensano, ancora meglio. Grazie!

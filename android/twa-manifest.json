@@ -1,0 +1,57 @@
+{
+  "packageId": "com.mondomago.app",
+  "host": "andrea85m.github.io",
+  "name": "MondoMago",
+  "launcherName": "MondoMago",
+  "display": "standalone",
+  "themeColor": "#1B1035",
+  "themeColorDark": "#000000",
+  "navigationColor": "#000000",
+  "navigationColorDark": "#000000",
+  "navigationDividerColor": "#000000",
+  "navigationDividerColorDark": "#000000",
+  "backgroundColor": "#1B1035",
+  "enableNotifications": true,
+  "startUrl": "/mondomago/?source=pwa",
+  "iconUrl": "https://andrea85m.github.io/mondomago/icon-512.png",
+  "maskableIconUrl": "https://andrea85m.github.io/mondomago/icon-maskable-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "../../mondomago-android-segreti/upload-keystore.jks",
+    "alias": "mondomago"
+  },
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [
+    {
+      "name": "Sfida del Giorno",
+      "shortName": "Sfida",
+      "url": "https://andrea85m.github.io/mondomago/?action=daily",
+      "chosenIconUrl": "https://andrea85m.github.io/mondomago/icon-192.png"
+    }
+  ],
+  "generatorApp": "unknown",
+  "webManifestUrl": "https://andrea85m.github.io/mondomago/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://andrea85m.github.io/mondomago/",
+  "minSdkVersion": 21,
+  "orientation": "portrait",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "protocolHandlers": [],
+  "fileHandlers": [],
+  "launchHandlerClientMode": "focus-existing",
+  "displayOverride": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "appVersion": "1.0.0"
+}

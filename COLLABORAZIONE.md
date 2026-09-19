@@ -175,6 +175,8 @@ Serve coordinarsi **solo** se si *rinomina* un asset → va aggiornato il riferi
 | `eslint-disable` con motivo | una trentina, ognuno col perché dopo `--` | Pattern voluti (reset di stato, casualità una volta per sfida): React Compiler non è in uso. |
 | `public/sw.js` — navigazioni | la shell dell'app si serve dalla cache anche con `?source=pwa` / `?action=daily` | **Bug grave**: offline, l'app installata non si apriva (cercava `'/'`, che sotto `/mondomago/` è la radice del dominio). Trovato sul sito live; lo smoke ora lo prova sul build. |
 | schermata di consenso e PIN genitori | link all'informativa privacy | Richiesto da Google Play per le app per bambini, in posti che il bambino non tocca. |
+| profilo del compagno → area genitori | *Ricomincia da capo* spostato dietro il PIN (19 set) | Il bambino poteva cancellare tutti i progressi con due tocchi. Per le app per bambini Play guarda proprio questo. |
+| radice di ogni schermata | classe `mm-schermo` accanto a `screenAnim` (19 set) | Su tablet il contenuto sta in una colonna di 600px (regola in `AnimationStyles.jsx`); sotto i 700px non cambia niente. |
 | `vite.config.js` | sfide e mondi in un chunk `dati` | Il chunk principale scende da 543 a 444 KB. Con l'aggiornamento di sicurezza di Vite l'hash di `vendor` è cambiato una volta. |
 | `ALL_CHALLENGES`, `WORLDS`, … | spostati in `src/data/` **senza cambiare una virgola** | Verificato: HTML identico carattere per carattere su 8 schermate, stesse 697 frasi registrate, stesso audit. |
 

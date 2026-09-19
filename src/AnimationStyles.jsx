@@ -311,6 +311,17 @@ export default function AnimationStyles() {
       .seal-ring     { animation: sealSpin    16s linear infinite; }
       .seal-ring-rev { animation: sealSpinRev 24s linear infinite; }
 
+      /* ── TABLET ─────────────────────────────────────────────────────────────
+         Da 700px in su lo sfondo resta a tutto schermo ma il contenuto sta in una
+         colonna di 600px: prima card e scene si allungavano fino a 820px e oltre.
+         !important perché il padding delle schermate è inline. */
+      @media (min-width: 700px) {
+        .mm-schermo {
+          padding-left:  max(24px, calc((100% - 600px) / 2)) !important;
+          padding-right: max(24px, calc((100% - 600px) / 2)) !important;
+        }
+      }
+
       /* ── ACCESSIBILITÀ ──────────────────────────────────────────────────────
          Toggle device-level dall'area genitori (data-* su <html>) + rispetto
          della preferenza di sistema. Vedi sezione "♿ Accessibilità". */

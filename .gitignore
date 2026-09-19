@@ -43,3 +43,10 @@ lighthouse.*/
 # Cache Python degli script
 __pycache__/
 *.pyc
+
+# App Android (TWA): si rigenera con scripts/android-twa.mjs. Nel repo solo la configurazione.
+# La chiave di firma sta fuori dal repo, in ../mondomago-android-segreti/
+/android/*
+!/android/twa-manifest.json
+*.jks
+*.keystore
