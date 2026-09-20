@@ -1,5 +1,5 @@
-const CACHE_CORE  = 'mondomago-core-v9';
-const CACHE_AUDIO = 'mondomago-audio-v8';
+const CACHE_CORE  = 'magistella-core-v10';
+const CACHE_AUDIO = 'magistella-audio-v9';
 
 // Assets to precache on install — relative paths so they work under any base URL
 const PRECACHE_URLS = [
@@ -87,9 +87,9 @@ self.addEventListener('fetch', e => {
       } catch {
         return new Response(
           '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width">' +
-          '<title>MondoMago</title><body style="margin:0;min-height:100vh;display:grid;place-items:center;' +
+          '<title>Magistella</title><body style="margin:0;min-height:100vh;display:grid;place-items:center;' +
           'background:#1B1035;color:#F6ECD4;font:18px system-ui;text-align:center;padding:24px">' +
-          '<p>Per il primo avvio serve la connessione.<br>Dopo, MondoMago funziona anche offline.</p>',
+          '<p>Per il primo avvio serve la connessione.<br>Dopo, Magistella funziona anche offline.</p>',
           { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } },
         );
       }
@@ -112,9 +112,9 @@ self.addEventListener('fetch', e => {
 
 // ── Push notification handler ─────────────────────────────────────────────────
 self.addEventListener('push', e => {
-  const data = e.data ? e.data.json() : { title: 'MondoMago', body: 'Torna a giocare oggi! ⭐' };
+  const data = e.data ? e.data.json() : { title: 'Magistella', body: 'Torna a giocare oggi! ⭐' };
   e.waitUntil(
-    self.registration.showNotification(data.title || 'MondoMago', {
+    self.registration.showNotification(data.title || 'Magistella', {
       body:    data.body  || 'La tua avventura ti aspetta! 🧙‍♂️',
       icon:    './icon-192.png',
       badge:   './icon-192.png',
@@ -143,7 +143,7 @@ self.addEventListener('periodicsync', e => {
     (async () => {
       const all = await clients.matchAll({ includeUncontrolled: true });
       if (all.length > 0) return;
-      self.registration.showNotification('MondoMago 🧙‍♂️', {
+      self.registration.showNotification('Magistella 🧙‍♂️', {
         body:    'La sfida del giorno ti aspetta! Puoi guadagnare 3 stelle bonus ⭐⭐⭐',
         icon:    './icon-192.png',
         badge:   './icon-192.png',
