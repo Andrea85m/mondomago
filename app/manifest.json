@@ -1,12 +1,15 @@
 {
-  "id": "/",
+  "id": "/app/",
   "name": "Magistella — Giochi per bambini",
   "short_name": "Magistella",
   "description": "Avventure educative per bambini 3-8 anni: logica, numeri, parole e coding. Offline, senza pubblicità, 8 mondi e 5 compagni magici.",
-  "start_url": "/?source=pwa",
-  "scope": "/",
+  "start_url": "/app/?source=pwa",
+  "scope": "/app/",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
   "orientation": "portrait",
   "background_color": "#1B1035",
   "theme_color": "#1B1035",
@@ -36,7 +39,11 @@
       "purpose": "any"
     }
   ],
-  "categories": ["education", "games", "kids"],
+  "categories": [
+    "education",
+    "games",
+    "kids"
+  ],
   "lang": "it",
   "dir": "ltr",
   "prefer_related_applications": false,
@@ -51,8 +58,13 @@
       "name": "Sfida del Giorno",
       "short_name": "Sfida",
       "description": "Inizia la sfida del giorno e guadagna 3 stelle bonus",
-      "url": "/?action=daily",
-      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+      "url": "/app/?action=daily",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ],
   "screenshots": [

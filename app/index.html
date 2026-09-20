@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/app/manifest.json" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="Gioco educativo per bambini da 3 a 8 anni: logica, numeri, parole e coding in 8 mondi magici. In italiano, senza pubblicità, anche offline." />
+    <meta name="theme-color" content="#1B1035" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Magistella" />
+    <title>Magistella</title>
+    <style>:root{--sat:env(safe-area-inset-top,0px);--sar:env(safe-area-inset-right,0px);--sab:env(safe-area-inset-bottom,0px);--sal:env(safe-area-inset-left,0px)}*,:before,:after{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;margin:0;padding:0}html{overscroll-behavior:none;height:100%}body{overscroll-behavior:none;overscroll-behavior-y:none;padding-top:var(--sat);padding-left:var(--sal);padding-right:var(--sar);-webkit-text-size-adjust:100%;-moz-text-size-adjust:100%;text-size-adjust:100%;background:#1b1035;min-height:100vh;font-family:Nunito,system-ui,sans-serif}#root{isolation:isolate;min-height:100vh}*{-webkit-user-select:none;user-select:none}input,textarea{-webkit-user-select:text;user-select:text}button,[role=button]{cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;background:0 0;border:none;font-family:Nunito,system-ui,sans-serif}input{font-family:Nunito,system-ui,sans-serif;font-size:16px}[data-scroll]{-webkit-overflow-scrolling:touch;scroll-behavior:smooth}.safe-bottom{padding-bottom:max(var(--sab), 16px)}.screen-full{min-height:100vh;padding-bottom:max(var(--sab), 0px)}</style>
+    <script type="module" crossorigin src="/assets/app-B4XKJTpw.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-B-GMe0eq.js">
+    <link rel="modulepreload" crossorigin href="/assets/modulepreload-polyfill-P2Xu9kJm.js">
+    <link rel="modulepreload" crossorigin href="/assets/dati-DSh_eTct.js">
+    <link rel="stylesheet" crossorigin href="/assets/vendor-CgghHojv.css">
+  </head>
+  <body>
+    <!-- Branded splash: shown until React mounts, removes itself -->
+    <div id="mm-splash" style="position:fixed;inset:0;background:radial-gradient(125% 85% at 50% -8%,#2D1B54 0%,#1B1035 52%,#140B29 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .35s ease">
+      <svg width="96" height="96" viewBox="0 0 64 64" aria-hidden="true" style="animation:mmFloat 2.4s ease-in-out infinite"><circle cx="32" cy="32" r="30" fill="none" stroke="#FFC24B" stroke-opacity=".5" stroke-width="1.6" stroke-dasharray="4 3"/><circle cx="32" cy="32" r="26" fill="none" stroke="#6DE0C6" stroke-opacity=".45" stroke-width="1"/><circle cx="32" cy="32" r="20" fill="#FFC24B"/><path d="M32.0,20.0L35.2,28.6L44.4,29.0L37.1,34.7L39.6,43.5L32.0,38.4L24.4,43.5L26.9,34.7L19.6,29.0L28.8,28.6Z" fill="#2D1B54" stroke="#2D1B54" stroke-width="1.4" stroke-linejoin="round"/></svg>
+      <div style="font-family:'Grandstander','Fredoka One',system-ui,sans-serif;font-weight:800;font-size:34px;color:#FFC24B;margin-top:16px;letter-spacing:0.5px">Magistella</div>
+      <div style="font-family:'Nunito',system-ui,sans-serif;font-size:14px;color:rgba(246,236,212,.6);margin-top:6px">Il mondo magico ti aspetta</div>
+      <style>@keyframes mmFloat{0%,to{transform:translateY(0)}50%{transform:translateY(-10px)}}@media (prefers-reduced-motion:reduce){#mm-splash svg{animation:none!important}}</style>
+    </div>
+    <main id="root"></main>
+    <script>
+      // Hide splash as soon as React commits its first render — NOT on window.load,
+      // which waits for every subresource (fonts, SW, JS) and would keep the splash
+      // (and its infinite bounce) covering the viewport for many seconds, inflating
+      // LCP/TTI and delaying perceived readiness.
+      (function () {
+        var root = document.getElementById('root');
+        function dismiss() {
+          var s = document.getElementById('mm-splash');
+          if (s) { s.style.opacity = '0'; setTimeout(function () { s.remove(); }, 400); }
+        }
+        function whenPainted() {
+          // double rAF: let the real content paint before fading the splash out
+          requestAnimationFrame(function () { requestAnimationFrame(dismiss); });
+        }
+        if (root && root.childElementCount > 0) { whenPainted(); return; }
+        if (root) {
+          var mo = new MutationObserver(function () {
+            if (root.childElementCount > 0) { mo.disconnect(); whenPainted(); }
+          });
+          mo.observe(root, { childList: true });
+        }
+        // Safety net: never trap the user behind the splash
+        setTimeout(dismiss, 8000);
+      })();
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js').then(reg => {
+            reg.addEventListener('updatefound', () => {
+              const nw = reg.installing;
+              nw.addEventListener('statechange', () => {
+                if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+                  const b = document.createElement('button');
+                  b.id = 'mm-update-banner';
+                  b.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:linear-gradient(135deg,#FFC24B,#F6A93B);color:#1B1035;text-align:center;padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px));font-family:Nunito,system-ui,sans-serif;font-size:15px;font-weight:800;z-index:99999;cursor:pointer;border:0;width:100%';
+                  b.type = 'button';
+                  b.textContent = 'Aggiornamento disponibile — tocca per ricaricare';
+                  b.onclick = () => { nw.postMessage({type:'SKIP_WAITING'}); location.reload(); };
+                  document.body.appendChild(b);
+                }
+              });
+            });
+          }).catch(() => {});
+        });
+      }
+    </script>
+  </body>
+</html>
