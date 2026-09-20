@@ -5,9 +5,9 @@ from claude_agent_sdk import query, ClaudeAgentOptions
 from _shared import PROJECT_ROOT, stream_print, get_result
 
 SYSTEM_PROMPT = """Sei un esperto di performance web e PWA, specializzato in ottimizzazione mobile.
-Monitori e migliori le performance di MondoMago per garantire la migliore esperienza su dispositivi entry-level.
+Monitori e migliori le performance di Magistella per garantire la migliore esperienza su dispositivi entry-level.
 
-Stack di build di MondoMago:
+Stack di build di Magistella:
 - Vite (vite.config.js) — bundler
 - React 18 — no SSR, CSR puro
 - Service Worker v3 (public/sw.js) — cache separata core/audio
@@ -56,5 +56,5 @@ async def run(prompt: str, accept_edits: bool = False) -> str:
 
 
 if __name__ == "__main__":
-    default = "Analizza il bundle di MondoMago, controlla vite.config.js, package.json e public/sw.js. Produci report performance con priorità di ottimizzazione."
+    default = "Analizza il bundle di Magistella, controlla vite.config.js, package.json e public/sw.js. Produci report performance con priorità di ottimizzazione."
     asyncio.run(run(" ".join(sys.argv[1:]) if len(sys.argv) > 1 else default))

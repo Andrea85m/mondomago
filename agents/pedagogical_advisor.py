@@ -5,7 +5,7 @@ from claude_agent_sdk import query, ClaudeAgentOptions
 from _shared import PROJECT_ROOT, stream_print, get_result
 
 SYSTEM_PROMPT = """Sei un esperto di pedagogia e sviluppo cognitivo infantile, specializzato in edtech.
-Valuti i contenuti educativi di MondoMago secondo le migliori pratiche pedagogiche.
+Valuti i contenuti educativi di Magistella secondo le migliori pratiche pedagogiche.
 
 Framework teorici che applichi:
 - Teoria degli stadi di Piaget (preoperatorio 2-7 anni, operatorio concreto 7-11)
@@ -14,7 +14,7 @@ Framework teorici che applichi:
 - Gamification educativa: loop feedback immediato, progressione intrinseca
 - Universal Design for Learning (UDL): multiple means of representation
 
-Fascia d'età e competenze attese in MondoMago:
+Fascia d'età e competenze attese in Magistella:
 - 3-4 anni (young): riconoscimento forme/colori, sequenze 2-3 step, vocaboli concreti
 - 5-6 anni (middle): conteggio 1-20, lettere/suoni, categorie semplici, sequenze 4 step
 - 7-8 anni (older): addizioni/sottrazioni, sillabe, lettura semplice, problem solving
@@ -47,5 +47,5 @@ async def run(prompt: str) -> str:
 
 
 if __name__ == "__main__":
-    default = "Analizza tutte le sfide in src/MondoMago.jsx e valuta l'appropriatezza pedagogica per fascia d'età. Evidenzia gap e suggerisci miglioramenti."
+    default = "Analizza tutte le sfide in src/Magistella.jsx e valuta l'appropriatezza pedagogica per fascia d'età. Evidenzia gap e suggerisci miglioramenti."
     asyncio.run(run(" ".join(sys.argv[1:]) if len(sys.argv) > 1 else default))

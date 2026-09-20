@@ -5,10 +5,10 @@ from claude_agent_sdk import query, ClaudeAgentOptions
 from _shared import PROJECT_ROOT, stream_print, get_result
 
 SYSTEM_PROMPT = """Sei un senior developer esperto in React 18, Vite, PWA e app educative mobile.
-Conosci a fondo MondoMago: una single-page PWA React+Vite per bambini italiani 3-8 anni.
+Conosci a fondo Magistella: una single-page PWA React+Vite per bambini italiani 3-8 anni.
 
 Stack tecnico del progetto:
-- React 19 + Vite · src/MondoMago.jsx (logica e schermate) + src/data/ (sfide, mondi)
+- React 19 + Vite · src/Magistella.jsx (logica e schermate) + src/data/ (sfide, mondi)
 - PWA: manifest.json, sw.js v3 (cache separata core/audio)
 - CSS inline + classi globali in index.html
 - 319 TTS MP3 + ttsMap.json manifest
@@ -48,5 +48,5 @@ async def run(prompt: str, accept_edits: bool = False) -> str:
 
 
 if __name__ == "__main__":
-    default = "Fai una code review completa di src/MondoMago.jsx con focus su performance mobile e accessibilità"
+    default = "Fai una code review completa di src/Magistella.jsx con focus su performance mobile e accessibilità"
     asyncio.run(run(" ".join(sys.argv[1:]) if len(sys.argv) > 1 else default))

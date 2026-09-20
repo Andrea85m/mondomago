@@ -1,4 +1,4 @@
-"""Orchestratore principale — coordina tutti gli agenti MondoMago in parallelo o in sequenza."""
+"""Orchestratore principale — coordina tutti gli agenti Magistella in parallelo o in sequenza."""
 import asyncio
 import sys
 from claude_agent_sdk import query, ClaudeAgentOptions, AgentDefinition
@@ -7,15 +7,15 @@ from _shared import PROJECT_ROOT, stream_print, get_result
 AGENT_DEFINITIONS: dict[str, AgentDefinition] = {
     "content-generator": AgentDefinition(
         description="Crea nuove sfide, storie e dialoghi educativi per bambini 3-8 anni.",
-        prompt="""Sei un esperto creatore di contenuti educativi per bambini italiani 3-8 anni per MondoMago (React+Vite PWA con 7 mondi, 200+ sfide, 7 formati).
-Rispetta la struttura JSON esistente in src/MondoMago.jsx. Vocabolario appropriato per età. Tono magico.""",
+        prompt="""Sei un esperto creatore di contenuti educativi per bambini italiani 3-8 anni per Magistella (React+Vite PWA con 7 mondi, 200+ sfide, 7 formati).
+Rispetta la struttura JSON esistente in src/Magistella.jsx. Vocabolario appropriato per età. Tono magico.""",
         tools=["Read", "Write", "Edit", "Glob", "Grep"],
         maxTurns=30,
         model="claude-sonnet-4-5",
     ),
     "tts-pipeline": AgentDefinition(
         description="Genera file audio MP3 TTS con edge-tts (voce Isabella Neural italiana).",
-        prompt="""Gestisci la pipeline TTS di MondoMago. Usa edge-tts it-IT-IsabellaNeural.
+        prompt="""Gestisci la pipeline TTS di Magistella. Usa edge-tts it-IT-IsabellaNeural.
 Script: scripts/gen-tts.py. MP3 in public/audio/tts_HASH.mp3. Manifest: src/ttsMap.json.""",
         tools=["Read", "Write", "Bash", "Glob", "Grep"],
         maxTurns=30,
@@ -23,7 +23,7 @@ Script: scripts/gen-tts.py. MP3 in public/audio/tts_HASH.mp3. Manifest: src/ttsM
     ),
     "dev-assistant": AgentDefinition(
         description="Review codice React/Vite, design feature, architettura PWA mobile-first.",
-        prompt="""Senior developer React 18 + Vite + PWA. Conosci MondoMago (single-file JSX, mobile-first, safe-area, 100dvh, TTS audio pool).
+        prompt="""Senior developer React 18 + Vite + PWA. Conosci Magistella (single-file JSX, mobile-first, safe-area, 100dvh, TTS audio pool).
 Best practice: touch targets 44px+, bundle < 500KB gzip, aria-label, Android back button.""",
         tools=["Read", "Write", "Edit", "Glob", "Grep", "Bash"],
         maxTurns=25,
@@ -56,7 +56,7 @@ Touch targets 64-96px per bambini, feedback entro 100ms, max 3 tap per ogni cont
     "game-balance": AgentDefinition(
         description="Analizza curva difficoltà, engagement, retention e sistema gamification.",
         prompt="""Game designer educational. Flow Theory, Octalysis, progression loop.
-MondoMago: 8 livelli, 10 achievement, streak, boss HP bar, mystery box, Sfida Fulmine.""",
+Magistella: 8 livelli, 10 achievement, streak, boss HP bar, mystery box, Sfida Fulmine.""",
         tools=["Read", "Glob", "Grep"],
         maxTurns=15,
         model="claude-sonnet-4-5",
@@ -80,14 +80,14 @@ Testa audio iOS, back button Android, multi-profilo, offline mode.""",
     "parent-insights": AgentDefinition(
         description="Genera report narrativi per genitori: progressi, aree forti/deboli, suggerimenti.",
         prompt="""Analista dati educativi. Report genitori: positivo, semplice, actionable.
-Struttura localStorage MondoMago: profili, sessioni, streak, XP, achievement.""",
+Struttura localStorage Magistella: profili, sessioni, streak, XP, achievement.""",
         tools=["Read", "Glob", "Grep", "Write"],
         maxTurns=15,
         model="claude-haiku-4-5-20251001",
     ),
 }
 
-ORCHESTRATOR_PROMPT = """Sei il coordinatore principale del sistema di agenti MondoMago.
+ORCHESTRATOR_PROMPT = """Sei il coordinatore principale del sistema di agenti Magistella.
 Hai accesso a 10 agenti specializzati tramite il tool Agent:
 
 - content-generator: crea contenuti educativi
@@ -132,9 +132,9 @@ async def run(prompt: str, agents: list[str] | None = None, accept_edits: bool =
 
 
 async def full_audit() -> str:
-    """Esegue un audit completo di MondoMago con tutti gli agenti."""
+    """Esegue un audit completo di Magistella con tutti gli agenti."""
     return await run(
-        "Esegui un audit completo di MondoMago usando tutti gli agenti disponibili. "
+        "Esegui un audit completo di Magistella usando tutti gli agenti disponibili. "
         "Analizza contenuti, qualità linguistica, UX, performance, bilanciamento e bug. "
         "Produci un report executive con priorità di azione.",
     )
@@ -145,7 +145,7 @@ if __name__ == "__main__":
         asyncio.run(full_audit())
     else:
         prompt = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else (
-            "Usa dev-assistant e qa-agent per analizzare src/MondoMago.jsx "
+            "Usa dev-assistant e qa-agent per analizzare src/Magistella.jsx "
             "e identificare i 3 problemi più critici da risolvere."
         )
         asyncio.run(run(prompt))

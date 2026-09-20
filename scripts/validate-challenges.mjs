@@ -1,4 +1,4 @@
-// Validatore + analizzatore delle sfide di MondoMago.
+// Validatore + analizzatore delle sfide di Magistella.
 // Estrae il blocco dati ALL_CHALLENGES da src/data/sfide.js (oggetti puri, niente JSX),
 // lo valuta in isolamento e produce: gap analysis (mondo × fascia età × skill) + controlli di integrità.
 //
@@ -97,7 +97,7 @@ for (const world of worlds) {
 const bands = ['3-4', '5-6', '6-8', '7-8'];
 const skills = ['logica', 'numeri', 'creativita', 'empatia', 'parole', 'coding'];
 
-console.log(`\n📊 MondoMago — analisi sfide  (totale: ${total})\n`);
+console.log(`\n📊 Magistella — analisi sfide  (totale: ${total})\n`);
 console.log('Sfide per mondo:');
 for (const w of worlds) console.log(`  ${w.padEnd(12)} ${ALL_CHALLENGES[w].length}`);
 

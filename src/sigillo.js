@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // "Sigillo di Stelle" — i token del design system.
 //
-// Erano dichiarati dentro src/MondoMago.jsx. Stanno qui perché da adesso li
+// Erano dichiarati dentro src/Magistella.jsx. Stanno qui perché da adesso li
 // usano anche schermate che vivono in file propri (PuzzleMagico), e due copie
 // degli stessi colori divergono al primo ritocco.
 // ─────────────────────────────────────────────────────────────────────────────

@@ -1,4 +1,4 @@
-# MondoMago — Scheda Google Play
+# Magistella — Scheda Google Play
 
 > Aggiornata il 2026-09-13. **Ogni numero qui sotto è verificato sul codice** (368 sfide,
 > 15 tipi, 14 traguardi, 13 cosmetici, 10 missioni famiglia, 6 lettere): se cambia il gioco,
@@ -8,7 +8,7 @@
 ---
 
 ## Titolo (max 30 caratteri)
-**MondoMago: giochi educativi** — 27 caratteri
+**Magistella: giochi educativi** — 27 caratteri
 
 ## Descrizione breve (max 80 caratteri)
 **Logica, numeri, parole e coding per bambini da 3 a 8 anni. Senza pubblicità.** — 78 caratteri
@@ -17,7 +17,7 @@
 
 ## Descrizione completa — italiano (max 4000 caratteri)
 
-MondoMago è un gioco educativo in italiano per bambini dai 3 agli 8 anni. Insieme a un compagno magico il bambino esplora otto mondi, risolve sfide di logica, numeri, parole ed empatia e muove i primi passi nel coding.
+Magistella è un gioco educativo in italiano per bambini dai 3 agli 8 anni. Insieme a un compagno magico il bambino esplora otto mondi, risolve sfide di logica, numeri, parole ed empatia e muove i primi passi nel coding.
 
 OTTO MONDI DA SCOPRIRE
 Foresta Magica, Castello delle Nuvole, Oceano Luminoso, Mercato dei Colori, Galassia Stellare, Vulcano Magico, Biblioteca Incantata e Laboratorio Logico. Ogni mondo ha la sua storia, le sue musiche e le sue sfide boss.
@@ -56,7 +56,7 @@ Motivazione senza pressione: stelle, 8 gradi da mago, 14 traguardi, 13 accessori
 
 ## Full description — English (secondary listing, max 4000)
 
-MondoMago is an Italian-language educational game for children aged 3 to 8. With a magical companion, kids explore eight worlds, solve logic, number, word and empathy challenges, and take their first steps in coding.
+Magistella is an Italian-language educational game for children aged 3 to 8. With a magical companion, kids explore eight worlds, solve logic, number, word and empathy challenges, and take their first steps in coding.
 
 - 8 worlds, 368 challenges, 15 ways to play, each world with its own story and boss challenges
 - Adapts to three age groups (3-4, 5-6, 7-8) and brings back the challenges a child found hard
@@ -112,18 +112,18 @@ Si rigenerano con `node scripts/gen-screenshots.mjs` (vedi DEPLOY_GUIDE §3).
 
 ## Novità della versione (1.0.0)
 
-**IT:** Prima versione di MondoMago: 8 mondi, 368 sfide, 5 compagni magici e il Puzzle Magico.
-**EN:** First release of MondoMago: 8 worlds, 368 challenges, 5 magical companions and Puzzle Magico.
+**IT:** Prima versione di Magistella: 8 mondi, 368 sfide, 5 compagni magici e il Puzzle Magico.
+**EN:** First release of Magistella: 8 worlds, 368 challenges, 5 magical companions and Puzzle Magico.
 
 ## Link
 
-- Privacy policy: https://andrea85m.github.io/mondomago/privacy-policy.html
+- Privacy policy: https://magistella.com/privacy-policy.html
 - Email di contatto (pubblica sulla scheda): afphotographyflickr@gmail.com
 - Nome sviluppatore: *da scegliere* (appare sotto il titolo)
 
 ## Messaggio per i tester del test chiuso
 
-> Ciao! Stiamo pubblicando MondoMago, un gioco educativo per bambini 3-8 anni, su Google Play.
+> Ciao! Stiamo pubblicando Magistella, un gioco educativo per bambini 3-8 anni, su Google Play.
 > Prima dell'uscita Google chiede che almeno 12 persone lo provino per 14 giorni. Ti basta:
 > 1) aprire questo link dal telefono Android e toccare "Diventa un tester": <LINK DELLA TRACCIA>
 > 2) installare l'app dal Play Store che si apre;

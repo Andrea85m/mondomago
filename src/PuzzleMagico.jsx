@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// PUZZLE MAGICO — la sezione puzzle di MondoMago
+// PUZZLE MAGICO — la sezione puzzle di Magistella
 //
 // Quattro giochi, sulla falsariga di "Puzzle Kids — Jigsaw Puzzles"
 // (com.rvappstudios.jigsaw.puzzles.kids, 50M+ download, Teacher Approved):
@@ -13,7 +13,7 @@
 // 150 illustrazioni di SvgAssets.jsx, già dentro il bundle. Zero KB di asset
 // nuovi, e il puzzle ha la faccia dei mondi che il bambino già conosce.
 //
-// Il file è tutto suo: non tocca né la logica né i dati di MondoMago.jsx.
+// Il file è tutto suo: non tocca né la logica né i dati di Magistella.jsx.
 // Riceve `speak` e `sfx` come prop invece di importarli, così la sezione resta
 // staccabile e non crea dipendenze incrociate.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -107,7 +107,7 @@ const livelloPerEtà = (età) => LIVELLI.find(l => l.perEtà >= (età || 5)) || 
 
 // ═══════════════════════════════════════════════════════════════════════════
 // ADESIVI — la ricompensa. Nel gioco di riferimento sono sticker e giocattoli;
-// qui sono frammenti del Sigillo, che è il linguaggio di MondoMago.
+// qui sono frammenti del Sigillo, che è il linguaggio di Magistella.
 // ═══════════════════════════════════════════════════════════════════════════
 const ADESIVI = [
   { id: "a1", emoji: "⭐", nome: "Stella d'oro" },

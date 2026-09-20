@@ -154,7 +154,7 @@ async function feature(browser) {
       return `<div class="stella" style="left:${x}%;top:${y}%;width:${sz}px;height:${sz}px;opacity:${0.3 + (i % 4) * 0.15}"></div>`;
     }).join('')}
     <div class="anello"></div>
-    <div class="testo"><img src="${icona}" alt=""><h1>MondoMago</h1><p>Logica, numeri e parole<br>per bambini da 3 a 8 anni</p></div>
+    <div class="testo"><img src="${icona}" alt=""><h1>Magistella</h1><p>Logica, numeri e parole<br>per bambini da 3 a 8 anni</p></div>
     <div class="compagni">${chars.map(c => `<img src="${c}" alt="">`).join('')}</div>
   </body></html>`);
   await page.waitForTimeout(400);

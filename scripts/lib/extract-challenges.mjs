@@ -5,7 +5,7 @@
 // Perché non un `import`: i file del gioco sono moduli del bundle (JSX, JSON,
 // asset), non caricabili da node così come sono. I dati però sono letterali
 // puri: si tolgono `import`/`export` e si valutano. Il motore si estrae da
-// MondoMago.jsx per delimitatori nominali (non per numero di riga: i numeri
+// Magistella.jsx per delimitatori nominali (non per numero di riga: i numeri
 // si spostano a ogni commit).
 //
 // NB: l'input è ESCLUSIVAMENTE il sorgente versionato del progetto — non input
@@ -20,7 +20,7 @@ export const ROOT = join(__dirname, '..', '..');
 
 /** I file che contengono testo e logica del gioco. */
 export const SRC_FILES = {
-  app: 'src/MondoMago.jsx',
+  app: 'src/Magistella.jsx',
   mondi: 'src/data/mondi.js',
   sfide: 'src/data/sfide.js',
 };
@@ -31,7 +31,7 @@ export const source = Object.values(SRC_FILES).map(read).join('\n');
 
 const appLines = read(SRC_FILES.app).split('\n');
 
-/** Estrae da MondoMago.jsx il testo fra la riga che contiene `startsWith` e quella che contiene `endsWith`. */
+/** Estrae da Magistella.jsx il testo fra la riga che contiene `startsWith` e quella che contiene `endsWith`. */
 export function sliceBlock(startsWith, endsWith) {
   const start = appLines.findIndex(l => l.includes(startsWith));
   if (start < 0) throw new Error(`Blocco non trovato: ${startsWith}`);

@@ -1,6 +1,6 @@
-# MondoMago AI Agents
+# Magistella AI Agents
 
-Sistema di 10 agenti AI specializzati per sviluppare e migliorare l'app educativa MondoMago.
+Sistema di 10 agenti AI specializzati per sviluppare e migliorare l'app educativa Magistella.
 
 ## Prerequisiti
 
@@ -51,7 +51,7 @@ uv run python orchestrator.py --full-audit
 ### Agente standalone
 
 ```bash
-uv run python dev_assistant.py "analizza performance di MondoMago.jsx"
+uv run python dev_assistant.py "analizza performance di Magistella.jsx"
 uv run python tts_pipeline.py  # genera MP3 mancanti
 ```
 
@@ -73,7 +73,7 @@ uv run python tts_pipeline.py  # genera MP3 mancanti
 
 ## Note
 
-- Gli agenti operano sul progetto in `../` (root MondoMago)
+- Gli agenti operano sul progetto in `../` (root Magistella)
 - Per default gli agenti usano `permission_mode="plan"` (non modificano file)
 - Il TTS Pipeline usa `acceptEdits` di default (genera MP3 senza conferma)
 - Passa `accept_edits=True` alle funzioni `run()` per abilitare modifiche automatiche

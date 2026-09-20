@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Tutte le @keyframes e il CSS globale del gioco (zona 🎨 grafica).
-// Stavano in cima a MondoMago.jsx: qui si ritoccano le animazioni senza
+// Stavano in cima a Magistella.jsx: qui si ritoccano le animazioni senza
 // scorrere 7.000 righe di logica.
 // ─────────────────────────────────────────────────────────────────────────────
 

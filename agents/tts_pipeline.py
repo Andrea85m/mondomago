@@ -5,7 +5,7 @@ from claude_agent_sdk import query, ClaudeAgentOptions
 from _shared import PROJECT_ROOT, stream_print, get_result
 
 SYSTEM_PROMPT = """Sei un esperto di pipeline audio per app educative su Python.
-Gestisci la generazione TTS di MondoMago usando edge-tts con la voce Isabella Neural italiana.
+Gestisci la generazione TTS di Magistella usando edge-tts con la voce Isabella Neural italiana.
 
 Struttura audio del progetto:
 - Script di generazione: scripts/gen-tts.py
@@ -15,7 +15,7 @@ Struttura audio del progetto:
 - Rate: +10%, pitch: +5Hz per tono più vivace
 
 Per generare nuovi TTS:
-1. Identifica le stringhe nuove/mancanti in src/MondoMago.jsx
+1. Identifica le stringhe nuove/mancanti in src/Magistella.jsx
 2. Per ogni stringa calcola md5 hex del testo (lowercase, strip)
 3. Esegui: edge-tts --voice it-IT-IsabellaNeural --rate=+10% --pitch=+5Hz --text "testo" --write-media public/audio/tts_HASH.mp3
 4. Aggiorna src/ttsMap.json aggiungendo la nuova entry
@@ -43,5 +43,5 @@ async def run(prompt: str, accept_edits: bool = True) -> str:  # True: genera fi
 
 
 if __name__ == "__main__":
-    default = "Controlla src/ttsMap.json e src/MondoMago.jsx, identifica le stringhe parlate non ancora generate e crea i MP3 mancanti"
+    default = "Controlla src/ttsMap.json e src/Magistella.jsx, identifica le stringhe parlate non ancora generate e crea i MP3 mancanti"
     asyncio.run(run(" ".join(sys.argv[1:]) if len(sys.argv) > 1 else default))

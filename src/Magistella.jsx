@@ -23,7 +23,7 @@ import { pick } from "./util.js";
 // Strategia: monetizzare il GENITORE, mai il bambino. Tutto il loop educativo
 // (8 mondi, sfide adattive, SRS, TTS, offline) resta SEMPRE gratis per non
 // frenare l'acquisizione. Solo feature parent-facing "avanzate" (report
-// settimanale + export) sono candidate premium "MondoMago Famiglia".
+// settimanale + export) sono candidate premium "Magistella Famiglia".
 // Finché MONETIZATION_ENABLED = false NULLA è bloccato: isPremium è true per
 // tutti → zero rischio acquisizione, ma le "cuciture" del gating esistono già.
 // Per attivare il freemium in futuro: mettere il flag a true e collegare un
@@ -92,7 +92,7 @@ function InstallBanner({ screen }) {
     }}>
       <span style={{fontSize:36}}>🧙‍♂️</span>
       <div style={{flex:1, color:"white"}}>
-        <div style={{fontWeight:900, fontSize:14}}>Installa MondoMago</div>
+        <div style={{fontWeight:900, fontSize:14}}>Installa Magistella</div>
         <div style={{fontSize:12, opacity:.75}}>Gioca offline, sempre a portata di mano!</div>
       </div>
       <button onClick={install} style={{
@@ -1094,7 +1094,7 @@ function LetterTracer({ letter, onComplete, youngBg }) {
 // i propri P_* localmente (shadowing legale) → nessun conflitto.
 const P_CARD = SG_CARD, P_BR = SG_BR, P_TILE = SG_TILE;
 
-export default function MondoMago() {
+export default function Magistella() {
   const [screen,       setScreen]       = useState("name");
   const [screenAnim,   setScreenAnim]   = useState("screen-enter");
   const prevScreenRef = useRef("");
@@ -1974,7 +1974,7 @@ export default function MondoMago() {
         ? `🔥 Streak di ${streak} giorni! Non dimenticare di giocare oggi per mantenerla!`
         : `✨ La sfida del giorno ti aspetta! Guadagna 3 stelle bonus oggi.`;
       try {
-        new Notification('MondoMago 🧙‍♂️', {
+        new Notification('Magistella 🧙‍♂️', {
           body: msg,
           icon: `${import.meta.env.BASE_URL}icon-192.png`,
           badge: `${import.meta.env.BASE_URL}icon-192.png`,
@@ -2047,7 +2047,7 @@ export default function MondoMago() {
   useEffect(() => {
     _onSongTick = setSongLyric;
     if (screen === "consent") {
-      setTimeout(() => speak("Ciao genitore! MondoMago è pronto per voi.", 0.82), 600);
+      setTimeout(() => speak("Ciao genitore! Magistella è pronto per voi.", 0.82), 600);
       return;
     }
     if (screen === "name") { setTimeout(() => speak("Come ti chiami?", 0.8), 300); return; }
@@ -2094,7 +2094,7 @@ export default function MondoMago() {
   useEffect(() => {
     if (screen !== "onboarding") return;
     const titles = [
-      "Benvenuto in MondoMago! Il gioco educativo per bambini da tre a otto anni.",
+      "Benvenuto in Magistella! Il gioco educativo per bambini da tre a otto anni.",
       "Sfide che fanno crescere! Calibrate per la tua età, sempre nuove.",
       "Guadagna stelle e premi! Sblocca nuovi mondi e personalizza il tuo compagno.",
     ];
@@ -2342,7 +2342,7 @@ export default function MondoMago() {
       {
         bg:    SG_BG,
         icon:  "sparkles",
-        title: "Benvenuto in MondoMago!",
+        title: "Benvenuto in Magistella!",
         sub:   "Il viaggio magico che fa crescere i bambini",
         body: (
           <div style={{display:"flex",gap:10,justifyContent:"center",margin:"20px 0 16px",flexWrap:"wrap"}}>
@@ -2450,7 +2450,7 @@ export default function MondoMago() {
           </div>
         ))}
       </div>
-      <h1 style={{fontFamily:FF_DISPLAY,fontSize:42,margin:"0 0 6px",color:SG_GOLD,textShadow:"0 2px 18px rgba(255,194,75,.25)"}}>MondoMago</h1>
+      <h1 style={{fontFamily:FF_DISPLAY,fontSize:42,margin:"0 0 6px",color:SG_GOLD,textShadow:"0 2px 18px rgba(255,194,75,.25)"}}>Magistella</h1>
       <p style={{fontSize:15,opacity:.75,marginBottom:44}}>Il tuo viaggio magico inizia qui</p>
       <div style={{width:"100%",maxWidth:340}}>
         <p style={{fontFamily:FF_DISPLAY,fontSize:20,marginBottom:14,color:SG_PARCH,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>Come ti chiami? <Icon name="wave" color="#FFC24B" size={20} /></p>
@@ -4387,8 +4387,8 @@ export default function MondoMago() {
             <button onClick={() => {
               const correct = results.filter(r => r.ok).length;
               navigator.share({
-                title: "MondoMago 🧙‍♂️",
-                text: `${childName} ha completato "${arc.reward_name}" in MondoMago! ${sessionStars}⭐ guadagnate, ${correct}/${results.length} risposte giuste. Livello: ${getLevel(totalStars).title} ${getLevel(totalStars).emoji}`,
+                title: "Magistella 🧙‍♂️",
+                text: `${childName} ha completato "${arc.reward_name}" in Magistella! ${sessionStars}⭐ guadagnate, ${correct}/${results.length} risposte giuste. Livello: ${getLevel(totalStars).title} ${getLevel(totalStars).emoji}`,
                 url: window.location.href,
               }).catch(() => {});
             }} style={{width:"100%",background:SG_CARD,color:SG_GOLD,border:SG_BR,borderRadius:50,padding:"14px",fontWeight:800,fontSize:14,cursor:"pointer",marginBottom:10,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
@@ -5074,7 +5074,7 @@ export default function MondoMago() {
             computazionale</b>: sequenze, condizioni e debug, le basi del coding spiegate col gioco.
           </p>
           <p style={{fontSize:11,opacity:.6,lineHeight:1.5}}>
-            È ciò che rende MondoMago unico: l'unica app in italiano che insegna a programmare
+            È ciò che rende Magistella unico: l'unica app in italiano che insegna a programmare
             ai più piccoli, adattandosi al loro ritmo.
           </p>
         </div>
@@ -5386,9 +5386,9 @@ export default function MondoMago() {
               return `<tr><td>${sk.emoji} ${sk.name}</td><td>Lv.${skills[sk.id]}/10</td><td>${pct !== null ? pct+'%' : '—'}</td><td>${acc.correct}/${acc.total}</td></tr>`;
             }).join('');
             const safeChildName = escapeHtml(childName);
-            const html = `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><title>Report MondoMago — ${safeChildName}</title>
+            const html = `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><title>Report Magistella — ${safeChildName}</title>
 <style>body{font-family:system-ui,sans-serif;max-width:640px;margin:40px auto;padding:20px;background:#f9fafb}h1,h2{color:#764ba2}table{width:100%;border-collapse:collapse;margin:16px 0}th,td{border:1px solid #e5e7eb;padding:10px;text-align:center}th{background:#f3f4f6;font-weight:700}.stat{display:inline-block;background:#ede9fe;border-radius:12px;padding:12px 20px;margin:6px;text-align:center}.stat b{display:block;font-size:24px;color:#764ba2}.pct-good{color:#16a34a;font-weight:700}.pct-mid{color:#d97706;font-weight:700}.pct-low{color:#dc2626;font-weight:700}</style></head>
-<body><h1>📊 Report MondoMago — ${safeChildName}</h1>
+<body><h1>📊 Report Magistella — ${safeChildName}</h1>
 <p>Generato il ${new Date().toLocaleDateString('it-IT')} | Livello: ${lvl.emoji} ${lvl.title} | Stelle totali: ${totalStars} ⭐</p>
 <div>
   <span class="stat"><b>${weekStars}</b>Stelle (7gg)</span>
@@ -5400,7 +5400,7 @@ export default function MondoMago() {
 </div>
 <h2>Attività ultimi 7 giorni</h2><table><tr><th>Data</th><th>Sessioni</th><th>Stelle</th><th>Tempo</th><th>Precisione</th></tr>${rows}</table>
 <h2>Precisione per abilità</h2><table><tr><th>Abilità</th><th>Livello</th><th>Precisione</th><th>Risposte</th></tr>${skillRows}</table>
-<p style="color:#9ca3af;font-size:12px">MondoMago — App educativa per bambini 3–8 anni. Tutti i dati sono salvati solo su questo dispositivo.</p></body></html>`;
+<p style="color:#9ca3af;font-size:12px">Magistella — App educativa per bambini 3–8 anni. Tutti i dati sono salvati solo su questo dispositivo.</p></body></html>`;
             const blob = new Blob([html], {type:'text/html'});
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
@@ -5419,11 +5419,11 @@ export default function MondoMago() {
                 <div style={{fontSize:12,fontWeight:800,opacity:.5,marginBottom:10,letterSpacing:1}}><Icon name="chart" color={GOLD} size={14} style={{verticalAlign:"-2px",marginRight:5}} />REPORT SETTIMANALE</div>
                 <div style={{marginBottom:6,display:"flex",justifyContent:"center"}}><Icon name="lock" color={GOLD} size={40} /></div>
                 <div style={{fontSize:13,opacity:.7,marginBottom:12,lineHeight:1.4}}>
-                  Andamento settimanale, grafici e report scaricabile sono inclusi in <b>MondoMago Famiglia</b>.
+                  Andamento settimanale, grafici e report scaricabile sono inclusi in <b>Magistella Famiglia</b>.
                 </div>
                 <button onClick={unlockPremium}
                   style={{width:"100%",background:"linear-gradient(135deg,#FFC24B,#F6A93B)",border:"none",color:INK,borderRadius:50,padding:"11px",fontSize:13,fontWeight:900,cursor:"pointer"}}>
-                  <Icon name="sparkles" color={GOLD} size={17} style={{verticalAlign:"-3px",marginRight:7}} />Sblocca MondoMago Famiglia
+                  <Icon name="sparkles" color={GOLD} size={17} style={{verticalAlign:"-3px",marginRight:7}} />Sblocca Magistella Famiglia
                 </button>
               </div>
             );

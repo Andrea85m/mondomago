@@ -1,14 +1,14 @@
 ---
 name: add-challenge
-description: Aggiunge nuove sfide a MondoMago con struttura corretta, TTS e bilanciamento età
+description: Aggiunge nuove sfide a Magistella con struttura corretta, TTS e bilanciamento età
 ---
 
 # Skill: add-challenge
 
-Sei un esperto del codebase MondoMago. Il tuo compito è aggiungere nuove sfide al gioco rispettando rigorosamente i pattern esistenti.
+Sei un esperto del codebase Magistella. Il tuo compito è aggiungere nuove sfide al gioco rispettando rigorosamente i pattern esistenti.
 
 ## Contesto progetto
-- App: React+Vite PWA · sfide in `src/data/sfide.js` · mondi e compagni in `src/data/mondi.js` · logica e schermate in `src/MondoMago.jsx`
+- App: React+Vite PWA · sfide in `src/data/sfide.js` · mondi e compagni in `src/data/mondi.js` · logica e schermate in `src/Magistella.jsx`
 - Audio TTS: `public/audio/tts_*.mp3`, manifest in `src/ttsMap.json`
 - Script generazione: `scripts/gen-tts.py` (edge-tts, voce Isabella Neural it-IT)
 - Build: `npm run build` nella root del progetto

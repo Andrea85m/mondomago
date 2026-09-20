@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Registra la voce di MondoMago.
+Registra la voce di Magistella.
 
 Una sola voce neurale italiana su TUTTO ciò che l'app dice ad alta voce.
 Il punto non è "avere il TTS": ce l'aveva già. Il punto è che prima 155 consegne
@@ -38,7 +38,7 @@ except ImportError:
 
 ROOT = Path(__file__).resolve().parent.parent
 # Il testo parlato sta nel gioco e nei suoi dati (compagni, mondi, sfide)
-SOURCES = [ROOT / "src" / "MondoMago.jsx", ROOT / "src" / "data" / "mondi.js", ROOT / "src" / "data" / "sfide.js"]
+SOURCES = [ROOT / "src" / "Magistella.jsx", ROOT / "src" / "data" / "mondi.js", ROOT / "src" / "data" / "sfide.js"]
 SOURCE_PUZZLE = ROOT / "src" / "PuzzleMagico.jsx"
 AUDIO_DIR = ROOT / "public" / "audio"
 MAP_OUT = ROOT / "src" / "ttsMap.json"

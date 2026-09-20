@@ -1,7 +1,7 @@
 {
   "id": "/mondomago/",
-  "name": "MondoMago — Giochi per bambini",
-  "short_name": "MondoMago",
+  "name": "Magistella — Giochi per bambini",
+  "short_name": "Magistella",
   "description": "Avventure educative per bambini 3-8 anni: logica, numeri, parole e coding. Offline, senza pubblicità, 8 mondi e 5 compagni magici.",
   "start_url": "/mondomago/?source=pwa",
   "scope": "/mondomago/",

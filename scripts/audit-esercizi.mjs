@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // ─────────────────────────────────────────────────────────────────────────────
-// AUDIT ESERCIZI — MondoMago
+// AUDIT ESERCIZI — Magistella
 //
 // Verifica che ogni sfida sia CORRETTA e APPROPRIATA per la fascia d'età a cui
 // viene servita, per ogni mondo, ogni formato, ogni livello e ogni modalità di
@@ -547,7 +547,7 @@ if (JSON_OUT) {
   console.log(JSON.stringify({ errors, warns, notes, sessionStats, balance }, null, 2));
 } else {
   const bar = (n, max, w = 22) => '█'.repeat(Math.round((n / Math.max(max, 1)) * w)).padEnd(w, '·');
-  console.log(`\n🔎 AUDIT ESERCIZI — MondoMago`);
+  console.log(`\n🔎 AUDIT ESERCIZI — Magistella`);
   console.log(`   ${flatChallenges.length} sfide · ${WORLD_IDS.length} mondi · età selezionabili ${SELECTABLE_AGES.join(' / ')}\n`);
 
   if (!QUIET) {

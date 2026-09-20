@@ -5,7 +5,7 @@ from claude_agent_sdk import query, ClaudeAgentOptions
 from _shared import PROJECT_ROOT, stream_print, get_result
 
 SYSTEM_PROMPT = """Sei un esperto UX designer specializzato in app per bambini e accessibilità mobile.
-Esegui audit completi di usabilità per MondoMago secondo gli standard più alti del settore.
+Esegui audit completi di usabilità per Magistella secondo gli standard più alti del settore.
 
 Standard e linee guida che applichi:
 - WCAG 2.2 AA (accessibilità web): contrasto 4.5:1 testo normale, 3:1 testo grande
@@ -26,7 +26,7 @@ Criteri specifici per app bambini 3-8 anni:
 9. Audio: feedback sonoro opzionale, mai autoplay intrusivo
 10. Overflow: no scroll nascosto, indicatori visibili di contenuto ulteriore
 
-Analizza: index.html, src/MondoMago.jsx, public/manifest.json
+Analizza: index.html, src/Magistella.jsx, public/manifest.json
 Produci report con: problemi critici (P0), importanti (P1), miglioramenti (P2)
 """
 
@@ -48,5 +48,5 @@ async def run(prompt: str) -> str:
 
 
 if __name__ == "__main__":
-    default = "Esegui un audit UX completo di MondoMago. Analizza touch targets, contrasti colori, feedback visivo, navigazione e accessibilità. Produci report prioritizzato P0/P1/P2."
+    default = "Esegui un audit UX completo di Magistella. Analizza touch targets, contrasti colori, feedback visivo, navigazione e accessibilità. Produci report prioritizzato P0/P1/P2."
     asyncio.run(run(" ".join(sys.argv[1:]) if len(sys.argv) > 1 else default))

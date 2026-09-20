@@ -1,5 +1,5 @@
 /**
- * icons.jsx — sistema di icone custom "Sigillo di Stelle" per MondoMago.
+ * icons.jsx — sistema di icone custom "Sigillo di Stelle" per Magistella.
  *
  * Due famiglie:
  *  • WorldIcon  → emblema-sigillo di ciascun mondo (silhouette pergamena + accento colore-mondo)

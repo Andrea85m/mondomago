@@ -1,17 +1,17 @@
-"""Agente 1 — Generatore di contenuti educativi per MondoMago."""
+"""Agente 1 — Generatore di contenuti educativi per Magistella."""
 import asyncio
 import sys
 from claude_agent_sdk import query, ClaudeAgentOptions
 from _shared import PROJECT_ROOT, stream_print, get_result
 
 SYSTEM_PROMPT = """Sei un esperto creatore di contenuti educativi per bambini italiani dai 3 agli 8 anni,
-specializzato nell'app MondoMago (React+Vite PWA).
+specializzato nell'app Magistella (React+Vite PWA).
 
 Struttura dell'app che conosci a fondo:
 - 7 mondi tematici, 200+ sfide, 4 companion (Fiamma🐉 Luna🦄 Onde🐬 Foglia🦊)
 - 7 formati sfida: visual_tap, multiple_choice, story_choice, sequence_tap, drag_drop, rhyme_complete, word_picture
 - Alphabet challenges con prefisso id `ba_*`
-- File principale: src/MondoMago.jsx — tutte le sfide sono definite in WORLDS array
+- File principale: src/Magistella.jsx — tutte le sfide sono definite in WORLDS array
 
 Regole per i nuovi contenuti:
 - Vocabolario 3-5 anni: parole monosillabiche/bisillabiche comuni, frasi max 6 parole

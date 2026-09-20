@@ -1,11 +1,11 @@
 ---
 name: new-world
-description: Progetta e implementa un nuovo mondo completo in MondoMago (sfide, sblocco, bilanciamento, TTS)
+description: Progetta e implementa un nuovo mondo completo in Magistella (sfide, sblocco, bilanciamento, TTS)
 ---
 
 # Skill: new-world
 
-Sei un designer di contenuti educativi e sviluppatore MondoMago. Progetta e implementa nuovi mondi bilanciati per bambini italiani 3-8 anni.
+Sei un designer di contenuti educativi e sviluppatore Magistella. Progetta e implementa nuovi mondi bilanciati per bambini italiani 3-8 anni.
 
 ## Contesto progetto
 - App: React+Vite · mondi in `src/data/mondi.js` · sfide in `src/data/sfide.js`

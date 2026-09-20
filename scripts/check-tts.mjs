@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // ─────────────────────────────────────────────────────────────────────────────
-// COPERTURA VOCE — MondoMago
+// COPERTURA VOCE — Magistella
 //
 // Ogni frase che l'app può dire ad alta voce deve avere la sua clip registrata.
 // Dove manca, il gioco ripiega su `speechSynthesis`: la voce di sistema del
@@ -23,7 +23,7 @@ const AUDIO = join(ROOT, 'public', 'audio');
 const errors = [];
 const warns = [];
 
-// ── stripName: la copia di riferimento è in src/MondoMago.jsx ────────────────
+// ── stripName: la copia di riferimento è in src/Magistella.jsx ────────────────
 // Qui si rilegge dal sorgente vero il comportamento, per non mantenere una
 // terza versione delle stesse regole.
 function stripName(text, name = '') {
@@ -162,7 +162,7 @@ const mb = Object.values(ttsMap)
   .map(f => (existsSync(join(AUDIO, f)) ? readFileSync(join(AUDIO, f)).length : 0))
   .reduce((a, b) => a + b, 0) / 1024 / 1024;
 
-console.log(`\n🔊 COPERTURA VOCE — MondoMago`);
+console.log(`\n🔊 COPERTURA VOCE — Magistella`);
 console.log(`   ${Object.keys(ttsMap).length} frasi registrate · ${mb.toFixed(1)} MB · scaricate su richiesta dal service worker\n`);
 if (warns.length) { console.log(`⚠️  ${warns.length} avvisi`); warns.forEach(w => console.log(`   ${w}`)); console.log(''); }
 if (errors.length) {

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate musical instrumental song files for MondoMago.
+Generate musical instrumental song files for Magistella.
 Produces pure synthesized multi-layer tracks (melody + bass + rhythm).
 No TTS voice — melody IS the earworm for each world.
 

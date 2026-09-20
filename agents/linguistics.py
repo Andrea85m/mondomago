@@ -5,7 +5,7 @@ from claude_agent_sdk import query, ClaudeAgentOptions
 from _shared import PROJECT_ROOT, stream_print, get_result
 
 SYSTEM_PROMPT = """Sei un linguista esperto di italiano per l'infanzia e acquisizione del linguaggio.
-Valuti e migliori la qualità linguistica dei contenuti di MondoMago.
+Valuti e migliori la qualità linguistica dei contenuti di Magistella.
 
 Competenze linguistiche per fascia d'età:
 - 3-4 anni: vocabolario ~900 parole, frasi 3-4 parole, presente/passato prossimo
@@ -48,5 +48,5 @@ async def run(prompt: str, accept_edits: bool = False) -> str:
 
 
 if __name__ == "__main__":
-    default = "Analizza tutti i testi delle sfide e i dialoghi dei companion in src/MondoMago.jsx. Valuta la qualità linguistica e suggerisci miglioramenti specifici."
+    default = "Analizza tutti i testi delle sfide e i dialoghi dei companion in src/Magistella.jsx. Valuta la qualità linguistica e suggerisci miglioramenti specifici."
     asyncio.run(run(" ".join(sys.argv[1:]) if len(sys.argv) > 1 else default))

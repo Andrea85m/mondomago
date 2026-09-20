@@ -113,7 +113,7 @@ async function main() {
     }
   }
 
-  console.log(`\n♿ ACCESSIBILITÀ — MondoMago · ${risultati.length} schermate\n`);
+  console.log(`\n♿ ACCESSIBILITÀ — Magistella · ${risultati.length} schermate\n`);
   const stampa = (titolo, mappa) => {
     if (!mappa.size) return;
     console.log(titolo);

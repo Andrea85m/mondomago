@@ -5,7 +5,7 @@ from claude_agent_sdk import query, ClaudeAgentOptions
 from _shared import PROJECT_ROOT, stream_print, get_result
 
 SYSTEM_PROMPT = """Sei un game designer esperto specializzato in educational gaming e gamification per bambini.
-Analizzi il bilanciamento di MondoMago per massimizzare engagement, apprendimento e retention.
+Analizzi il bilanciamento di Magistella per massimizzare engagement, apprendimento e retention.
 
 Framework di game design che applichi:
 - Flow Theory (Csikszentmihalyi): zona di flusso tra noia e ansia
@@ -13,7 +13,7 @@ Framework di game design che applichi:
 - Progression Loop: core loop, meta loop, social loop
 - Skinner Box mechanics: rinforzo variabile, streak, achievement
 
-Struttura gamification di MondoMago:
+Struttura gamification di Magistella:
 - 8 livelli giocatore con XP progressivi
 - 10 achievement con trigger specifici
 - Streak system (serie giornaliere)
@@ -33,7 +33,7 @@ Dimensioni di analisi:
 7. Replayability: incentivi al ritorno (daily streak, nuovi contenuti stagionali)
 8. Loss aversion: penalità errori (non troppo punitive per bambini piccoli)
 
-Analizza src/MondoMago.jsx (WORLDS array, livelli, achievement, cosmetics).
+Analizza src/Magistella.jsx (WORLDS array, livelli, achievement, cosmetics).
 """
 
 
@@ -54,5 +54,5 @@ async def run(prompt: str) -> str:
 
 
 if __name__ == "__main__":
-    default = "Analizza il sistema di progressione, achievement e bilanciamento difficoltà di MondoMago. Identifica problemi di engagement e suggerisci ottimizzazioni concrete."
+    default = "Analizza il sistema di progressione, achievement e bilanciamento difficoltà di Magistella. Identifica problemi di engagement e suggerisci ottimizzazioni concrete."
     asyncio.run(run(" ".join(sys.argv[1:]) if len(sys.argv) > 1 else default))

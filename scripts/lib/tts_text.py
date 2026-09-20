@@ -7,7 +7,7 @@ check-tts.py (che verifica la copertura). Se le due regole divergono, la app
 chiede una voce con una chiave e il generatore ne ha registrata un'altra: il
 bambino sente la voce di sistema.
 
-La regola gemella in JavaScript sta in `ttsKey()` dentro src/MondoMago.jsx.
+La regola gemella in JavaScript sta in `ttsKey()` dentro src/Magistella.jsx.
 Le due devono restare allineate — c'è un test: `node scripts/check-tts.mjs`.
 """
 

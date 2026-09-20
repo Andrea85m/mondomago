@@ -1,4 +1,4 @@
-"""CLI interattivo MondoMago Agents — menu rich con selezione agente e prompt libero."""
+"""CLI interattivo Magistella Agents — menu rich con selezione agente e prompt libero."""
 import asyncio
 import importlib
 import sys
@@ -46,7 +46,7 @@ def check_api_key() -> bool:
 
 def print_header() -> None:
     console.print(Panel(
-        "[bold magenta]🧙 MondoMago AI Agents[/]\n"
+        "[bold magenta]🧙 Magistella AI Agents[/]\n"
         "[dim]Sistema di 10 agenti specializzati per l'app educativa[/]",
         border_style="magenta",
     ))
@@ -110,7 +110,7 @@ async def interactive_loop() -> None:
             defaults = {
                 "1": "Analizza le sfide nel mondo della foresta e crea 5 nuove sfide multiple_choice per bambini 5-6 anni",
                 "2": "Controlla le stringhe TTS mancanti e genera i MP3 mancanti in public/audio/",
-                "3": "Fai code review di src/MondoMago.jsx con focus su performance mobile e accessibilità",
+                "3": "Fai code review di src/Magistella.jsx con focus su performance mobile e accessibilità",
                 "4": "Valuta l'appropriatezza pedagogica delle sfide per ogni fascia d'età",
                 "5": "Analizza la qualità linguistica italiana dei testi di sfida e dialoghi companion",
                 "6": "Esegui audit UX completo: touch targets, contrasti, navigazione, feedback visivo",
@@ -120,7 +120,7 @@ async def interactive_loop() -> None:
                 "10": "Progetta un report settimanale tipo per genitori con dati di esempio",
                 "0": "Esegui audit completo usando dev-assistant, ux-auditor e qa-agent. Identifica i 5 problemi più critici.",
             }
-            prompt = defaults.get(choice, "Analizza src/MondoMago.jsx e fornisci raccomandazioni")
+            prompt = defaults.get(choice, "Analizza src/Magistella.jsx e fornisci raccomandazioni")
 
         console.print()
         try:
@@ -149,6 +149,6 @@ if __name__ == "__main__":
             sys.exit(1)
         if not check_api_key():
             sys.exit(1)
-        asyncio.run(run_agent(key, prompt or "Analizza src/MondoMago.jsx e fornisci raccomandazioni"))
+        asyncio.run(run_agent(key, prompt or "Analizza src/Magistella.jsx e fornisci raccomandazioni"))
     else:
         cli_main()

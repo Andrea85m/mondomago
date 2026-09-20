@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate pre-recorded audio for MondoMago songs.
+Generate pre-recorded audio for Magistella songs.
 Uses edge-tts Communicate with native rate/pitch params — NO raw SSML.
 
 Age-differentiated voices:
@@ -32,7 +32,7 @@ VOICE_BRIGHT   = "it-IT-IsabellaNeural"
 # Dynamic male voice for dramatic/older worlds
 VOICE_DYNAMIC  = "it-IT-DiegoNeural"
 
-# ── Song lyrics (must match WORLD_SONGS in MondoMago.jsx) ────────────────────
+# ── Song lyrics (must match WORLD_SONGS in Magistella.jsx) ────────────────────
 SONG_LINES = {
     "foresta": [
         "Nella foresta magica canto,",

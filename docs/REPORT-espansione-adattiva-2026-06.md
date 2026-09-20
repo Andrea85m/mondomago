@@ -40,7 +40,7 @@ Ora (`filterByAge(worldId, age, skills)`):
 
 ## 3. Confronto con i competitor (sintesi della ricerca)
 
-**Insight chiave:** *nessun leader 0-8 implementa una vera adattività per padronanza (mastery).* Khan Academy Kids e Lingokids fanno "sbagli → rinforzo / indovini → avanzi"; ABCmouse la pubblicizza ma le recensioni la dicono lineare. Spaced repetition sui contenuti sbagliati **non la spedisce nessuno** in questa fascia. → È esattamente lo spazio in cui MondoMago può superarli, e ora **ci siamo dentro**.
+**Insight chiave:** *nessun leader 0-8 implementa una vera adattività per padronanza (mastery).* Khan Academy Kids e Lingokids fanno "sbagli → rinforzo / indovini → avanzi"; ABCmouse la pubblicizza ma le recensioni la dicono lineare. Spaced repetition sui contenuti sbagliati **non la spedisce nessuno** in questa fascia. → È esattamente lo spazio in cui Magistella può superarli, e ora **ci siamo dentro**.
 
 | App | Adattività | SEL | Coding | Prezzo | Note |
 |---|---|---|---|---|---|
@@ -50,9 +50,9 @@ Ora (`filterByAge(worldId, age, skills)`):
 | **ABCmouse** | "Individualizzata" (recensita come lineare) | Scarsa | Sì | ~45 $/anno | 13.000 attività; problemi di billing |
 | **Smart Tales** (🇮🇹) | Story-driven STEAM | Media | Sì | Abbonamento | **Competitor italiano #1 da monitorare** |
 | **ScratchJr / Osmo** | Nessuna (creazione) | No | Sì | Gratis / Hardware | Riferimento per il coding kids |
-| **MondoMago (oggi)** | **Età + skill + SRS** | **Forte (mondo empatia)** | **Sì (Laboratorio)** | **Gratis** | + Italiano-first, offline, PWA |
+| **Magistella (oggi)** | **Età + skill + SRS** | **Forte (mondo empatia)** | **Sì (Laboratorio)** | **Gratis** | + Italiano-first, offline, PWA |
 
-### Pro di MondoMago vs il mercato
+### Pro di Magistella vs il mercato
 - **Gratis, senza ads/IAP** — pareggia i temibili (Khan, Duolingo ABC, ScratchJr) e batte i pay (Lingokids, ABCmouse, Smart Tales).
 - **Italiano-first** — tutti i leader internazionali sono inglese-first; l'unico vero rivale locale è Smart Tales.
 - **Offline + PWA** — niente store, caricamento istantaneo, zero attrito d'installazione.
@@ -83,7 +83,7 @@ Ora (`filterByAge(worldId, age, skills)`):
 9. Modularizzazione del file + code-splitting per mondo (oggi bundle ~634 KB monolitico).
 
 ## 5. File toccati
-- `src/MondoMago.jsx` — +48 sfide, `filterByAge` adattivo, SRS (`missed`/`noteMiss`/`clearMiss`), persistenza profilo.
+- `src/Magistella.jsx` — +48 sfide, `filterByAge` adattivo, SRS (`missed`/`noteMiss`/`clearMiss`), persistenza profilo.
 - `scripts/validate-challenges.mjs` *(nuovo)* — validatore + gap analysis riutilizzabile.
 - `scripts/test-adaptive.mjs` *(nuovo)* — test della logica adattiva e SRS.
 - `docs/REPORT-espansione-adattiva-2026-06.md` *(questo file)*.

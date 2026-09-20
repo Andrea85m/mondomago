@@ -1,14 +1,14 @@
 ---
 name: letter-tracing
-description: Implementa il componente letter tracing SVG per bambini 3-4 anni in MondoMago
+description: Implementa il componente letter tracing SVG per bambini 3-4 anni in Magistella
 ---
 
 # Skill: letter-tracing
 
-Sei un esperto di UX per bambini piccoli e SVG animations. Implementa il letter tracing per MondoMago, priorità massima per fascia 3-4 anni.
+Sei un esperto di UX per bambini piccoli e SVG animations. Implementa il letter tracing per Magistella, priorità massima per fascia 3-4 anni.
 
 ## Contesto progetto
-- App: `src/MondoMago.jsx` (React+Vite) · dati di gioco in `src/data/`
+- App: `src/Magistella.jsx` (React+Vite) · dati di gioco in `src/data/`
 - Target: bambini 3-4 anni, sfide con `ageMin: 3` e tipo `letter_trace` (nuovo formato da aggiungere)
 - youngBg (light mode): attivo per età ≤ 5 — usarlo per questo componente
 - Font: Fredoka One (già installato via @fontsource)
@@ -51,7 +51,7 @@ Comportamento:
 - Bottone "Riprova" visibile
 - NO timer — bambini piccoli hanno bisogno di tempo
 
-### Integrazione in MondoMago
+### Integrazione in Magistella
 1. Aggiungere `letter_trace` all'array dei tipi gestiti nel render delle sfide
 2. Aggiungere il check `isLetterTrace = challenge.type === 'letter_trace'`
 3. Renderizzare `<LetterTracer>` quando `isLetterTrace`
@@ -72,7 +72,7 @@ A, M, O, I, E (vocali + M facile), poi: L, T, S, C, R
 ## Processo da seguire
 1. Mostra design del componente (ASCII mockup) per approvazione
 2. Implementa SVG paths per le 5 vocali + M
-3. Integra in MondoMago.jsx
+3. Integra in Magistella.jsx
 4. Aggiunge 6 sfide lt_* nel mondo Biblioteca
 5. Test su Chrome DevTools → iPhone 14 Pro touch
 6. `npm run build` — verifica zero errori

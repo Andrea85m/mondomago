@@ -1,8 +1,8 @@
 {
-  "name": "mondomago",
+  "name": "magistella",
   "private": true,
   "version": "1.0.0",
-  "description": "MondoMago — Gioco educativo magico per bambini italiani 3-8 anni",
+  "description": "Magistella — Gioco educativo magico per bambini italiani 3-8 anni",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -18,7 +18,7 @@
     "preview": "vite preview",
     "deploy": "npm run verifica && GITHUB_PAGES=1 vite build && gh-pages -d dist --dotfiles --nojekyll",
     "lighthouse": "node scripts/lighthouse.mjs",
-    "lighthouse:live": "node scripts/lighthouse.mjs --url https://andrea85m.github.io/mondomago/"
+    "lighthouse:live": "node scripts/lighthouse.mjs --url https://magistella.com/"
   },
   "dependencies": {
     "@fontsource/dm-mono": "^5.2.7",

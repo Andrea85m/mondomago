@@ -1,8 +1,8 @@
-# 🤝 Guida alla collaborazione — MondoMago
+# 🤝 Guida alla collaborazione — Magistella
 
 Come lavorare in due sullo stesso progetto senza pestarsi i piedi.
 
-> **Aggiornata il 2026-09-13.** `src/MondoMago.jsx` non è più un file unico da 7.700 righe:
+> **Aggiornata il 2026-09-13.** `src/Magistella.jsx` non è più un file unico da 7.700 righe:
 > sfide, mondi e animazioni stanno in file propri (vedi §3). Il confine fra le zone resta
 > quello di agosto, ma adesso buona parte coincide con file diversi, quindi i conflitti git
 > sono molti meno. Da questa versione lint, audit, smoke test e accessibilità girano da soli
@@ -14,8 +14,8 @@ Come lavorare in due sullo stesso progetto senza pestarsi i piedi.
 
 | Persona | Ambito | Dove |
 |---------|--------|------|
-| **Andrea** | **Contenuti + logica di gioco**: sfide, mondi, motore adattivo, SRS, stato — **+ la schermata `map`** | `src/data/sfide.js`, il corpo logico di `MondoMago()`, il blocco `map` |
-| **Amico** | **Grafica + Audio**: look, animazioni, schermate, icone, scene, suoni | file grafici separati **+ le zone 🎨 dentro `MondoMago.jsx`** (mappa esclusa) |
+| **Andrea** | **Contenuti + logica di gioco**: sfide, mondi, motore adattivo, SRS, stato — **+ la schermata `map`** | `src/data/sfide.js`, il corpo logico di `Magistella()`, il blocco `map` |
+| **Amico** | **Grafica + Audio**: look, animazioni, schermate, icone, scene, suoni | file grafici separati **+ le zone 🎨 dentro `Magistella.jsx`** (mappa esclusa) |
 
 ---
 
@@ -68,7 +68,7 @@ git push -u origin feature/grafica-schermata-skill   # 4. push
 |------|---------------|-------|
 | `src/data/sfide.js` | `ALL_CHALLENGES` — 368 sfide, 8 mondi | 🟢 **Andrea** |
 | `src/data/mondi.js` | `COMPANIONS` (con le battute), `STORY_ARCS`, `WORLDS`, `SIGILLO_FRAGMENTS`, `SIGILLO_STORY`, `SKILLS`, `SKILL_MAP` | 🔴 **condivisa** |
-| `src/MondoMago.jsx` (~5.500 righe) | il componente `MondoMago()`: stato, logica, tutte le schermate | zone miste, vedi sotto |
+| `src/Magistella.jsx` (~5.500 righe) | il componente `Magistella()`: stato, logica, tutte le schermate | zone miste, vedi sotto |
 | `src/AnimationStyles.jsx` | tutte le `@keyframes` e il CSS globale | 🎨 **Amico** |
 | `src/sigillo.js` | token del design system (colori, font) + calcolo del contrasto WCAG | 🎨 **Amico** |
 | `src/PuzzleMagico.jsx` | la sezione Puzzle, quattro giochi | 🎨 **Amico** |
@@ -76,7 +76,7 @@ git push -u origin feature/grafica-schermata-skill   # 4. push
 | `src/ErrorBoundary.jsx` | la schermata "Ops! La magia si è inceppata" | ⚪ raro |
 | `src/util.js` | `pick()` e altri aiuti condivisi | ⚪ raro |
 
-### Le zone dentro `src/MondoMago.jsx`
+### Le zone dentro `src/Magistella.jsx`
 
 I numeri di riga cambiano a ogni commit: orientati sui **nomi** (cercali con ⌘F).
 
@@ -90,7 +90,7 @@ I numeri di riga cambiano a ogni commit: orientati sui **nomi** (cercali con ⌘
 | Voce e suoni (`speak`, `SFX`, musica, canzoni) | 🎨 **Amico** | |
 | `PLAYER_LEVELS`, `COSMETICS`, `ACHIEVEMENTS`, salvataggi | 🟢 **Andrea** | |
 | `LETTER_DATA`, `LetterTracer` | 🟢 / 🎨 | |
-| Corpo di `MondoMago()`: state, `useEffect`, handler, `triggerOK`/`triggerBAD` | 🟢 **Andrea** | |
+| Corpo di `Magistella()`: state, `useEffect`, handler, `triggerOK`/`triggerBAD` | 🟢 **Andrea** | |
 | Render — onboarding (`consent` … `companion_welcome`) | 🎨 **Amico** | |
 | **Render — `map` + tab-bar** | 🟢 **Andrea** | ⚠️ **eccezione: la mappa se la tiene Andrea** |
 | Render — tutte le altre schermate | 🎨 **Amico** | il grosso del lavoro grafico |
@@ -105,7 +105,7 @@ percorso con i nodi dei mondi · card dei mondi con `WorldScene`.
 **Punto di contatto:** le icone della tab-bar (`NavMap` …) sono dell'Amico ma vengono
 *renderizzate* dentro la mappa. Ridisegnarle è libero e non genera conflitto: **avvisare** Andrea.
 
-### ⚠️ Regole per chi lavora nelle zone 🎨 dentro `MondoMago.jsx`
+### ⚠️ Regole per chi lavora nelle zone 🎨 dentro `Magistella.jsx`
 
 - **Cambia come appare, non cosa fa.** Nei blocchi di render puoi toccare `style`, classi,
   markup, icone, animazioni. **Non** rinominare variabili di stato, handler (`onClick={...}`)

@@ -5,9 +5,9 @@ from claude_agent_sdk import query, ClaudeAgentOptions
 from _shared import PROJECT_ROOT, stream_print, get_result
 
 SYSTEM_PROMPT = """Sei un esperto di analisi dati educativi e comunicazione con i genitori.
-Elabori i dati di utilizzo di MondoMago e generi report chiari, motivanti e actionable per i genitori.
+Elabori i dati di utilizzo di Magistella e generi report chiari, motivanti e actionable per i genitori.
 
-Struttura dati di MondoMago (localStorage):
+Struttura dati di Magistella (localStorage):
 - Profili: nome, età, compagno, livello, XP, achievement sbloccati
 - Sessioni: date, sfide completate, punteggi, errori per tipo sfida
 - Streak: giorni consecutivi, streak migliore
@@ -52,5 +52,5 @@ async def run(prompt: str, accept_edits: bool = False) -> str:
 
 
 if __name__ == "__main__":
-    default = "Analizza la struttura del parent report in src/MondoMago.jsx. Progetta un report narrativo settimanale tipo con dati di esempio per un bambino di 5 anni."
+    default = "Analizza la struttura del parent report in src/Magistella.jsx. Progetta un report narrativo settimanale tipo con dati di esempio per un bambino di 5 anni."
     asyncio.run(run(" ".join(sys.argv[1:]) if len(sys.argv) > 1 else default))

@@ -1,4 +1,4 @@
-import MondoMago from './MondoMago'
+import Magistella from './Magistella'
 import ErrorBoundary from './ErrorBoundary.jsx'
 
 // Crash di prova, solo in sviluppo: con /?crash si vede la schermata d'errore
@@ -12,7 +12,7 @@ const crashDiProva = import.meta.env.DEV && new URLSearchParams(window.location.
 export default function App() {
   return (
     <ErrorBoundary>
-      {crashDiProva ? <CrashDiProva /> : <MondoMago />}
+      {crashDiProva ? <CrashDiProva /> : <Magistella />}
     </ErrorBoundary>
   )
 }

@@ -5,7 +5,7 @@ from claude_agent_sdk import query, ClaudeAgentOptions
 from _shared import PROJECT_ROOT, stream_print, get_result
 
 SYSTEM_PROMPT = """Sei un QA engineer esperto specializzato in app educative React e PWA.
-Generi test cases, identifichi bug e regressioni in MondoMago.
+Generi test cases, identifichi bug e regressioni in Magistella.
 
 Stack di test disponibile:
 - Vitest (se configurato) o Jest per unit/integration test
@@ -53,5 +53,5 @@ async def run(prompt: str, accept_edits: bool = False) -> str:
 
 
 if __name__ == "__main__":
-    default = "Analizza src/MondoMago.jsx alla ricerca di bug logici nei 7 formati sfida. Verifica la correttezza di isCorrect, answerMC, answerSeq, answerDrag. Crea lista bug con file:linea e fix."
+    default = "Analizza src/Magistella.jsx alla ricerca di bug logici nei 7 formati sfida. Verifica la correttezza di isCorrect, answerMC, answerSeq, answerDrag. Crea lista bug con file:linea e fix."
     asyncio.run(run(" ".join(sys.argv[1:]) if len(sys.argv) > 1 else default))

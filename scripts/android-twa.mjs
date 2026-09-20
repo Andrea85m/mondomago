@@ -41,9 +41,9 @@ const webManifest = JSON.parse(readFileSync(join(ROOT, 'public', 'manifest.json'
 
 const twa = TwaManifest.fromWebManifestJson(webManifestUrl, webManifest);
 Object.assign(twa, {
-  packageId: 'com.mondomago.app',
-  name: 'MondoMago',
-  launcherName: 'MondoMago',
+  packageId: 'com.magistella.app',
+  name: 'Magistella',
+  launcherName: 'Magistella',
   appVersionCode: versione,
   appVersionName: `1.0.${versione - 1}`,
   enableNotifications: true,        // promemoria giornaliero dall'area genitori

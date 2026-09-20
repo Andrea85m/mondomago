@@ -1,4 +1,4 @@
-# MondoMago — Guida al deploy e alla pubblicazione
+# Magistella — Guida al deploy e alla pubblicazione
 
 > Aggiornata il 2026-09-19. Il deploy di tutti i giorni è il passo 1; i passi
 > 4-6 servono solo per pubblicare l'app su Google Play.
@@ -109,15 +109,15 @@ Configurazione → Integrità dell'app → Firma dell'app* (Play firma con la su
 
 ### Passare al dominio proprio
 
-1. Comprare il dominio (es. `mondomago.it`) e nel suo DNS creare:
+1. Comprare il dominio (es. `magistella.com`) e nel suo DNS creare:
    `A` @ → `185.199.108.153`, `185.199.109.153`, `185.199.110.153`, `185.199.111.153`
    e `CNAME` www → `andrea85m.github.io`.
-2. `echo mondomago.it > public/CNAME` → `npm run deploy`. Base, manifest e service worker
+2. `echo magistella.com > public/CNAME` → `npm run deploy`. Base, manifest e service worker
    passano alla radice da soli (`vite.config.js`).
-3. Repo GitHub → Settings → Pages → Custom domain = `mondomago.it`, poi **Enforce HTTPS**
+3. Repo GitHub → Settings → Pages → Custom domain = `magistella.com`, poi **Enforce HTTPS**
    (serve che il DNS sia propagato: da qualche minuto a qualche ora).
-4. Verifica: `curl -I https://mondomago.it/` → 200 e
-   `curl https://mondomago.it/.well-known/assetlinks.json` → il JSON con l'impronta.
+4. Verifica: `curl -I https://magistella.com/` → 200 e
+   `curl https://magistella.com/.well-known/assetlinks.json` → il JSON con l'impronta.
 5. `node scripts/android-twa.mjs` e build come sopra: l'app ora punta al dominio.
 6. Aggiornare l'indirizzo della privacy in `STORE_LISTING.md` e `lighthouse:live` in `package.json`.
 
@@ -130,7 +130,7 @@ al nuovo). Meglio farlo **prima** di mandare l'app ai tester.
 Account **personale** → prima della produzione serve un **test chiuso con almeno 12 tester
 che restano iscritti per 14 giorni di fila**. Il conto parte quando il dodicesimo accetta.
 
-1. **Crea app**: nome `MondoMago: giochi educativi`, lingua predefinita Italiano, **App**
+1. **Crea app**: nome `Magistella: giochi educativi`, lingua predefinita Italiano, **App**
    (non gioco), **Senza costi**. Le dichiarazioni sulle norme: sì.
 2. **Configura l'app** (la dashboard le elenca), risposte già pronte in `STORE_LISTING.md`:
    - Privacy policy → l'URL della privacy (§ Link di `STORE_LISTING.md`)
@@ -178,7 +178,7 @@ L'icona è `apple-touch-icon.png`.
 - [x] *Ricomincia da capo* spostato nell'area genitori, dietro PIN (19 set)
 - [x] Su tablet il contenuto sta in una colonna di 600px, sfondo a tutto schermo (19 set)
 - [x] Chiave di caricamento creata, fuori dal repo; impronta in `assetlinks.json`
-- [x] AAB e APK firmati: `com.mondomago.app`, versione 1.0.0 (1), targetSdk 36, solo permesso notifiche
+- [x] AAB e APK firmati: `com.magistella.app`, versione 1.0.0 (1), targetSdk 36, solo permesso notifiche
 - [x] Build pronta per il dominio proprio: basta `public/CNAME` (§4)
 
 **Da fare — serve un account o un acquisto**

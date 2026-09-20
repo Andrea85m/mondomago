@@ -1,4 +1,4 @@
-"""Utilities condivise tra tutti gli agenti MondoMago."""
+"""Utilities condivise tra tutti gli agenti Magistella."""
 import os
 from pathlib import Path
 from claude_agent_sdk import AssistantMessage, ResultMessage, TextBlock

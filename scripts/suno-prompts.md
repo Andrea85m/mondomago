@@ -1,4 +1,4 @@
-# MondoMago — Prompt Suno AI per le 9 canzoni
+# Magistella — Prompt Suno AI per le 9 canzoni
 
 ## Come usare Suno
 
@@ -278,7 +278,7 @@ la natura è bella — ho imparato tanto!
 ## Dopo il download — Attivare nell'app
 
 1. Metti i 9 file MP3 in `public/audio/` con i nomi indicati sopra
-2. In `src/MondoMago.jsx`, cerca `WORLD_SONGS` e trova il mondo corrispondente
+2. In `src/Magistella.jsx`, cerca `WORLD_SONGS` e trova il mondo corrispondente
 3. Cambia `fullSong: false` → `fullSong: true` per quel mondo
 4. Fai il build e il deploy
 

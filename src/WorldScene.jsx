@@ -1,5 +1,5 @@
 /**
- * WorldScene — illustrated SVG scenes for each world in MondoMago.
+ * WorldScene — illustrated SVG scenes for each world in Magistella.
  * variant="card"   : small hero inside world cards on the map
  * variant="bg"     : full-screen translucent background behind challenges
  * variant="full"   : full-screen opaque scene (world_intro, world_end)

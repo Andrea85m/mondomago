@@ -360,7 +360,7 @@ async function main() {
 
   await browser.close();
 
-  console.log('\n🧪 SMOKE TEST — MondoMago\n');
+  console.log('\n🧪 SMOKE TEST — Magistella\n');
   passi.forEach(p => console.log('   ' + p));
   console.log(`\n   Schermate in ${OUT.replace(ROOT + '/', '')}/`);
   if (problemi.length) {
