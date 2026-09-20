@@ -28,7 +28,7 @@ const { TwaManifest, TwaGenerator, ConsoleLog } = require('@bubblewrap/core');
 const arg = (n) => { const i = process.argv.indexOf(n); return i > -1 ? process.argv[i + 1] : undefined; };
 const cname = join(ROOT, 'public', 'CNAME');
 const host = arg('--host') || (existsSync(cname) ? readFileSync(cname, 'utf8').trim() : 'andrea85m.github.io');
-const base = host.endsWith('.github.io') ? '/mondomago/' : '/';
+const base = host.endsWith('.github.io') ? '/mondomago/app/' : '/app/';
 
 // Il numero di versione non torna mai indietro: si parte da quello già in android/
 const vecchio = join(OUT, 'twa-manifest.json');
@@ -36,8 +36,8 @@ const precedente = existsSync(vecchio) ? JSON.parse(readFileSync(vecchio, 'utf8'
 const versione = Number(arg('--versione') || precedente?.appVersionCode || 1);
 
 const webManifestUrl = new URL(`https://${host}${base}manifest.json`);
-const webManifest = JSON.parse(readFileSync(join(ROOT, 'public', 'manifest.json'), 'utf8')
-  .replaceAll('"/mondomago/', `"${base}`));
+const webManifest = JSON.parse(readFileSync(join(ROOT, 'public', 'app', 'manifest.json'), 'utf8')
+  .replaceAll('"/app/', `"${base}`));
 
 const twa = TwaManifest.fromWebManifestJson(webManifestUrl, webManifest);
 Object.assign(twa, {

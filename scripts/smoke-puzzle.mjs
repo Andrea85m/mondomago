@@ -5,7 +5,7 @@
 //
 //   npm run dev            (in un altro terminale)
 //   node scripts/smoke-puzzle.mjs
-//   node scripts/smoke-puzzle.mjs --url https://andrea85m.github.io/mondomago/
+//   node scripts/smoke-puzzle.mjs --url https://magistella.com/app/
 //
 // Esce 1 al primo errore di console, eccezione di pagina o passo che non
 // completa. Le schermate finiscono in .smoke/ per il controllo a occhio.
@@ -19,7 +19,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(ROOT, '.smoke');
 const argUrl = process.argv.indexOf('--url');
-const URL = argUrl > -1 ? process.argv[argUrl + 1] : 'http://localhost:5173/';
+const URL = argUrl > -1 ? process.argv[argUrl + 1] : 'http://localhost:5173/app/';
 const HEADED = process.argv.includes('--headed');
 
 mkdirSync(OUT, { recursive: true });

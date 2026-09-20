@@ -15,7 +15,7 @@ import { chromium } from 'playwright';
 import axe from 'axe-core';
 
 const argUrl = process.argv.indexOf('--url');
-const URL = argUrl > -1 ? process.argv[argUrl + 1] : 'http://localhost:5173/';
+const URL = argUrl > -1 ? process.argv[argUrl + 1] : 'http://localhost:5173/app/';
 const VERBOSE = process.argv.includes('--verbose');
 
 const risultati = [];

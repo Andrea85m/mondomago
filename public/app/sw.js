@@ -3,11 +3,11 @@ const CACHE_AUDIO = 'magistella-audio-v9';
 
 // Assets to precache on install — relative paths so they work under any base URL
 const PRECACHE_URLS = [
-  './',
-  './manifest.json',
-  './favicon.svg',
-  './icon-192.png',
-  './icon-512.png',
+  './',                 // /app/ — la shell del gioco
+  './manifest.json',     // /app/manifest.json
+  '/favicon.svg',        // gli asset condivisi stanno alla radice del dominio,
+  '/icon-192.png',       // insieme alla landing: percorsi assoluti, non relativi
+  '/icon-512.png',
 ];
 
 self.addEventListener('message', e => {
@@ -61,8 +61,8 @@ self.addEventListener('fetch', e => {
   }
 
   // ── Navigazioni ──────────────────────────────────────────────────────────────
-  // L'app è una pagina sola: /mondomago/, /mondomago/?source=pwa (avvio dall'icona)
-  // e /mondomago/?action=daily (scorciatoia) sono lo stesso documento. Si serve la
+  // L'app è una pagina sola: /app/, /app/?source=pwa (avvio dall'icona)
+  // e /app/?action=daily (scorciatoia) sono lo stesso documento. Si serve la
   // shell in cache subito e la si aggiorna in background.
   // Prima si cercava l'indirizzo esatto (con la query non c'era mai) e poi '/', che
   // su GitHub Pages è la radice del dominio: offline l'app installata non partiva.

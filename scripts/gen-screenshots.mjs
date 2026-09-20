@@ -21,7 +21,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(ROOT, 'public', 'screenshots');
 const argUrl = process.argv.indexOf('--url');
-const URL = argUrl > -1 ? process.argv[argUrl + 1] : 'http://localhost:5173/';
+const URL = argUrl > -1 ? process.argv[argUrl + 1] : 'http://localhost:5173/app/';
 
 // Tutti i mondi aperti: stelle appena sopra la soglia dell'ultimo.
 const source = readFileSync(join(ROOT, 'src', 'data', 'mondi.js'), 'utf8');

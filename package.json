@@ -18,7 +18,7 @@
     "preview": "vite preview",
     "deploy": "npm run verifica && GITHUB_PAGES=1 vite build && gh-pages -d dist --dotfiles --nojekyll",
     "lighthouse": "node scripts/lighthouse.mjs",
-    "lighthouse:live": "node scripts/lighthouse.mjs --url https://magistella.com/"
+    "lighthouse:live": "node scripts/lighthouse.mjs --url https://magistella.com/app/"
   },
   "dependencies": {
     "@fontsource/dm-mono": "^5.2.7",

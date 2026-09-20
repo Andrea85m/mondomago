@@ -12,7 +12,7 @@
   "navigationDividerColorDark": "#000000",
   "backgroundColor": "#1B1035",
   "enableNotifications": true,
-  "startUrl": "/?source=pwa",
+  "startUrl": "/app/?source=pwa",
   "iconUrl": "https://magistella.com/icon-512.png",
   "maskableIconUrl": "https://magistella.com/icon-maskable-512.png",
   "splashScreenFadeOutDuration": 300,
@@ -26,12 +26,12 @@
     {
       "name": "Sfida del Giorno",
       "shortName": "Sfida",
-      "url": "https://magistella.com/?action=daily",
+      "url": "https://magistella.com/app/?action=daily",
       "chosenIconUrl": "https://magistella.com/icon-192.png"
     }
   ],
   "generatorApp": "unknown",
-  "webManifestUrl": "https://magistella.com/manifest.json",
+  "webManifestUrl": "https://magistella.com/app/manifest.json",
   "fallbackType": "customtabs",
   "features": {},
   "alphaDependencies": {
@@ -40,7 +40,7 @@
   "enableSiteSettingsShortcut": true,
   "isChromeOSOnly": false,
   "isMetaQuest": false,
-  "fullScopeUrl": "https://magistella.com/",
+  "fullScopeUrl": "https://magistella.com/app/",
   "minSdkVersion": 21,
   "orientation": "portrait",
   "fingerprints": [],

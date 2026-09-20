@@ -17,7 +17,7 @@ import {
 import AnimationStyles from "./AnimationStyles.jsx";
 import { COMPANIONS, STORY_ARCS, WORLDS, SIGILLO_FRAGMENTS, SIGILLO_STORY, SKILLS, SKILL_MAP } from "./data/mondi.js";
 import { ALL_CHALLENGES } from "./data/sfide.js";
-import { pick } from "./util.js";
+import { pick, inchiostroSu } from "./util.js";
 
 // ── MONETIZZAZIONE (impalcatura freemium, OFF) ──────────────────────────────────
 // Strategia: monetizzare il GENITORE, mai il bambino. Tutto il loop educativo
@@ -4031,8 +4031,11 @@ export default function Magistella() {
                     border:`4px solid ${colorZonePicked===color?(youngBg?"#333":"white"):"rgba(255,255,255,.18)"}`,
                     boxShadow:colorZonePicked===color?`0 0 18px ${color}88`:"0 2px 6px rgba(0,0,0,.2)",
                     transform:colorZonePicked===color?"scale(1.12)":"scale(1)",
-                    transition:"all .15s",fontSize:11,fontWeight:800,color:"white",
-                    textShadow:"0 1px 3px rgba(0,0,0,.45)",
+                    // La sigla sta sopra il colore della pasticca, che lo decidono i dati
+                    // della sfida: il bianco fisso spariva su oro e verde medio (2.49:1).
+                    // L'inchiostro si sceglie sul contrasto vero di quel colore.
+                    transition:"all .15s",fontSize:11,fontWeight:800,color:inchiostroSu(color),
+                    textShadow:"none",
                   }}>
                   {ch.colorNames?.[ci2]?.slice(0,3)||""}
                 </button>
@@ -5404,7 +5407,7 @@ export default function Magistella() {
             const blob = new Blob([html], {type:'text/html'});
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = `mondomago_report_${childName.toLowerCase()}_${today.toISOString().slice(0,10)}.html`;
+            a.download = `magistella_report_${childName.toLowerCase()}_${today.toISOString().slice(0,10)}.html`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);

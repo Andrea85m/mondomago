@@ -1,155 +1,439 @@
 <!doctype html>
-<html lang="it">
+<!--
+  Landing di magistella.com — la porta d'ingresso del sito. Il gioco sta su /app/.
+
+  PRE-LANCIO: finché l'app non è pubblicata su Google Play, data-stato="prelancio"
+  tiene il pulsante spento e mostra l'avviso. Il giorno della pubblicazione basta
+  cambiarlo in data-stato="live": il badge diventa un link e l'avviso sparisce.
+-->
+<html lang="it" data-stato="prelancio">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Magistella — gioco educativo per bambini da 3 a 8 anni</title>
+    <meta name="description" content="Otto mondi magici, 368 sfide di logica, numeri, parole e coding. Un gioco educativo italiano per bambini dai 3 agli 8 anni: niente pubblicità, niente acquisti, nessun dato raccolto." />
+    <meta name="theme-color" content="#1B1035" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <link rel="manifest" href="/manifest.json" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="description" content="Gioco educativo per bambini da 3 a 8 anni: logica, numeri, parole e coding in 8 mondi magici. In italiano, senza pubblicità, anche offline." />
-    <meta name="theme-color" content="#1B1035" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Magistella" />
-    <title>Magistella</title>
+    <link rel="canonical" href="https://magistella.com/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://magistella.com/" />
+    <meta property="og:title" content="Magistella — le stelle si guadagnano imparando" />
+    <meta property="og:description" content="Gioco educativo italiano per bambini dai 3 agli 8 anni. Otto mondi, 368 sfide, un compagno magico. Niente pubblicità, niente acquisti, nessun dato raccolto." />
+    <meta property="og:image" content="https://magistella.com/screenshots/feature-graphic.png" />
+    <meta property="og:locale" content="it_IT" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Magistella",
+      "applicationCategory": "EducationalApplication",
+      "operatingSystem": "Android",
+      "inLanguage": "it",
+      "url": "https://magistella.com/",
+      "description": "Gioco educativo per bambini dai 3 agli 8 anni: logica, numeri, parole, empatia e coding in otto mondi magici. Senza pubblicità e senza acquisti.",
+      "audience": { "@type": "PeopleAudience", "suggestedMinAge": 3, "suggestedMaxAge": 8 },
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" }
+    }
+    </script>
+
+    <script type="module" src="/src/landing.js"></script>
+
     <style>
+      /* ── Il Sigillo di Stelle: gli stessi token del gioco (src/sigillo.js) ────── */
       :root {
-        --sat: env(safe-area-inset-top, 0px);
-        --sar: env(safe-area-inset-right, 0px);
-        --sab: env(safe-area-inset-bottom, 0px);
-        --sal: env(safe-area-inset-left, 0px);
+        --notte:      #1B1035;   /* fondo */
+        --fonda:      #140B29;   /* il fondo più profondo, in basso */
+        --alto:       #2D1B54;   /* il chiarore in cima al cielo */
+        --oro:        #FFC24B;   /* magia, accento primario */
+        --runa:       #6DE0C6;   /* logica e codice */
+        --pergamena:  #F6ECD4;   /* testo */
+        --soffusa:    rgba(246, 236, 212, .62);
+        --filo:       rgba(246, 236, 212, .14);
+
+        --display: 'Grandstander', system-ui, sans-serif;
+        --testo:   'Nunito', system-ui, sans-serif;
+
+        --gutter: clamp(20px, 5vw, 40px);
+        --colonna: 1180px;
       }
-      *, *::before, *::after {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-        -webkit-tap-highlight-color: transparent;
-        -webkit-touch-callout: none;
-      }
-      html {
-        height: 100%;
-        /* prevent elastic scroll bounce on iOS */
-        overscroll-behavior: none;
-      }
+
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+      @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
       body {
-        font-family: 'Nunito', system-ui, sans-serif;
-        background: #1B1035;
-        overscroll-behavior: none;
-        /* block pull-to-refresh and overscroll glow */
-        overscroll-behavior-y: none;
-        /* safe-area aware padding for notch phones */
-        padding-top: var(--sat);
-        padding-left: var(--sal);
-        padding-right: var(--sar);
-        /* DO NOT add padding-bottom here — screens handle it individually */
-        min-height: 100dvh;
-        min-height: 100vh; /* fallback for older browsers */
-        /* prevent iOS text size adjustment */
-        -webkit-text-size-adjust: 100%;
-        text-size-adjust: 100%;
+        font-family: var(--testo);
+        font-size: 17px;
+        line-height: 1.65;
+        color: var(--pergamena);
+        background: var(--notte);
+        overflow-x: hidden;
       }
-      #root {
-        min-height: 100dvh;
-        min-height: 100vh;
-        isolation: isolate;
+
+      .dentro {
+        width: 100%;
+        max-width: var(--colonna);
+        margin-inline: auto;
+        padding-inline: var(--gutter);
       }
-      /* Prevent text selection across all game UI */
-      * {
-        -webkit-user-select: none;
-        user-select: none;
+
+      a { color: inherit; }
+      :focus-visible { outline: 3px solid var(--oro); outline-offset: 3px; border-radius: 4px; }
+
+      /* ── Intestazione ─────────────────────────────────────────────────────────── */
+      .testata {
+        padding-block: 22px;
+        display: flex;
+        align-items: center;
+        gap: 11px;
       }
-      /* Re-enable selection only for text inputs */
-      input, textarea {
-        -webkit-user-select: text;
-        user-select: text;
+      .testata svg { width: 30px; height: 30px; flex: none; }
+      .testata b {
+        font-family: var(--display);
+        font-weight: 800;
+        font-size: 21px;
+        color: var(--oro);
+        letter-spacing: .2px;
       }
-      button, [role="button"] {
-        font-family: 'Nunito', system-ui, sans-serif;
-        cursor: pointer;
-        touch-action: manipulation;
-        -webkit-tap-highlight-color: transparent;
-        border: none;
-        background: none;
+
+      /* ── Apertura ─────────────────────────────────────────────────────────────── */
+      .apertura {
+        background: radial-gradient(125% 90% at 50% -12%, var(--alto) 0%, var(--notte) 55%, var(--fonda) 100%);
+        padding-bottom: clamp(56px, 9vw, 104px);
       }
-      input {
-        font-family: 'Nunito', system-ui, sans-serif;
-        /* 16px minimum prevents iOS auto-zoom on focus */
+      .apertura .dentro {
+        display: grid;
+        gap: clamp(36px, 6vw, 64px);
+        align-items: center;
+        padding-top: clamp(24px, 5vw, 56px);
+      }
+      @media (min-width: 900px) {
+        .apertura .dentro { grid-template-columns: 1.05fr .95fr; }
+      }
+
+      h1 {
+        font-family: var(--display);
+        font-weight: 800;
+        font-size: clamp(38px, 6.4vw, 67px);
+        line-height: 1.04;
+        letter-spacing: -.5px;
+        text-wrap: balance;
+      }
+      .sottotitolo {
+        margin-top: 22px;
+        max-width: 33em;
+        font-size: clamp(17px, 2vw, 19px);
+        color: var(--soffusa);
+      }
+      .eta {
+        margin-top: 26px;
+        font-family: var(--display);
+        font-weight: 700;
+        font-size: 15px;
+        color: var(--runa);
+      }
+
+      /* ── Il sigillo: otto frammenti, uno per mondo ────────────────────────────── */
+      .sigillo { width: 100%; max-width: 470px; margin-inline: auto; display: block; }
+      .sigillo .ruota { transform-origin: 250px 250px; animation: giro 120s linear infinite; }
+      @keyframes giro { to { transform: rotate(360deg); } }
+      @media (prefers-reduced-motion: reduce) { .sigillo .ruota { animation: none; } }
+
+      /* ── Il richiamo all'azione ───────────────────────────────────────────────── */
+      .richiamo { margin-top: 32px; }
+      .badge { display: inline-block; line-height: 0; }
+      .badge img { width: 216px; height: auto; }
+      [data-stato="prelancio"] .badge {
+        pointer-events: none;
+        opacity: .45;
+        filter: grayscale(1);
+      }
+      .avviso {
+        margin-top: 14px;
+        font-size: 15px;
+        color: var(--soffusa);
+        max-width: 30em;
+      }
+      .avviso b { color: var(--oro); font-weight: 600; }
+      [data-stato="live"] .avviso { display: none; }
+      .gratis { margin-top: 14px; font-size: 15px; color: var(--soffusa); }
+      [data-stato="prelancio"] .gratis { display: none; }
+
+      /* ── I quattro patti ──────────────────────────────────────────────────────── */
+      .patti { border-block: 1px solid var(--filo); background: var(--fonda); }
+      .patti ul {
+        list-style: none;
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+      @media (min-width: 720px) { .patti ul { grid-template-columns: repeat(4, 1fr); } }
+      .patti li {
+        padding: 26px 0;
+        font-family: var(--display);
+        font-weight: 700;
         font-size: 16px;
+        border-top: 1px solid var(--filo);
       }
-      /* Smooth scrolling for any scrollable containers */
-      [data-scroll] {
-        -webkit-overflow-scrolling: touch;
-        scroll-behavior: smooth;
+      .patti li:first-child { border-top: 0; }
+      @media (min-width: 720px) {
+        .patti li { border-top: 0; border-left: 1px solid var(--filo); padding: 30px 26px; }
+        .patti li:first-child { border-left: 0; padding-left: 0; }
       }
-      /* iOS safe area bottom padding helper class */
-      .safe-bottom {
-        padding-bottom: max(var(--sab), 16px);
+      .patti span { display: block; margin-top: 5px; font-family: var(--testo); font-weight: 400; font-size: 14.5px; color: var(--soffusa); }
+
+      /* ── Sezioni ──────────────────────────────────────────────────────────────── */
+      section.blocco { padding-block: clamp(58px, 9vw, 96px); }
+      h2 {
+        font-family: var(--display);
+        font-weight: 800;
+        font-size: clamp(27px, 3.8vw, 38px);
+        line-height: 1.15;
+        letter-spacing: -.3px;
       }
-      /* Full-screen helper using dynamic viewport */
-      .screen-full {
-        min-height: 100dvh;
-        min-height: 100vh;
-        /* bottom padding so content isn't hidden behind home indicator */
-        padding-bottom: max(var(--sab), 0px);
+      .occhiello { margin-top: 15px; max-width: 46em; color: var(--soffusa); }
+
+      /* ── Gli otto mondi ───────────────────────────────────────────────────────── */
+      .mondi {
+        list-style: none;
+        margin-top: 42px;
+        display: grid;
+        gap: 2px;
+        background: var(--filo);
+        border: 1px solid var(--filo);
       }
+      @media (min-width: 620px) { .mondi { grid-template-columns: 1fr 1fr; } }
+      @media (min-width: 980px) { .mondi { grid-template-columns: repeat(4, 1fr); } }
+      .mondi li {
+        background: var(--notte);
+        padding: 24px 22px 26px;
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+      }
+      .mondi .astro { width: 17px; height: 17px; }
+      .mondi h3 { font-family: var(--display); font-weight: 700; font-size: 17.5px; line-height: 1.25; }
+      .mondi p { font-size: 14px; color: var(--soffusa); line-height: 1.5; }
+
+      /* ── I compagni ───────────────────────────────────────────────────────────── */
+      .compagni {
+        list-style: none;
+        margin-top: 42px;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: clamp(18px, 3vw, 30px);
+        text-align: center;
+      }
+      @media (min-width: 620px) { .compagni { grid-template-columns: repeat(5, 1fr); } }
+      /* I ritratti hanno proporzioni diverse: una riga di altezza fissa con allineamento
+         in basso li appoggia tutti sulla stessa linea di terra, e i nomi restano in riga. */
+      .compagni li { display: grid; grid-template-rows: 124px auto auto; justify-items: center; }
+      .compagni img { max-height: 124px; width: auto; max-width: 100%; align-self: end; display: block; }
+      .compagni h3 { font-family: var(--display); font-weight: 700; font-size: 17px; margin-top: 12px; }
+      .compagni p { font-size: 13.5px; color: var(--soffusa); }
+
+      /* ── Per i genitori ───────────────────────────────────────────────────────── */
+      .genitori { background: var(--fonda); border-block: 1px solid var(--filo); }
+      .genitori dl { margin-top: 38px; display: grid; gap: 1px; background: var(--filo); }
+      @media (min-width: 760px) { .genitori dl { grid-template-columns: 1fr 1fr; } }
+      .genitori div { background: var(--fonda); padding: 24px 0; }
+      @media (min-width: 760px) { .genitori div { padding: 26px 30px 26px 0; } }
+      .genitori dt { font-family: var(--display); font-weight: 700; font-size: 16.5px; color: var(--oro); }
+      .genitori dd { margin-top: 6px; font-size: 15px; color: var(--soffusa); line-height: 1.55; }
+
+      /* ── Chiusura ─────────────────────────────────────────────────────────────── */
+      .chiusura { text-align: center; background: radial-gradient(100% 130% at 50% 120%, var(--alto) 0%, var(--notte) 62%); }
+      .chiusura h2 { max-width: 16em; margin-inline: auto; }
+      .chiusura .richiamo { display: flex; flex-direction: column; align-items: center; }
+
+      /* ── Piede ────────────────────────────────────────────────────────────────── */
+      footer {
+        border-top: 1px solid var(--filo);
+        padding-block: 32px 40px;
+        font-size: 14.5px;
+        color: var(--soffusa);
+      }
+      footer .dentro { display: flex; flex-wrap: wrap; gap: 10px 28px; align-items: baseline; }
+      footer a { text-decoration-color: var(--filo); text-underline-offset: 3px; }
+      footer a:hover { text-decoration-color: var(--oro); }
+      footer small { margin-left: auto; }
     </style>
   </head>
+
   <body>
-    <!-- Branded splash: shown until React mounts, removes itself -->
-    <div id="mm-splash" style="position:fixed;inset:0;background:radial-gradient(125% 85% at 50% -8%,#2D1B54 0%,#1B1035 52%,#140B29 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .35s ease">
-      <svg width="96" height="96" viewBox="0 0 64 64" aria-hidden="true" style="animation:mmFloat 2.4s ease-in-out infinite"><circle cx="32" cy="32" r="30" fill="none" stroke="#FFC24B" stroke-opacity=".5" stroke-width="1.6" stroke-dasharray="4 3"/><circle cx="32" cy="32" r="26" fill="none" stroke="#6DE0C6" stroke-opacity=".45" stroke-width="1"/><circle cx="32" cy="32" r="20" fill="#FFC24B"/><path d="M32.0,20.0L35.2,28.6L44.4,29.0L37.1,34.7L39.6,43.5L32.0,38.4L24.4,43.5L26.9,34.7L19.6,29.0L28.8,28.6Z" fill="#2D1B54" stroke="#2D1B54" stroke-width="1.4" stroke-linejoin="round"/></svg>
-      <div style="font-family:'Grandstander','Fredoka One',system-ui,sans-serif;font-weight:800;font-size:34px;color:#FFC24B;margin-top:16px;letter-spacing:0.5px">Magistella</div>
-      <div style="font-family:'Nunito',system-ui,sans-serif;font-size:14px;color:rgba(246,236,212,.6);margin-top:6px">Il mondo magico ti aspetta</div>
-      <style>@keyframes mmFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}@media (prefers-reduced-motion:reduce){#mm-splash svg{animation:none!important}}</style>
-    </div>
-    <main id="root"></main>
-    <script type="module" src="/src/main.jsx"></script>
-    <script>
-      // Hide splash as soon as React commits its first render — NOT on window.load,
-      // which waits for every subresource (fonts, SW, JS) and would keep the splash
-      // (and its infinite bounce) covering the viewport for many seconds, inflating
-      // LCP/TTI and delaying perceived readiness.
-      (function () {
-        var root = document.getElementById('root');
-        function dismiss() {
-          var s = document.getElementById('mm-splash');
-          if (s) { s.style.opacity = '0'; setTimeout(function () { s.remove(); }, 400); }
-        }
-        function whenPainted() {
-          // double rAF: let the real content paint before fading the splash out
-          requestAnimationFrame(function () { requestAnimationFrame(dismiss); });
-        }
-        if (root && root.childElementCount > 0) { whenPainted(); return; }
-        if (root) {
-          var mo = new MutationObserver(function () {
-            if (root.childElementCount > 0) { mo.disconnect(); whenPainted(); }
-          });
-          mo.observe(root, { childList: true });
-        }
-        // Safety net: never trap the user behind the splash
-        setTimeout(dismiss, 8000);
-      })();
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js').then(reg => {
-            reg.addEventListener('updatefound', () => {
-              const nw = reg.installing;
-              nw.addEventListener('statechange', () => {
-                if (nw.state === 'installed' && navigator.serviceWorker.controller) {
-                  const b = document.createElement('button');
-                  b.id = 'mm-update-banner';
-                  b.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:linear-gradient(135deg,#FFC24B,#F6A93B);color:#1B1035;text-align:center;padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px));font-family:Nunito,system-ui,sans-serif;font-size:15px;font-weight:800;z-index:99999;cursor:pointer;border:0;width:100%';
-                  b.type = 'button';
-                  b.textContent = 'Aggiornamento disponibile — tocca per ricaricare';
-                  b.onclick = () => { nw.postMessage({type:'SKIP_WAITING'}); location.reload(); };
-                  document.body.appendChild(b);
-                }
-              });
-            });
-          }).catch(() => {});
-        });
-      }
-    </script>
+    <header class="testata dentro">
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <circle cx="32" cy="32" r="20" fill="#FFC24B" />
+        <path d="M32 20l3.2 8.6 9.2.4-7.3 5.7 2.5 8.8L32 38.4l-7.6 5.1 2.5-8.8-7.3-5.7 9.2-.4z" fill="#2D1B54" stroke="#2D1B54" stroke-width="1.4" stroke-linejoin="round" />
+      </svg>
+      <b>Magistella</b>
+    </header>
+
+    <main>
+      <section class="apertura">
+        <div class="dentro">
+          <div>
+            <h1>Le stelle si guadagnano imparando.</h1>
+            <p class="sottotitolo">
+              Magistella è un gioco educativo italiano per bambini dai 3 agli 8 anni.
+              Otto mondi da aprire, 368 sfide di logica, numeri, parole, empatia e coding,
+              e un compagno magico che incoraggia a ogni risposta, con una voce registrata.
+            </p>
+            <p class="eta">Tre fasce d'età: 3-4, 5-6, 7-8 anni</p>
+
+            <div class="richiamo">
+              <a class="badge" href="https://play.google.com/store/apps/details?id=com.magistella.app">
+                <img src="/img/google-play-badge-it.png" alt="Disponibile su Google Play" width="646" height="250" />
+              </a>
+              <p class="avviso"><b>In arrivo su Google Play.</b> Stiamo completando i test sui dispositivi: il pulsante si accende il giorno della pubblicazione.</p>
+              <p class="gratis">Gratis, per telefoni e tablet Android.</p>
+            </div>
+          </div>
+
+          <!-- Il Sigillo di Stelle: otto frammenti, uno per ogni mondo, nei colori del gioco. -->
+          <svg class="sigillo" viewBox="0 0 500 500" role="img" aria-label="Il Sigillo di Stelle: otto frammenti in cerchio, uno per ogni mondo del gioco.">
+            <defs>
+              <radialGradient id="alone" cx="50%" cy="50%">
+                <stop offset="0%" stop-color="#FFC24B" stop-opacity=".30" />
+                <stop offset="70%" stop-color="#FFC24B" stop-opacity="0" />
+              </radialGradient>
+              <g id="astro">
+                <path d="M0 -13l3.4 8.2 8.9.7-6.8 5.8 2.1 8.7L0 6.9l-7.6 4.5 2.1-8.7-6.8-5.8 8.9-.7z" />
+              </g>
+            </defs>
+
+            <circle cx="250" cy="250" r="230" fill="url(#alone)" />
+            <g class="ruota" fill="none">
+              <circle cx="250" cy="250" r="176" stroke="#FFC24B" stroke-opacity=".34" stroke-width="1.5" stroke-dasharray="5 9" />
+              <circle cx="250" cy="250" r="150" stroke="#6DE0C6" stroke-opacity=".28" stroke-width="1" />
+            </g>
+
+            <g fill="none" stroke="#F6ECD4" stroke-opacity=".13" stroke-width="1">
+              <path d="M250 74 426 250 250 426 74 250Z" />
+              <path d="M125 125 375 125 375 375 125 375Z" />
+            </g>
+
+            <!-- I frammenti, nei colori di src/data/mondi.js -->
+            <g>
+              <use href="#astro" transform="translate(250 74)  scale(1.25)" fill="#22C55E" />
+              <use href="#astro" transform="translate(374 126) scale(1.1)"  fill="#A78BFA" />
+              <use href="#astro" transform="translate(426 250) scale(1.25)" fill="#38BDF8" />
+              <use href="#astro" transform="translate(374 374) scale(1.1)"  fill="#F97316" />
+              <use href="#astro" transform="translate(250 426) scale(1.25)" fill="#818CF8" />
+              <use href="#astro" transform="translate(126 374) scale(1.1)"  fill="#EF4444" />
+              <use href="#astro" transform="translate(74 250)  scale(1.25)" fill="#D97706" />
+              <use href="#astro" transform="translate(126 126) scale(1.1)"  fill="#06B6D4" />
+            </g>
+
+            <circle cx="250" cy="250" r="62" fill="#FFC24B" />
+            <path d="M250 208l9.9 26.6 28.4 1.2-22.5 17.5 7.7 27.3L250 264.7l-23.5 15.9 7.7-27.3-22.5-17.5 28.4-1.2z" fill="#2D1B54" stroke="#2D1B54" stroke-width="4" stroke-linejoin="round" />
+          </svg>
+        </div>
+      </section>
+
+      <section class="patti">
+        <div class="dentro">
+          <ul>
+            <li>Niente pubblicità<span>Nessun banner, nessun video, mai.</span></li>
+            <li>Niente acquisti<span>Non c'è nulla da sbloccare pagando.</span></li>
+            <li>Nessun dato raccolto<span>Niente account. I progressi restano sul dispositivo.</span></li>
+            <li>Funziona offline<span>Dopo il primo avvio si gioca senza connessione.</span></li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="blocco">
+        <div class="dentro">
+          <h2>Otto mondi che si aprono a forza di stelle</h2>
+          <p class="occhiello">
+            Ogni risposta giusta vale una stella, e le stelle aprono il mondo successivo.
+            Nessun timer che mette fretta, nessuna vita da perdere: il bambino avanza quando è pronto,
+            e le sfide sbagliate tornano a distanza di giorni finché non diventano facili.
+          </p>
+          <ul class="mondi">
+            <li><svg class="astro" viewBox="-14 -14 28 28" aria-hidden="true"><use href="#astro" fill="#22C55E"/></svg><h3>Foresta Magica</h3><p>Il punto di partenza</p></li>
+            <li><svg class="astro" viewBox="-14 -14 28 28" aria-hidden="true"><use href="#astro" fill="#A78BFA"/></svg><h3>Castello delle Nuvole</h3><p>Aperto fin da subito</p></li>
+            <li><svg class="astro" viewBox="-14 -14 28 28" aria-hidden="true"><use href="#astro" fill="#38BDF8"/></svg><h3>Oceano Luminoso</h3><p>Si apre a 15 stelle</p></li>
+            <li><svg class="astro" viewBox="-14 -14 28 28" aria-hidden="true"><use href="#astro" fill="#F97316"/></svg><h3>Mercato dei Colori</h3><p>Si apre a 30 stelle</p></li>
+            <li><svg class="astro" viewBox="-14 -14 28 28" aria-hidden="true"><use href="#astro" fill="#818CF8"/></svg><h3>Galassia Stellare</h3><p>Si apre a 50 stelle</p></li>
+            <li><svg class="astro" viewBox="-14 -14 28 28" aria-hidden="true"><use href="#astro" fill="#EF4444"/></svg><h3>Vulcano Magico</h3><p>Si apre a 70 stelle</p></li>
+            <li><svg class="astro" viewBox="-14 -14 28 28" aria-hidden="true"><use href="#astro" fill="#D97706"/></svg><h3>Biblioteca Incantata</h3><p>Si apre a 100 stelle</p></li>
+            <li><svg class="astro" viewBox="-14 -14 28 28" aria-hidden="true"><use href="#astro" fill="#06B6D4"/></svg><h3>Laboratorio Logico</h3><p>Si apre a 140 stelle</p></li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="blocco">
+        <div class="dentro">
+          <h2>Cinque compagni, una voce sola</h2>
+          <p class="occhiello">
+            Il bambino ne sceglie uno e se lo porta dietro per tutto il viaggio. Parlano tutti
+            con la stessa voce italiana registrata: nessuna sintesi del telefono che cambia timbro
+            a metà frase, e nessuna lettura che dipende dal modello di dispositivo.
+          </p>
+          <ul class="compagni">
+            <li><img src="/characters/fiamma_cutout.webp" alt="Fiamma, il drago" width="132" height="132" loading="lazy" /><h3>Fiamma</h3><p>Drago</p></li>
+            <li><img src="/characters/luna_cutout.webp" alt="Luna, l'unicorno" width="132" height="132" loading="lazy" /><h3>Luna</h3><p>Unicorno</p></li>
+            <li><img src="/characters/onde_cutout.webp" alt="Onde, il delfino" width="132" height="132" loading="lazy" /><h3>Onde</h3><p>Delfino</p></li>
+            <li><img src="/characters/volpe_cutout.webp" alt="Foglia, la volpe" width="132" height="132" loading="lazy" /><h3>Foglia</h3><p>Volpe</p></li>
+            <li><img src="/characters/pixel_cutout.webp" alt="Pixel, il robot" width="132" height="132" loading="lazy" /><h3>Pixel</h3><p>Robot</p></li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="blocco genitori">
+        <div class="dentro">
+          <h2>Quello che resta in mano a voi</h2>
+          <p class="occhiello">
+            L'area genitori è protetta da un PIN, così il bambino non ci entra per sbaglio.
+          </p>
+          <dl>
+            <div>
+              <dt>Un limite di tempo per sessione</dt>
+              <dd>Lo decidete voi, e quando scade il gioco si ferma da solo senza contrattare.</dd>
+            </div>
+            <div>
+              <dt>I progressi, abilità per abilità</dt>
+              <dd>Dove se la cava e dove fatica, con consigli pratici da fare a casa senza schermo.</dd>
+            </div>
+            <div>
+              <dt>Più profili sullo stesso dispositivo</dt>
+              <dd>Fratelli e sorelle hanno ognuno il proprio percorso, le proprie stelle e la propria età.</dd>
+            </div>
+            <div>
+              <dt>Testo grande, alto contrasto, font per la dislessia</dt>
+              <dd>E le animazioni si possono ridurre, per chi ne ha bisogno o le trova disturbanti.</dd>
+            </div>
+          </dl>
+        </div>
+      </section>
+
+      <section class="blocco chiusura">
+        <div class="dentro">
+          <h2>La prima stella si guadagna in un minuto.</h2>
+          <div class="richiamo">
+            <a class="badge" href="https://play.google.com/store/apps/details?id=com.magistella.app">
+              <img src="/img/google-play-badge-it.png" alt="Disponibile su Google Play" width="646" height="250" loading="lazy" />
+            </a>
+            <p class="avviso"><b>In arrivo su Google Play.</b> Stiamo completando i test sui dispositivi.</p>
+            <p class="gratis">Gratis, per telefoni e tablet Android.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="dentro">
+        <a href="/privacy-policy.html">Informativa privacy</a>
+        <!-- DA DECIDERE: l'indirizzo di contatto pubblico. Google Play ne chiede uno nella
+             scheda; qui è facoltativo. Meglio una casella dedicata (es. ciao@magistella.com)
+             che un indirizzo personale, perché finisce a disposizione degli spam bot. -->
+        <small>© 2026 Magistella</small>
+      </div>
+    </footer>
   </body>
 </html>

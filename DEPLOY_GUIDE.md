@@ -13,7 +13,7 @@ npm run deploy
 `npm run deploy` fa, in ordine:
 
 1. `npm run verifica` — lint, audit di esercizi e voce, build. Se qualcosa fallisce **si ferma e non pubblica**.
-2. build con base `/mondomago/`;
+2. build delle due pagine: la landing in `dist/index.html`, il gioco in `dist/app/index.html`;
 3. `gh-pages -d dist --dotfiles --nojekyll` — push sul branch `gh-pages`.
 
 I due flag non sono decorativi: senza `--dotfiles` la cartella `.well-known/`
@@ -29,7 +29,7 @@ npm run a11y      # accessibilità su tutte le schermate principali
 Gli stessi controlli girano da soli su GitHub a ogni push e a ogni Pull Request
 (`.github/workflows/ci.yml`).
 
-URL live: https://andrea85m.github.io/mondomago/
+URL live: https://magistella.com/ (landing) · https://magistella.com/app/ (il gioco)
 
 ## 2. Icone
 
@@ -98,6 +98,7 @@ BUBBLEWRAP_KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD BUBBLEWRAP_KEY_PASSWORD=$KEY_PAS
 Escono `app-release-bundle.aab` (**questo va su Play**) e `app-release-signed.apk`
 (da installare a mano su un telefono per provarlo). L'indirizzo lo decide
 `public/CNAME`: se c'è, l'app punta al dominio; se no, a `andrea85m.github.io/mondomago/`.
+Il TWA apre **`/app/`**, non la radice: sulla radice c'è la landing.
 
 ### assetlinks.json — deve stare alla radice del dominio
 
@@ -107,19 +108,35 @@ Android lo cerca **sempre** in `https://<dominio>/.well-known/assetlinks.json`. 
 il primo caricamento su Play va **aggiunta** quella di *Play Console → Test e rilascio →
 Configurazione → Integrità dell'app → Firma dell'app* (Play firma con la sua chiave).
 
-### Passare al dominio proprio
+### Il dominio — fatto il 20 settembre 2026
 
-1. Comprare il dominio (es. `magistella.com`) e nel suo DNS creare:
-   `A` @ → `185.199.108.153`, `185.199.109.153`, `185.199.110.153`, `185.199.111.153`
-   e `CNAME` www → `andrea85m.github.io`.
-2. `echo magistella.com > public/CNAME` → `npm run deploy`. Base, manifest e service worker
-   passano alla radice da soli (`vite.config.js`).
-3. Repo GitHub → Settings → Pages → Custom domain = `magistella.com`, poi **Enforce HTTPS**
-   (serve che il DNS sia propagato: da qualche minuto a qualche ora).
-4. Verifica: `curl -I https://magistella.com/` → 200 e
-   `curl https://magistella.com/.well-known/assetlinks.json` → il JSON con l'impronta.
+`magistella.com` è registrato su Register.it, il DNS punta a GitHub Pages (4 record `A`,
+4 `AAAA`, `www` in CNAME su `andrea85m.github.io`) e il certificato Let's Encrypt è emesso.
+`public/CNAME` porta il build alla radice del dominio.
+
+Per rifarlo altrove, la ricetta è questa:
+
+1. Nel DNS del dominio: `A` @ → `185.199.108.153`, `185.199.109.153`, `185.199.110.153`,
+   `185.199.111.153`; `AAAA` @ → `2606:50c0:8000::153` … `8003::153`;
+   `CNAME` www → `andrea85m.github.io.`
+2. `echo <dominio> > public/CNAME` → `npm run deploy`.
+3. Repo GitHub → Settings → Pages → Custom domain, poi **Enforce HTTPS** quando il
+   certificato è emesso (da qualche minuto a un'ora).
+4. Verifica: `curl -I https://<dominio>/` → 200 e
+   `curl https://<dominio>/.well-known/assetlinks.json` → il JSON con l'impronta.
 5. `node scripts/android-twa.mjs` e build come sopra: l'app ora punta al dominio.
-6. Aggiornare l'indirizzo della privacy in `STORE_LISTING.md` e `lighthouse:live` in `package.json`.
+
+### Le due pagine: landing e gioco
+
+- `index.html` (radice del repo) → `https://<dominio>/` — la landing, statica, è quella
+  che si condivide e che sta nel campo "Sito web" della scheda Play.
+- `app/index.html` → `https://<dominio>/app/` — il gioco, ed è **lo scope della PWA e del
+  TWA**. `public/app/sw.js` è servito da `/app/sw.js`: registrato con percorso relativo
+  prende come scope `/app/` e non tocca la landing.
+- Restano alla radice, perché servono a entrambe o le vuole Android lì: `.well-known/`,
+  `privacy-policy.html`, icone, `characters/`, `screenshots/`, `audio/`.
+- La landing ha `data-stato="prelancio"` su `<html>`: tiene il badge Google Play spento
+  finché l'app non è pubblicata. Il giorno della pubblicazione → `data-stato="live"`.
 
 ⚠️ **Il dominio è un'origine nuova**: i progressi salvati su `andrea85m.github.io` non lo
 seguono. Chi gioca già dal browser riparte da zero (GitHub reindirizza il vecchio indirizzo
@@ -166,7 +183,7 @@ L'icona è `apple-touch-icon.png`.
 ---
 
 
-## Checklist prima del lancio su Play — stato al 2026-09-19
+## Checklist prima del lancio su Play — stato al 2026-09-20
 
 **Pronto e verificato**
 - [x] Controlli verdi: lint, audit, smoke (avvio offline compreso), accessibilità 0 violazioni, CI GitHub
@@ -180,10 +197,14 @@ L'icona è `apple-touch-icon.png`.
 - [x] Chiave di caricamento creata, fuori dal repo; impronta in `assetlinks.json`
 - [x] AAB e APK firmati: `com.magistella.app`, versione 1.0.0 (1), targetSdk 36, solo permesso notifiche
 - [x] Build pronta per il dominio proprio: basta `public/CNAME` (§4)
+- [x] Rinominata da MondoMago a **Magistella** (20 set): nome, package, voce, assetlinks
+- [x] Dominio `magistella.com` comprato, DNS a GitHub Pages, HTTPS attivo (20 set)
+- [x] Landing su `/` e gioco su `/app/`, con badge Google Play ufficiale (20 set)
+- [x] Contrasto delle pasticche del selettore colori portato sopra 4.5:1 (20 set)
 
 **Da fare — serve un account o un acquisto**
 - [ ] Copia della chiave di firma in due posti
-- [ ] Dominio comprato e collegato (§4 "Passare al dominio proprio"), poi AAB rigenerato
+- [ ] **Account Google Play Developer** attivo e intestato a chi possiede il dominio
 - [ ] Play Console: scheda, contenuti, Data safety (§5 punto 2)
 - [ ] Nome sviluppatore pubblico ed email di contatto verificata dall'account Play
 - [ ] Test interno → impronta di Play App Signing in `assetlinks.json` → deploy

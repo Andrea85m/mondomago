@@ -5,7 +5,7 @@ import * as chromeLauncher from 'chrome-launcher';
 const args = process.argv.slice(2);
 // Support both --url=VALUE and --url VALUE
 const urlFlagIdx = args.findIndex(a => a === '--url' || a.startsWith('--url='));
-let URL = 'http://localhost:4173';
+let URL = 'http://localhost:4173/app/';
 if (urlFlagIdx !== -1) {
   const arg = args[urlFlagIdx];
   URL = arg.startsWith('--url=') ? arg.slice(6) : (args[urlFlagIdx + 1] || URL);
