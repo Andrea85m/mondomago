@@ -2,7 +2,10 @@
 
 Come lavorare in due sullo stesso progetto senza pestarsi i piedi.
 
-> **Aggiornata il 2026-09-13.** `src/Magistella.jsx` non è più un file unico da 7.700 righe:
+> **Aggiornata il 2026-09-21.** Il gioco si chiama **Magistella** e sta online su
+> magistella.com: nome, dominio, Play e chiave di firma sono raccontati in **§8**.
+>
+> **2026-09-13.** `src/Magistella.jsx` non è più un file unico da 7.700 righe:
 > sfide, mondi e animazioni stanno in file propri (vedi §3). Il confine fra le zone resta
 > quello di agosto, ma adesso buona parte coincide con file diversi, quindi i conflitti git
 > sono molti meno. Da questa versione lint, audit, smoke test e accessibilità girano da soli
@@ -291,6 +294,127 @@ git commit
 ```
 
 In caso di dubbio su una sfida: **due sfide diverse si tengono entrambe**, non si sceglie.
+
+---
+
+## 8. Lo stato del progetto fuori dal codice
+
+> Aggiornata il **2026-09-21**. Questa sezione esiste perché metà delle decisioni prese in
+> questi giorni non si capiscono guardando il codice, e fra tre mesi non se le ricorda nessuno.
+
+### Il nome
+
+Il gioco si chiamava **MondoMago**. È stato rinominato **Magistella** il 20 settembre 2026.
+
+Il motivo non è estetico: `mondomago.it` e `mondomago.com` sono un negozio online attivo dal
+2022 che vende repliche a tema magico, con vendite in tutta la UE. Stesso nome, stesso campo
+semantico, stesso mercato. Restava libero solo il `.app`, cioè il nome non era nostro in
+nessun mercato in cui l'app vive.
+
+`Magistella` tiene insieme la magia, le stelle — che sono già la valuta del gioco, dal design
+system "Sigillo di Stelle" fino alle soglie dei gradi in `PLAYER_LEVELS` — e, per l'orecchio
+di un genitore, *magister*.
+
+**Il package `com.magistella.app` dopo la prima pubblicazione su Play non è più modificabile.**
+
+⚠️ **Le chiavi `localStorage` sono rimaste `mondomago_*` apposta.** Sono gli identificativi
+con cui i progressi vengono salvati sul dispositivo: `mondomago_profiles_v1`,
+`mondomago_parent_v1`, `mondomago_consent`, `mondomago_a11y` e altre. Rinominarle cancella
+profili, PIN genitori e stelle di chiunque stia già usando l'app. Non sono visibili a nessuno.
+Stessa logica per `/mondomago/` in `vite.config.js`: è il percorso del repo su github.io e il
+segnaposto che il build riscrive, non il marchio.
+
+### Il dominio e il sito
+
+| Cosa | Dove |
+|---|---|
+| `magistella.com` | Registrato su **Register.it** il 20 set 2026 |
+| DNS | 4 record `A` + 4 `AAAA` verso GitHub Pages, `www` in CNAME su `andrea85m.github.io` |
+| HTTPS | Certificato Let's Encrypt emesso da GitHub, gratuito e automatico |
+| Landing | `https://magistella.com/` — `index.html` nella radice del repo |
+| Il gioco | `https://magistella.com/app/` — `app/index.html`, ed è lo scope della PWA e del TWA |
+
+Il service worker sta in `public/app/sw.js`, servito da `/app/sw.js`: registrandosi con
+percorso relativo prende come scope `/app/` e non tocca la landing. Restano alla radice le
+cose che servono a entrambe o che Android pretende lì: `.well-known/`, `privacy-policy.html`,
+icone, personaggi, screenshot, audio.
+
+La landing ha `data-stato="prelancio"` su `<html>`: tiene spento il badge Google Play finché
+l'app non è pubblicata. Il giorno della pubblicazione → `data-stato="live"`.
+
+### Google Play
+
+- App creata come **App → Istruzione** (non Gioco), pubblico **5 anni e meno + 6-8 anni**
+- Classificazione contenuti: **3 anni in su**. Il questionario IARC va compilato come
+  *Tutti gli altri tipi di app*, con **No** a interazione fra utenti, posizione, dati personali
+  a terzi, acquisti digitali e internet non filtrato. Una sola di queste su "Sì" fa uscire una
+  classificazione 13+, che poi **impedisce** di dichiarare un pubblico di bambini
+- Dichiarazioni: niente annunci, niente ID pubblicità, nessun dato raccolto, nessuna limitazione
+  di accesso
+- `public/.well-known/assetlinks.json` contiene **quattro** impronte: chiave di caricamento,
+  Play App Signing e due che Play usa per la distribuzione. Con meno di così la verifica del
+  dominio fallisce e l'app mostra la barra degli indirizzi di Chrome. Il file si rigenera dalla
+  Console, sezione *Link diretti*. **Senza** la relazione `get_login_creds`: l'app non ha login
+- Account personale → prima della produzione serve un **test chiuso con almeno 12 tester
+  iscritti per 14 giorni consecutivi**. Il test interno non fa maturare giorni
+
+### La chiave di firma — dove sta e dove NON va
+
+Sta **fuori dal repo**, in `../mondomago-android-segreti/`: `upload-keystore.jks` e
+`password.env`. L'alias dentro il keystore è `mondomago` e non si può cambiare.
+
+⚠️ **Non finisce mai su questo repo, che è pubblico.** Chi ha quel file può firmare un APK
+che Android riconosce come `com.magistella.app` verificato su `magistella.com`, perché la sua
+impronta è dichiarata in `assetlinks.json`. E git conserva la storia: cancellarla col commit
+dopo non la toglie.
+
+Si condivide da una cassaforte (gestore password con vault condiviso) o da un archivio cifrato,
+con la password su un canale diverso dal file. Con Play App Signing attivo è comunque la sola
+chiave di *caricamento*: se si perde, Google la resetta su richiesta — pratica lenta, non
+catastrofe.
+
+### Monetizzazione — i vincoli veri
+
+Oggi: **nessuna pubblicità, nessun acquisto, nessun dato raccolto**, e quattro dichiarazioni
+su Play che lo affermano. Nel codice c'è l'impalcatura freemium con
+`MONETIZATION_ENABLED = false`: `isPremium` è sempre vero, **niente è bloccato**.
+
+Prima di cambiare idea, due fatti che costano cari da scoprire dopo:
+
+1. **AdSense nelle app non si può usare.** La policy AdSense: *"Google ads may not be integrated
+   into a software application of any kind (this does not apply to AdMob)."* Un TWA mostra il
+   sito dentro l'app: è esattamente il caso vietato, e si rischia la sospensione dell'account.
+   L'unica via è **AdMob**
+2. **Per un'app rivolta solo a bambini**, le Families Policies impongono SDK "Families
+   self-certified", pubblicità **non personalizzata**, e vietano di trasmettere l'identificatore
+   pubblicitario (AAID). È l'inventario che rende meno in assoluto
+
+Aggiungere annunci rende false le dichiarazioni su Play (annunci, ID pubblicità, sicurezza dei
+dati) e obbliga a riscrivere descrizione breve e landing, che oggi dicono entrambe "senza
+pubblicità". La strada già impostata nel codice è l'altra: **monetizzare il genitore, mai il
+bambino** — report avanzati come feature premium, loop educativo sempre gratis.
+
+### Chi tiene cosa — da aggiornare quando cambia
+
+| Cosa | Chi | Nota |
+|---|---|---|
+| Repo GitHub | Andrea | Pubblico, serve anche il sito |
+| Dominio `magistella.com` | *(da confermare)* | Register.it |
+| Account Google Play | *(da confermare)* | Il nome sviluppatore è pubblico |
+| Chiave di firma | *(da confermare)* | Copia di sicurezza fuori dal Mac |
+
+Dominio e account Play in mani diverse funzionano, ma ogni volta che Play rigenera un'impronta
+serve che chi ha il dominio la pubblichi sul sito. Invitatevi a vicenda in
+*Play Console → Impostazioni → Utenti e autorizzazioni* invece di scambiarvi la password.
+
+### Decisioni ancora aperte
+
+- **Nome sviluppatore** su Play — pubblico, sotto il titolo dell'app
+- **Email di contatto** — Play la pubblica sulla scheda, non si può nascondere
+- **Indirizzo di contatto sulla landing** — oggi non c'è: meglio una casella dedicata che un
+  indirizzo personale, che i bot raccolgono
+- Se rendere anonimo il testo del pulsante "Condividi il risultato!", che oggi contiene il
+  nome del bambino
 
 ---
 
