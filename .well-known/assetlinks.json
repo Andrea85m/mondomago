@@ -8,7 +8,9 @@
       "package_name": "com.magistella.app",
       "sha256_cert_fingerprints": [
         "12:18:70:F5:FB:0B:F8:62:CA:09:6D:91:30:68:60:5A:53:4B:49:4A:D6:D2:F2:C3:F9:C9:48:0D:8F:D6:EA:84",
-        "1F:E9:F7:5D:E8:C2:25:C6:79:3A:98:11:65:3B:60:DA:4D:98:D3:03:6B:EA:B0:E8:49:DE:36:7D:6A:7A:71:A0"
+        "1F:E9:F7:5D:E8:C2:25:C6:79:3A:98:11:65:3B:60:DA:4D:98:D3:03:6B:EA:B0:E8:49:DE:36:7D:6A:7A:71:A0",
+        "50:BA:5A:C2:8C:0B:47:3F:15:D2:C0:AB:D3:EF:B5:3A:DD:A3:63:BF:58:5A:0B:44:25:64:B8:2B:6F:C7:46:29",
+        "98:97:DD:40:11:EB:2F:CD:BD:DE:5A:A8:3F:BC:A1:DD:94:4A:4D:99:EE:D2:35:C0:1D:31:EA:F9:DF:3A:8D:D4"
       ]
     }
   }
