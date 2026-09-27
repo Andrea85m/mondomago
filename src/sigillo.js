@@ -21,10 +21,10 @@ export const SG_RUNE  = "#6DE0C6";   // logica / codice
 export const SG_PARCH = "#F6ECD4";   // testo su superfici scure
 export const SG_INK   = "#1B1035";   // testo scuro su oro
 export const SG_BG    = "radial-gradient(120% 80% at 18% 10%, rgba(124,58,237,.26) 0%, transparent 46%), radial-gradient(95% 72% at 86% 6%, rgba(255,194,75,.11) 0%, transparent 42%), radial-gradient(85% 62% at 78% 96%, rgba(109,224,198,.10) 0%, transparent 46%), radial-gradient(125% 85% at 50% -8%, #2D1B54 0%, #1B1035 52%, #140B29 100%)";
-export const SG_CARD  = "rgba(45,27,84,.55)";              // superficie card indaco caldo
-export const SG_BR    = "1px solid rgba(255,194,75,.14)";  // filo d'oro sottile
-export const SG_GOLD_GRAD = "linear-gradient(135deg,#FFC24B,#F6A93B)"; // pulsanti primari
-export const SG_TILE  = "rgba(20,11,41,.5)";               // riquadri interni più scuri
+export const SG_CARD  = "linear-gradient(180deg,rgba(64,40,152,.94),rgba(38,22,92,.94))"; // card indaco pieno (restyling 3D)
+export const SG_BR    = "3px solid #27134F";                // contorno inchiostro (restyling 3D)
+export const SG_GOLD_GRAD = "linear-gradient(180deg,#FFE58A 0%,#FFCB45 45%,#FFB21E 55%,#F5A000 100%)"; // pulsanti primari, oro lucido
+export const SG_TILE  = "rgba(18,8,46,.72)";               // riquadri interni più scuri
 
 // ── Contrasto (WCAG 2.1) ──────────────────────────────────────────────────────
 // Il colore del testo si sceglie coi numeri, non a occhio: 4.5:1 è la soglia AA

@@ -4,7 +4,18 @@ import WorldScene from "./WorldScene.jsx";
 import { WorldIcon, Icon, SkillIcon, RankIcon } from "./icons.jsx";
 import SvgAsset from "./SvgAssets.jsx";
 import Emo from "./Emo.jsx";
-import { posa3d, premio3d } from "./data/grafica3d.js";
+// Restyling 3D: tessera crema con spessore e contorno inchiostro (vedi stile3d.css)
+const MG_TILE = "linear-gradient(180deg,#FFFFFF 0%,#FFF7E6 55%,#FBEACB 100%)";
+const MG_TILE_SHADOW = "inset 0 -5px 0 #E3CFA6, 0 4px 0 #27134F";
+const MG_INK = "#27134F";
+const COSMETIC_3D = { acc_bow:"magic-pink-hair-bow", hat_crown:"royal-crown", acc_glasses:"cool-sunglasses", hat_wizard:"wizard-top-hat",
+  acc_rainbow:"rainbow-arch", aura_fire:"fire-aura-ring", hat_party:"party-hat", acc_lightning:"lightning-bolt", aura_ice:"ice-crystal-aura",
+  hat_star:"golden-star", acc_moon:"silver-crescent-moon", aura_gold:"golden-sparkles", aura_legend:"legendary-golden-trophy" };
+const MG_BTN_SQ = { background:"linear-gradient(180deg,#B39BFF,#6D42F2)", border:"3px solid #27134F", boxShadow:"inset 0 3px 0 rgba(255,255,255,.35), 0 4px 0 #27134F",
+  color:"white", borderRadius:14, padding:"8px 12px", cursor:"pointer", fontSize:15, fontFamily:"'Fredoka One', sans-serif", display:"inline-flex", alignItems:"center" };
+const MG_BTN_BACK = { background:"linear-gradient(180deg,#B39BFF,#6D42F2)", border:"3px solid #27134F", boxShadow:"0 4px 0 #27134F",
+  color:"white", borderRadius:14, padding:"7px 14px", cursor:"pointer", fontSize:14, fontFamily:"'Fredoka One', sans-serif" };
+import { posa3d, premio3d, ui3d, isola3d, reliquia3d, sfondo3d } from "./data/grafica3d.js";
 import ErrorBoundary from "./ErrorBoundary.jsx";
 import canvasConfetti from "canvas-confetti";
 // Caricato a parte: la sezione Puzzle pesa ~17KB gzip e non serve finché il
@@ -1793,6 +1804,21 @@ export default function Magistella() {
     if (dailyCompletedDate !== new Date().toISOString().slice(0, 10)) startDaily();
   }, [screen, activeProfileId, childAge]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Solo in sviluppo (npm run dev): ?schermata=fine apre direttamente la ricompensa di
+  // fine mondo, per fotografarla con scripts/scatti.mjs. Nel build pubblicato non esiste.
+  useEffect(() => {
+    if (!import.meta.env.DEV || screen !== 'map' || !activeProfileId) return;
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('schermata') !== 'fine') return;
+    url.searchParams.delete('schermata');
+    window.history.replaceState(null, '', url);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- scorciatoia di sviluppo
+    setWorld(WORLDS.find(w => w.id === "foresta"));
+    setResults([{ type:"logica", ok:true }, { type:"numeri", ok:true }, { type:"empatia", ok:false }]);
+    setSessionStars(6);
+    navigate("world_end");
+  }, [screen, activeProfileId]);
+
   // Auto-save profile on any progress change
   useEffect(() => {
     if (!childName || !childAge || !companion) return;
@@ -2643,7 +2669,7 @@ export default function Magistella() {
       sectionLbl: "rgba(255,194,75,.62)",
     };
     return (
-    <div key="map" className={`${screenAnim} mm-schermo`} style={{minHeight:"100dvh",background:mt.bg,color:mt.fg,padding:22,paddingBottom:"max(env(safe-area-inset-bottom,0px),22px)",position:"relative"}}>
+    <div key="map" className={`${screenAnim} mm-schermo mg-home`} style={{minHeight:"100dvh",background:mt.bg,color:mt.fg,padding:0,paddingBottom:"calc(170px + env(safe-area-inset-bottom,0px))",position:"relative"}}>
       {G}
       {/* SigilloSky — profondità "notte incantata" (nebulose+costellazione+rune) */}
       {!youngBg && <SigilloSky />}
@@ -2671,433 +2697,139 @@ export default function Magistella() {
         </div>
       )}
       <div style={{position:"relative",zIndex:1}}>
-      {/* Seasonal banner */}
-      {season && (
-        <div className="slide-up" style={{background:`${season.color}22`,border:`1px solid ${season.color}55`,borderRadius:14,padding:"10px 14px",marginBottom:14,fontSize:12,textAlign:"center",fontWeight:700,color:mt.fg}}>
-          <span style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name={season.glyph} color={season.color} size={15} />{season.banner}</span>
-        </div>
-      )}
-      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:18}}>
-        <div style={{flex:1,minWidth:0}}>
-          <div style={{fontSize:12,color:mt.fgDim,display:"flex",alignItems:"center",gap:5}}>{isReturning ? `Bentornato, ${childName}!` : `Ciao, ${childName}!`} <Icon name="wave" color="#FFC24B" size={15} /></div>
-          <h1 style={{fontFamily:FF_DISPLAY,fontWeight:800,margin:0,fontSize:23,letterSpacing:.3,display:"flex",alignItems:"center",gap:8}}><Icon name="map" color="#FFC24B" size={24} /> I Mondi Magici</h1>
-        </div>
-        {comp && (
-          <div onClick={() => navigate("profile")}
-            role="button" aria-label="Apri il profilo del compagno" {...TASTIERA}
-            style={{textAlign:"center",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,flexShrink:0}}>
-            <div style={{position:"relative",width:72,height:72}}>
-              <CompanionAvatar c={comp} size={72} mood="idle" anim={compAnim} decorativa />
-              {!youngBg && <CompanionOrbit color={comp.color} />}
-            </div>
-            <div style={{fontFamily:FF,fontSize:13,color:comp.color}}>{comp.name}</div>
-          </div>
-        )}
-      </div>
-      {/* Time-of-day greeting */}
-      {(() => {
-        const h = new Date().getHours();
-        const t = h < 10 ? {ic:"sun",tx:"Buongiorno!"} : h < 13 ? {ic:"cloudSun",tx:"Buona mattina!"} : h < 17 ? {ic:"cloudSun",tx:"Buon pomeriggio!"} : h < 21 ? {ic:"moon",tx:"Buona sera!"} : {ic:"nightStars",tx:"Notte di avventura!"};
-        return <div style={{fontSize:12,color:mt.fgDim,marginBottom:12,fontWeight:600,display:"flex",alignItems:"center",justifyContent:"flex-end",gap:6}}><Icon name={t.ic} color="#FFC24B" size={16} />{t.tx}</div>;
-      })()}
-      {/* ── IL SIGILLO MAGICO (banner di progresso in cima) ── */}
-      {(() => {
-        const completedWorlds = SIGILLO_FRAGMENTS.filter(f =>
-          items.find(it => it.emoji === STORY_ARCS[f.worldId]?.reward_emoji)
-        );
-        const count = completedWorlds.length;
-        const isComplete = count === SIGILLO_FRAGMENTS.length;
-        return (
-          <button onClick={() => navigate("story_book")}
-            style={{
-              width:"100%",marginBottom:14,
-              background:isComplete
-                ? "linear-gradient(135deg,rgba(255,194,75,.26),rgba(255,160,40,.12))"
-                : "linear-gradient(135deg,rgba(255,194,75,.12),rgba(45,27,84,.42))",
-              border:`2px solid ${isComplete?"rgba(255,194,75,.6)":"rgba(255,194,75,.28)"}`,
-              borderRadius:22,padding:"15px 18px",
-              color:mt.fg,cursor:"pointer",
-              display:"flex",alignItems:"center",gap:16,textAlign:"left",
-              boxShadow:isComplete?"0 6px 28px rgba(255,194,75,.28)":"0 4px 20px rgba(255,194,75,.1)",
-            }}>
-            {/* Sigillo SVG */}
-            <svg width={58} height={58} viewBox="0 0 100 100"
-              className={isComplete?"sigillo-glow":""} style={{flexShrink:0}}>
-              <circle cx={50} cy={50} r={44} fill="none"
-                stroke={isComplete?"rgba(255,194,75,.6)":"rgba(255,194,75,.28)"} strokeWidth={2}/>
-              {SIGILLO_FRAGMENTS.map((f, i) => {
-                const rad = (f.angle - 90) * Math.PI / 180;
-                const x = 50 + 32 * Math.cos(rad);
-                const y = 50 + 32 * Math.sin(rad);
-                const active = !!items.find(it => it.emoji === STORY_ARCS[f.worldId]?.reward_emoji);
-                return (
-                  <circle key={i} cx={x} cy={y} r={9}
-                    fill={active ? f.color : "rgba(246,236,212,.08)"}
-                    stroke={active ? `${f.color}bb` : "rgba(246,236,212,.14)"}
-                    strokeWidth={1.5}
-                    opacity={active ? 1 : 0.5}
-                  />
-                );
-              })}
-              {/* Centro */}
-              <circle cx={50} cy={50} r={11}
-                fill={isComplete?"rgba(255,194,75,.65)":"rgba(246,236,212,.08)"}
-                stroke={isComplete?"#FFC24B":"rgba(255,194,75,.4)"} strokeWidth={2}/>
-              <text x={50} y={55} textAnchor="middle" fontSize={12} fill={mt.fg} style={{pointerEvents:"none"}}>
-                {isComplete?"✦":"✧"}
-              </text>
-            </svg>
-            <div style={{flex:1,minWidth:0}}>
-              <div style={{fontFamily:FF_DISPLAY,fontWeight:800,fontSize:16,color:isComplete?"#FFE3A6":"#FFD9A0",marginBottom:3}}>
-                Il Sigillo Magico {isComplete?"— COMPLETO!":""}
-              </div>
-              <div style={{fontSize:12,color:mt.fgDim,lineHeight:1.35}}>
-                <span style={{fontFamily:FF_NUM,fontWeight:700,color:"#FFC24B"}}>{count}/{SIGILLO_FRAGMENTS.length}</span> frammenti · {SIGILLO_STORY[count]?.slice(0,48)}…
-              </div>
-              <div style={{display:"flex",gap:5,marginTop:7,flexWrap:"wrap"}}>
-                {SIGILLO_FRAGMENTS.map((f, i) => {
-                  const active = !!items.find(it => it.emoji === STORY_ARCS[f.worldId]?.reward_emoji);
-                  return <div key={i} style={{width:9,height:9,borderRadius:"50%",background:active?f.color:"rgba(246,236,212,.15)",boxShadow:active?`0 0 5px ${f.color}99`:"none"}} />;
-                })}
-              </div>
-            </div>
-            <div style={{fontSize:20,color:"rgba(255,194,75,.6)"}}>›</div>
-          </button>
-        );
-      })()}
-      {/* ── STATS ROW ── */}
-      <div style={{display:"flex",gap:10,marginBottom:12}}>
-        {[{n:"star",v:totalStars,l:"stelle",c:"#FFC24B"},{n:"trophy",v:items.length,l:"trofei",c:"#C084FC"},{n:"coin",v:coins,l:"monete",c:"#6DE0C6"}].map((s,idx) => (
-          <div key={idx} style={{flex:1,background:mt.card,borderRadius:20,padding:"14px 8px",textAlign:"center",border:mt.cardBd}}>
-            <div style={{height:28,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name={s.n} color={s.c} size={26} /></div>
-            <div style={{fontFamily:FF_NUM,fontWeight:700,fontSize:24,color:s.c,lineHeight:1}}>{s.v}</div>
-            <div style={{fontSize:11,color:mt.fgDim,marginTop:2}}>{s.l}</div>
-          </div>
-        ))}
-        {/* Streak card */}
-        {(() => {
-          const flameCount = streak >= 7 ? 3 : streak >= 3 ? 2 : 1;
-          const today = new Date().toISOString().slice(0,10);
-          const playedToday = sessionLog.some(s => s.date === today) || sessionLog.length > 0;
-          const last7 = Array.from({length:7},(_,i) => { const d=new Date(); d.setDate(d.getDate()-6+i); return d.toISOString().slice(0,10); });
-          const playedDates = new Set(sessionLog.map(s=>s.date));
-          playedDates.add(today);
-          const streakAtRisk = streak >= 2 && !playedToday;
-          return (
-            <div style={{
-              flex:1,
-              background:streakAtRisk
-                ?(youngBg?"rgba(239,68,68,.1)":"rgba(239,68,68,.12)")
-                :(youngBg?"rgba(255,100,0,.1)":"rgba(249,115,22,.1)"),
-              borderRadius:20,padding:"10px 8px",textAlign:"center",
-              border:streakAtRisk
-                ?(youngBg?"1px solid rgba(239,68,68,.3)":"1px solid rgba(239,68,68,.3)")
-                :(youngBg?"1px solid rgba(255,100,0,.2)":"1px solid rgba(249,115,22,.2)"),
-            }}>
-              <div className={streak>=3?"streak-flame":""} style={{display:"flex",justifyContent:"center",gap:1,height:24,alignItems:"center"}}>{Array.from({length:flameCount},(_,fi) => <Icon key={fi} name="flame" color={streakAtRisk?"#F87171":"#FB923C"} size={22} />)}</div>
-              <div style={{fontFamily:FF_NUM,fontWeight:700,fontSize:24,color:streakAtRisk?"#F87171":"#FB923C",lineHeight:1}}>{streak}</div>
-              <div style={{fontSize:9,fontWeight:800,color:streakAtRisk?"#F87171":"#FB923C",opacity:.8,marginBottom:3}}>
-                {streakAtRisk?"a rischio!":streak>=7?"LEGGENDA":streak>=3?"SERIE":streak>=1?"Giorni":""}
-              </div>
-              <div style={{display:"flex",gap:3,justifyContent:"center",marginTop:3}}>
-                {last7.map(d => {
-                  const dayLbl = ["D","L","M","M","G","V","S"][new Date(d+"T12:00:00").getDay()];
-                  const played = playedDates.has(d);
-                  return (
-                    <div key={d} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
-                      <div style={{fontSize:8,fontWeight:800,color:played?"#F97316":youngBg?"rgba(0,0,0,.3)":"rgba(255,255,255,.3)",lineHeight:1}}>{dayLbl}</div>
-                      <div style={{width:10,height:10,borderRadius:"50%",background:played?"#F97316":youngBg?"rgba(0,0,0,.14)":"rgba(255,255,255,.12)"}} />
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })()}
-      </div>
-      {/* ── XP LEVEL BAR ── */}
-      {(() => {
-        return (
-          <div style={{background:mt.xpBg,border:mt.xpBd,borderRadius:20,padding:"14px 16px",marginBottom:14}}>
-            <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:mapToNext ? 10 : 0}}>
-              <span style={{display:"flex"}}><RankIcon level={PLAYER_LEVELS.indexOf(mapLvl)} color="#FFC24B" size={32} /></span>
-              <div style={{flex:1}}>
-                <div style={{fontFamily:FF,fontSize:17,color:"#FFD95A"}}>{mapLvl.title}</div>
-                {mapToNext ? <div style={{fontSize:11,opacity:.5}}>{mapToNext} stelle per <strong>{mapNextTitle}</strong></div>
-                           : <div style={{fontSize:11,color:"#FFD700",opacity:.8}}>Livello massimo! <Icon name="trophy" color="#FFC24B" size={13} style={{verticalAlign:"-2px"}} /></div>}
-              </div>
-              {allProfiles.length > 1 && (
-                <button onClick={() => navigate('profile_select')} style={{background:youngBg?"rgba(0,0,0,.07)":"rgba(255,255,255,.1)",border:youngBg?"1px solid rgba(0,0,0,.14)":"1px solid rgba(255,255,255,.2)",color:mt.fg,borderRadius:20,padding:"6px 14px",fontSize:12,cursor:"pointer",fontWeight:700}}>
-                  Cambia
-                </button>
-              )}
-            </div>
-            {mapToNext > 0 && (
-              <div>
-                <div style={{background:mt.xpBarBg,borderRadius:8,height:12,overflow:"hidden",border:youngBg?"1px solid rgba(0,0,0,.05)":"1px solid rgba(255,255,255,.06)",position:"relative"}}>
-                  <div style={{background:"linear-gradient(90deg,#E8952B,#FFC24B,#FFE3A6)",height:"100%",borderRadius:8,width:`${mapPct}%`,transition:"width 1.2s cubic-bezier(.22,1,.36,1)",boxShadow:"0 0 8px #FFC24B88"}} />
-                  {!youngBg && mapPct > 10 && <div className="xp-glint" />}
-                </div>
-                <div style={{fontSize:10,opacity:.35,marginTop:4,textAlign:"right"}}>{Math.round(mapPct)}%</div>
-              </div>
-            )}
-          </div>
-        );
-      })()}
-      {/* School mode indicator */}
-      {schoolMode && schoolCode && (
-        <div style={{background:"rgba(37,99,235,.15)",border:"1px solid rgba(37,99,235,.4)",borderRadius:12,padding:"8px 14px",marginBottom:12,fontSize:12,display:"flex",alignItems:"center",gap:8}}>
-          <span style={{display:"flex"}}><Icon name="school" color="#60A5FA" size={18} /></span>
-          <span style={{flex:1}}>Modalità Scuola attiva · Classe <strong>{schoolCode}</strong></span>
-          {schoolAssigned.length > 0 && <span style={{background:"#2563EB",color:"white",borderRadius:10,padding:"2px 8px",fontSize:10,fontWeight:900}}>{schoolAssigned.length} sfide</span>}
-        </div>
-      )}
-      {/* Il Sigillo Magico è ora un banner di progresso in cima alla mappa */}
-      {/* ── DAILY CHALLENGE ── */}
+      {/* ══ HOME 3D (restyling 27/09/2026): barra risorse, mappa a isole, GIOCA ══ */}
       {(() => {
         const today = new Date().toISOString().slice(0,10);
-        const done  = dailyCompletedDate === today;
+        const dailyDone = dailyCompletedDate === today;
+        const playedToday = sessionLog.some(s => s.date === today) || sessionLog.length > 0;
+        const streakAtRisk = streak >= 2 && !playedToday;
+        const sigilloCount = SIGILLO_FRAGMENTS.filter(f => items.find(it => it.emoji === STORY_ARCS[f.worldId]?.reward_emoji)).length;
+        const hasW = (w) => !!items.find(it => it.emoji === STORY_ARCS[w.id]?.reward_emoji);
+        const current = unlockedWorlds.find(w => w.unlocked && !hasW(w)) || unlockedWorlds.find(w => w.unlocked);
+        const startFulmine = () => {
+          // Solo formati "una domanda, quattro bottoni": la Fulmine renderizza visual+prompt+options.
+          // Le sole visual_tap si fermano a 7 anni → a 8 anni il pool restava vuoto e la sfida
+          // partiva senza domande; multiple_choice copre la fascia alta.
+          const RAPID = new Set(["visual_tap", "multiple_choice"]);
+          const pool = Object.values(ALL_CHALLENGES).flat().filter(c =>
+            RAPID.has(c.format) && Array.isArray(c.options) && c.options.length >= 2 &&
+            c.ageMin <= (childAge||5) && c.ageMax >= (childAge||5));
+          const shuffled = [...pool].sort(() => Math.random() - 0.5);
+          setFulminoPool(shuffled); setFulminoCi(0); setFulminoScore(0); setFulminoTime(60); setFulminoRunning(false);
+          navigate("fulmine");
+        };
+        const h = new Date().getHours();
+        const saluto = h < 13 ? "Buongiorno" : h < 18 ? "Buon pomeriggio" : "Buonasera";
+        // mappa a zig-zag dall'alto: il primo mondo in cima, così quello da giocare si vede subito
+        const ROW = 150;
+        const nodes = unlockedWorlds.map((w, i) => ({ w, i, x: i % 2 ? 74 : 26, y: 125 + i * ROW }));
+        const mapH = 75 + unlockedWorlds.length * ROW;
+        const pathD = nodes.map((n, k) => {
+          if (k === 0) return `M ${n.x} ${n.y}`;
+          const p = nodes[k - 1]; const my = (p.y + n.y) / 2;
+          return `C ${p.x} ${my}, ${n.x} ${my}, ${n.x} ${n.y}`;
+        }).join(" ");
+        const tabs = [["map-with-a-red-pin","Mondi",null],["jigsaw-puzzle-piece","Puzzle","puzzle"],["bar-chart-report","Skill","skills"],["parent-shield-with-heart","Famiglia","family"],["crown","Look","cosmetics"]];
         return (
-          <button onClick={done ? undefined : startDaily}
-            style={{width:"100%",marginBottom:12,
-              background:done
-                ? "rgba(255,255,255,.04)"
-                : "linear-gradient(135deg,rgba(255,217,90,.18),rgba(255,122,0,.12))",
-              border:`2px solid ${done?"rgba(255,255,255,.08)":"rgba(255,217,90,.5)"}`,
-              borderRadius:24,padding:"16px 20px",color:"white",
-              cursor:done?"default":"pointer",
-              display:"flex",alignItems:"center",gap:16,textAlign:"left",
-              boxShadow:done?"none":"0 4px 24px rgba(255,217,90,.15)",
-              opacity:done?.6:1}}>
-            <span style={{display:"flex"}}>{done ? <Icon name="check" color="#6DE0C6" size={40} /> : <Icon name="star" color="#FFD95A" size={40} />}</span>
-            <div style={{flex:1}}>
-              <div style={{fontWeight:900,fontSize:17,marginBottom:3}}>Sfida del Giorno</div>
-              <div style={{fontSize:13,opacity:.7}}>{done?"Completata! Torna domani":"3 sfide speciali · +3 stelle bonus"}</div>
+          <>
+            <div className="mg-cielo" aria-hidden="true" style={{backgroundImage:`url(${sfondo3d("castello")})`}} />
+            {/* barra risorse */}
+            <div className="mg-hud">
+              {comp && (
+                <button className="mg-ava" onClick={() => navigate("profile")} aria-label="Apri il profilo del compagno">
+                  <CompanionAvatar c={comp} size={46} mood="idle" decorativa />
+                  <span className="mg-lvl" aria-label={`Livello ${PLAYER_LEVELS.indexOf(mapLvl) + 1}`}>{PLAYER_LEVELS.indexOf(mapLvl) + 1}</span>
+                </button>
+              )}
+              <div className="mg-res" aria-label={`${totalStars} stelle`}><img src={premio3d("star")} alt="" /><b>{totalStars}</b></div>
+              <div className="mg-res" aria-label={`${coins} monete`}><img src={premio3d("coin")} alt="" /><b>{coins}</b></div>
+              <div className={`mg-res${streakAtRisk ? " rischio" : ""}`} style={{flex:.8}} aria-label={`Serie di ${streak} giorni${streakAtRisk ? ", a rischio" : ""}`}><img src={ui3d("flame")} alt="" /><b>{streak}</b></div>
             </div>
-            {!done && <div style={{background:"linear-gradient(135deg,#FFD95A,#FFB800)",color:"#1a1a2e",borderRadius:20,padding:"6px 14px",fontSize:13,fontWeight:900,whiteSpace:"nowrap",display:"inline-flex",alignItems:"center",gap:4}}>+3 <Icon name="star" color="#1a1a2e" ink="#1a1a2e" size={13} /></div>}
-          </button>
+
+            <div style={{textAlign:"center",padding:"6px 16px 0"}}>
+              <h1 className="mg-ribbon viola"><span>I Mondi Magici</span></h1>
+              <div className="mg-saluto">{saluto}, {childName}! {isReturning ? "Bentornato nel regno." : "Dove andiamo oggi?"}</div>
+            </div>
+
+            {/* livello */}
+            <div className="mg-livello">
+              <RankIcon level={PLAYER_LEVELS.indexOf(mapLvl)} color="#FFC24B" size={30} />
+              <div style={{flex:1,minWidth:0}}>
+                <div className="t">{mapLvl.title}</div>
+                {mapToNext
+                  ? <div className="bar"><i style={{width:`${mapPct}%`}} /></div>
+                  : <div className="s">Livello massimo!</div>}
+                {mapToNext > 0 && <div className="s">{mapToNext} stelle per {mapNextTitle}</div>}
+              </div>
+              {allProfiles.length > 1 && <button className="mg-mini" onClick={() => navigate('profile_select')}>Cambia</button>}
+            </div>
+
+            {season && <div className="mg-avviso stagione" style={{borderColor:season.color}}><Icon name={season.glyph} color={season.color} size={15} />{season.banner}</div>}
+            {schoolMode && schoolCode && (
+              <div className="mg-avviso" style={{borderColor:"#60A5FA"}}><Icon name="school" color="#60A5FA" size={16} />Modalità Scuola · Classe <strong>{schoolCode}</strong>{schoolAssigned.length > 0 && <> · {schoolAssigned.length} sfide</>}</div>
+            )}
+
+            {/* tre scorciatoie */}
+            <div className="mg-quick">
+              <button className="mg-q viola" onClick={() => navigate("story_book")} aria-label={`Il Sigillo Magico, ${sigilloCount} frammenti su ${SIGILLO_FRAGMENTS.length}`}>
+                <img src={reliquia3d("magic-star")} alt="" /><b>Sigillo</b><span>{sigilloCount}/{SIGILLO_FRAGMENTS.length}</span>
+              </button>
+              <button className={`mg-q crema${dailyDone ? " fatto" : ""}`} onClick={dailyDone ? undefined : startDaily} aria-label={dailyDone ? "Sfida del Giorno completata" : "Sfida del Giorno, più 3 stelle"}>
+                {!dailyDone && <i className="mg-badge">3</i>}
+                <img src={dailyDone ? ui3d("check-mark") : ui3d("gift-box")} alt="" /><b>Del giorno</b><span>{dailyDone ? "Fatta!" : "+3 stelle"}</span>
+              </button>
+              <button className="mg-q oro" onClick={startFulmine} aria-label="Sfida Fulmine, 60 secondi">
+                <img src={premio3d("lightning-bolt")} alt="" /><b>Fulmine</b><span>60 secondi</span>
+              </button>
+            </div>
+
+            {/* mappa */}
+            <div className="mg-mappa" style={{height:mapH}}>
+              <svg className="mg-sentiero" viewBox={`0 0 100 ${mapH}`} preserveAspectRatio="none" aria-hidden="true">
+                <path d={pathD} vectorEffect="non-scaling-stroke" />
+                <path d={pathD} vectorEffect="non-scaling-stroke" className="punti" />
+              </svg>
+              {nodes.map(({ w, i, x, y }) => {
+                const has = hasW(w);
+                const locked = !w.unlocked;
+                const isCur = current && w.id === current.id;
+                const isSpot = i === 0 && !isReturning && totalStars === 0 && !mapSpotDismissed;
+                return (
+                  <div key={w.id} className={`mg-isola${locked ? " chiusa" : ""}${isCur ? " attuale" : ""}`} style={{left:`${x}%`,top:y}}>
+                    {isCur && <div className="mg-alone" />}
+                    <button onClick={() => { if (isSpot) setMapSpotDismissed(true); locked ? speak(`Questo mondo è ancora chiuso. Guadagna altre stelle per aprire ${w.name}!`) : startWorld(w); }}
+                      aria-label={locked ? `${w.name}, servono ${w.starsNeeded} stelle` : has ? `${w.name}, completato` : w.name}>
+                      <img src={isola3d(w.id)} alt="" style={{animationDelay:`${-i * 0.7}s`}} />
+                      {locked && <img className="lucchetto" src={ui3d("padlock")} alt="" />}
+                    </button>
+                    {has && <div className="mg-stelline"><img src={premio3d("star")} alt="" /><img src={premio3d("star")} alt="" /><img src={premio3d("star")} alt="" /></div>}
+                    <div className="mg-nome">{shortWorldName(w.name)}</div>
+                    {locked && w.starsNeeded > 0 && <div className="mg-serve"><img src={premio3d("star")} alt="" />{w.starsNeeded}</div>}
+                    {w.id === "laboratorio" && !has && !locked && <div className="mg-novita">NOVITÀ</div>}
+                    {isCur && comp && <img className="mg-guida" src={posa3d(comp.id, "indica")} alt="" style={{[i % 2 ? "left" : "right"]:-78}} />}
+                    {isSpot && <div className="mg-spot pop-in">Inizia da qui!</div>}
+                  </div>
+                );
+              })}
+            </div>
+
+            <button className="mg-genitori" onClick={() => navigate("parent")}>
+              <Icon name="lock" color={SG_GOLD} size={16} style={{verticalAlign:"-3px",marginRight:7}} />Area Genitori
+            </button>
+
+            {/* GIOCA + barra in basso */}
+            {current && <button className="mg-cta mg-gioca" onClick={() => startWorld(current)} aria-label={`Gioca: ${current.name}`}>GIOCA</button>}
+            <nav className="mg-tabs" aria-label="Sezioni">
+              {tabs.map(([ic, label, dest], i) => (
+                <button key={label} className={i === 0 ? "on" : ""} aria-current={i === 0 ? "page" : undefined}
+                  onClick={() => { if (dest) navigate(dest); }}>
+                  <img src={ui3d(ic)} alt="" /><span>{label}</span>
+                </button>
+              ))}
+            </nav>
+          </>
         );
       })()}
-      {/* ── SFIDA FULMINE ── */}
-      <button onClick={() => {
-        // Solo formati "una domanda, quattro bottoni": la Fulmine renderizza visual+prompt+options.
-        // Le sole visual_tap si fermano a 7 anni → a 8 anni il pool restava vuoto e la sfida
-        // partiva senza domande; multiple_choice copre la fascia alta.
-        const RAPID = new Set(["visual_tap", "multiple_choice"]);
-        const pool = Object.values(ALL_CHALLENGES).flat().filter(c =>
-          RAPID.has(c.format) && Array.isArray(c.options) && c.options.length >= 2 &&
-          c.ageMin <= (childAge||5) && c.ageMax >= (childAge||5));
-        const shuffled = [...pool].sort(() => Math.random() - 0.5);
-        setFulminoPool(shuffled); setFulminoCi(0); setFulminoScore(0); setFulminoTime(60); setFulminoRunning(false);
-        navigate("fulmine");
-      }} className="pulse"
-        style={{width:"100%",marginBottom:16,
-          background:"linear-gradient(135deg,#F59E0B,#FBBF24)",
-          border:"none",borderRadius:24,padding:"16px 20px",
-          color:"#1a1a2e",cursor:"pointer",
-          display:"flex",alignItems:"center",gap:16,textAlign:"left",fontWeight:900,
-          boxShadow:"0 6px 28px rgba(251,191,36,.4)"}}>
-        <span style={{display:"flex"}}><Icon name="bolt" color="#1a1a2e" size={40} /></span>
-        <div style={{flex:1}}>
-          <div style={{fontSize:17}}>Sfida Fulmine!</div>
-          <div style={{fontSize:12,fontWeight:700,opacity:.65}}>60 secondi · rispondi più che puoi!</div>
-        </div>
-        <div style={{background:"rgba(0,0,0,.15)",borderRadius:20,padding:"5px 14px",fontSize:13,fontWeight:900}}>GO!</div>
-      </button>
-      {/* ── NAV TABS ── */}
-      {/* Da 4 tab a 5 con l'arrivo di Puzzle: spazi e corpo del testo scendono,
-          altrimenti "Famiglia" va a capo su uno schermo da 360px. */}
-      <div style={{display:"flex",gap:6,marginBottom:20}}>
-        {[[NavMap,"Mondi"],[NavPuzzle,"Puzzle"],[NavBrain,"Skill"],[NavFamily,"Famiglia"],[NavSparkle,"Look"]].map(([Icon,label],i) => (
-          <button key={i} onClick={() => {
-            if(i===1) navigate("puzzle");
-            else if(i===2) navigate("skills");
-            else if(i===3) navigate("family");
-            else if(i===4) navigate("cosmetics");
-          }}
-            style={{
-              flex:1,
-              background:i===0?mt.tabAct:mt.tabInact,
-              border:i===0?mt.tabActBd:mt.tabInactBd,
-              borderRadius:16,padding:"13px 3px",minHeight:58,
-              color:i===0?mt.tabActFg:mt.tabInactFg,
-              fontFamily:FF,fontSize:10.5,letterSpacing:-.2,whiteSpace:"nowrap",cursor:"pointer",
-              display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:3,
-            }}>
-            <Icon c={i===0?mt.tabActFg:mt.tabInactFg} s={21}/>
-            <div>{label}</div>
-          </button>
-        ))}
-      </div>
-      {/* [A2] Visual path map */}
-      <div style={{fontSize:11,fontWeight:800,letterSpacing:1,marginBottom:10,color:mt.sectionLbl,display:"flex",alignItems:"center",gap:6}}><Icon name="map" color="#FFC24B" size={14} /> MONDI</div>
-      <div className="h-scroll" style={{overflowX:"auto",overflowY:"visible",paddingBottom:12,marginBottom:4}}>
-        <div style={{display:"flex",gap:0,alignItems:"center",minWidth: unlockedWorlds.length * 106 + 40, padding:"16px 12px 8px"}}>
-          {unlockedWorlds.map((w, i) => {
-            const a   = STORY_ARCS[w.id];
-            const has = items.find(it => it.emoji === a?.reward_emoji);
-            const starsEarned = has ? 3 : 0;
-            const isLast = i === unlockedWorlds.length - 1;
-            return (
-              <div key={w.id} style={{display:"flex",alignItems:"center"}}>
-                {/* World node */}
-                <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:5,width:96}}>
-                  <button onClick={() => startWorld(w)} disabled={!w.unlocked}
-                    aria-label={w.unlocked ? w.name : `${w.name}, ancora chiuso`}
-                    className={w.unlocked ? "pop-in" : ""}
-                    style={{
-                      width:72, height:72, borderRadius:"50%",
-                      background:w.unlocked?`radial-gradient(circle at 35% 32%,${w.color}55,${w.color}88)`:
-                                            "rgba(255,255,255,.08)",
-                      border:`3px solid ${w.unlocked?w.color+"aa":"rgba(255,255,255,.15)"}`,
-                      boxShadow:w.unlocked?(has?`0 0 14px ${w.color}55,0 4px 12px rgba(0,0,0,.4)`:`0 4px 14px ${w.color}33,0 4px 12px rgba(0,0,0,.3)`):"none",
-                      cursor:w.unlocked?"pointer":"default",
-                      display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
-                      fontSize:32, padding:0, position:"relative",
-                      transform:w.unlocked?"scale(1)":"scale(0.88)",
-                      transition:"transform .2s",
-                      animationDelay:`${i*.05}s`,
-                    }}>
-                    {/* Illustrated scene medallion (a window into the world) */}
-                    {w.unlocked && (
-                      <div className="ws-static" style={{position:"absolute",inset:0,borderRadius:"50%",overflow:"hidden"}} aria-hidden="true">
-                        <WorldScene worldId={w.id} variant="card" />
-                        <div style={{position:"absolute",inset:0,background:`radial-gradient(circle at 50% 40%, transparent 30%, rgba(20,11,41,.35) 72%, rgba(20,11,41,.72) 100%), linear-gradient(0deg, ${w.color}33, transparent 60%)`}} />
-                      </div>
-                    )}
-                    <span style={{display:"flex",position:"relative",zIndex:1,filter:w.unlocked?"drop-shadow(0 1px 4px rgba(0,0,0,.85))":"none"}}>{w.unlocked ? <WorldIcon id={w.id} color="#F6ECD4" size={36} /> : <Icon name="lock" color={w.color} size={34} />}</span>
-                    {w.id === "laboratorio" && !has && (
-                      <div aria-label="Novità: mondo del coding" style={{position:"absolute",top:-13,left:"50%",transform:"translateX(-50%)",
-                        background:"linear-gradient(90deg,#06B6D4,#A855F7)",color:"white",borderRadius:10,
-                        padding:"2px 7px",fontSize:8.5,fontWeight:900,letterSpacing:.3,whiteSpace:"nowrap",
-                        border:"1.5px solid white",boxShadow:"0 2px 8px rgba(168,85,247,.5)",zIndex:3}}>
-                        NOVITÀ
-                      </div>
-                    )}
-                    {has && <div style={{position:"absolute",top:-6,right:-6,background:w.color,borderRadius:"50%",width:20,height:20,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,border:"2px solid white"}}>✓</div>}
-                    {!w.unlocked && w.starsNeeded > 0 && (
-                      <div style={{position:"absolute",bottom:-10,left:"50%",transform:"translateX(-50%)",
-                        background:youngBg?"rgba(255,255,255,.9)":"rgba(0,0,0,.8)",border:`1px solid ${w.color}44`,
-                        borderRadius:10,padding:"1px 6px",fontSize:9,color:youngBg?"#333":"rgba(255,255,255,.7)",whiteSpace:"nowrap"}}>
-                        <Icon name="star" color="#FFC24B" size={9} style={{verticalAlign:"-1px",marginRight:3}} />{w.starsNeeded}
-                      </div>
-                    )}
-                  </button>
-                  <div style={{fontFamily:FF,fontSize:11,color:w.unlocked?mt.wNodeTxt:mt.wNodeLocked,textAlign:"center",lineHeight:1.2,maxWidth:90}}>
-                    {shortWorldName(w.name)}
-                  </div>
-                  {/* Stars earned */}
-                  <div style={{display:"flex",gap:1,height:12}}>
-                    {[0,1,2].map(si => (
-                      <span key={si} style={{display:"flex",opacity:si < starsEarned ? 1 : 0.22}}><Icon name="star" color="#FFC24B" size={11} /></span>
-                    ))}
-                  </div>
-                </div>
-                {/* Connector path between nodes */}
-                {!isLast && (
-                  <div style={{width:22,height:4,marginBottom:22,borderRadius:3,
-                    background: unlockedWorlds[i+1]?.unlocked
-                      ? `linear-gradient(90deg,${w.color}88,${unlockedWorlds[i+1].color}88)`
-                      : mt.wNodeConn,
-                    flexShrink:0}} />
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-      {/* Selected world detail card */}
-      {(() => {
-        // Show detail on tap — use a simpler "expand on click" via a separate state-less approach:
-        // Just show all worlds as scrollable cards below the path
-        return null;
-      })()}
-      {/* ── WORLD CARDS ── */}
-      <div style={{fontSize:12,fontWeight:800,letterSpacing:1.5,marginBottom:12,textTransform:"uppercase",color:mt.sectionLbl}}>✦ I tuoi Mondi</div>
-      <div style={{display:"flex",flexDirection:"column",gap:14,marginBottom:8}}>
-        {unlockedWorlds.map((w,i) => {
-          const a   = STORY_ARCS[w.id];
-          const has = items.find(it => it.emoji === a?.reward_emoji);
-          const locked = !w.unlocked;
-          const isSpot = i === 0 && !isReturning && totalStars === 0 && !mapSpotDismissed;
-          return (
-            <button key={w.id} onClick={() => { if (isSpot) setMapSpotDismissed(true); locked ? speak(`Questo mondo è ancora chiuso. Guadagna altre stelle per aprire ${w.name}!`) : startWorld(w); }}
-              className={`slide-up${locked?"":" world-card-btn"}${isSpot?" pulse":""}`}
-              disabled={locked}
-              style={{
-                background:locked ? "rgba(20,11,41,.55)" : mt.wCard,
-                border:`2px solid ${locked?"rgba(246,236,212,.1)":has?w.color+"cc":w.color+"55"}`,
-                borderRadius:28,padding:"18px 20px",minHeight:96,
-                cursor:locked?"default":"pointer",
-                color:mt.fg,
-                display:"flex",alignItems:"center",gap:18,textAlign:"left",
-                boxShadow:locked?"none":has
-                  ? `0 8px 28px ${w.color}44`
-                  : `0 4px 20px ${w.color}28`,
-                opacity:locked?.72:1,
-                animationDelay:`${i*.06}s`,
-                position:"relative",overflow:"hidden",
-                transition:"transform .16s ease, box-shadow .16s ease",
-              }}>
-              {/* WorldScene illustrated hero — full presence for unlocked, dark mystery preview for locked */}
-              <div style={{position:"absolute",inset:0,borderRadius:26,overflow:"hidden",opacity:locked?.3:.55,pointerEvents:"none",filter:locked?"grayscale(.5) brightness(.7)":"none"}}><WorldScene worldId={w.id} variant="card" /></div>
-              {/* Left→right scrim: text stays crisp on the left, scene glows through on the right */}
-              <div style={{position:"absolute",inset:0,borderRadius:26,pointerEvents:"none",background:locked
-                ? "linear-gradient(90deg, rgba(20,11,41,.82) 0%, rgba(20,11,41,.72) 100%)"
-                : "linear-gradient(90deg, rgba(20,11,41,.92) 0%, rgba(20,11,41,.64) 40%, rgba(20,11,41,.24) 72%, transparent 100%)"}} />
-              {/* Shimmer accent for completed */}
-              {has && !locked && <div style={{position:"absolute",top:0,right:0,width:60,height:"100%",background:`linear-gradient(90deg,transparent,${w.color}22)`,borderRadius:"0 26px 26px 0",pointerEvents:"none"}} />}
-              {/* Animated shimmer sweep */}
-              {!locked && !youngBg && <div className="world-shimmer" style={{animationDelay:`${i*0.55}s`}} />}
-              {/* World icon */}
-              <div style={{
-                width:68,height:68,borderRadius:20,flexShrink:0,
-                background:locked?"rgba(255,255,255,.06)":`${w.color}22`,
-                border:`2px solid ${locked?"rgba(255,255,255,.1)":w.color+"55"}`,
-                display:"flex",alignItems:"center",justifyContent:"center",
-                fontSize:34,position:"relative",zIndex:1,
-                boxShadow:locked?"none":`0 0 20px ${w.color}44`,
-              }}>
-                {locked ? <Icon name="lock" color={w.color} size={34} /> : <WorldIcon id={w.id} color={w.color} size={40} />}
-                {has && !locked && <div style={{position:"absolute",bottom:-6,right:-6,fontSize:18,lineHeight:1,filter:"drop-shadow(0 1px 3px rgba(0,0,0,.5))"}}>{a?.reward_emoji}</div>}
-              </div>
-              {/* Content */}
-              <div style={{flex:1,minWidth:0,position:"relative",zIndex:1}}>
-                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
-                  <span style={{fontWeight:900,fontSize:16,color:locked?mt.fgDimmer:mt.fg}}>{w.name}</span>
-                  {has && <span style={{background:`${w.color}33`,color:w.color,fontSize:10,fontWeight:900,borderRadius:20,padding:"2px 8px",border:`1px solid ${w.color}55`}}>✓ COMPLETO</span>}
-                </div>
-                {locked
-                  ? <div style={{fontSize:12,color:w.color,opacity:.7,fontWeight:700}}><Icon name="lock" color={w.color} size={12} style={{verticalAlign:"-2px"}} /> Servono {w.starsNeeded} <Icon name="star" color={w.color} size={12} style={{verticalAlign:"-2px"}} /> per sbloccare</div>
-                  : has
-                    ? <div style={{fontSize:12,color:youngBg?"#D97706":"#FFD95A",fontWeight:700,display:"flex",alignItems:"center",gap:6}}><Icon name="trophy" color={youngBg?"#D97706":"#FFD95A"} ink={youngBg?"#3A2A10":undefined} size={13} />{a?.reward_name}</div>
-                    : <div style={{fontSize:12,color:mt.fgDim,display:"flex",alignItems:"center",gap:6}}><Icon name="target" color={mt.fgDim} size={13} />~6 sfide · {young?"visive":"interattive"}</div>}
-                {/* Stars */}
-                {!locked && (
-                  <div style={{display:"flex",gap:4,marginTop:6}}>
-                    {[0,1,2].map(si => (
-                      <span key={si} style={{display:"flex",opacity:si<(has?3:0)?1:.22}}><Icon name="star" color="#FFC24B" size={14} /></span>
-                    ))}
-                  </div>
-                )}
-              </div>
-              {/* Arrow */}
-              {!locked && <div style={{color:youngBg?w.color:w.color,fontSize:22,opacity:youngBg?.9:.8,flexShrink:0,position:"relative",zIndex:1}}>›</div>}
-              {/* First-visit spotlight tooltip */}
-              {isSpot && (
-                <div className="pop-in" style={{position:"absolute",top:-42,left:"50%",transform:"translateX(-50%)",background:"white",color:"#1a1a2e",borderRadius:20,padding:"6px 16px",fontSize:12,fontWeight:900,whiteSpace:"nowrap",boxShadow:"0 4px 16px rgba(0,0,0,.25)",zIndex:20,pointerEvents:"none"}}>
-                  Inizia da qui!
-                  <div style={{position:"absolute",bottom:-6,left:"50%",transform:"translateX(-50%)",width:0,height:0,borderLeft:"6px solid transparent",borderRight:"6px solid transparent",borderTop:"6px solid white"}} />
-                </div>
-              )}
-            </button>
-          );
-        })}
-      </div>
-      <button onClick={() => navigate("parent")}
-        style={{width:"100%",marginTop:10,background:mt.parentBtn,border:mt.parentBd,borderRadius:18,padding:"13px",color:mt.parentFg,fontSize:13,cursor:"pointer",fontWeight:700}}>
-        <Icon name="lock" color={SG_GOLD} size={18} style={{verticalAlign:"-3px",marginRight:7}} />Area Genitori
-      </button>
       </div>{/* /relative z-1 */}
     </div>
     );
@@ -3108,7 +2840,7 @@ export default function Magistella() {
     <div key="coplay" className={`${screenAnim} mm-schermo`} style={{minHeight:"100dvh",background:SG_BG,color:"#F6ECD4",padding:28,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center",position:"relative",isolation:"isolate"}}>
       {G}
       <SigilloSky zIndex={-1} />
-      <button onClick={() => navigate("map")} style={{position:"absolute",top:20,left:20,background:"rgba(255,255,255,.1)",border:"none",color:"white",borderRadius:50,padding:"8px 16px",cursor:"pointer",fontSize:14,fontWeight:700}}>← Esci</button>
+      <button onClick={() => navigate("map")} style={{...MG_BTN_BACK,position:"absolute",top:20,left:20}}>← Esci</button>
       <div className="bounce" style={{marginBottom:12,display:"flex",justifyContent:"center"}}><Icon name="insieme" color={SG_GOLD} size={68} /></div>
       <h1 className="slide-up" style={{fontFamily:FF_DISPLAY,fontSize:25,fontWeight:900,marginBottom:10,color:SG_GOLD}}>
         Modalità Co-Gioco
@@ -3146,7 +2878,7 @@ export default function Magistella() {
       <div style={{position:"absolute",inset:0,overflow:"hidden",zIndex:0}}><WorldScene worldId={world?.id} variant="full" /></div>
       <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg,rgba(10,8,26,.55) 0%,rgba(10,8,26,.25) 50%,rgba(10,8,26,.75) 100%)",zIndex:1,pointerEvents:"none"}} />
       {G}
-      <button onClick={() => navigate("map")} style={{position:"absolute",top:20,left:20,background:"rgba(255,255,255,.15)",border:"none",color:"white",borderRadius:50,padding:"8px 16px",cursor:"pointer",fontSize:14,fontWeight:700,zIndex:2}}>← Mappa</button>
+      <button onClick={() => navigate("map")} style={{...MG_BTN_BACK,position:"absolute",top:20,left:20,zIndex:2}}>← Mappa</button>
       <div className="float" style={{marginBottom:16,position:"relative",zIndex:2,display:"flex"}}><WorldIcon id={world.id} color={world.color} size={76} /></div>
       <div style={{position:"relative",zIndex:2,display:"flex",flexDirection:"column",alignItems:"center",width:"100%"}}>
         <h1 className="slide-up" style={{fontFamily:FF_DISPLAY,fontSize:27,fontWeight:900,marginBottom:14,color:SG_GOLD}}>{arc.intro_title}</h1>
@@ -3279,7 +3011,7 @@ export default function Magistella() {
                 return (
                 <button key={idx} onClick={() => fulminoAnswer(idx)}
                   className="ans-btn"
-                  style={{background:"rgba(255,255,255,.09)",border:"3px solid rgba(255,255,255,.18)",borderRadius:22,minHeight:88,padding:wordy?"10px 12px":0,fontSize:wordy?(String(opt).length>12?15:18):42,fontWeight:wordy?800:400,lineHeight:1.25,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"white"}}>
+                  style={{background:MG_TILE,boxShadow:MG_TILE_SHADOW,color:MG_INK,border:`3px solid ${MG_INK}`,borderRadius:22,minHeight:88,padding:wordy?"10px 12px":0,fontSize:wordy?(String(opt).length>12?15:18):42,fontWeight:wordy?800:400,lineHeight:1.25,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>
                   <Emo text={opt} />
                 </button>
                 );
@@ -3472,7 +3204,7 @@ export default function Magistella() {
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,position:"relative",zIndex:1}}>
           <div style={{display:"flex",gap:6}}>
             <button onClick={() => setExitConfirm(true)}
-              aria-label="Esci dalla sfida" style={{background:youngBg?"rgba(0,0,0,.08)":"rgba(255,255,255,.1)",border:"none",color:youngBg?"#444":"white",borderRadius:12,padding:"11px 16px",cursor:"pointer",fontSize:14}}>
+              aria-label="Esci dalla sfida" style={MG_BTN_SQ}>
               ← Esci
             </button>
             <button onClick={() => {
@@ -3483,13 +3215,13 @@ export default function Magistella() {
                 : ch.prompt || ch.question;
               speak(t);
             }}
-              style={{background:youngBg?"rgba(0,0,0,.08)":"rgba(255,255,255,.1)",border:"none",color:youngBg?"#444":"white",borderRadius:12,padding:"11px 14px",cursor:"pointer",fontSize:17}}
+              style={{...MG_BTN_SQ,background:"linear-gradient(180deg,#A8E8FF,#1E97DA)",padding:"5px 8px"}}
               title="Rileggi la domanda" aria-label="Rileggi la domanda">
-              <Icon name="audio" color={youngBg?"#444":"#F6ECD4"} size={19} />
+              <img src={ui3d("speaker-with-sound-waves")} alt="" style={{width:26,height:26}} />
             </button>
             <button onClick={handlePause}
-              aria-label="Metti in pausa" style={{background:youngBg?"rgba(0,0,0,.08)":"rgba(255,255,255,.1)",border:"none",color:youngBg?"#444":"white",borderRadius:12,padding:"11px 14px",cursor:"pointer",fontSize:17}}>
-              ⏸
+              aria-label="Metti in pausa" style={{...MG_BTN_SQ,padding:"5px 8px"}}>
+              <img src={ui3d("pause-button")} alt="" style={{width:26,height:26}} />
             </button>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:10,fontSize:14,position:"relative"}}>
@@ -3740,10 +3472,10 @@ export default function Magistella() {
               {ch.items.map((item, idx) => (
                 <button key={idx} onClick={(e) => answerMC(idx, e)}
                   aria-label={`Risposta ${idx + 1}: ${item}`}
-                  style={{background:youngBg?"rgba(0,0,0,.04)":"rgba(246,236,212,.08)",
-                    border:`2px solid ${youngBg?"rgba(0,0,0,.10)":"rgba(255,194,75,.34)"}`,
+                  style={{background:MG_TILE,boxShadow:MG_TILE_SHADOW,
+                    border:`3px solid ${MG_INK}`,
                     borderRadius:16,padding:"14px 16px",
-                    color:youngBg?"#1a1a2e":"white",
+                    color:MG_INK,
                     fontSize:youngBg?16:15,fontWeight:700,cursor:"pointer",
                     textAlign:"left",lineHeight:1.4,transition:"all .15s"}}>
                   <Emo text={item} />
@@ -3822,7 +3554,7 @@ export default function Magistella() {
             {ch.choices.map((c,idx) => (
               <button key={idx} onClick={() => answerStory(c)}
                 aria-label={`Scelta ${idx + 1}: ${c.text}`}
-                style={{background:"rgba(246,236,212,.08)",border:"2px solid rgba(255,194,75,.34)",borderRadius:22,padding:"20px 22px",color:"white",fontSize:17,fontWeight:700,cursor:"pointer",textAlign:"left",lineHeight:1.45}}>
+                style={{background:MG_TILE,boxShadow:MG_TILE_SHADOW,border:`3px solid ${MG_INK}`,borderRadius:22,padding:"20px 22px",color:MG_INK,fontSize:17,fontWeight:800,cursor:"pointer",textAlign:"left",lineHeight:1.45}}>
                 {c.text}
               </button>
             ))}
@@ -3847,9 +3579,10 @@ export default function Magistella() {
                 return (
                   <button key={idx} onClick={() => answerSeq(idx)}
                     aria-label={`Passo: ${item}${tapped ? `, selezionato in posizione ${tapIdx + 1}` : ""}`}
-                    style={{background:tapped?"rgba(109,224,198,.28)":seqError?"rgba(239,68,68,.15)":"rgba(246,236,212,.08)",
-                      border:`2.5px solid ${tapped?"#6DE0C6":"rgba(255,194,75,.34)"}`,
-                      borderRadius:16,padding:"16px 12px",color:"white",fontSize:15,fontWeight:700,cursor:"pointer",
+                    style={{background:tapped?"linear-gradient(180deg,#D4FCE6,#8EF0BD)":seqError?"linear-gradient(180deg,#FFD9DE,#FF9AA8)":MG_TILE,
+                      boxShadow:MG_TILE_SHADOW,
+                      border:`3px solid ${MG_INK}`,
+                      borderRadius:16,padding:"16px 12px",color:MG_INK,fontSize:15,fontWeight:700,cursor:"pointer",
                       position:"relative",transition:"all .2s",minHeight:64}}>
                     {tapped&&<span style={{position:"absolute",top:6,right:8,fontSize:11,opacity:.7,fontWeight:900}}>{tapIdx+1}</span>}
                     <Emo text={item} />
@@ -3904,14 +3637,14 @@ export default function Magistella() {
                     className="ans-vis"
                     style={{
                       width:72, height:72, borderRadius:18,
-                      background: isPicked ? `${world?.color || "#A78BFA"}44` : "rgba(246,236,212,.08)",
-                      border:`3px solid ${isPicked ? (world?.color||"#A78BFA") : "rgba(255,194,75,.34)"}`,
+                      background: isPicked ? "linear-gradient(180deg,#E9DEFF,#CDB8FF)" : MG_TILE,
+                      boxShadow: isPicked ? `inset 0 -5px 0 #9E82F0, 0 4px 0 ${MG_INK}, 0 0 0 4px ${world?.color || "#A78BFA"}88` : MG_TILE_SHADOW,
+                      border:`3px solid ${MG_INK}`,
                       display:"flex",alignItems:"center",justifyContent:"center",
                       fontSize:36, cursor: isPlaced ? "default" : "pointer",
                       opacity: isPlaced ? 0.25 : 1,
                       transform: isPicked ? "scale(1.12)" : "scale(1)",
                       transition:"all .15s",
-                      boxShadow: isPicked ? `0 0 16px ${(world?.color||"#A78BFA")}66` : "none",
                     }}>
                     <Emo text={item} />
                   </div>
@@ -3946,16 +3679,15 @@ export default function Magistella() {
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:youngBg?14:10}}>
               {ch.options.map((opt, idx) => {
-                let bg = "rgba(246,236,212,.08)", border = "rgba(255,194,75,.34)";
-                if (youngBg) { const yc=["#FF6B9D","#A78BFA","#38BDF8","#34D399"]; bg=yc[idx%4]+"22"; border=yc[idx%4]; }
+                const bg = MG_TILE, border = MG_INK;
                 return (
                   <button key={`${ci}-qc-${idx}`} onClick={e => answerMC(idx, e)}
                     className={`ans-btn ans-btn-idle ans-enter`}
                     style={{
                       animationDelay:`${idx*80}ms`,
                       background:bg, border:`3px solid ${border}`,
-                      borderRadius:youngBg?22:18, color:youngBg?(["#FF6B9D","#A78BFA","#38BDF8","#34D399"][idx%4]):"white",
-                      fontWeight:youngBg?800:600, cursor:"pointer",
+                      borderRadius:youngBg?22:18, color:MG_INK, boxShadow:MG_TILE_SHADOW,
+                      fontWeight:800, cursor:"pointer",
                       height:youngBg?96:84, fontSize:youngBg?19:17,
                       display:"flex",alignItems:"center",justifyContent:"center",
                     }}>
@@ -4152,12 +3884,14 @@ export default function Magistella() {
           <div style={{position:"relative",zIndex:1}}>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:(isVis||isWordPic)?14:10}}>
               {ch.options.map((opt,idx) => {
-                let bg = "rgba(246,236,212,.08)", border = "rgba(255,194,75,.34)";
+                // Restyling 3D: tessere crema con spessore; menta = giusta, corallo = sbagliata
+                let bg = "linear-gradient(180deg,#FFFFFF 0%,#FFF7E6 55%,#FBEACB 100%)", lip = "#E3CFA6";
                 let correct = false, wrong = false;
                 if (done) {
-                  if (idx === ch.correct)    { bg="rgba(109,224,198,.24)"; border="#6DE0C6"; correct=true; }
-                  else if (idx === selected) { bg="rgba(239,68,68,.28)"; border="#F87171"; wrong=true; }
+                  if (idx === ch.correct)    { bg="linear-gradient(180deg,#D4FCE6,#8EF0BD)"; lip="#3FC985"; correct=true; }
+                  else if (idx === selected) { bg="linear-gradient(180deg,#FFD9DE,#FF9AA8)"; lip="#E0566B"; wrong=true; }
                 }
+                const border = "#27134F";
                 return (
                   <button key={`${ci}-${idx}`} onClick={(e) => answerMC(idx, e)}
                     aria-label={`Risposta ${idx + 1}: ${opt}`}
@@ -4165,9 +3899,10 @@ export default function Magistella() {
                     style={{
                       animationDelay: !done ? `${idx * 80}ms` : undefined,
                       background:bg, border:`3px solid ${border}`,
-                      borderRadius: (isVis||isWordPic||isAlpha) ? 28 : 18,
-                      color: "white",
-                      fontWeight: 600,
+                      borderRadius: (isVis||isWordPic||isAlpha) ? 24 : 18,
+                      color: "#27134F",
+                      fontWeight: 800,
+                      opacity: done && !correct && !wrong ? .55 : 1,
                       cursor:done?"default":"pointer",
                       height: (isVis||isWordPic) ? 148 : isAlpha ? 120 : (young ? 92 : 82),
                       fontSize: isAlpha ? 52 : 18,
@@ -4176,7 +3911,7 @@ export default function Magistella() {
                       padding: (isVis||isWordPic) ? "10px 4px 8px" : isAlpha ? 0 : "16px 12px",
                       gap: (isVis||isWordPic) ? 4 : 0,
                       transform: wrong ? "scale(0.97)" : correct ? "scale(1.04)" : "scale(1)",
-                      boxShadow: correct ? "0 0 22px rgba(109,224,198,.45)" : (done&&wrong) ? "0 0 18px rgba(239,68,68,.5)" : "none",
+                      boxShadow: `inset 0 -6px 0 ${lip}, 0 5px 0 #27134F${correct ? ", 0 0 0 5px rgba(62,224,143,.45)" : ""}`,
                       position:"relative",
                       overflow:"hidden",
                     }}>
@@ -4272,14 +4007,8 @@ export default function Magistella() {
                 <CompanionAvatar c={comp} size={youngBg?52:44} anim="bounce" talking={compTalking} mood={compMood} />
               )}
             </div>
-            <button onClick={next} style={{
-              width:"100%",
-              background:isCorrect ? "#22C55E" : youngBg ? "#FBBF24" : "rgba(255,255,255,.18)",
-              color:isCorrect ? "white" : youngBg ? "#1a1a2e" : "white",
-              border:isCorrect||youngBg ? "none" : "2px solid rgba(255,255,255,.35)",
-              borderRadius:50, padding:"15px",
-              fontFamily:FF, fontSize:20, cursor:"pointer",
-              boxShadow:isCorrect ? "0 4px 20px rgba(34,197,94,.45)" : youngBg ? "0 4px 16px rgba(251,191,36,.35)" : "none",
+            <button onClick={next} className={isCorrect ? "mg-cta mg-verde" : "mg-cta"} style={{
+              width:"100%", padding:"14px", fontSize:22, cursor:"pointer",
             }}>
               {ci < challenges.length-1 ? "Avanti →" : "Fine Missione!"}
             </button>
@@ -4306,8 +4035,8 @@ export default function Magistella() {
           {comp && <img className="cp" src={posa3d(comp.id, "festa")} alt="" />}
         </div>
         <h1 className="mg-ribbon slide-up" style={{animationDelay:".5s"}}><span>Fantastico!</span></h1>
-        <p style={{fontFamily:FF_DISPLAY,fontSize:18,fontWeight:800,margin:"0 0 12px",color:"#FFF6E0"}}>Mondo completato: {world.name}</p>
-        <p className="fade-in" style={{fontSize:15,lineHeight:1.75,opacity:.9,marginBottom:24,maxWidth:360,animationDelay:".7s"}}>{arc.outro}</p>
+        <p style={{fontFamily:FF,fontSize:17,margin:"8px 0 12px",color:"#FFF6E0",textShadow:"0 2px 4px rgba(0,0,0,.6)"}}>Mondo completato: {world.name}</p>
+        <p className="fade-in" style={{fontSize:15,lineHeight:1.75,opacity:.9,marginBottom:24,maxWidth:360,animationDelay:".7s"}}><Emo text={arc.outro} /></p>
         {comp && (
           <div className="slide-up" style={{background:SG_CARD,border:SG_BR,borderRadius:20,padding:"12px 18px",marginBottom:22,fontSize:14,maxWidth:360,animationDelay:".95s",display:"flex",alignItems:"center",gap:12}}>
             <CompanionAvatar c={comp} size={38} />
@@ -4315,7 +4044,7 @@ export default function Magistella() {
           </div>
         )}
         <div className="pop-in glow" style={{background:"rgba(255,194,75,.13)",borderRadius:24,padding:"20px 32px",marginBottom:24,border:"2px solid rgba(255,194,75,.45)",animationDelay:"1.2s"}}>
-          <div style={{fontSize:50}}>{arc.reward_emoji}</div>
+          <div style={{fontSize:50}}><Emo text={arc.reward_emoji} size={64} /></div>
           <div style={{fontFamily:FF_DISPLAY,fontSize:22,marginTop:8,color:SG_GOLD}}>{arc.reward_name}</div>
           <div style={{fontSize:12,opacity:.65,marginTop:4}}>Sbloccato per {comp?.name}!</div>
         </div>
@@ -4583,7 +4312,7 @@ export default function Magistella() {
   if (screen === "skills") return (
     <div key="skills" className={`${screenAnim} mm-schermo`} style={{minHeight:"100dvh",background:"linear-gradient(135deg,#0f0c29,#302b63)",color:"white",padding:24}}>
       {G}
-      <button onClick={() => navigate("map")} style={{background:"rgba(255,255,255,.1)",border:"none",color:"white",borderRadius:50,padding:"8px 16px",cursor:"pointer",marginBottom:20,fontSize:14,fontWeight:700}}>← Mappa</button>
+      <button onClick={() => navigate("map")} style={{...MG_BTN_BACK,marginBottom:20}}>← Mappa</button>
       <h1 style={{margin:"0 0 4px",fontSize:26,fontWeight:900}}><Icon name="albero" color={"#6DE0C6"} size={24} style={{verticalAlign:"-3px",marginRight:7}} />Le tue Abilità</h1>
       <p style={{opacity:.5,fontSize:13,marginBottom:28}}>Crescono ad ogni sfida che superi</p>
       <div style={{display:"flex",flexDirection:"column",gap:14}}>
@@ -4623,7 +4352,7 @@ export default function Magistella() {
   if (screen === "family") return (
     <div key="family" className={`${screenAnim} mm-schermo`} style={{minHeight:"100dvh",background:SG_BG,color:"#F6ECD4",padding:24}}>
       {G}
-      <button onClick={() => navigate("map")} style={{background:"rgba(255,255,255,.1)",border:"none",color:"white",borderRadius:50,padding:"8px 16px",cursor:"pointer",marginBottom:16,fontSize:14,fontWeight:700}}>← Mappa</button>
+      <button onClick={() => navigate("map")} style={{...MG_BTN_BACK,marginBottom:16}}>← Mappa</button>
       <h1 style={{fontFamily:FF_DISPLAY,margin:"0 0 4px",fontSize:26,fontWeight:800,color:SG_GOLD}}><Icon name="famiglia" color={SG_GOLD} size={24} style={{verticalAlign:"-3px",marginRight:7}} />Missioni Famiglia</h1>
       <p style={{opacity:.65,fontSize:13,marginBottom:24}}>Avventure da fare insieme, nella vita reale!</p>
       <div style={{display:"flex",flexDirection:"column",gap:13}}>
@@ -4676,16 +4405,16 @@ export default function Magistella() {
         {G}
         {/* Header */}
         <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
-          <button onClick={() => navigate("map")} style={{background:"rgba(255,255,255,.1)",border:"none",color:"white",borderRadius:50,padding:"8px 16px",cursor:"pointer",fontSize:14,fontWeight:700}}>← Mappa</button>
-          <h1 style={{fontFamily:FF_DISPLAY,margin:0,fontSize:20,fontWeight:900,flex:1,color:SG_GOLD}}><Icon name="sparkles" color={SG_GOLD} size={20} style={{verticalAlign:"-3px",marginRight:7}} />Personalizza</h1>
-          <div style={{background:"rgba(56,189,248,.15)",border:"1px solid rgba(56,189,248,.4)",borderRadius:20,padding:"6px 14px",display:"flex",alignItems:"center",gap:6}}>
-            <span style={{display:"flex"}}><Icon name="coin" color="#38BDF8" size={18} /></span>
-            <span style={{fontFamily:FF,fontSize:18,color:"#38BDF8"}}>{coins}</span>
-          </div>
+          <button onClick={() => navigate("map")} style={{...MG_BTN_BACK,whiteSpace:"nowrap"}}>← Mappa</button>
+          <div style={{flex:1}} />
+          <div className="mg-res" style={{flex:"none",minWidth:86}} aria-label={`${coins} monete`}><img src={premio3d("coin")} alt="" /><b>{coins}</b></div>
+        </div>
+        <div style={{textAlign:"center",marginBottom:14}}>
+          <h1 className="mg-ribbon viola" style={{margin:"0 auto"}}><span style={{fontSize:23}}>Negozio Magico</span></h1>
         </div>
         {/* Current look preview */}
-        <div style={{background:"rgba(255,255,255,.07)",borderRadius:24,padding:"20px",marginBottom:18,display:"flex",flexDirection:"column",alignItems:"center",gap:10}}>
-          <div style={{fontSize:11,opacity:.45,letterSpacing:1,fontWeight:800}}>IL TUO {comp.name.toUpperCase()} ADESSO</div>
+        <div style={{background:SG_CARD,border:SG_BR,boxShadow:"0 4px 0 #27134F",borderRadius:24,padding:"20px",marginBottom:18,display:"flex",flexDirection:"column",alignItems:"center",gap:10}}>
+          <div style={{fontSize:11,opacity:.7,letterSpacing:1,fontWeight:800}}>IL TUO {comp.name.toUpperCase()} ADESSO</div>
           <CompanionAvatar c={comp} size={96} anim="float" cosmetic={equippedObj} showBody />
           <div style={{fontSize:13,opacity:.7}}>{equippedObj ? `${equippedObj.emoji} ${equippedObj.name}` : "Nessun cosmetico equipaggiato"}</div>
           {equipped && (
@@ -4705,11 +4434,11 @@ export default function Magistella() {
                 return (
                   <button key={c.id} onClick={() => setEquippedCosmetic(prev => ({...prev, [comp.id]: isEq ? undefined : c.id}))}
                     className={isEq ? "pulse" : ""}
-                    style={{background:isEq?"rgba(192,132,252,.25)":"rgba(255,255,255,.08)",border:`2px solid ${isEq?"#C084FC":"rgba(255,255,255,.14)"}`,borderRadius:18,padding:"14px 8px",cursor:"pointer",textAlign:"center",color:"white",position:"relative"}}>
-                    {isEq && <div style={{position:"absolute",top:4,right:6,fontSize:10,fontWeight:900,color:"#C084FC"}}>ON</div>}
-                    <div style={{fontSize:32,marginBottom:4}}>{c.emoji}</div>
+                    style={{background:isEq?"linear-gradient(180deg,#E9DEFF,#CDB8FF)":MG_TILE,border:`3px solid ${MG_INK}`,boxShadow:isEq?"inset 0 -5px 0 #9E82F0, 0 4px 0 #27134F, 0 0 0 4px rgba(123,77,255,.5)":MG_TILE_SHADOW,borderRadius:18,padding:"12px 6px",cursor:"pointer",textAlign:"center",color:MG_INK,position:"relative"}}>
+                    {isEq && <div style={{position:"absolute",top:4,right:6,fontSize:10,fontWeight:900,color:"#5329D6"}}>IN USO</div>}
+                    <div style={{height:56,marginBottom:4,display:"flex",alignItems:"center",justifyContent:"center"}}>{COSMETIC_3D[c.id] ? <img src={premio3d(COSMETIC_3D[c.id])} alt="" style={{height:56,width:"auto",maxWidth:"100%",objectFit:"contain",filter:"drop-shadow(0 3px 3px rgba(0,0,0,.25))"}} /> : <span style={{fontSize:32}}>{c.emoji}</span>}</div>
                     <div style={{fontSize:11,fontWeight:700,lineHeight:1.2}}>{c.name}</div>
-                    <div style={{fontSize:9,opacity:.5,marginTop:2}}>{isEq?"Equipaggiato":"Tocca per equipaggiare"}</div>
+                    <div style={{fontSize:9,opacity:.65,marginTop:2}}>{isEq?"Lo indossa":"Tocca per indossare"}</div>
                   </button>
                 );
               })}
@@ -4725,11 +4454,11 @@ export default function Magistella() {
                 const canAfford = coins >= c.coinCost;
                 return (
                   <button key={c.id} onClick={() => canAfford && buyCosmetic(c)}
-                    style={{background:canAfford?"rgba(56,189,248,.12)":"rgba(255,255,255,.04)",border:`2px solid ${canAfford?"rgba(56,189,248,.4)":"rgba(255,255,255,.08)"}`,borderRadius:18,padding:"14px 8px",cursor:canAfford?"pointer":"default",textAlign:"center",color:"white",opacity:canAfford?1:.6,transition:"transform .1s",position:"relative"}}>
-                    {canAfford && <div style={{position:"absolute",top:4,left:"50%",transform:"translateX(-50%)",fontSize:8,fontWeight:900,color:"#38BDF8",letterSpacing:.5,whiteSpace:"nowrap"}}>PUOI ACQUISTARE</div>}
-                    <div style={{fontSize:32,marginBottom:4,marginTop:canAfford?8:0,filter:canAfford?"none":"grayscale(.7)"}}>{c.emoji}</div>
+                    style={{background:MG_TILE,border:`3px solid ${MG_INK}`,boxShadow:MG_TILE_SHADOW,color:MG_INK,opacity:canAfford?1:.8,borderRadius:18,padding:"12px 6px",cursor:canAfford?"pointer":"default",textAlign:"center",transition:"transform .1s",position:"relative"}}>
+                    {canAfford && <div style={{position:"absolute",top:4,left:"50%",transform:"translateX(-50%)",fontSize:8,fontWeight:900,color:"#1F7A4C",letterSpacing:.5,whiteSpace:"nowrap"}}>PUOI COMPRARLO</div>}
+                    <div style={{height:56,marginBottom:4,marginTop:canAfford?8:0,display:"flex",alignItems:"center",justifyContent:"center",filter:canAfford?"none":"grayscale(.8) brightness(.8)"}}>{COSMETIC_3D[c.id] ? <img src={premio3d(COSMETIC_3D[c.id])} alt="" style={{height:56,width:"auto",maxWidth:"100%",objectFit:"contain",filter:"drop-shadow(0 3px 3px rgba(0,0,0,.25))"}} /> : <span style={{fontSize:32}}>{c.emoji}</span>}</div>
                     <div style={{fontSize:11,fontWeight:700,lineHeight:1.2}}>{c.name}</div>
-                    <div style={{fontSize:10,marginTop:4,color:canAfford?"#38BDF8":"rgba(255,255,255,.4)",fontWeight:700}}><Icon name="coin" color={canAfford?"#38BDF8":"rgba(255,255,255,.4)"} size={12} style={{verticalAlign:"-3px",marginRight:5}} />{c.coinCost}</div>
+                    <div style={{display:"inline-flex",alignItems:"center",gap:3,marginTop:5,padding:"1px 9px 1px 3px",borderRadius:9,background:MG_INK,color:"#FFD95A",fontFamily:FF,fontSize:13}}><img src={premio3d("coin")} alt="" style={{width:18,height:18}} />{c.coinCost}</div>
                   </button>
                 );
               })}
@@ -4830,7 +4559,7 @@ export default function Magistella() {
   if (screen === "profile" && comp) return (
     <div key="profile" className={`${screenAnim} mm-schermo`} style={{minHeight:"100dvh",background:comp.bg,color:"white",padding:28,display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center"}}>
       {G}
-      <button onClick={() => navigate("map")} style={{alignSelf:"flex-start",background:"rgba(255,255,255,.15)",border:"none",color:"white",borderRadius:12,padding:"8px 14px",cursor:"pointer",marginBottom:24,fontSize:14}}>← Indietro</button>
+      <button onClick={() => navigate("map")} style={{...MG_BTN_BACK,alignSelf:"flex-start",marginBottom:24}}>← Indietro</button>
       <CompanionAvatar c={comp} size={110} anim="float" cosmetic={COSMETICS.find(c => c.id === equippedCosmetic[comp.id]) || null} showBody />
       <h1 style={{fontSize:28,fontWeight:900,marginBottom:4}}>{comp.name}</h1>
       <div style={{fontSize:14,opacity:.7,marginBottom:8}}>{comp.type} · Il tuo compagno magico</div>
@@ -4895,7 +4624,7 @@ export default function Magistella() {
     if (!parentUnlocked) return (
       <div key="parent-lock" className={`${screenAnim} mm-schermo`} style={{minHeight:"100dvh",background:P_BG,color:PARCH,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,textAlign:"center"}}>
         {G}
-        <button onClick={() => navigate("map")} style={{position:"absolute",top:20,left:20,background:"rgba(255,255,255,.1)",border:"none",color:PARCH,borderRadius:50,padding:"8px 16px",cursor:"pointer",fontSize:14,fontWeight:700}}>← Indietro</button>
+        <button onClick={() => navigate("map")} style={{...MG_BTN_BACK,position:"absolute",top:20,left:20}}>← Indietro</button>
         <div style={{marginBottom:12,display:"flex",justifyContent:"center"}}><Icon name="lock" color={SG_GOLD} size={54} /></div>
         <h1 style={{fontFamily:FF_DISPLAY,fontSize:24,fontWeight:900,margin:"0 0 6px",color:GOLD}}>Area Genitori</h1>
         <p style={{fontSize:13,opacity:.6,marginBottom:28}}>{!pinSaved ? "Crea un PIN a 4 cifre" : "Inserisci il tuo PIN"}</p>
@@ -5053,7 +4782,7 @@ export default function Magistella() {
       <div key="parent-dash" className={`${screenAnim} mm-schermo`} style={{minHeight:"100dvh",background:P_BG,color:PARCH,padding:24,paddingBottom:40}}>
         {G}
         <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
-          <button onClick={() => navigate("map")} style={{background:"rgba(255,255,255,.1)",border:"none",color:PARCH,borderRadius:50,padding:"8px 16px",cursor:"pointer",fontSize:14,fontWeight:700}}>← Mappa</button>
+          <button onClick={() => navigate("map")} style={{...MG_BTN_BACK}}>← Mappa</button>
           <h1 style={{fontFamily:FF_DISPLAY,margin:0,fontSize:24,color:GOLD,display:"flex",alignItems:"center",gap:9}}><Icon name="lock" color={GOLD} size={22} />Area Genitori</h1>
         </div>
 

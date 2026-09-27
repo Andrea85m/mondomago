@@ -50,3 +50,4 @@ __pycache__/
 !/android/twa-manifest.json
 *.jks
 *.keystore
+.scatti/

@@ -288,13 +288,10 @@ async function main() {
   // ── una sfida normale, per controllare che non abbia rotto niente ──────────
   await passo('una sfida del percorso si apre ancora', async () => {
     await page.waitForTimeout(300);
-    // "Foresta Magica" compare due volte: sul nodo del percorso e sulla card.
-    // La card è quella che porta il conteggio delle sfide.
-    const mondo = page.locator('button')
-      .filter({ hasText: /Foresta Magica/ })
-      .filter({ hasText: /sfide/ }).first();
-    // le card dei mondi stanno sotto la piega e hanno un badge animato in
-    // permanenza: Playwright non le vede mai "ferme", quindi si forza il click
+    // Dal restyling 3D ogni mondo è un'isola sulla mappa: il bottone porta il nome
+    // del mondo nell'aria-label. Le isole ondeggiano in permanenza: Playwright non
+    // le vede mai "ferme", quindi si forza il click.
+    const mondo = page.getByRole('button', { name: /^Foresta Magica/ }).first();
     await mondo.evaluate(el => el.scrollIntoView({ block: 'center' }));
     await page.waitForTimeout(300);
     await mondo.click({ force: true });

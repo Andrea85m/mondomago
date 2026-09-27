@@ -92,7 +92,7 @@
         align-items: center;
         gap: 11px;
       }
-      .testata svg { width: 30px; height: 30px; flex: none; }
+      .testata img { width: 36px; height: 36px; flex: none; object-fit: contain; }
       .testata b {
         font-family: var(--display);
         font-weight: 800;
@@ -138,11 +138,16 @@
         color: var(--runa);
       }
 
-      /* ── Il sigillo: otto frammenti, uno per mondo ────────────────────────────── */
-      .sigillo { width: 100%; max-width: 470px; margin-inline: auto; display: block; }
-      .sigillo .ruota { transform-origin: 250px 250px; animation: giro 120s linear infinite; }
-      @keyframes giro { to { transform: rotate(360deg); } }
-      @media (prefers-reduced-motion: reduce) { .sigillo .ruota { animation: none; } }
+      /* ── Vetrina: la Home vera dentro un telefono ──────────────────────────────── */
+      .apertura { overflow-x: clip; }
+      .vetrina { position: relative; margin: 0 auto; width: min(100%, 300px); }
+      .telefono { border-radius: 38px; border: 9px solid #0B0618; overflow: hidden; background: #0B0618;
+        box-shadow: 0 30px 60px rgba(0, 0, 0, .55), 0 0 0 2px rgba(255, 194, 75, .18); }
+      .telefono img { display: block; width: 100%; height: auto; }
+      .vetrina .mascotte { position: absolute; z-index: 2; width: 36%; height: auto; right: -4%; top: -7%; rotate: 10deg;
+        filter: drop-shadow(0 12px 18px rgba(0, 0, 0, .5)); animation: galleggia 3.2s ease-in-out infinite; }
+      @keyframes galleggia { 50% { translate: 0 -10px; } }
+      @media (prefers-reduced-motion: reduce) { .vetrina .mascotte { animation: none; } }
 
       /* ── Il richiamo all'azione ───────────────────────────────────────────────── */
       .richiamo { margin-top: 32px; }
@@ -215,7 +220,7 @@
         flex-direction: column;
         gap: 9px;
       }
-      .mondi .astro { width: 17px; height: 17px; }
+      .mondi .isola { width: 84px; height: 84px; object-fit: contain; margin: -6px 0 -4px -6px; filter: drop-shadow(0 8px 10px rgba(0, 0, 0, .45)); }
       .mondi h3 { font-family: var(--display); font-weight: 700; font-size: 17.5px; line-height: 1.25; }
       .mondi p { font-size: 14px; color: var(--soffusa); line-height: 1.5; }
 
@@ -266,10 +271,7 @@
 
   <body>
     <header class="testata dentro">
-      <svg viewBox="0 0 64 64" aria-hidden="true">
-        <circle cx="32" cy="32" r="20" fill="#FFC24B" />
-        <path d="M32 20l3.2 8.6 9.2.4-7.3 5.7 2.5 8.8L32 38.4l-7.6 5.1 2.5-8.8-7.3-5.7 9.2-.4z" fill="#2D1B54" stroke="#2D1B54" stroke-width="1.4" stroke-linejoin="round" />
-      </svg>
+      <img src="/img/3d/brand/mascotte.webp" alt="" width="36" height="36" />
       <b>Magistella</b>
     </header>
 
@@ -294,44 +296,11 @@
             </div>
           </div>
 
-          <!-- Il Sigillo di Stelle: otto frammenti, uno per ogni mondo, nei colori del gioco. -->
-          <svg class="sigillo" viewBox="0 0 500 500" role="img" aria-label="Il Sigillo di Stelle: otto frammenti in cerchio, uno per ogni mondo del gioco.">
-            <defs>
-              <radialGradient id="alone" cx="50%" cy="50%">
-                <stop offset="0%" stop-color="#FFC24B" stop-opacity=".30" />
-                <stop offset="70%" stop-color="#FFC24B" stop-opacity="0" />
-              </radialGradient>
-              <g id="astro">
-                <path d="M0 -13l3.4 8.2 8.9.7-6.8 5.8 2.1 8.7L0 6.9l-7.6 4.5 2.1-8.7-6.8-5.8 8.9-.7z" />
-              </g>
-            </defs>
-
-            <circle cx="250" cy="250" r="230" fill="url(#alone)" />
-            <g class="ruota" fill="none">
-              <circle cx="250" cy="250" r="176" stroke="#FFC24B" stroke-opacity=".34" stroke-width="1.5" stroke-dasharray="5 9" />
-              <circle cx="250" cy="250" r="150" stroke="#6DE0C6" stroke-opacity=".28" stroke-width="1" />
-            </g>
-
-            <g fill="none" stroke="#F6ECD4" stroke-opacity=".13" stroke-width="1">
-              <path d="M250 74 426 250 250 426 74 250Z" />
-              <path d="M125 125 375 125 375 375 125 375Z" />
-            </g>
-
-            <!-- I frammenti, nei colori di src/data/mondi.js -->
-            <g>
-              <use href="#astro" transform="translate(250 74)  scale(1.25)" fill="#22C55E" />
-              <use href="#astro" transform="translate(374 126) scale(1.1)"  fill="#A78BFA" />
-              <use href="#astro" transform="translate(426 250) scale(1.25)" fill="#38BDF8" />
-              <use href="#astro" transform="translate(374 374) scale(1.1)"  fill="#F97316" />
-              <use href="#astro" transform="translate(250 426) scale(1.25)" fill="#818CF8" />
-              <use href="#astro" transform="translate(126 374) scale(1.1)"  fill="#EF4444" />
-              <use href="#astro" transform="translate(74 250)  scale(1.25)" fill="#D97706" />
-              <use href="#astro" transform="translate(126 126) scale(1.1)"  fill="#06B6D4" />
-            </g>
-
-            <circle cx="250" cy="250" r="62" fill="#FFC24B" />
-            <path d="M250 208l9.9 26.6 28.4 1.2-22.5 17.5 7.7 27.3L250 264.7l-23.5 15.9 7.7-27.3-22.5-17.5 28.4-1.2z" fill="#2D1B54" stroke="#2D1B54" stroke-width="4" stroke-linejoin="round" />
-          </svg>
+          <!-- La Home vera del gioco dentro un telefono, con la mascotte che ci si affaccia. -->
+          <figure class="vetrina">
+            <img class="mascotte" src="/img/3d/brand/mascotte.webp" alt="" width="150" height="150" />
+            <div class="telefono"><img src="/img/3d/brand/home.webp" alt="La mappa dei mondi di Magistella: isole da aprire, stelle, monete e il bottone Gioca." width="540" height="960" /></div>
+          </figure>
         </div>
       </section>
 
@@ -355,14 +324,14 @@
             e le sfide sbagliate tornano a distanza di giorni finché non diventano facili.
           </p>
           <ul class="mondi">
-            <li><svg class="astro" viewBox="-14 -14 28 28" aria-hidden="true"><use href="#astro" fill="#22C55E"/></svg><h3>Foresta Magica</h3><p>Il punto di partenza</p></li>
-            <li><svg class="astro" viewBox="-14 -14 28 28" aria-hidden="true"><use href="#astro" fill="#A78BFA"/></svg><h3>Castello delle Nuvole</h3><p>Aperto fin da subito</p></li>
-            <li><svg class="astro" viewBox="-14 -14 28 28" aria-hidden="true"><use href="#astro" fill="#38BDF8"/></svg><h3>Oceano Luminoso</h3><p>Si apre a 15 stelle</p></li>
-            <li><svg class="astro" viewBox="-14 -14 28 28" aria-hidden="true"><use href="#astro" fill="#F97316"/></svg><h3>Mercato dei Colori</h3><p>Si apre a 30 stelle</p></li>
-            <li><svg class="astro" viewBox="-14 -14 28 28" aria-hidden="true"><use href="#astro" fill="#818CF8"/></svg><h3>Galassia Stellare</h3><p>Si apre a 50 stelle</p></li>
-            <li><svg class="astro" viewBox="-14 -14 28 28" aria-hidden="true"><use href="#astro" fill="#EF4444"/></svg><h3>Vulcano Magico</h3><p>Si apre a 70 stelle</p></li>
-            <li><svg class="astro" viewBox="-14 -14 28 28" aria-hidden="true"><use href="#astro" fill="#D97706"/></svg><h3>Biblioteca Incantata</h3><p>Si apre a 100 stelle</p></li>
-            <li><svg class="astro" viewBox="-14 -14 28 28" aria-hidden="true"><use href="#astro" fill="#06B6D4"/></svg><h3>Laboratorio Logico</h3><p>Si apre a 140 stelle</p></li>
+            <li><img class="isola" src="/img/3d/isole/foresta.webp" alt="" width="84" height="84" loading="lazy" /><h3>Foresta Magica</h3><p>Il punto di partenza</p></li>
+            <li><img class="isola" src="/img/3d/isole/castello.webp" alt="" width="84" height="84" loading="lazy" /><h3>Castello delle Nuvole</h3><p>Aperto fin da subito</p></li>
+            <li><img class="isola" src="/img/3d/isole/oceano.webp" alt="" width="84" height="84" loading="lazy" /><h3>Oceano Luminoso</h3><p>Si apre a 15 stelle</p></li>
+            <li><img class="isola" src="/img/3d/isole/mercato.webp" alt="" width="84" height="84" loading="lazy" /><h3>Mercato dei Colori</h3><p>Si apre a 30 stelle</p></li>
+            <li><img class="isola" src="/img/3d/isole/galassia.webp" alt="" width="84" height="84" loading="lazy" /><h3>Galassia Stellare</h3><p>Si apre a 50 stelle</p></li>
+            <li><img class="isola" src="/img/3d/isole/vulcano.webp" alt="" width="84" height="84" loading="lazy" /><h3>Vulcano Magico</h3><p>Si apre a 70 stelle</p></li>
+            <li><img class="isola" src="/img/3d/isole/biblioteca.webp" alt="" width="84" height="84" loading="lazy" /><h3>Biblioteca Incantata</h3><p>Si apre a 100 stelle</p></li>
+            <li><img class="isola" src="/img/3d/isole/laboratorio.webp" alt="" width="84" height="84" loading="lazy" /><h3>Laboratorio Logico</h3><p>Si apre a 140 stelle</p></li>
           </ul>
         </div>
       </section>

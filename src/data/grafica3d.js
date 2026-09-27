@@ -262,3 +262,9 @@ export const posa3d = (id, posa) => `${BASE}pose/${id}_${posa}.webp`;
 export const sfondo3d = (mondo) => `${BASE}sfondi/${mondo}.webp`;
 /** Premi, icone e oggetti del negozio. */
 export const premio3d = (nome) => `${BASE}premi/${nome}.webp`;
+/** Icone dell'interfaccia (public/img/3d/ui). */
+export const ui3d = (nome) => `${BASE}ui/${nome}.webp`;
+/** Isola di un mondo sulla mappa (id del mondo). */
+export const isola3d = (mondo) => `${BASE}isole/${mondo}.webp`;
+/** Frammenti e reliquie del Sigillo. */
+export const reliquia3d = (nome) => `${BASE}reliquie/${nome}.webp`;
