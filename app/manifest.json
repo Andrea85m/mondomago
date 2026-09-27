@@ -87,14 +87,14 @@
       "sizes": "1080x1920",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "Puzzle completato: monete e adesivi"
+      "label": "Mondo completato: tre stelle e trofeo"
     },
     {
       "src": "/screenshots/screen-puzzle.png",
       "sizes": "1080x1920",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "Puzzle a incastro"
+      "label": "Puzzle Magico: quattro giochi in più"
     }
   ]
 }
