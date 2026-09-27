@@ -3,6 +3,7 @@
  * Each component returns a self-contained 100×100 circle illustration.
  * SvgAsset wraps them with drop-shadow and fallback to styled emoji.
  */
+import { emoji3d } from "./data/grafica3d.js";
 import { useId } from "react";
 
 // Una regola sola, iniettata una volta: in modalità sagoma sparisce il cerchio
@@ -2003,7 +2004,9 @@ function normalizeEmoji(s) {
 }
 
 export default function SvgAsset({ emoji, size = 80, state = "default" }) {
-  const Component = ASSET_MAP[emoji] || ASSET_MAP[normalizeEmoji(emoji)];
+  // Restyling 3D: se l'emoji ha la sua immagine 3D, vince su SVG e fallback.
+  const img3d = emoji3d(emoji);
+  const Component = img3d ? null : (ASSET_MAP[emoji] || ASSET_MAP[normalizeEmoji(emoji)]);
 
   const shadow = {
     default:  `drop-shadow(0 3px ${Math.round(size * 0.1)}px rgba(0,0,0,.45))`,
@@ -2031,6 +2034,15 @@ export default function SvgAsset({ emoji, size = 80, state = "default" }) {
     transform: `scale(${scale})`,
     transition: "transform .15s ease, filter .35s ease, opacity .35s ease",
   };
+
+  if (img3d) {
+    return (
+      <div style={{ ...containerStyle, borderRadius: 0, overflow: "visible" }} className={state === "shadow" ? "sa-shadow" : undefined}>
+        <img src={img3d} alt={emoji} draggable={false} decoding="async"
+          style={{ width: "100%", height: "100%", objectFit: "contain", userSelect: "none" }} />
+      </div>
+    );
+  }
 
   if (Component) {
     return (

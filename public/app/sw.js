@@ -1,4 +1,4 @@
-const CACHE_CORE  = 'magistella-core-v10';
+const CACHE_CORE  = 'magistella-core-v11';
 const CACHE_AUDIO = 'magistella-audio-v9';
 
 // Assets to precache on install — relative paths so they work under any base URL

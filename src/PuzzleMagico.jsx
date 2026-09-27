@@ -1043,7 +1043,7 @@ export default function PuzzleMagico({ età = 5, speak, sfx, onExit, onMonete })
   if (schermo === "indovina")
     gioco = <GiocoIndovina {...comuni} onVinto={(risparmiati) => vinci(risparmiati > 0 ? `Indovinato con ${risparmiati} pezzi ancora coperti!` : "Indovinato!")} />;
   if (schermo === "incastro")
-    gioco = <GiocoIncastro {...comuni} onNuovaImmagine={() => setSeme(n => n + 1)} onVinto={(sc) => vinci(`${sc.nome} completata!`)} />;
+    gioco = <GiocoIncastro {...comuni} onNuovaImmagine={() => setSeme(n => n + 1)} onVinto={(sc) => vinci(`Puzzle completato: ${sc.nome}!`)} />;
 
   if (gioco) return (
     <>

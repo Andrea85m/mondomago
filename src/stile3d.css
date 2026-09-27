@@ -1,0 +1,78 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   Restyling 3D di Magistella (27/09/2026): bottoni "fisici", nastro, raggi,
+   eroe della ricompensa. I bottoni primari prendono la classe .mg-cta e questo
+   foglio vince sugli stili inline con !important: così non si tocca la logica.
+   ───────────────────────────────────────────────────────────────────────────── */
+:root { --mg-ink: #27134F; }
+
+.mg-cta {
+  position: relative; overflow: hidden;
+  background: linear-gradient(180deg, #FFE58A 0%, #FFCB45 45%, #FFB21E 55%, #F5A000 100%) !important;
+  border: 4px solid var(--mg-ink) !important;
+  border-radius: 20px !important;
+  box-shadow: inset 0 -7px 0 #C97800, 0 6px 0 var(--mg-ink), 0 12px 22px rgba(0, 0, 0, .35) !important;
+  color: #fff !important;
+  font-family: "Fredoka One", "Nunito", sans-serif !important;
+  letter-spacing: .5px;
+  /* contorno proporzionato al carattere: sui testi piccoli 5px impastava le lettere */
+  -webkit-text-stroke: .16em var(--mg-ink);
+  paint-order: stroke fill;
+  text-shadow: 0 .12em 0 var(--mg-ink);
+  transition: translate .08s ease-out, box-shadow .08s ease-out;
+}
+.mg-cta::before {
+  content: ""; position: absolute; left: 8px; right: 8px; top: 4px; height: 42%;
+  border-radius: 14px 14px 40% 40% / 14px 14px 14px 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .6), rgba(255, 255, 255, .05));
+  pointer-events: none;
+}
+.mg-cta:active {
+  translate: 0 5px;
+  box-shadow: inset 0 -4px 0 #C97800, 0 1px 0 var(--mg-ink), 0 4px 10px rgba(0, 0, 0, .3) !important;
+}
+.mg-cta svg { -webkit-text-stroke: 0; }
+
+/* Eroe della ricompensa: raggi, tre stelle, trofeo, compagno che festeggia */
+.mg-hero { position: relative; width: 300px; height: 250px; margin: 0 auto 4px; }
+.mg-rays {
+  position: absolute; left: 50%; top: 52%; width: 560px; height: 560px; margin: -280px 0 0 -280px;
+  border-radius: 50%; pointer-events: none;
+  background: repeating-conic-gradient(from 4deg, rgba(255, 226, 140, .5) 0deg 7deg, rgba(255, 226, 140, 0) 7deg 20deg);
+  -webkit-mask: radial-gradient(circle, #000 8%, rgba(0, 0, 0, .55) 24%, transparent 48%);
+          mask: radial-gradient(circle, #000 8%, rgba(0, 0, 0, .55) 24%, transparent 48%);
+  animation: mg-spin 26s linear infinite;
+}
+.mg-hero .mg-glow { position: absolute; left: 50%; top: 58%; width: 240px; height: 240px; margin: -120px 0 0 -120px;
+  border-radius: 50%; background: radial-gradient(circle, rgba(255, 236, 170, .85), rgba(255, 200, 61, 0) 65%); }
+.mg-hero img { position: absolute; user-select: none; filter: drop-shadow(0 8px 12px rgba(20, 8, 50, .5)); }
+.mg-hero .st { width: 70px; top: 18px; animation: mg-pop .5s cubic-bezier(.2, .9, .3, 1.3) both; }
+.mg-hero .st.a { left: 40px; rotate: -16deg; animation-delay: .25s; }
+.mg-hero .st.b { width: 94px; left: 103px; top: 0; animation-delay: .55s; }
+.mg-hero .st.c { right: 40px; rotate: 16deg; animation-delay: .85s; }
+.mg-hero .tr { width: 150px; left: 75px; top: 96px; animation: mg-pop .6s cubic-bezier(.2, .9, .3, 1.25) both; }
+.mg-hero .cp { width: 96px; right: -30px; top: 118px; animation: mg-rise .5s .5s ease-out both, mg-bob 2.2s 1s ease-in-out infinite; }
+
+.mg-ribbon { position: relative; display: inline-block; margin: 0 auto 10px; }
+.mg-ribbon span {
+  position: relative; z-index: 2; display: inline-block; padding: 6px 26px 9px;
+  border: 4px solid var(--mg-ink); border-radius: 13px;
+  background: linear-gradient(180deg, #FF9AA8 0%, #FF6A7D 38%, #F04560 62%, #D63350 100%);
+  box-shadow: inset 0 4px 0 rgba(255, 255, 255, .4), inset 0 -6px 0 rgba(0, 0, 0, .2), 0 6px 0 var(--mg-ink);
+  font-family: "Fredoka One", sans-serif; font-size: 30px; line-height: 1; color: #fff; letter-spacing: .5px;
+  -webkit-text-stroke: 6px var(--mg-ink); paint-order: stroke fill; text-shadow: 0 3px 0 var(--mg-ink);
+}
+.mg-ribbon::before, .mg-ribbon::after {
+  content: ""; position: absolute; top: 14px; width: 40px; height: 38px; z-index: 1;
+  border: 4px solid var(--mg-ink); background: linear-gradient(180deg, #E23F58, #B92342);
+}
+.mg-ribbon::before { left: -24px; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 30% 50%); }
+.mg-ribbon::after { right: -24px; clip-path: polygon(0 0, 100% 0, 70% 50%, 100% 100%, 0 100%); }
+
+@keyframes mg-pop { 0% { scale: 0; opacity: 0 } 60% { scale: 1.18; opacity: 1 } 80% { scale: .94 } 100% { scale: 1; opacity: 1 } }
+@keyframes mg-spin { to { rotate: 360deg } }
+@keyframes mg-bob { 0%, 100% { translate: 0 0 } 50% { translate: 0 -7px } }
+@keyframes mg-rise { from { translate: 0 60px; opacity: 0 } to { translate: 0 0; opacity: 1 } }
+
+@media (prefers-reduced-motion: reduce) {
+  .mg-rays, .mg-hero img { animation: none !important; }
+}

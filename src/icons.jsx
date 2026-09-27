@@ -79,9 +79,21 @@ const WORLD_EMBLEM = {
   </>),
 };
 
+// ─── RESTYLING 3D ───────────────────────────────────────────────────────────
+const ICON_3D = { coin: "premi/coin", trophy: "premi/trophy", flame: "ui/flame", star: "premi/star" };
+function Img3d({ src, size, style }) {
+  return (
+    <img src={`${import.meta.env.BASE_URL}img/3d/${src}.webp`} alt="" aria-hidden="true" draggable={false}
+      decoding="async" width={Math.round(size)} height={Math.round(size)}
+      style={{ objectFit: "contain", userSelect: "none", ...style }} />
+  );
+}
+
 export function WorldIcon({ id, color = GOLD, size = 24, style, ink = PARCH }) {
   const draw = WORLD_EMBLEM[id];
   if (!draw) return null;
+  // Restyling 3D: dai 40 px in su il mondo è la sua isola 3D; più piccolo resta l'emblema.
+  if (size >= 40) return <Img3d src={`isole/${id}`} size={size * 1.3} style={style} />;
   return (
     <svg viewBox="0 0 24 24" width={size} height={size} style={style}
       xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
@@ -329,6 +341,11 @@ const GLYPH = {
 export function Icon({ name, color = GOLD, size = 24, style, ink = PARCH }) {
   const draw = GLYPH[name];
   if (!draw) return null;
+  // Restyling 3D: moneta, trofeo e fiamma sono sempre in 3D (la moneta nuova non ha più
+  // il simbolo ฿). La stella diventa 3D quando è abbastanza grande e non è "spenta".
+  const tre = ICON_3D[name];
+  if (tre && (name !== "star" || (size >= 18 && !String(color).startsWith("rgba"))))
+    return <Img3d src={tre} size={size * 1.2} style={style} />;
   return (
     <svg viewBox="0 0 24 24" width={size} height={size} style={style}
       xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">

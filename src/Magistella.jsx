@@ -3,6 +3,8 @@ import TTS_MAP from "./ttsMap.json";
 import WorldScene from "./WorldScene.jsx";
 import { WorldIcon, Icon, SkillIcon, RankIcon } from "./icons.jsx";
 import SvgAsset from "./SvgAssets.jsx";
+import Emo from "./Emo.jsx";
+import { posa3d, premio3d } from "./data/grafica3d.js";
 import ErrorBoundary from "./ErrorBoundary.jsx";
 import canvasConfetti from "canvas-confetti";
 // Caricato a parte: la sezione Puzzle pesa ~17KB gzip e non serve finché il
@@ -276,10 +278,12 @@ function CompanionAvatar({ c, size = 64, anim = "", cosmetic = null, mood = "idl
                  :            "compIdle 4.6s ease-in-out infinite";
   // sfasa il blink d'attesa così più companion insieme (es. schermata scelta) non blinkano all'unisono
   const idleDelay = talking || reacting ? undefined : `${((c.id ? c.id.charCodeAt(0) : 0) % 5) * 0.7}s`;
+  // Restyling 3D: nei momenti di festa e dopo un errore il compagno cambia posa.
+  const posa = reacting ? "festa" : mood === "sad" ? "incoraggia" : null;
   const src = companionCharSrc(c.id);
   // I companion sono serviti a 512px in due formati (vedi scripts/optimize-characters.mjs):
   // webp ai browser che lo supportano, png come fallback sullo stesso path di prima.
-  const srcWebp = src ? src.replace(/\.png$/, ".webp") : null;
+  const srcWebp = src ? (posa ? posa3d(c.id, posa) : src.replace(/\.png$/, ".webp")) : null;
   return (
     <div className={anim} style={{ position:"relative", width:s, height:showBody && size >= 80 ? Math.round(s*1.2) : s, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center" }}>
       {auraCol && (
@@ -2142,7 +2146,7 @@ export default function Magistella() {
                 <span style={{fontSize:14,color:SG_PARCH,lineHeight:1.4}}>Che magia, {childName}! Ora sei <b style={{color:SG_GOLD}}>{newLevel.title}</b>. Continuiamo insieme!</span>
               </div>
             )}
-            <button onClick={() => setNewLevel(null)} style={{fontFamily:FF_DISPLAY,background:SG_GOLD_GRAD,color:SG_INK,border:"none",borderRadius:50,padding:"14px 40px",fontSize:19,fontWeight:800,cursor:"pointer",boxShadow:"0 6px 20px rgba(255,194,75,.4)"}}>
+            <button className="mg-cta" onClick={() => setNewLevel(null)} style={{fontFamily:FF_DISPLAY,background:SG_GOLD_GRAD,color:SG_INK,border:"none",borderRadius:50,padding:"14px 40px",fontSize:19,fontWeight:800,cursor:"pointer",boxShadow:"0 6px 20px rgba(255,194,75,.4)"}}>
               Continua! ✨
             </button>
           </div>
@@ -2177,7 +2181,7 @@ export default function Magistella() {
                 <span style={{fontSize:14,color:SG_PARCH,lineHeight:1.4}}>Sei incredibile, {childName}! Torna domani per tenere accesa la fiamma.</span>
               </div>
             )}
-            <button onClick={() => setStreakCelebrate(false)} style={{fontFamily:FF_DISPLAY,background:SG_GOLD_GRAD,color:SG_INK,border:"none",borderRadius:50,padding:"14px 40px",fontSize:19,fontWeight:800,cursor:"pointer",boxShadow:"0 6px 20px rgba(255,194,75,.4)",display:"inline-flex",alignItems:"center",gap:8}}>
+            <button className="mg-cta" onClick={() => setStreakCelebrate(false)} style={{fontFamily:FF_DISPLAY,background:SG_GOLD_GRAD,color:SG_INK,border:"none",borderRadius:50,padding:"14px 40px",fontSize:19,fontWeight:800,cursor:"pointer",boxShadow:"0 6px 20px rgba(255,194,75,.4)",display:"inline-flex",alignItems:"center",gap:8}}>
               Continuo! <Icon name="flame" color={SG_INK} size={20} />
             </button>
           </div>
@@ -2429,7 +2433,7 @@ export default function Magistella() {
               <div key={i} onClick={() => setObSlide(i)} role="button" aria-label={`Slide ${i + 1} di 3`} aria-current={i === obSlide ? "step" : undefined} {...TASTIERA} style={{width:i===obSlide?26:8,height:8,borderRadius:8,background:i===obSlide?SG_GOLD:"rgba(255,255,255,.3)",transition:"width .3s",cursor:"pointer"}} />
             ))}
           </div>
-          <button onClick={() => obSlide < 2 ? setObSlide(s => s+1) : navigate("name")}
+          <button className="mg-cta" onClick={() => obSlide < 2 ? setObSlide(s => s+1) : navigate("name")}
             style={{background:SG_GOLD_GRAD,border:"none",color:SG_INK,borderRadius:50,padding:"16px 48px",fontWeight:900,fontSize:18,cursor:"pointer",boxShadow:"0 8px 32px rgba(255,194,75,.35)"}}>
             {obSlide < 2 ? "Avanti →" : "Inizia!"}
           </button>
@@ -2571,7 +2575,7 @@ export default function Magistella() {
           </div>
         </div>
         {/* CTA */}
-        <button onClick={() => { warmUpAudio(); navigate("map"); }}
+        <button className="mg-cta" onClick={() => { warmUpAudio(); navigate("map"); }}
           style={{background:SG_GOLD_GRAD,color:SG_INK,border:"none",borderRadius:50,padding:"18px 52px",fontSize:20,fontWeight:900,cursor:"pointer",boxShadow:"0 8px 32px rgba(255,194,75,.35)",width:"100%",maxWidth:340}}>
           Iniziamo l'avventura!
         </button>
@@ -3128,7 +3132,7 @@ export default function Magistella() {
           <span>{comp.onWorldStart()}</span>
         </div>
       )}
-      <button className="pop-in" onClick={() => navigate("world_intro")}
+      <button className="pop-in mg-cta" onClick={() => navigate("world_intro")}
         style={{background:SG_GOLD_GRAD,color:SG_INK,border:"none",borderRadius:50,padding:"16px 48px",fontFamily:FF_DISPLAY,fontWeight:900,fontSize:18,cursor:"pointer",boxShadow:"0 8px 28px rgba(255,194,75,.32)",animationDelay:".4s"}}>
         Pronti insieme!
       </button>
@@ -3157,7 +3161,7 @@ export default function Magistella() {
             <span>{comp.onWorldStart()}</span>
           </div>
         )}
-        <button className="pop-in" onClick={() => navigate("challenge")}
+        <button className="pop-in mg-cta" onClick={() => navigate("challenge")}
           style={{background:SG_GOLD_GRAD,color:SG_INK,border:"none",borderRadius:50,padding:"16px 48px",fontFamily:FF_DISPLAY,fontWeight:900,fontSize:18,cursor:"pointer",boxShadow:"0 8px 28px rgba(255,194,75,.32)",animationDelay:".35s"}}>
           Inizia la Missione!
         </button>
@@ -3265,7 +3269,7 @@ export default function Magistella() {
         {fc && (
           <>
             <div className="pop-in" style={{background:"rgba(255,255,255,.1)",borderRadius:24,padding:"24px 20px",marginBottom:14,textAlign:"center",border:"1px solid rgba(255,255,255,.14)",boxShadow:"0 8px 32px rgba(0,0,0,.4)"}}>
-              {fc.visual && <div style={{fontSize:64,letterSpacing:8,marginBottom:10}}>{fc.visual}</div>}
+              {fc.visual && <div style={{fontSize:64,letterSpacing:8,marginBottom:10}}><Emo text={fc.visual} /></div>}
               <p style={{fontSize:18,fontWeight:700,margin:0,whiteSpace:"pre-line"}}>{fc.prompt || fc.question}</p>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
@@ -3276,7 +3280,7 @@ export default function Magistella() {
                 <button key={idx} onClick={() => fulminoAnswer(idx)}
                   className="ans-btn"
                   style={{background:"rgba(255,255,255,.09)",border:"3px solid rgba(255,255,255,.18)",borderRadius:22,minHeight:88,padding:wordy?"10px 12px":0,fontSize:wordy?(String(opt).length>12?15:18):42,fontWeight:wordy?800:400,lineHeight:1.25,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"white"}}>
-                  {opt}
+                  <Emo text={opt} />
                 </button>
                 );
               })}
@@ -3640,7 +3644,7 @@ export default function Magistella() {
             style={{background:youngBg?"white":ch.isBoss?"rgba(255,60,60,.13)":"rgba(255,255,255,.10)",borderRadius:youngBg?32:24,padding:youngBg?"24px 22px":"22px 20px",marginBottom:16,border:`1px solid ${youngBg?"rgba(0,0,0,.06)":ch.isBoss?"rgba(255,80,80,.3)":"rgba(255,255,255,.14)"}`,boxShadow:youngBg?"0 6px 30px rgba(0,0,0,.10)":"0 8px 32px rgba(0,0,0,.4)",position:"relative",zIndex:1}}>
             <div onClick={() => { SFX.tap(); speak(ch.format==="story_choice"?ch.situation:(ch.prompt||ch.question)); }}
               role="button" aria-label="Ascolta la domanda" {...TASTIERA}
-              style={{fontSize:youngBg?52:40,marginBottom:12,cursor:"pointer",display:"inline-block"}}>{ch.emoji}</div>
+              style={{fontSize:youngBg?52:40,marginBottom:12,cursor:"pointer",display:"inline-block"}}><Emo text={ch.emoji} size={youngBg?64:52} /></div>
             {isVis && (() => {
               const segs = typeof Intl?.Segmenter === "function"
                 ? [...new Intl.Segmenter().segment(ch.visual)].map(s => s.segment).filter(s => s.trim())
@@ -3657,7 +3661,7 @@ export default function Magistella() {
             })()}
             {isStory
               ? <p style={{fontSize:youngBg?17:15,lineHeight:1.75,margin:0,color:youngBg?"#333":"inherit"}}>{ch.situation}</p>
-              : <p style={{fontFamily:FF_DISPLAY,fontWeight:700,fontSize:isVis?(youngBg?26:23):youngBg?23:19,lineHeight:1.55,margin:0,whiteSpace:"pre-line",color:youngBg?"#222":"inherit"}}>{ch.prompt || ch.question}</p>
+              : <p style={{fontFamily:FF_DISPLAY,fontWeight:700,fontSize:isVis?(youngBg?26:23):youngBg?23:19,lineHeight:1.55,margin:0,whiteSpace:"pre-line",color:youngBg?"#222":"inherit"}}><Emo text={ch.prompt || ch.question} /></p>
             }
           </div>
         )}
@@ -3742,7 +3746,7 @@ export default function Magistella() {
                     color:youngBg?"#1a1a2e":"white",
                     fontSize:youngBg?16:15,fontWeight:700,cursor:"pointer",
                     textAlign:"left",lineHeight:1.4,transition:"all .15s"}}>
-                  {item}
+                  <Emo text={item} />
                 </button>
               ))}
             </div>
@@ -3848,7 +3852,7 @@ export default function Magistella() {
                       borderRadius:16,padding:"16px 12px",color:"white",fontSize:15,fontWeight:700,cursor:"pointer",
                       position:"relative",transition:"all .2s",minHeight:64}}>
                     {tapped&&<span style={{position:"absolute",top:6,right:8,fontSize:11,opacity:.7,fontWeight:900}}>{tapIdx+1}</span>}
-                    {item}
+                    <Emo text={item} />
                   </button>
                 );
               })}
@@ -3909,7 +3913,7 @@ export default function Magistella() {
                       transition:"all .15s",
                       boxShadow: isPicked ? `0 0 16px ${(world?.color||"#A78BFA")}66` : "none",
                     }}>
-                    {item}
+                    <Emo text={item} />
                   </div>
                 );
               })}
@@ -3933,7 +3937,7 @@ export default function Magistella() {
                 transition:"filter .55s cubic-bezier(.34,1.56,.64,1), transform .55s cubic-bezier(.34,1.56,.64,1)",
                 userSelect:"none",
               }}>
-                {ch.cartoonEmoji}
+                <Emo text={ch.cartoonEmoji} size={96} />
               </div>
               <p style={{fontSize:13,opacity:.55,margin:"10px 0 0",
                 color:youngBg?"#555":"rgba(255,255,255,.7)"}}>
@@ -3955,7 +3959,7 @@ export default function Magistella() {
                       height:youngBg?96:84, fontSize:youngBg?19:17,
                       display:"flex",alignItems:"center",justifyContent:"center",
                     }}>
-                    {opt}
+                    <Emo text={opt} />
                   </button>
                 );
               })}
@@ -3965,7 +3969,7 @@ export default function Magistella() {
         {isCartoon && done && (
           <div style={{textAlign:"center",padding:"14px 0 4px"}}>
             <div className="cartoon-reveal" style={{fontSize:96,lineHeight:1,marginBottom:10}}>
-              {ch.cartoonEmoji}
+              <Emo text={ch.cartoonEmoji} size={96} />
             </div>
             <div style={{fontSize:17,fontFamily:"Fredoka One, sans-serif",
               color:isCorrect?(youngBg?"#15803D":"#6DE0C6"):(youngBg?"#DC2626":"#F87171")}}>
@@ -4189,7 +4193,7 @@ export default function Magistella() {
                           </span>
                         )}
                       </>
-                    ) : opt}
+                    ) : <Emo text={opt} />}
                     {correct && <span style={{position:"absolute",top:6,right:8,fontSize:18,lineHeight:1}}>✓</span>}
                   </button>
                 );
@@ -4293,9 +4297,16 @@ export default function Magistella() {
       <div key="world_end" className={`${screenAnim} mm-schermo`} style={{minHeight:"100dvh",background:`linear-gradient(160deg,#1B1035,${arc.color}55,#140B29)`,color:"#F6ECD4",padding:28,paddingBottom:"max(env(safe-area-inset-bottom,0px),28px)",display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center",isolation:"isolate"}}>
         {G}
         <SigilloSky zIndex={-1} />
-        <div className="pop-in" style={{fontSize:72,marginBottom:4,animationDelay:"0s"}}>{arc.reward_emoji}</div>
-        <div className="bounce" style={{marginBottom:14,animationDelay:".25s",display:"flex"}}><WorldIcon id={world.id} color={world.color} size={64} /></div>
-        <h1 className="slide-up" style={{fontFamily:FF_DISPLAY,fontSize:28,color:SG_GOLD,marginBottom:12,animationDelay:".5s"}}>Mondo completato!</h1>
+        <div className="mg-hero" aria-hidden="true">
+          <div className="mg-rays" /><div className="mg-glow" />
+          <img className="st a" src={premio3d("star")} alt="" />
+          <img className="st c" src={premio3d("star")} alt="" />
+          <img className="st b" src={premio3d("star")} alt="" />
+          <img className="tr" src={premio3d("trophy")} alt="" />
+          {comp && <img className="cp" src={posa3d(comp.id, "festa")} alt="" />}
+        </div>
+        <h1 className="mg-ribbon slide-up" style={{animationDelay:".5s"}}><span>Fantastico!</span></h1>
+        <p style={{fontFamily:FF_DISPLAY,fontSize:18,fontWeight:800,margin:"0 0 12px",color:"#FFF6E0"}}>Mondo completato: {world.name}</p>
         <p className="fade-in" style={{fontSize:15,lineHeight:1.75,opacity:.9,marginBottom:24,maxWidth:360,animationDelay:".7s"}}>{arc.outro}</p>
         {comp && (
           <div className="slide-up" style={{background:SG_CARD,border:SG_BR,borderRadius:20,padding:"12px 18px",marginBottom:22,fontSize:14,maxWidth:360,animationDelay:".95s",display:"flex",alignItems:"center",gap:12}}>
@@ -4408,7 +4419,7 @@ export default function Magistella() {
             style={{width:"100%",background:SG_TILE,color:SG_PARCH,border:SG_BR,borderRadius:50,padding:"13px",fontWeight:800,fontSize:14,cursor:"pointer",marginBottom:10,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
             <Icon name="chart" color="#F6ECD4" size={18} /> Vedi statistiche dettagliate
           </button>
-          <button onClick={() => { navigate("map"); setSessionStars(0); setResults([]); setCombo(0); }}
+          <button className="mg-cta" onClick={() => { navigate("map"); setSessionStars(0); setResults([]); setCombo(0); }}
             style={{width:"100%",fontFamily:FF_DISPLAY,background:SG_GOLD_GRAD,color:SG_INK,border:"none",borderRadius:50,padding:"16px",fontWeight:800,fontSize:17,cursor:"pointer",boxShadow:"0 6px 20px rgba(255,194,75,.4)"}}>
             Torna ai Mondi
           </button>
@@ -4461,7 +4472,7 @@ export default function Magistella() {
             style={{flex:1,background:SG_TILE,color:SG_PARCH,border:SG_BR,borderRadius:50,padding:"14px",fontWeight:800,fontSize:14,cursor:"pointer"}}>
             ← Risultati
           </button>
-          <button onClick={() => { navigate("map"); setSessionStars(0); setResults([]); setCombo(0); }}
+          <button className="mg-cta" onClick={() => { navigate("map"); setSessionStars(0); setResults([]); setCombo(0); }}
             style={{flex:2,fontFamily:FF_DISPLAY,background:SG_GOLD_GRAD,color:SG_INK,border:"none",borderRadius:50,padding:"14px",fontWeight:800,fontSize:16,cursor:"pointer",boxShadow:"0 6px 20px rgba(255,194,75,.4)"}}>
             Torna ai Mondi
           </button>
@@ -4833,7 +4844,7 @@ export default function Magistella() {
           : <div style={{display:"flex",gap:16,flexWrap:"wrap",justifyContent:"center"}}>
               {items.map((it,i) => (
                 <div key={i} className="pop-in" style={{textAlign:"center",background:"rgba(255,255,255,.15)",borderRadius:18,padding:"16px 20px",animationDelay:`${i*.1}s`}}>
-                  <div style={{fontSize:42}}>{it.emoji}</div>
+                  <div style={{fontSize:42}}><Emo text={it.emoji} size={48} /></div>
                   <div style={{fontSize:12,marginTop:6,fontWeight:700}}>{it.name}</div>
                 </div>
               ))}
@@ -5530,7 +5541,7 @@ export default function Magistella() {
     <div style={{minHeight:"100dvh",background:SG_BG,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",color:SG_PARCH,gap:16,padding:28,textAlign:"center"}}>
       <div style={{display:"flex"}}><Icon name="sparkles" color={SG_GOLD} size={54} /></div>
       <div style={{fontFamily:FF_DISPLAY,fontSize:24,color:SG_GOLD}}>Ops, qualcosa è andato storto!</div>
-      <button onClick={() => navigate(childName ? "map" : "name")}
+      <button className="mg-cta" onClick={() => navigate(childName ? "map" : "name")}
         style={{background:SG_GOLD_GRAD,border:"none",color:SG_INK,borderRadius:50,padding:"14px 36px",fontSize:17,fontWeight:900,cursor:"pointer",fontFamily:FF_DISPLAY,boxShadow:"0 8px 28px rgba(255,194,75,.32)"}}>
         Torna all'inizio
       </button>

@@ -4,6 +4,7 @@
  * variant="bg"     : full-screen translucent background behind challenges
  * variant="full"   : full-screen opaque scene (world_intro, world_end)
  */
+import { sfondo3d } from "./data/grafica3d.js";
 
 // Inject keyframes once at module load
 if (typeof document !== "undefined" && !document.getElementById("ws-styles")) {
@@ -852,16 +853,23 @@ export default function WorldScene({ worldId, variant = "bg" }) {
   const Scene = SCENE_MAP[worldId];
   if (!Scene) return null;
 
-  const full = variant === "full";
+  // Restyling 3D: ogni mondo ha il suo sfondo dipinto sopra la scena SVG, che resta
+  // sotto come ripiego se l'immagine non si carica (per esempio offline al primo avvio).
+  const dipinto = (
+    <img src={sfondo3d(worldId)} alt="" draggable={false} decoding="async"
+      onError={(e) => { e.currentTarget.style.display = "none"; }}
+      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", userSelect: "none" }} />
+  );
 
   if (variant === "bg") {
     return (
       <div style={{
         position: "absolute", inset: 0, zIndex: 0,
-        opacity: 0.22, pointerEvents: "none",
+        opacity: 0.32, pointerEvents: "none",
         overflow: "hidden",
       }}>
         <Scene full={false} />
+        {dipinto}
       </div>
     );
   }
@@ -869,11 +877,13 @@ export default function WorldScene({ worldId, variant = "bg" }) {
   // card or full
   return (
     <div style={{
+      position: "relative",
       width: "100%", height: "100%",
       overflow: "hidden",
       borderRadius: variant === "card" ? "inherit" : 0,
     }}>
-      <Scene full={full} />
+      <Scene full={variant === "full"} />
+      {dipinto}
     </div>
   );
 }
