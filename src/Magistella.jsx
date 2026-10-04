@@ -1,4 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useRef, useMemo, lazy, Suspense } from "react";
+import { createPortal } from "react-dom";
 import TTS_MAP from "./ttsMap.json";
 import WorldScene from "./WorldScene.jsx";
 import { WorldIcon, Icon, SkillIcon, RankIcon } from "./icons.jsx";
@@ -371,6 +372,44 @@ function CompanionAvatar({ c, size = 64, anim = "", cosmetic = null, mood = "idl
           pointerEvents:"none",zIndex:3,animation:"float 1.8s ease-in-out infinite"}}>{cosmetic.emoji}</div>
       )}
     </div>
+  );
+}
+
+// ── Barra delle sezioni ──────────────────────────────────────────────────────
+// Prima esisteva solo dentro la mappa: toccando Puzzle, Skill, Famiglia o Look
+// si finiva su una pagina senza barra, con un "← Mappa" per tornare indietro.
+// Ora è la barra delle app vere (Material: "destinazioni raggiungibili da
+// ovunque"): resta su tutte e cinque le sezioni e si nasconde solo dentro
+// un'attività (una sfida, un gioco del puzzle).
+// Vive in un portale su <body>: le schermate entrano con un'animazione che usa
+// transform, e un position:fixed dentro un transform scivolerebbe con loro
+// (vedi COLLABORAZIONE §5, .screen-enter). Fuori dalle schermate resta ferma.
+const SEZIONI = [
+  { id: "map",       icona: "map-with-a-red-pin",       nome: "Mondi" },
+  { id: "puzzle",    icona: "jigsaw-puzzle-piece",      nome: "Puzzle" },
+  { id: "skills",    icona: "bar-chart-report",         nome: "Skill" },
+  { id: "family",    icona: "parent-shield-with-heart", nome: "Famiglia" },
+  { id: "cosmetics", icona: "crown",                    nome: "Look" },
+];
+function BarraSezioni({ attiva, onVai }) {
+  if (typeof document === "undefined") return null;
+  return createPortal(
+    <nav className="mg-tabs" aria-label="Sezioni">
+      {SEZIONI.map(t => {
+        const on = t.id === attiva;
+        return (
+          <button key={t.id} className={on ? "on" : ""} aria-current={on ? "page" : undefined}
+            onClick={() => {
+              // ritoccare la sezione in cui si è già riporta in cima (come nelle app native)
+              if (on) { window.scrollTo({ top: 0, behavior: "smooth" }); return; }
+              onVai(t.id);
+            }}>
+            <img src={ui3d(t.icona)} alt="" /><span>{t.nome}</span>
+          </button>
+        );
+      })}
+    </nav>,
+    document.body
   );
 }
 
@@ -2630,6 +2669,7 @@ export default function Magistella() {
           // comprano solo cosmetici. Il tetto giornaliero è dentro PuzzleMagico.
           onMonete={(n) => setCoins(c => c + n)}
           onExit={() => navigate("map")}
+          barra={<BarraSezioni attiva="puzzle" onVai={navigate} />}
         />
       </Suspense>
       </ErrorBoundary>
@@ -2729,7 +2769,6 @@ export default function Magistella() {
           const p = nodes[k - 1]; const my = (p.y + n.y) / 2;
           return `C ${p.x} ${my}, ${n.x} ${my}, ${n.x} ${n.y}`;
         }).join(" ");
-        const tabs = [["map-with-a-red-pin","Mondi",null],["jigsaw-puzzle-piece","Puzzle","puzzle"],["bar-chart-report","Skill","skills"],["parent-shield-with-heart","Famiglia","family"],["crown","Look","cosmetics"]];
         return (
           <>
             <div className="mg-cielo" aria-hidden="true" style={{backgroundImage:`url(${sfondo3d("castello")})`}} />
@@ -2819,14 +2858,7 @@ export default function Magistella() {
 
             {/* GIOCA + barra in basso */}
             {current && <button className="mg-cta mg-gioca" onClick={() => startWorld(current)} aria-label={`Gioca: ${current.name}`}>GIOCA</button>}
-            <nav className="mg-tabs" aria-label="Sezioni">
-              {tabs.map(([ic, label, dest], i) => (
-                <button key={label} className={i === 0 ? "on" : ""} aria-current={i === 0 ? "page" : undefined}
-                  onClick={() => { if (dest) navigate(dest); }}>
-                  <img src={ui3d(ic)} alt="" /><span>{label}</span>
-                </button>
-              ))}
-            </nav>
+            <BarraSezioni attiva="map" onVai={navigate} />
           </>
         );
       })()}
@@ -4310,9 +4342,9 @@ export default function Magistella() {
   }
 
   if (screen === "skills") return (
-    <div key="skills" className={`${screenAnim} mm-schermo`} style={{minHeight:"100dvh",background:"linear-gradient(135deg,#0f0c29,#302b63)",color:"white",padding:24}}>
+    <div key="skills" className={`${screenAnim} mm-schermo`} style={{minHeight:"100dvh",background:"linear-gradient(135deg,#0f0c29,#302b63)",color:"white",padding:24,paddingBottom:"calc(100px + env(safe-area-inset-bottom,0px))"}}>
       {G}
-      <button onClick={() => navigate("map")} style={{...MG_BTN_BACK,marginBottom:20}}>← Mappa</button>
+      <BarraSezioni attiva="skills" onVai={navigate} />
       <h1 style={{margin:"0 0 4px",fontSize:26,fontWeight:900}}><Icon name="albero" color={"#6DE0C6"} size={24} style={{verticalAlign:"-3px",marginRight:7}} />Le tue Abilità</h1>
       <p style={{opacity:.5,fontSize:13,marginBottom:28}}>Crescono ad ogni sfida che superi</p>
       <div style={{display:"flex",flexDirection:"column",gap:14}}>
@@ -4350,9 +4382,9 @@ export default function Magistella() {
 
   // ════════════════════ SCREEN: FAMILY ═════════════════════════════════════
   if (screen === "family") return (
-    <div key="family" className={`${screenAnim} mm-schermo`} style={{minHeight:"100dvh",background:SG_BG,color:"#F6ECD4",padding:24}}>
+    <div key="family" className={`${screenAnim} mm-schermo`} style={{minHeight:"100dvh",background:SG_BG,color:"#F6ECD4",padding:24,paddingBottom:"calc(100px + env(safe-area-inset-bottom,0px))"}}>
       {G}
-      <button onClick={() => navigate("map")} style={{...MG_BTN_BACK,marginBottom:16}}>← Mappa</button>
+      <BarraSezioni attiva="family" onVai={navigate} />
       <h1 style={{fontFamily:FF_DISPLAY,margin:"0 0 4px",fontSize:26,fontWeight:800,color:SG_GOLD}}><Icon name="famiglia" color={SG_GOLD} size={24} style={{verticalAlign:"-3px",marginRight:7}} />Missioni Famiglia</h1>
       <p style={{opacity:.65,fontSize:13,marginBottom:24}}>Avventure da fare insieme, nella vita reale!</p>
       <div style={{display:"flex",flexDirection:"column",gap:13}}>
@@ -4401,11 +4433,11 @@ export default function Magistella() {
       SFX.achievement();
     }
     return (
-      <div key="cosmetics" className={`${screenAnim} mm-schermo`} style={{minHeight:"100dvh",background:SG_BG,color:"#F6ECD4",padding:24}}>
+      <div key="cosmetics" className={`${screenAnim} mm-schermo`} style={{minHeight:"100dvh",background:SG_BG,color:"#F6ECD4",padding:24,paddingBottom:"calc(100px + env(safe-area-inset-bottom,0px))"}}>
         {G}
+        <BarraSezioni attiva="cosmetics" onVai={navigate} />
         {/* Header */}
         <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
-          <button onClick={() => navigate("map")} style={{...MG_BTN_BACK,whiteSpace:"nowrap"}}>← Mappa</button>
           <div style={{flex:1}} />
           <div className="mg-res" style={{flex:"none",minWidth:86}} aria-label={`${coins} monete`}><img src={premio3d("coin")} alt="" /><b>{coins}</b></div>
         </div>

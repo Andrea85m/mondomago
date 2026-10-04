@@ -87,15 +87,20 @@ async function main() {
   }
 
   await allaMappa();
-  const mondo = page.locator('button').filter({ hasText: /Foresta Magica/ }).filter({ hasText: /sfide/ }).first();
+  // Dal restyling 3D ogni mondo è un'isola: il nome sta nell'aria-label del
+  // bottone, non nel testo. Le isole ondeggiano sempre: si clicca via evento.
+  const mondo = page.locator('.mg-isola:not(.chiusa) button').first();
   await mondo.evaluate(el => el.scrollIntoView({ block: 'center' }));
-  await mondo.click({ force: true });
+  await mondo.dispatchEvent('click');
   await page.waitForTimeout(900);
   await analizza(page, 'introduzione del mondo');
 
   const parti = page.getByRole('button', { name: /Inizia la Missione|Iniziamo|Comincia|Partiamo|Avanti/i }).first();
-  if (await parti.count()) await parti.click();
+  if (await parti.count()) await parti.dispatchEvent('click');
   await page.waitForTimeout(1200);
+  const capito = page.getByRole('button', { name: /Capito/i });
+  if (await capito.count()) await capito.click();
+  await page.waitForTimeout(400);
   await analizza(page, 'sfida');
 
   await browser.close();
