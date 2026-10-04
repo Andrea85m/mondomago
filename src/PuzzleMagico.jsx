@@ -22,6 +22,7 @@ import { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback, use
 import WorldScene from "./WorldScene.jsx";
 import SvgAsset, { ASSET_MAP } from "./SvgAssets.jsx";
 import { Icon } from "./icons.jsx";
+import { ANIMALI } from "./data/animali.js";
 import {
   FF, FF_DISPLAY, FF_NUM,
   SG_GOLD, SG_RUNE, SG_PARCH, SG_INK, SG_BG, SG_CARD, SG_BR, SG_GOLD_GRAD, SG_TILE,
@@ -91,6 +92,16 @@ const TEMI = [
 ];
 const TUTTE_LE_COSE = TEMI.flatMap(t => t.cose.map(([e, n]) => ({ emoji: e, nome: n, tema: t.id })))
   .filter(c => ASSET_MAP[c.emoji] || ASSET_MAP[c.emoji.replace(/️/g, "")]);
+
+// Il bambino sceglie il tema (Animali, Mare, …) e Ombre e "Cosa si nasconde"
+// pescano solo da lì. Se un tema non basta per il livello, si completa con il
+// resto: meglio un oggetto fuori tema che una partita con due ombre.
+function cosePerTema(tema, quante) {
+  const delTema = tema === "tutti" ? TUTTE_LE_COSE : TUTTE_LE_COSE.filter(c => c.tema === tema);
+  if (delTema.length >= quante) return delTema;
+  const altre = TUTTE_LE_COSE.filter(c => !delTema.includes(c));
+  return [...delTema, ...shuffle(altre).slice(0, quante - delTema.length)];
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // DIFFICOLTÀ
@@ -236,6 +247,7 @@ function useScenaRasterizzata(worldId, W, H) {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- via la scena vecchia mentre si disegna la nuova
     setUrl(null);
+    if (!worldId) return;                 // il puzzle usa una foto: niente da disegnare
     const svg = nascosto.current?.querySelector("svg");
     if (!svg) return;
     let annullato = false;
@@ -266,7 +278,7 @@ function useScenaRasterizzata(worldId, W, H) {
   }, [worldId, W, H]);
 
   // il contenitore nascosto serve solo a far esistere l'SVG da serializzare
-  const sorgente = (
+  const sorgente = !worldId ? null : (
     <div ref={nascosto} aria-hidden style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", opacity: 0, pointerEvents: "none" }}>
       <WorldScene worldId={worldId} variant="full" />
     </div>
@@ -414,9 +426,9 @@ function Vittoria({ testo, adesivo, monete = 0, onAncora, onEsci }) {
 // Le sagome stanno in alto, gli oggetti in basso. Ogni oggetto va posato sulla
 // propria ombra. È il gioco d'ingresso: nessuna lettura, nessun numero.
 // ═══════════════════════════════════════════════════════════════════════════
-function GiocoOmbre({ livello, seme, speak, sfx, onVinto, onIndietro, onLivello }) {
+function GiocoOmbre({ livello, seme, tema = "tutti", speak, sfx, onVinto, onIndietro, onLivello }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps -- seme cambia apposta: nuovo giro, cose nuove
-  const cose = useMemo(() => shuffle(TUTTE_LE_COSE).slice(0, livello.ombre), [livello, seme]);
+  const cose = useMemo(() => shuffle(cosePerTema(tema, livello.ombre)).slice(0, livello.ombre), [livello, seme, tema]);
   const vassoio = useMemo(() => shuffle(cose), [cose]);
   const [posati, setPosati] = useState({});     // emoji → true
   const [preso, setPreso] = useState(null);
@@ -627,17 +639,18 @@ function GiocoCostruttore({ livello, seme, speak, sfx, onVinto, onIndietro, onLi
 // L'immagine è coperta da tessere. Ogni indizio ne scopre una. Si vince con
 // meno indizi possibile: è lì che sta il gioco.
 // ═══════════════════════════════════════════════════════════════════════════
-function GiocoIndovina({ livello, seme, speak, sfx, onVinto, onIndietro, onLivello }) {
+function GiocoIndovina({ livello, seme, tema = "tutti", speak, sfx, onVinto, onIndietro, onLivello }) {
   const n = livello.indovina;
   const cols = n <= 6 ? 3 : n <= 9 ? 3 : 4;
   const rows = Math.ceil(n / cols);
 
   const { soluzione, opzioni } = useMemo(() => {
-    const s = pick(TUTTE_LE_COSE);
-    const altri = shuffle(TUTTE_LE_COSE.filter(c => c.nome !== s.nome)).slice(0, 3);
+    const pool = cosePerTema(tema, 4);
+    const s = pick(pool);
+    const altri = shuffle(pool.filter(c => c.nome !== s.nome)).slice(0, 3);
     return { soluzione: s, opzioni: shuffle([s, ...altri]) };
   // eslint-disable-next-line react-hooks/exhaustive-deps -- seme cambia apposta: nuova cosa da indovinare
-  }, [seme]);
+  }, [seme, tema]);
 
   const [scoperte, setScoperte] = useState([]);
   const [risposta, setRisposta] = useState(null);
@@ -754,19 +767,22 @@ function GiocoIndovina({ livello, seme, speak, sfx, onVinto, onIndietro, onLivel
 // Il puzzle vero: pezzi con le linguette, vaschetta in basso, si trascinano
 // col dito e scattano in posizione quando sono abbastanza vicini.
 // ═══════════════════════════════════════════════════════════════════════════
-function GiocoIncastro({ livello, seme, speak, sfx, onVinto, onIndietro, onLivello, onNuovaImmagine }) {
+// `immagine` ({ nome, foto }): una foto al posto della scena di un mondo — è il
+// Puzzle degli animali. La foto è già ritagliata a 5:3, come il tabellone.
+function GiocoIncastro({ livello, seme, speak, sfx, onVinto, onIndietro, onLivello, onNuovaImmagine, immagine = null, titolo = "Puzzle a incastro", consegna = "Trascina ogni pezzo al suo posto!" }) {
   const [cols, rows] = livello.incastro;
   // eslint-disable-next-line react-hooks/exhaustive-deps -- seme cambia apposta: nuova immagine
-  const scena = useMemo(() => pick(SCENES), [seme]);
+  const scena = useMemo(() => immagine || pick(SCENES), [seme, immagine]);
 
   const W = 360, H = Math.round(W * 240 / 400);
   const VASSOIO_Y = H + 26;
   const SCALA_VASSOIO = 0.56;
-  const [url, sorgente] = useScenaRasterizzata(scena.id, W * 2, H * 2);
+  const [urlScena, sorgente] = useScenaRasterizzata(immagine ? null : scena.id, W * 2, H * 2);
+  const url = immagine ? immagine.foto : urlScena;
   const clipId = useId().replace(/:/g, "");
 
   // eslint-disable-next-line react-hooks/exhaustive-deps -- seme cambia apposta: tagli nuovi
-  const pezzi = useMemo(() => tagliaPuzzle(cols, rows, W, H), [cols, rows, H, seme]);
+  const pezzi = useMemo(() => tagliaPuzzle(cols, rows, W, H), [cols, rows, H, seme, immagine]);
   const [posti, setPosti] = useState({});          // id → true
   const [dove, setDove] = useState({});            // id → {x,y} nel vassoio
   const [selezionato, setSelezionato] = useState(null);
@@ -797,9 +813,9 @@ function GiocoIncastro({ livello, seme, speak, sfx, onVinto, onIndietro, onLivel
   }, [pezzi, cols, rows, H, VASSOIO_Y]);
 
   useEffect(() => {
-    const t = setTimeout(() => speak?.("Trascina ogni pezzo al suo posto!"), 350);
+    const t = setTimeout(() => speak?.(consegna), 350);
     return () => clearTimeout(t);
-  }, [speak]);
+  }, [speak, consegna]);
 
   // Man mano che i pezzi salgono sul tabellone la vaschetta si accorcia, ma non
   // può sparire: a puzzle finito tutte le y stanno sopra VASSOIO_Y e senza un
@@ -860,10 +876,10 @@ function GiocoIncastro({ livello, seme, speak, sfx, onVinto, onIndietro, onLivel
   const messi = Object.keys(posti).length;
 
   return (
-    <Cornice titolo="Puzzle a incastro" sottotitolo={`${scena.nome} · ${messi}/${pezzi.length} pezzi`}
+    <Cornice titolo={titolo} sottotitolo={`${scena.nome} · ${messi}/${pezzi.length} pezzi`}
       onIndietro={onIndietro}
       azione={
-        <button onClick={onNuovaImmagine} aria-label="Nuova immagine"
+        <button onClick={onNuovaImmagine} aria-label={immagine ? "Un altro animale" : "Nuova immagine"}
           style={{ background: "rgba(255,255,255,.10)", border: "none", color: SG_PARCH, borderRadius: 14, padding: "10px 12px", cursor: "pointer", flexShrink: 0 }}>
           <Icon name="ricomincia" color={SG_GOLD} size={18} />
         </button>
@@ -934,11 +950,157 @@ function GiocoIncastro({ livello, seme, speak, sfx, onVinto, onIndietro, onLivel
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// 5 · PUZZLE DEGLI ANIMALI
+// Si sceglie un animale, si ricompone la sua foto vera (il motore è quello del
+// puzzle a incastro) e alla fine si sente il suo verso vero, poi la voce dice
+// il nome e una curiosità. Gli animali finiti restano nell'album: si possono
+// riascoltare quando si vuole. È il ciclo "raccogli e riascolta" che tiene i
+// bambini sulle app di puzzle di animali più scaricate.
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Il verso è un mp3 a parte, non una clip della voce: si suona da solo e, quando
+// finisce, parla la voce. `poi` parte comunque (file mancante, autoplay negato,
+// verso troppo lungo): la frase non deve mai restare muta.
+function suonaVerso(src, poi) {
+  const a = new Audio(src);
+  let fatto = false;
+  const fine = () => { if (fatto) return; fatto = true; clearTimeout(t); poi?.(); };
+  const t = setTimeout(fine, 5000);
+  a.onended = fine;
+  a.onerror = fine;
+  a.play().catch(fine);
+  return () => { fatto = true; clearTimeout(t); a.pause(); };
+}
+
+function SceltaAnimale({ completati, onScegli, onIndietro, speak, sfx }) {
+  useEffect(() => {
+    const t = setTimeout(() => speak?.("Scegli un animale e rimetti insieme la sua foto!"), 350);
+    return () => clearTimeout(t);
+  }, [speak]);
+  return (
+    <Cornice titolo="Puzzle degli animali" sottotitolo={`${completati.length} animali su ${ANIMALI.length} nel tuo album`} onIndietro={onIndietro}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10 }}>
+        {ANIMALI.map(a => {
+          const fatto = completati.includes(a.id);
+          return (
+            <button key={a.id} onClick={() => { sfx?.tap?.(); onScegli(a); }}
+              aria-label={fatto ? `${a.nome}, già nel tuo album` : a.nome}
+              style={{
+                position: "relative", padding: 0, borderRadius: 18, overflow: "hidden", cursor: "pointer",
+                border: fatto ? "3px solid #FFC24B" : "3px solid rgba(255,255,255,.14)",
+                background: "#140B29", aspectRatio: "1", boxShadow: "0 4px 14px rgba(0,0,0,.35)",
+              }}>
+              <img src={a.mini} alt="" loading="lazy" decoding="async"
+                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              <span style={{
+                position: "absolute", left: 0, right: 0, bottom: 0, padding: "14px 4px 5px",
+                background: "linear-gradient(transparent, rgba(11,6,25,.85))",
+                fontFamily: FF_DISPLAY, fontSize: 14, color: "#fff", textAlign: "center",
+              }}>{a.nome}</span>
+              {fatto && (
+                <span style={{ position: "absolute", top: 5, right: 5, width: 24, height: 24, borderRadius: "50%",
+                  background: SG_GOLD_GRAD, display: "flex", alignItems: "center", justifyContent: "center",
+                  boxShadow: "0 2px 6px rgba(0,0,0,.4)" }}>
+                  <Icon name="star" color={SG_INK} size={14} />
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+      <div style={{ fontSize: 11, opacity: .45, textAlign: "center", marginTop: 12 }}>
+        A puzzle finito senti il verso vero dell'animale.
+      </div>
+    </Cornice>
+  );
+}
+
+function VittoriaAnimale({ animale, monete = 0, adesivo, speak, onAncora, onAltri }) {
+  const ferma = useRef(null);
+  const ascolta = useCallback(() => {
+    ferma.current?.();
+    ferma.current = suonaVerso(animale.verso, () => speak?.(animale.frase));
+  }, [animale, speak]);
+  useEffect(() => {
+    const t = setTimeout(ascolta, 450);
+    return () => { clearTimeout(t); ferma.current?.(); };
+  }, [ascolta]);
+
+  return (
+    <div className="fade-in" style={{
+      position: "fixed", inset: 0, zIndex: 60, background: "rgba(11,6,25,.88)",
+      display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
+    }}>
+      <div className="pop-in" style={{
+        background: SG_CARD, border: SG_BR, borderRadius: 28, padding: "18px 18px 20px",
+        maxWidth: 360, width: "100%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,.5)",
+      }}>
+        <div style={{ borderRadius: 20, overflow: "hidden", border: "3px solid #FFC24B", marginBottom: 12, aspectRatio: "5 / 3", background: "#140B29" }}>
+          <img src={animale.foto} alt={animale.nome} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+        </div>
+        <div style={{ fontFamily: FF_DISPLAY, fontSize: 28, color: SG_GOLD, lineHeight: 1.1 }}>{animale.nome}</div>
+        <div style={{ fontSize: 14, opacity: .85, margin: "6px 4px 10px", lineHeight: 1.35 }}>{animale.frase.replace(/^[^!]*!\s*/, "")}</div>
+        <div style={{ display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+          {monete > 0 && (
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(109,224,198,.14)",
+              border: "1px solid rgba(109,224,198,.4)", borderRadius: 30, padding: "4px 12px" }}>
+              <Icon name="coin" color={SG_RUNE} size={16} />
+              <span style={{ fontFamily: FF_NUM, fontWeight: 800, fontSize: 15, color: SG_RUNE }}>+{monete}</span>
+            </span>
+          )}
+          {adesivo && (
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,194,75,.12)",
+              border: "1px solid rgba(255,194,75,.4)", borderRadius: 30, padding: "4px 12px", fontSize: 13, fontWeight: 800 }}>
+              <span style={{ fontSize: 18 }}>{adesivo.emoji}</span> {adesivo.nome}
+            </span>
+          )}
+        </div>
+        <button onClick={ascolta} aria-label={`Ascolta di nuovo il verso: ${animale.nome}`}
+          style={{ width: "100%", background: "rgba(255,255,255,.09)", border: SG_BR, color: SG_PARCH, borderRadius: 40,
+            padding: 12, fontSize: 15, fontWeight: 800, cursor: "pointer", marginBottom: 10,
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+          <Icon name="audio" color={SG_GOLD} size={18} /> Ascolta il verso
+        </button>
+        <div style={{ display: "flex", gap: 10 }}>
+          <button onClick={onAltri} style={{ flex: 1, background: "rgba(255,255,255,.09)", border: SG_BR, color: SG_PARCH, borderRadius: 40, padding: 13, fontSize: 14, fontWeight: 800, cursor: "pointer" }}>
+            Tutti gli animali
+          </button>
+          <button onClick={onAncora} style={{ flex: 1.2, background: SG_GOLD_GRAD, border: "none", color: SG_INK, borderRadius: 40, padding: 13, fontSize: 14, fontWeight: 900, cursor: "pointer", boxShadow: "0 8px 22px rgba(255,194,75,.34)" }}>
+            Un altro!
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // ALBUM DEGLI ADESIVI
 // ═══════════════════════════════════════════════════════════════════════════
-function Album({ vinti, onIndietro, speak }) {
+function Album({ vinti, animali = [], onIndietro, speak }) {
+  const ferma = useRef(null);
+  useEffect(() => () => ferma.current?.(), []);
+  const riascolta = (a) => { ferma.current?.(); ferma.current = suonaVerso(a.verso, () => speak?.(a.nome)); };
   return (
-    <Cornice titolo="Il tuo album" sottotitolo={`${vinti.length} adesivi su ${ADESIVI.length}`} onIndietro={onIndietro}>
+    <Cornice titolo="Il tuo album" sottotitolo={`${vinti.length} adesivi su ${ADESIVI.length} · ${animali.length} animali su ${ANIMALI.length}`} onIndietro={onIndietro}>
+      <div style={{ fontSize: 11, opacity: .55, fontWeight: 800, letterSpacing: 1, margin: "2px 0 8px" }}>I TUOI ANIMALI</div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginBottom: 18 }}>
+        {ANIMALI.map(a => {
+          const preso = animali.includes(a.id);
+          return (
+            <button key={a.id} onClick={() => preso && riascolta(a)}
+              aria-label={preso ? `${a.nome}: tocca per sentire il verso` : "Animale ancora da trovare"}
+              style={{ aspectRatio: "1", padding: 0, borderRadius: 14, overflow: "hidden", cursor: preso ? "pointer" : "default",
+                border: preso ? "2px solid rgba(255,194,75,.6)" : "2px dashed rgba(255,255,255,.12)", background: "rgba(0,0,0,.24)",
+                display: "flex", alignItems: "center", justifyContent: "center", color: SG_PARCH }}>
+              {preso
+                ? <img src={a.mini} alt="" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                : <span style={{ fontSize: 22, opacity: .35 }}>?</span>}
+            </button>
+          );
+        })}
+      </div>
+      <div style={{ fontSize: 11, opacity: .55, fontWeight: 800, letterSpacing: 1, margin: "0 0 8px" }}>I TUOI ADESIVI</div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12 }}>
         {ADESIVI.map(a => {
           const preso = vinti.includes(a.id);
@@ -995,6 +1157,7 @@ export default function PuzzleMagico({ età = 5, speak, sfx, onExit, onMonete, b
   const [livello, setLivello] = useState(() => livelloPerEtà(età));
   const [vittoria, setVittoria] = useState(null);
   const [seme, setSeme] = useState(0);   // cambiarlo rimescola soggetti e tagli
+  const [animale, setAnimale] = useState(null);   // l'animale del puzzle in corso
 
   useEffect(() => { writeSave(salvato); }, [salvato]);
   // eslint-disable-next-line react-hooks/set-state-in-effect -- cambia il bambino: il livello riparte dalla sua età
@@ -1002,8 +1165,17 @@ export default function PuzzleMagico({ età = 5, speak, sfx, onExit, onMonete, b
 
   const adesiviVinti = salvato.adesivi || [];
   const partite = salvato.partite || 0;
+  const animaliFatti = salvato.animali || [];
+  const tema = salvato.tema || "animali";
+  const scegliTema = (t) => setSalvato(s => ({ ...s, tema: t }));
 
-  function vinci(testo) {
+  // il prossimo animale da proporre: prima quelli non ancora nell'album
+  function prossimoAnimale(dopo) {
+    const nuovi = ANIMALI.filter(a => !animaliFatti.includes(a.id) && a.id !== dopo?.id);
+    return pick(nuovi.length ? nuovi : ANIMALI.filter(a => a.id !== dopo?.id));
+  }
+
+  function vinci(testo, animaleVinto = null) {
     const mancanti = ADESIVI.filter(a => !adesiviVinti.includes(a.id));
     // un adesivo nuovo ogni 2 partite, finché ce ne sono
     const nuovo = mancanti.length && partite % 2 === 1 ? pick(mancanti) : null;
@@ -1017,20 +1189,27 @@ export default function PuzzleMagico({ età = 5, speak, sfx, onExit, onMonete, b
       ...s,
       partite: (s.partite || 0) + 1,
       adesivi: nuovo ? [...adesiviVinti, nuovo.id] : adesiviVinti,
+      animali: animaleVinto && !(s.animali || []).includes(animaleVinto.id) ? [...(s.animali || []), animaleVinto.id] : (s.animali || []),
       moneteData: oggi,
       moneteOggi: giaOggi + monete,
     }));
     if (monete) onMonete?.(monete);
     sfx?.victory?.();
-    speak?.(nuovo ? "Bravissimo! Hai vinto un adesivo nuovo!" : "Bravissimo! Puzzle completato!");
-    setVittoria({ testo, adesivo: nuovo, monete });
+    // sul puzzle degli animali parla l'animale (verso + curiosità), non il "bravo" generico
+    if (!animaleVinto) speak?.(nuovo ? "Bravissimo! Hai vinto un adesivo nuovo!" : "Bravissimo! Puzzle completato!");
+    setVittoria({ testo, adesivo: nuovo, monete, animale: animaleVinto });
   }
 
   const chiudi = () => { setVittoria(null); setSchermo("hub"); };
   const ancora = () => { setVittoria(null); setSeme(n => n + 1); };
 
   if (schermo === "album")
-    return <Album vinti={adesiviVinti} onIndietro={() => setSchermo("hub")} speak={speak} />;
+    return <Album vinti={adesiviVinti} animali={animaliFatti} onIndietro={() => setSchermo("hub")} speak={speak} />;
+
+  if (schermo === "animali")
+    return <SceltaAnimale completati={animaliFatti} speak={speak} sfx={sfx}
+      onIndietro={() => setSchermo("hub")}
+      onScegli={(a) => { setAnimale(a); setSeme(n => n + 1); setSchermo("animale"); }} />;
 
   const comuni = {
     livello, seme, speak, sfx,
@@ -1039,19 +1218,30 @@ export default function PuzzleMagico({ età = 5, speak, sfx, onExit, onMonete, b
   };
 
   let gioco = null;
-  if (schermo === "ombre")
-    gioco = <GiocoOmbre {...comuni} onVinto={() => vinci("Tutte al loro posto!")} />;
   if (schermo === "costruttore")
     gioco = <GiocoCostruttore {...comuni} onVinto={(sc) => vinci(`Hai ricostruito ${sc.nome}!`)} />;
-  if (schermo === "indovina")
-    gioco = <GiocoIndovina {...comuni} onVinto={(risparmiati) => vinci(risparmiati > 0 ? `Indovinato con ${risparmiati} pezzi ancora coperti!` : "Indovinato!")} />;
   if (schermo === "incastro")
     gioco = <GiocoIncastro {...comuni} onNuovaImmagine={() => setSeme(n => n + 1)} onVinto={(sc) => vinci(`Puzzle completato: ${sc.nome}!`)} />;
+  if (schermo === "animale" && animale)
+    gioco = <GiocoIncastro {...comuni} immagine={animale} titolo="Puzzle degli animali"
+      consegna="Rimetti insieme la foto dell'animale!"
+      onIndietro={() => setSchermo("animali")}
+      onNuovaImmagine={() => { setAnimale(prossimoAnimale(animale)); setSeme(n => n + 1); }}
+      onVinto={() => vinci(animale.nome, animale)} />;
+  if (schermo === "ombre" || schermo === "indovina")
+    gioco = schermo === "ombre"
+      ? <GiocoOmbre {...comuni} tema={tema} onVinto={() => vinci("Tutte al loro posto!")} />
+      : <GiocoIndovina {...comuni} tema={tema} onVinto={(risparmiati) => vinci(risparmiati > 0 ? `Indovinato con ${risparmiati} pezzi ancora coperti!` : "Indovinato!")} />;
 
   if (gioco) return (
     <>
       {gioco}
-      {vittoria && <Vittoria testo={vittoria.testo} adesivo={vittoria.adesivo} monete={vittoria.monete} onAncora={ancora} onEsci={chiudi} />}
+      {vittoria && !vittoria.animale && <Vittoria testo={vittoria.testo} adesivo={vittoria.adesivo} monete={vittoria.monete} onAncora={ancora} onEsci={chiudi} />}
+      {vittoria?.animale && (
+        <VittoriaAnimale animale={vittoria.animale} monete={vittoria.monete} adesivo={vittoria.adesivo} speak={speak}
+          onAltri={() => { setVittoria(null); setSchermo("animali"); }}
+          onAncora={() => { setVittoria(null); setAnimale(prossimoAnimale(vittoria.animale)); setSeme(n => n + 1); }} />
+      )}
     </>
   );
 
@@ -1072,8 +1262,47 @@ export default function PuzzleMagico({ età = 5, speak, sfx, onExit, onMonete, b
         )}
         <div style={{ flex: 1 }}>
           <h1 style={{ fontFamily: FF_DISPLAY, fontSize: 26, fontWeight: 400, margin: 0, color: SG_GOLD, lineHeight: 1.1 }}>Puzzle Magico</h1>
-          <div style={{ fontSize: 12, opacity: .7 }}>Quattro giochi per costruire, incastrare e indovinare</div>
+          <div style={{ fontSize: 12, opacity: .7 }}>Cinque giochi per costruire, incastrare e indovinare</div>
         </div>
+      </div>
+
+      {/* in evidenza: il puzzle degli animali, con tre foto in anteprima */}
+      <button onClick={() => { sfx?.tap?.(); setSchermo("animali"); }}
+        style={{
+          width: "100%", display: "flex", alignItems: "center", gap: 14, textAlign: "left", marginBottom: 14,
+          background: "linear-gradient(135deg,rgba(255,194,75,.22),rgba(249,115,22,.16))",
+          border: "2px solid rgba(255,194,75,.55)", borderRadius: 24, padding: "14px 16px",
+          cursor: "pointer", color: SG_PARCH, boxShadow: "0 6px 26px rgba(0,0,0,.28)",
+        }}>
+        <div style={{ position: "relative", width: 86, height: 62, flexShrink: 0 }} aria-hidden="true">
+          {ANIMALI.slice(0, 3).map((a, i) => (
+            <img key={a.id} src={a.mini} alt="" loading="lazy"
+              style={{ position: "absolute", left: i * 18, top: i % 2 ? 8 : 0, width: 50, height: 50, objectFit: "cover",
+                borderRadius: 12, border: "2px solid #FFC24B", boxShadow: "0 3px 8px rgba(0,0,0,.4)", rotate: `${(i - 1) * 7}deg` }} />
+          ))}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontFamily: FF_DISPLAY, fontSize: 19, color: SG_GOLD, marginBottom: 2 }}>Puzzle degli animali</div>
+          <div style={{ fontSize: 12.5, opacity: .8 }}>Ricomponi la foto e senti il suo verso · {animaliFatti.length}/{ANIMALI.length}</div>
+        </div>
+        <div style={{ fontSize: 20, opacity: .5 }}>›</div>
+      </button>
+
+      {/* tema di Ombre e "Cosa si nasconde" */}
+      <div style={{ fontSize: 11, opacity: .55, fontWeight: 800, letterSpacing: 1, margin: "0 0 6px" }}>TEMA DEI GIOCHI</div>
+      <div role="radiogroup" aria-label="Tema dei giochi" style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4, marginBottom: 12 }}>
+        {[...TEMI.map(t => ({ id: t.id, nome: t.nome, icona: t.icona })), { id: "tutti", nome: "Tutti", icona: "🎲" }].map(t => {
+          const on = t.id === tema;
+          return (
+            <button key={t.id} role="radio" aria-checked={on} onClick={() => { sfx?.tap?.(); scegliTema(t.id); }}
+              style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 5, padding: "7px 12px", borderRadius: 30,
+                cursor: "pointer", fontFamily: FF, fontSize: 13, fontWeight: 800,
+                background: on ? SG_GOLD_GRAD : "rgba(255,255,255,.07)", color: on ? SG_INK : SG_PARCH,
+                border: on ? "none" : "1px solid rgba(255,194,75,.18)" }}>
+              <span aria-hidden="true">{t.icona}</span>{t.nome}
+            </button>
+          );
+        })}
       </div>
 
       <div style={{ display: "grid", gap: 12, marginBottom: 16 }}>

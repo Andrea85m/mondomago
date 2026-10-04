@@ -112,6 +112,17 @@ for (const m of source.matchAll(/onMeet\s*:\s*\(\s*(\w+)\s*\)\s*=>\s*`((?:[^`\\]
     if (!has(unesc(m[1]))) errors.push(`Puzzle · consegna senza voce: "${unesc(m[1]).slice(0, 60)}"`);
   for (const m of pz.matchAll(/nome:\s*"([^"]+)"/g))                 // adesivi, scene
     if (!has(m[1])) errors.push(`Puzzle · etichetta senza voce: "${m[1]}"`);
+  for (const m of pz.matchAll(/consegna\s*=\s*"((?:[^"\\]|\\.)*)"/g))  // consegne passate come prop
+    if (!has(unesc(m[1]))) errors.push(`Puzzle · consegna senza voce: "${unesc(m[1]).slice(0, 60)}"`);
+  // Puzzle degli animali: nome e frase finale (verso + curiosità)
+  const an = readFileSync(join(ROOT, 'src', 'data', 'animali.js'), 'utf8');
+  for (const m of an.matchAll(/(?:nome|frase):\s*"((?:[^"\\]|\\.)*)"/g))
+    if (!has(unesc(m[1]))) errors.push(`Puzzle animali · frase senza voce: "${unesc(m[1]).slice(0, 60)}"`);
+  // e i file che il gioco carica davvero: foto, miniatura, verso
+  for (const m of an.matchAll(/id:\s*"([a-z]+)"/g)) {
+    for (const f of [`img/animali/${m[1]}.webp`, `img/animali/${m[1]}-mini.webp`, `audio/versi/${m[1]}.mp3`])
+      if (!existsSync(join(ROOT, 'public', f))) errors.push(`Puzzle animali · file mancante: public/${f}`);
+  }
 }
 
 // ═══ 4 · Integrità del manifest ══════════════════════════════════════════════
