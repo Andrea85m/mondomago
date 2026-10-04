@@ -51,3 +51,6 @@ __pycache__/
 *.jks
 *.keystore
 .scatti/
+
+# anteprime del look (scripts/look-prova.py)
+.look/
