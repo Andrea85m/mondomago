@@ -618,30 +618,140 @@ function speakBrowser(text, rate = 0.85) {
 
 let _onTalkingEnd = null; // callback to clear compTalking
 
-function speak(text, rate = 0.85, onEnd) {
-  if (!_ttsEnabled || !text) { if (onEnd) setTimeout(onEnd, 300); return; }
-  window.speechSynthesis?.cancel?.();
-  if (_currentAudio) { _currentAudio.pause(); _currentAudio = null; }
-  if (_onTalkingEnd) { _onTalkingEnd(); _onTalkingEnd = null; }
-  if (onEnd) _onTalkingEnd = onEnd;
+// Dove stanno le clip. Era "./audio/": relativo alla pagina, quindi da
+// magistella.com/app/ diventava /app/audio/… — che non esiste (404). Ogni
+// frase falliva e l'app ripiegava sulla voce robotica del telefono: dal
+// trasloco del gioco su /app/ la voce registrata non si era più sentita.
+// Le canzoni usavano già BASE_URL e infatti funzionavano.
+const VOCE_BASE = `${import.meta.env.BASE_URL}audio/`;
 
-  const file = TTS_MAP[ttsKey(text)] || TTS_MAP[text];
+// ── Priorità della voce ──────────────────────────────────────────────────────
+// CONSEGNA = la domanda, l'intro del mondo: è quello che il bambino deve sentire.
+// COMMENTO = la battuta del compagno dopo una risposta.
+// Prima ogni speak() troncava quello che c'era: il bambino toccava una risposta
+// e la domanda si spezzava a metà. Ora un commento su una risposta sbagliata non
+// copre la consegna (il bambino ha ancora bisogno di sentirla), e quando una
+// frase deve lasciare il posto a un'altra sfuma in 120 ms invece di tagliarsi.
+const VOCE_CONSEGNA = 2;
+const VOCE_COMMENTO = 1;
+let _currentKey  = null;
+let _currentPrio = 0;
+
+function sfumaEFerma(audio) {
+  // iOS ignora audio.volume: lì il fade non c'è e resta lo stop secco di prima.
+  const passi = 6;
+  let i = 0;
+  const v0 = audio.volume;
+  const t = setInterval(() => {
+    i++;
+    try { audio.volume = Math.max(0, v0 * (1 - i / passi)); } catch { /* volume non scrivibile */ }
+    if (i >= passi) { clearInterval(t); audio.pause(); }
+  }, 20);
+}
+
+function chiudiParlato() {
+  if (_onTalkingEnd) { const f = _onTalkingEnd; _onTalkingEnd = null; f(); }
+  _currentKey = null; _currentPrio = 0;
+  alzaMusica();
+}
+
+/** Questa frase è già in onda, o sta per partire (clip ancora in download)? */
+function staParlando(text) {
+  return !!_currentAudio && !_currentAudio.ended && _currentKey === ttsKey(text);
+}
+
+/**
+ * speak(testo, rate, onEnd, opzioni)
+ *   opzioni.prio      VOCE_CONSEGNA (default) o VOCE_COMMENTO
+ *   opzioni.cedeA     se true il commento rinuncia quando c'è una consegna in corso
+ */
+function speak(text, rate = 0.85, onEnd, { prio = VOCE_CONSEGNA, cedeA = false } = {}) {
+  if (!_ttsEnabled || !text) { if (onEnd) setTimeout(onEnd, 300); return; }
+  const key  = ttsKey(text);
+  const file = TTS_MAP[key] || TTS_MAP[text];
+
+  // La stessa frase è già in onda (doppio tocco sull'altoparlante o sulla
+  // domanda): ripartire da capo suona come un'interruzione. Si lascia finire.
+  if (file && staParlando(text)) { if (onEnd) setTimeout(onEnd, 300); return; }
+
+  // Un commento "debole" non copre una consegna che sta ancora parlando.
+  if (cedeA && _currentAudio && !_currentAudio.paused && _currentPrio > prio) {
+    if (onEnd) setTimeout(onEnd, 300);
+    return;
+  }
+
+  window.speechSynthesis?.cancel?.();
+  if (_currentAudio) { sfumaEFerma(_currentAudio); _currentAudio = null; }
+  if (_onTalkingEnd) { const f = _onTalkingEnd; _onTalkingEnd = null; f(); }
+  if (onEnd) _onTalkingEnd = onEnd;
+  _currentKey = key; _currentPrio = prio;
+
   if (file) {
-    const audio = new Audio(`./audio/${file}`);
+    const audio = new Audio(VOCE_BASE + file);
     // Niente playbackRate: allungare o accorciare un mp3 sposta le formanti e
     // la voce diventa metallica. La cadenza giusta è già dentro il file
     // (gen-tts.py registra tutto a rate -10%), quindi si riproduce a 1×.
     _currentAudio = audio;
+    abbassaMusica();
     audio.onended = () => {
-      if (_currentAudio === audio) _currentAudio = null;
-      if (_onTalkingEnd) { _onTalkingEnd(); _onTalkingEnd = null; }
+      if (_currentAudio !== audio) return;   // nel frattempo è partita un'altra frase
+      _currentAudio = null;
+      chiudiParlato();
     };
-    audio.play().catch(() => { _currentAudio = null; speakBrowser(text, rate); if (_onTalkingEnd) { _onTalkingEnd(); _onTalkingEnd = null; } });
+    audio.play().catch(err => {
+      // AbortError = la frase è stata fermata da un'altra prima di partire (il
+      // file stava ancora scaricando). Non è un errore: la frase nuova è già in
+      // onda. Prima qui si azzerava _currentAudio — perdendo quella nuova — e si
+      // rileggeva la VECCHIA con la voce di sistema, sopra la nuova.
+      if (_currentAudio !== audio || err?.name === "AbortError") return;
+      _currentAudio = null;
+      // Errore vero (file non scaricabile, offline senza cache): la voce di
+      // sistema è meglio del silenzio per un bambino che non sa ancora leggere.
+      speakBrowser(text, rate);
+      chiudiParlato();
+    });
     return;
   }
   speakBrowser(text, rate);
   // Browser TTS has no reliable onend cross-browser; clear after estimate
-  if (onEnd) setTimeout(onEnd, Math.max(1000, text.length * 65));
+  setTimeout(() => { if (_currentKey === key && !_currentAudio) chiudiParlato(); }, Math.max(1000, text.length * 65));
+}
+
+/** Commento del compagno dopo una risposta. Sulle risposte giuste prende il
+ *  posto della domanda (il bambino l'ha già capita); su quelle sbagliate no. */
+function speakCommento(text, onEnd, { giusta = true } = {}) {
+  speak(text, 0.85, onEnd, { prio: VOCE_COMMENTO, cedeA: !giusta });
+}
+
+// ── Pre-scaricamento ─────────────────────────────────────────────────────────
+// Le clip si scaricano la prima volta che servono: su rete mobile il bambino
+// aspettava mezzo secondo di silenzio a ogni domanda nuova. All'ingresso di un
+// mondo si scaricano in sottofondo tutte le consegne della sessione (il service
+// worker le tiene in cache, così funzionano anche offline). Due alla volta, per
+// non rubare banda alla schermata.
+const _giaScaricate = new Set();
+function preScaricaVoce(testi) {
+  if (navigator.connection?.saveData) return;
+  const coda = [...new Set(testi.filter(Boolean).map(t => TTS_MAP[ttsKey(t)] || TTS_MAP[t]).filter(Boolean))]
+    .filter(f => !_giaScaricate.has(f));
+  coda.forEach(f => _giaScaricate.add(f));
+  const avanti = () => {
+    const f = coda.shift();
+    if (!f) return;
+    fetch(VOCE_BASE + f, { priority: "low" }).catch(() => _giaScaricate.delete(f)).finally(avanti);
+  };
+  avanti(); avanti();
+}
+
+/** Il testo che la voce legge come consegna di una sfida. */
+function consegnaDi(c) {
+  if (!c) return "";
+  return c.format === "story_choice" ? c.situation
+    : c.format === "word_picture" ? `Trova l'immagine per la parola: ${c.word}`
+    : c.format === "rhyme_complete" ? c.prompt.replace("___", "...")
+    : c.id?.startsWith("ba_") ? `Quale immagine inizia con la lettera ${c.id.replace("ba_","")}?`
+    // quiz_cartoon / color_zones / puzzle_swap scrivono la consegna in `question`
+    : c.prompt || c.question;
 }
 
 // ── AUDIO UNLOCK ─────────────────────────────────────────────────────────────
@@ -742,13 +852,30 @@ const WORLD_SCALES = {
   biblioteca:{ freqs:[329.6,349.2,392.0,440.0,392.0,349.2], ms:720 },
 };
 let _musicTimer = null, _musicStep = 0;
+// ── Ducking: la musica si abbassa quando parla la voce ──────────────────────
+// Prima sotto la voce suonavano due musiche a volume pieno (le note di
+// startMusic e il loop di startSong) e la domanda si capiva male.
+const SONG_VOL = 0.38, SONG_VOL_SOTTO_VOCE = 0.1;
+let _musicaSotto = false;
+function abbassaMusica() {
+  _musicaSotto = true;
+  if (_songAudio) try { _songAudio.volume = SONG_VOL_SOTTO_VOCE; } catch { /* iOS: volume fisso */ }
+}
+function alzaMusica() {
+  _musicaSotto = false;
+  if (_songAudio) try { _songAudio.volume = SONG_VOL; } catch { /* iOS: volume fisso */ }
+}
 function startMusic(worldId) {
   if (_musicTimer) return; // already running
+  // Una musica sola: se il mondo ha il suo brano (startSong), le note
+  // sintetiche restano spente. Servono solo ai mondi senza brano.
+  if (WORLD_SONGS[worldId]) return;
   const scale = WORLD_SCALES[worldId]; if (!scale) return;
   function tick() {
     const f = scale.freqs[_musicStep % scale.freqs.length];
-    playTone(f,   'sine', 0, scale.ms / 1000 * 0.85, 0.055);
-    playTone(f/2, 'sine', 0, scale.ms / 1000 * 0.85, 0.028);
+    const k = _musicaSotto ? 0.3 : 1;
+    playTone(f,   'sine', 0, scale.ms / 1000 * 0.85, 0.055 * k);
+    playTone(f/2, 'sine', 0, scale.ms / 1000 * 0.85, 0.028 * k);
     _musicStep++;
     _musicTimer = setTimeout(tick, scale.ms);
   }
@@ -779,7 +906,7 @@ function _playSongLine() {
   const lines = WORLD_SONGS[_songWorld]; if (!lines) return;
   const idx = _songLine % lines.length;
   _songAudio = new Audio(`${import.meta.env.BASE_URL}audio/song_${_songWorld}_${idx}.mp3`);
-  _songAudio.volume = 0.38;
+  _songAudio.volume = _musicaSotto ? SONG_VOL_SOTTO_VOCE : SONG_VOL;
   if (_onSongTick) _onSongTick(lines[idx]);
   _songAudio.onended = () => { if (_songActive) { _songLine++; _playSongLine(); } };
   _songAudio.play().catch(() => {});
@@ -1420,7 +1547,7 @@ export default function Magistella() {
       if (comp) {
         const msg = nc >= 2 ? comp.onStreak() : comp.onCorrect();
         setFeedbackMsg(msg);
-        setTimeout(() => { setCompTalking(true); speak(msg, 0.85, () => setCompTalking(false)); }, 400);
+        setTimeout(() => { setCompTalking(true); speakCommento(msg, () => setCompTalking(false)); }, 400);
       }
     } else {
       triggerBAD();
@@ -1429,7 +1556,7 @@ export default function Magistella() {
       if (comp) {
         const msg = comp.onWrong();
         setFeedbackMsg(msg);
-        setTimeout(() => { setCompTalking(true); speak(msg, 0.85, () => setCompTalking(false)); }, 400);
+        setTimeout(() => { setCompTalking(true); speakCommento(msg, () => setCompTalking(false), { giusta: false }); }, 400);
       }
     }
     setResults(r => [...r, { type: ch.type, ok }]);
@@ -1445,7 +1572,7 @@ export default function Magistella() {
       if (comp) {
         const msg = nc >= 2 ? comp.onStreak() : comp.onCorrect();
         setFeedbackMsg(msg);
-        setTimeout(() => { setCompTalking(true); speak(msg, 0.85, () => setCompTalking(false)); }, 400);
+        setTimeout(() => { setCompTalking(true); speakCommento(msg, () => setCompTalking(false)); }, 400);
       }
     } else {
       triggerBAD();
@@ -1453,7 +1580,7 @@ export default function Magistella() {
       if (comp) {
         const msg = comp.onWrong();
         setFeedbackMsg(msg);
-        setTimeout(() => { setCompTalking(true); speak(msg, 0.85, () => setCompTalking(false)); }, 400);
+        setTimeout(() => { setCompTalking(true); speakCommento(msg, () => setCompTalking(false), { giusta: false }); }, 400);
       }
     }
     setResults(r => [...r, { type: ch.type, ok: choice.correct }]);
@@ -1468,7 +1595,7 @@ export default function Magistella() {
       if (comp) {
         const msg = comp.onWrong();
         setFeedbackMsg(msg);
-        setTimeout(() => { setCompTalking(true); speak(msg, 0.85, () => setCompTalking(false)); }, 400);
+        setTimeout(() => { setCompTalking(true); speakCommento(msg, () => setCompTalking(false), { giusta: false }); }, 400);
       }
       setTimeout(() => { setSeqTaps([]); setSeqError(false); }, 900);
       return;
@@ -1485,7 +1612,7 @@ export default function Magistella() {
       if (comp) {
         const msg = nc >= 2 ? comp.onStreak() : comp.onCorrect();
         setFeedbackMsg(msg);
-        setTimeout(() => { setCompTalking(true); speak(msg, 0.85, () => setCompTalking(false)); }, 400);
+        setTimeout(() => { setCompTalking(true); speakCommento(msg, () => setCompTalking(false)); }, 400);
       }
       setTimeout(() => setShowFeedback(true), 280);
     }
@@ -1521,11 +1648,11 @@ export default function Magistella() {
     if (ok) {
       triggerOK(pts); setSkills(s => addSkill(s, ch.type));
       setWrongStreak(0);
-      if (comp) { const msg = comp.onCorrect(); setFeedbackMsg(msg); setTimeout(() => { setCompTalking(true); speak(msg, 0.85, () => setCompTalking(false)); }, 400); }
+      if (comp) { const msg = comp.onCorrect(); setFeedbackMsg(msg); setTimeout(() => { setCompTalking(true); speakCommento(msg, () => setCompTalking(false)); }, 400); }
       setTimeout(() => setShowFeedback(true), 280);
     } else {
       triggerBAD(); setWrongStreak(w => w + 1);
-      if (comp) { const msg = comp.onWrong(); setFeedbackMsg(msg); setTimeout(() => { setCompTalking(true); speak(msg, 0.85, () => setCompTalking(false)); }, 400); }
+      if (comp) { const msg = comp.onWrong(); setFeedbackMsg(msg); setTimeout(() => { setCompTalking(true); speakCommento(msg, () => setCompTalking(false), { giusta: false }); }, 400); }
       setTimeout(() => { setDragPlaced({}); setSelected(null); }, 1200);
     }
     setResults(r => [...r, { type: ch.type, ok }]);
@@ -1551,7 +1678,7 @@ export default function Magistella() {
       const pts = ch.isBoss ? 3 : young ? 1 : 2;
       triggerOK(pts); setSkills(s => addSkill(s, ch.type || "logica"));
       setWrongStreak(0);
-      if (comp) { const msg = comp.onCorrect(); setFeedbackMsg(msg); setTimeout(() => { setCompTalking(true); speak(msg, 0.85, () => setCompTalking(false)); }, 400); }
+      if (comp) { const msg = comp.onCorrect(); setFeedbackMsg(msg); setTimeout(() => { setCompTalking(true); speakCommento(msg, () => setCompTalking(false)); }, 400); }
       setResults(r => [...r, { type: ch.type || "logica", ok: true }]);
       setTimeout(() => setShowFeedback(true), 280);
     }
@@ -1644,6 +1771,7 @@ export default function Magistella() {
       }
     }
     stopMusic(); stopSong();
+    preScaricaVoce([...list.map(consegnaDi), STORY_ARCS[w.id]?.intro_text, STORY_ARCS[w.id]?.outro]);
     setWorld(w); setChallenges(list); setCi(0);
     setSelected(null); setStoryChoice(null); setSeqTaps([]); setSeqError(false); setDragPicked(null); setDragPlaced({}); setColorZoneColors({}); setColorZonePicked(null); setPuzzleGrid(null); setPuzzleMoves(0);
     setFeedbackMsg(""); setWrongStreak(0); setShowFeedback(false);
@@ -1658,6 +1786,7 @@ export default function Magistella() {
     const list = getDailyChallenges(childAge || 5, activeProfileId); // M6: per-profile daily
     if (!list.length) return;
     stopMusic(); stopSong();
+    preScaricaVoce(list.map(consegnaDi));
     setWorld({ id:"daily", name:"Sfida del Giorno", emoji:"🌟", color:"#FFD95A", unlocked:true });
     setChallenges(list); setCi(0);
     setSelected(null); setStoryChoice(null); setSeqTaps([]); setSeqError(false); setDragPicked(null); setDragPlaced({}); setColorZoneColors({}); setColorZonePicked(null); setPuzzleGrid(null); setPuzzleMoves(0);
@@ -2094,13 +2223,7 @@ export default function Magistella() {
       const c = challenges[ci];
       if (!c) return;
       if (c.isBoss) SFX.boss();
-      const autoText = c.format === "story_choice" ? c.situation
-        : c.format === "word_picture" ? `Trova l'immagine per la parola: ${c.word}`
-        : c.format === "rhyme_complete" ? c.prompt.replace("___", "...")
-        : c.id?.startsWith("ba_") ? `Quale immagine inizia con la lettera ${c.id.replace("ba_","")}?`
-        // quiz_cartoon / color_zones / puzzle_swap scrivono la consegna in `question`
-        : c.prompt || c.question;
-      speak(autoText);
+      speak(consegnaDi(c));
     } else if (screen === "world_intro" && arc) {
       startMusic(world?.id);
       startSong(world?.id);
@@ -3207,14 +3330,7 @@ export default function Magistella() {
               aria-label="Esci dalla sfida" style={MG_BTN_SQ}>
               ← Esci
             </button>
-            <button onClick={() => {
-              const t = ch.format==="story_choice" ? ch.situation
-                : ch.format==="word_picture" ? `Trova l'immagine per la parola: ${ch.word}`
-                : ch.id?.startsWith("ba_") ? `Quale immagine inizia con la lettera ${ch.id.replace("ba_","")}?`
-                : ch.format==="rhyme_complete" ? ch.prompt.replace("___","...")
-                : ch.prompt || ch.question;
-              speak(t);
-            }}
+            <button onClick={() => speak(consegnaDi(ch))}
               style={{...MG_BTN_SQ,background:"linear-gradient(180deg,#A8E8FF,#1E97DA)",padding:"5px 8px"}}
               title="Rileggi la domanda" aria-label="Rileggi la domanda">
               <img src={ui3d("speaker-with-sound-waves")} alt="" style={{width:26,height:26}} />
@@ -3735,7 +3851,7 @@ export default function Magistella() {
                         setSelected(999);
                         const pts = ch.isBoss ? 3 : young ? 1 : 2;
                         triggerOK(pts); setSkills(s => addSkill(s, ch.type||"creativita"));
-                        if (comp) { const msg = comp.onCorrect(); setFeedbackMsg(msg); setTimeout(() => { setCompTalking(true); speak(msg, 0.85, () => setCompTalking(false)); }, 400); }
+                        if (comp) { const msg = comp.onCorrect(); setFeedbackMsg(msg); setTimeout(() => { setCompTalking(true); speakCommento(msg, () => setCompTalking(false)); }, 400); }
                         setResults(r => [...r, { type: ch.type||"creativita", ok: true }]);
                         setTimeout(() => setShowFeedback(true), 280);
                       }

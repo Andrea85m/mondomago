@@ -219,6 +219,13 @@ esiste perché senza, il puzzle diventa una macchinetta da monete.
 
 ## 5. 🚧 Trappole note (leggere prima di perderci un pomeriggio)
 
+- **Ogni percorso verso `public/` va scritto con `import.meta.env.BASE_URL`, mai `./`**. Il gioco
+  vive su `/app/` ma i file di `public/` stanno alla radice: `./audio/x.mp3` diventava
+  `/app/audio/x.mp3` (404) e dal trasloco su `/app/` ogni frase ripiegava sulla voce robotica
+  del telefono, senza un errore visibile. `npm run smoke:voce` lo controlla in Chrome.
+- **La voce ha due priorità** (`speak` per le consegne, `speakCommento` per le battute del
+  compagno): un commento su una risposta sbagliata non copre la domanda. Non tornare a
+  chiamare `speak()` nudo per il feedback.
 - **`.screen-enter` deve restare `backwards`, NON `both`** (in `AnimationStyles.jsx`). Con
   `both` il fill-mode lascia un transform residuo che crea un *containing block* per i
   `position:fixed` → le modali-celebrazione si centrano nel container invece che nel viewport.

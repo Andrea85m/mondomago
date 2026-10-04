@@ -20,6 +20,7 @@ Serve ffmpeg per la normalizzazione (senza, il file resta grezzo e lo dice).
 
 import argparse
 import asyncio
+import base64
 import json
 import os
 import re
@@ -34,7 +35,7 @@ from tts_text import to_speech, tts_key, file_name, NAME_TOKEN  # noqa: E402
 try:
     import edge_tts
 except ImportError:
-    sys.exit("edge-tts non trovato. Esegui: pip3 install edge-tts")
+    edge_tts = None          # serve solo col motore "edge"
 
 ROOT = Path(__file__).resolve().parent.parent
 # Il testo parlato sta nel gioco e nei suoi dati (compagni, mondi, sfide)
@@ -52,6 +53,65 @@ VOICE = "it-IT-IsabellaNeural"
 RATE = "-10%"      # un filo sotto il naturale: i bambini di 3-8 anni seguono meglio
 PITCH = "+0Hz"     # niente pitch shift: sul neurale introduce artefatti metallici
 CONCURRENCY = 6
+
+# ── Motore Google: Cloud Text-to-Speech, voci Chirp 3 HD ─────────────────────
+# Perché: edge-tts usa il servizio "Leggi ad alta voce" di Edge in modo non
+# ufficiale (Microsoft: l'uso commerciale senza Azure "could be a violation of
+# our terms"), e un'app per bambini su Play non può poggiare su quello.
+# Cloud TTS è un servizio ufficiale: "You can use the audio data files you create
+# [...] to power your applications" (docs.cloud.google.com/text-to-speech/docs/basics).
+# Chirp 3 HD: 1 milione di caratteri gratis al mese (tutte le frasi ≈ 34.000).
+# NON Gemini API: i suoi termini vietano l'uso in app rivolte ai minori di 18 anni.
+#
+#   chiave in ~/.config/google-tts/api_key   (oppure env GOOGLE_TTS_API_KEY)
+#   python3 scripts/gen-tts.py --motore google --demo          # campioni di ogni voce
+#   python3 scripts/gen-tts.py --motore google --voce Leda --force
+GOOGLE_VOCE = "Leda"        # da confermare dopo l'ascolto dei campioni (--demo)
+GOOGLE_RITMO = 0.92         # come il -10% di Isabella: i bambini piccoli seguono meglio
+GOOGLE_URL = "https://texttospeech.googleapis.com/v1"
+
+
+def google_chiave() -> str:
+    k = os.environ.get("GOOGLE_TTS_API_KEY", "").strip()
+    f = Path.home() / ".config" / "google-tts" / "api_key"
+    if not k and f.exists():
+        k = f.read_text().strip()
+    if not k:
+        sys.exit("Chiave Google TTS assente: mettila in ~/.config/google-tts/api_key "
+                 "(una riga, nessun altro testo) oppure in GOOGLE_TTS_API_KEY.")
+    return k
+
+
+def google_post(percorso: str, corpo: dict | None, chiave: str) -> dict:
+    """curl invece di urllib: sul Mac di Emilio urllib inciampa nei certificati SSL.
+    La chiave va in un header, mai nella riga di comando (resterebbe in `ps`)."""
+    cmd = ["curl", "-s", "--max-time", "60", "-H", "Content-Type: application/json",
+           "-H", "@-", f"{GOOGLE_URL}/{percorso}"]
+    intestazione = f"X-Goog-Api-Key: {chiave}\n"
+    if corpo is not None:
+        cmd[1:1] = ["-X", "POST", "--data-binary", json.dumps(corpo)]
+    r = subprocess.run(cmd, input=intestazione, capture_output=True, text=True)
+    try:
+        d = json.loads(r.stdout or "{}")
+    except json.JSONDecodeError:
+        d = {"error": {"message": (r.stdout or r.stderr)[:200]}}
+    if "error" in d:
+        raise RuntimeError(f"{d['error'].get('status', '')} {d['error'].get('message', '')[:160]}")
+    return d
+
+
+def google_voci(chiave: str) -> list[str]:
+    d = google_post("voices?languageCode=it-IT", None, chiave)
+    return sorted(v["name"] for v in d.get("voices", []) if "Chirp3-HD" in v["name"])
+
+
+def google_sintesi(testo: str, voce: str, path: Path, chiave: str):
+    d = google_post("text:synthesize", {
+        "input": {"text": testo},
+        "voice": {"languageCode": "it-IT", "name": f"it-IT-Chirp3-HD-{voce}"},
+        "audioConfig": {"audioEncoding": "MP3", "speakingRate": GOOGLE_RITMO, "sampleRateHertz": 24000},
+    }, chiave)
+    path.write_bytes(base64.b64decode(d["audioContent"]))
 
 # ── Normalizzazione audio ────────────────────────────────────────────────────
 # Senza questo alcune battute arrivavano più forti di altre e il genitore
@@ -183,7 +243,7 @@ def normalize(path: Path) -> bool:
     return False
 
 
-async def render(text: str, path: Path, sem: asyncio.Semaphore, force: bool) -> str:
+async def render(text: str, path: Path, sem: asyncio.Semaphore, force: bool, motore: dict) -> str:
     if path.exists() and not force:
         return "skip"
     spoken = to_speech(text)
@@ -192,7 +252,10 @@ async def render(text: str, path: Path, sem: asyncio.Semaphore, force: bool) -> 
     async with sem:
         for attempt in range(3):
             try:
-                await edge_tts.Communicate(spoken, VOICE, rate=RATE, pitch=PITCH).save(str(path))
+                if motore["nome"] == "google":
+                    await asyncio.to_thread(google_sintesi, spoken, motore["voce"], path, motore["chiave"])
+                else:
+                    await edge_tts.Communicate(spoken, VOICE, rate=RATE, pitch=PITCH).save(str(path))
                 break
             except Exception as e:                       # rete ballerina: si riprova
                 if attempt == 2:
@@ -208,9 +271,35 @@ async def main():
     ap.add_argument("--force", action="store_true", help="rigenera anche i file già presenti")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--demo", action="store_true", help="una frase con ognuna delle voci italiane")
+    ap.add_argument("--motore", choices=["edge", "google"], default="edge")
+    ap.add_argument("--voce", default=GOOGLE_VOCE, help="voce Chirp 3 HD (solo --motore google), es. Leda")
     args = ap.parse_args()
 
     AUDIO_DIR.mkdir(parents=True, exist_ok=True)
+    motore = {"nome": args.motore, "voce": args.voce}
+    if args.motore == "google":
+        motore["chiave"] = google_chiave()
+    elif edge_tts is None:
+        sys.exit("edge-tts non trovato. Esegui: pip3 install edge-tts")
+
+    if args.demo and args.motore == "google":
+        out = ROOT / "public" / "audio" / "_demo"
+        out.mkdir(exist_ok=True)
+        try:
+            voci = google_voci(motore["chiave"])
+        except RuntimeError as e:
+            sys.exit(f"Google TTS ha risposto: {e}\nControlla che nel progetto Google Cloud sia attiva "
+                     "l'API Cloud Text-to-Speech e che la fatturazione sia collegata (resta gratis "
+                     "fino a 1 milione di caratteri al mese).")
+        print(f"Voci Chirp 3 HD italiane disponibili: {len(voci)}")
+        for nome in voci:
+            v = nome.split("-")[-1]
+            f = out / f"google-{v}.mp3"
+            google_sintesi(to_speech(DEMO_PHRASE), v, f, motore["chiave"])
+            normalize(f)
+            print(f"  {f.relative_to(ROOT)}")
+        print("\nAscoltale e scegli: poi --voce <Nome> --force (o cambia GOOGLE_VOCE qui sopra).")
+        return
 
     if args.demo:
         out = ROOT / "public" / "audio" / "_demo"
@@ -234,7 +323,10 @@ async def main():
         manifest[tts_key(t)] = file_name(tts_key(t))
     manifest = {k: v for k, v in sorted(manifest.items()) if k}
 
-    print(f"Voce: {VOICE}  ·  rate {RATE}  ·  pitch {PITCH}")
+    if args.motore == "google":
+        print(f"Voce: Google Chirp 3 HD {args.voce}  ·  ritmo {GOOGLE_RITMO}")
+    else:
+        print(f"Voce: {VOICE}  ·  rate {RATE}  ·  pitch {PITCH}")
     print(f"ffmpeg: {'sì — volume normalizzato a -16 LUFS' if HAS_FFMPEG else 'NO — audio non normalizzato'}")
     print(f"Stringhe parlate trovate: {len(manifest)}")
 
@@ -246,7 +338,7 @@ async def main():
 
     sem = asyncio.Semaphore(CONCURRENCY)
     results = await asyncio.gather(*[
-        render(k, AUDIO_DIR / v, sem, args.force) for k, v in manifest.items()
+        render(k, AUDIO_DIR / v, sem, args.force, motore) for k, v in manifest.items()
     ])
     tally = {r: results.count(r) for r in set(results)}
 
