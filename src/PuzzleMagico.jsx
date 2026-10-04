@@ -986,7 +986,10 @@ const GIOCHI = [
 const MONETE_PER_LIVELLO = { facile: 1, medio: 2, difficile: 3, mago: 4 };
 const TETTO_MONETE_AL_GIORNO = 20;
 
-export default function PuzzleMagico({ età = 5, speak, sfx, onExit, onMonete }) {
+// `barra`: la barra delle sezioni di Magistella. Si vede solo nell'hub: dentro
+// un gioco il bambino è in un'attività e la barra lo distrarrebbe (come in una
+// sfida). Senza `barra` (sezione usata da sola) torna la freccia per uscire.
+export default function PuzzleMagico({ età = 5, speak, sfx, onExit, onMonete, barra = null }) {
   const [salvato, setSalvato] = useState(loadSave);
   const [schermo, setSchermo] = useState("hub");
   const [livello, setLivello] = useState(() => livelloPerEtà(età));
@@ -1056,13 +1059,17 @@ export default function PuzzleMagico({ età = 5, speak, sfx, onExit, onMonete })
   return (
     <div style={{
       minHeight: "var(--vvh,100dvh)", background: SG_BG, color: SG_PARCH,
-      padding: "18px 16px max(env(safe-area-inset-bottom,0px),24px)", isolation: "isolate",
+      padding: barra ? "18px 16px calc(100px + env(safe-area-inset-bottom,0px))" : "18px 16px max(env(safe-area-inset-bottom,0px),24px)",
+      isolation: "isolate",
     }}>
+      {barra}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18 }}>
-        <button onClick={onExit} aria-label="Torna alla mappa"
-          style={{ background: "rgba(255,255,255,.10)", border: "none", color: SG_PARCH, borderRadius: 14, padding: "10px 14px", cursor: "pointer", fontSize: 15, fontWeight: 800 }}>
-          ←
-        </button>
+        {!barra && (
+          <button onClick={onExit} aria-label="Torna alla mappa"
+            style={{ background: "rgba(255,255,255,.10)", border: "none", color: SG_PARCH, borderRadius: 14, padding: "10px 14px", cursor: "pointer", fontSize: 15, fontWeight: 800 }}>
+            ←
+          </button>
+        )}
         <div style={{ flex: 1 }}>
           <h1 style={{ fontFamily: FF_DISPLAY, fontSize: 26, fontWeight: 400, margin: 0, color: SG_GOLD, lineHeight: 1.1 }}>Puzzle Magico</h1>
           <div style={{ fontSize: 12, opacity: .7 }}>Quattro giochi per costruire, incastrare e indovinare</div>

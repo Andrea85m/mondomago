@@ -280,8 +280,41 @@ async function main() {
     });
     void n;
     // il controllo vero lo fa l'audit; qui basta che la mappa risponda
-    await page.getByRole('button', { name: 'Torna alla mappa' }).click();
+    // (dalla barra delle sezioni: l'hub del puzzle non ha più la freccia)
+    await page.getByRole('button', { name: 'Mondi' }).click();
     await page.waitForTimeout(500);
+    await page.waitForSelector('text=I Mondi Magici', { timeout: 8000 });
+  });
+
+  // ── la barra delle sezioni resta su tutte le sezioni ──────────────────────
+  // Prima esisteva solo sulla mappa: toccando una voce la barra spariva.
+  await passo('la barra resta visibile su ogni sezione e segna quella giusta', async () => {
+    for (const [voce, segno] of [['Skill', 'Le tue Abilità'], ['Famiglia', 'Missioni Famiglia'], ['Look', 'Negozio Magico'], ['Puzzle', 'Puzzle Magico'], ['Mondi', 'I Mondi Magici']]) {
+      await page.locator('nav.mg-tabs').getByRole('button', { name: voce }).click();
+      await page.waitForSelector(`text=${segno}`, { timeout: 8000 });
+      await page.waitForTimeout(350);
+      const stato = await page.evaluate(() => {
+        const navs = document.querySelectorAll('nav.mg-tabs');
+        const on = document.querySelector('nav.mg-tabs button[aria-current="page"]');
+        const r = navs[0]?.getBoundingClientRect();
+        return { quante: navs.length, attiva: on?.textContent, inBasso: r ? Math.abs(r.bottom - window.innerHeight) < 2 : false };
+      });
+      if (stato.quante !== 1) throw new Error(`${voce}: ${stato.quante} barre invece di 1`);
+      if (stato.attiva !== voce) throw new Error(`${voce}: la voce accesa è "${stato.attiva}"`);
+      if (!stato.inBasso) throw new Error(`${voce}: la barra non è attaccata al fondo dello schermo`);
+    }
+  });
+
+  await passo('dentro un gioco del puzzle la barra si nasconde, e torna nell\'hub', async () => {
+    await page.locator('nav.mg-tabs').getByRole('button', { name: 'Puzzle' }).click();
+    await page.waitForSelector('text=Puzzle Magico', { timeout: 8000 });
+    await page.getByRole('button', { name: /Ombre magiche/i }).first().click();
+    await page.waitForTimeout(600);
+    if (await page.locator('nav.mg-tabs').count()) throw new Error('la barra copre il gioco');
+    await page.getByRole('button', { name: 'Indietro' }).first().click();
+    await page.waitForTimeout(400);
+    if (!(await page.locator('nav.mg-tabs').count())) throw new Error("tornando all'hub la barra non c'è");
+    await page.locator('nav.mg-tabs').getByRole('button', { name: 'Mondi' }).click();
     await page.waitForSelector('text=I Mondi Magici', { timeout: 8000 });
   });
 
