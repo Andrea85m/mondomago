@@ -51,3 +51,6 @@ __pycache__/
 *.jks
 *.keystore
 .scatti/
+
+# campioni di voce (gen-tts.py --demo)
+public/audio/_demo/
