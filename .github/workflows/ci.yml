@@ -44,11 +44,13 @@ jobs:
       - name: Browser per lo smoke test
         run: npx playwright install --with-deps chromium
 
+      # Il gioco vive su /app/: la radice è la landing (dal rebranding Magistella).
+      # Con l'URL della radice ogni passo cercava "Ciao, genitore" sulla landing.
       - name: Smoke test sul build di produzione
         run: |
           npx vite preview --port 4173 --strictPort &
           for i in $(seq 1 30); do curl -sf http://localhost:4173/ >/dev/null && break; sleep 1; done
-          npm run smoke -- --url http://localhost:4173/
+          npm run smoke -- --url http://localhost:4173/app/
 
       - name: Smoke test in sviluppo (schermata d'errore compresa)
         run: |
@@ -57,7 +59,7 @@ jobs:
           npm run smoke
 
       - name: Accessibilità (axe-core, WCAG 2.1 AA)
-        run: npm run a11y -- --url http://localhost:4173/
+        run: npm run a11y -- --url http://localhost:4173/app/
 
       - name: Schermate dello smoke test
         if: always()
