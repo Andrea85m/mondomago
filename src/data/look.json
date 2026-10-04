@@ -1,0 +1,450 @@
+{
+ "_leggimi": "Punti di aggancio degli accessori sui compagni, in frazioni (0-1) del riquadro quadrato in cui il compagno è disegnato (object-fit: contain, centrato). testa = [x, y del punto dove poggia il cappello, larghezza della testa]; occhi = [xSx, ySx, xDx, yDx] centri delle pupille; fiocco = [x, y, rotazione in gradi]; spalla = [x, y] dove fluttua l'oggetto compagno. Controllo visivo: python3 scripts/look-prova.py — oggetti: per ogni cosmetico lo slot (uno per slot), l'immagine 3D in public/img/3d/premi, ar = altezza/larghezza dell'immagine e le misure di posa.",
+ "oggetti": {
+  "hat_crown": {
+   "slot": "testa",
+   "img": "royal-crown",
+   "ar": 0.75,
+   "larg": 0.62,
+   "appoggio": 0.88
+  },
+  "hat_wizard": {
+   "slot": "testa",
+   "img": "wizard-top-hat",
+   "ar": 0.84,
+   "larg": 0.92,
+   "appoggio": 0.84
+  },
+  "hat_party": {
+   "slot": "testa",
+   "img": "party-hat",
+   "ar": 1.371,
+   "larg": 0.56,
+   "appoggio": 0.93,
+   "rot": 12
+  },
+  "hat_star": {
+   "slot": "testa",
+   "img": "golden-star",
+   "ar": 0.957,
+   "larg": 0.42,
+   "appoggio": 1.45
+  },
+  "acc_glasses": {
+   "slot": "viso",
+   "img": "cool-sunglasses",
+   "ar": 0.382,
+   "lenti": 0.46,
+   "lentiY": 0.48
+  },
+  "acc_bow": {
+   "slot": "fiocco",
+   "img": "magic-pink-hair-bow",
+   "ar": 0.8,
+   "larg": 0.26
+  },
+  "acc_rainbow": {
+   "slot": "sfondo",
+   "img": "rainbow-arch",
+   "ar": 0.646,
+   "larg": 0.9,
+   "sottoOcchi": 0.16
+  },
+  "acc_lightning": {
+   "slot": "spalla",
+   "img": "lightning-bolt",
+   "ar": 1.234,
+   "larg": 0.2
+  },
+  "acc_moon": {
+   "slot": "spalla",
+   "img": "silver-crescent-moon",
+   "ar": 1.066,
+   "larg": 0.22
+  },
+  "aura_fire": {
+   "slot": "aura",
+   "img": "fire-aura-ring",
+   "ar": 1.153,
+   "larg": 1.05,
+   "centro": [
+    0.5,
+    0.52
+   ],
+   "colore": "#FF6B00"
+  },
+  "aura_ice": {
+   "slot": "aura",
+   "img": "ice-crystal-aura",
+   "ar": 0.982,
+   "larg": 0.9,
+   "centro": [
+    0.5,
+    0.78
+   ],
+   "colore": "#60D0FF"
+  },
+  "aura_gold": {
+   "slot": "aura",
+   "img": "golden-sparkles",
+   "ar": 0.96,
+   "larg": 0.28,
+   "vicinoTesta": [
+    0.27,
+    -0.03
+   ],
+   "davanti": true,
+   "colore": "#FFD700"
+  },
+  "aura_legend": {
+   "slot": "aura",
+   "img": "legendary-golden-trophy",
+   "ar": 0.955,
+   "larg": 0.22,
+   "suSpalla": true,
+   "colore": "#C084FC"
+  }
+ },
+ "compagni": {
+  "fiamma": {
+   "base": {
+    "testa": [
+     0.5,
+     0.15,
+     0.4
+    ],
+    "occhi": [
+     0.395,
+     0.33,
+     0.62,
+     0.33
+    ],
+    "fiocco": [
+     0.73,
+     0.21,
+     25
+    ],
+    "spalla": [
+     0.87,
+     0.14
+    ]
+   },
+   "festa": {
+    "testa": [
+     0.49,
+     0.075,
+     0.44
+    ],
+    "occhi": [
+     0.374,
+     0.242,
+     0.605,
+     0.242
+    ],
+    "fiocco": [
+     0.73,
+     0.17,
+     25
+    ],
+    "spalla": [
+     0.87,
+     0.08
+    ]
+   },
+   "incoraggia": {
+    "testa": [
+     0.45,
+     0.08,
+     0.42
+    ],
+    "occhi": [
+     0.341,
+     0.242,
+     0.556,
+     0.242
+    ],
+    "fiocco": [
+     0.7,
+     0.16,
+     25
+    ],
+    "spalla": [
+     0.87,
+     0.1
+    ]
+   }
+  },
+  "luna": {
+   "base": {
+    "testa": [
+     0.49,
+     0.175,
+     0.33
+    ],
+    "occhi": [
+     0.386,
+     0.315,
+     0.575,
+     0.315
+    ],
+    "fiocco": [
+     0.62,
+     0.13,
+     20
+    ],
+    "spalla": [
+     0.83,
+     0.2
+    ]
+   },
+   "festa": {
+    "testa": [
+     0.415,
+     0.125,
+     0.33
+    ],
+    "occhi": [
+     0.321,
+     0.226,
+     0.463,
+     0.226
+    ],
+    "fiocco": [
+     0.51,
+     0.1,
+     20
+    ],
+    "spalla": [
+     0.8,
+     0.12
+    ]
+   },
+   "incoraggia": {
+    "testa": [
+     0.44,
+     0.145,
+     0.32
+    ],
+    "occhi": [
+     0.357,
+     0.283,
+     0.525,
+     0.283
+    ],
+    "fiocco": [
+     0.57,
+     0.1,
+     20
+    ],
+    "spalla": [
+     0.84,
+     0.14
+    ]
+   }
+  },
+  "onde": {
+   "base": {
+    "testa": [
+     0.505,
+     0.07,
+     0.52
+    ],
+    "occhi": [
+     0.439,
+     0.268,
+     0.7,
+     0.252
+    ],
+    "fiocco": [
+     0.72,
+     0.12,
+     25
+    ],
+    "spalla": [
+     0.9,
+     0.12
+    ]
+   },
+   "festa": {
+    "testa": [
+     0.41,
+     0.035,
+     0.4
+    ],
+    "occhi": [
+     0.347,
+     0.147,
+     0.521,
+     0.147
+    ],
+    "fiocco": [
+     0.56,
+     0.07,
+     25
+    ],
+    "spalla": [
+     0.76,
+     0.05
+    ]
+   },
+   "incoraggia": {
+    "testa": [
+     0.485,
+     0.05,
+     0.52
+    ],
+    "occhi": [
+     0.383,
+     0.241,
+     0.63,
+     0.236
+    ],
+    "fiocco": [
+     0.68,
+     0.1,
+     25
+    ],
+    "spalla": [
+     0.9,
+     0.1
+    ]
+   }
+  },
+  "foglia": {
+   "base": {
+    "testa": [
+     0.55,
+     0.155,
+     0.47
+    ],
+    "occhi": [
+     0.423,
+     0.373,
+     0.644,
+     0.389
+    ],
+    "fiocco": [
+     0.38,
+     0.14,
+     -25
+    ],
+    "spalla": [
+     0.87,
+     0.12
+    ]
+   },
+   "festa": {
+    "testa": [
+     0.435,
+     0.085,
+     0.41
+    ],
+    "occhi": [
+     0.363,
+     0.215,
+     0.547,
+     0.215
+    ],
+    "fiocco": [
+     0.29,
+     0.07,
+     -25
+    ],
+    "spalla": [
+     0.78,
+     0.06
+    ]
+   },
+   "incoraggia": {
+    "testa": [
+     0.475,
+     0.155,
+     0.5
+    ],
+    "occhi": [
+     0.372,
+     0.315,
+     0.609,
+     0.336
+    ],
+    "fiocco": [
+     0.31,
+     0.1,
+     -25
+    ],
+    "spalla": [
+     0.88,
+     0.1
+    ]
+   }
+  },
+  "pixel": {
+   "base": {
+    "testa": [
+     0.505,
+     0.12,
+     0.44
+    ],
+    "occhi": [
+     0.428,
+     0.3,
+     0.633,
+     0.3
+    ],
+    "fiocco": [
+     0.7,
+     0.16,
+     25
+    ],
+    "spalla": [
+     0.86,
+     0.12
+    ]
+   },
+   "festa": {
+    "testa": [
+     0.475,
+     0.175,
+     0.32
+    ],
+    "occhi": [
+     0.405,
+     0.294,
+     0.557,
+     0.294
+    ],
+    "fiocco": [
+     0.6,
+     0.2,
+     25
+    ],
+    "spalla": [
+     0.82,
+     0.14
+    ]
+   },
+   "incoraggia": {
+    "testa": [
+     0.43,
+     0.1,
+     0.45
+    ],
+    "occhi": [
+     0.346,
+     0.268,
+     0.551,
+     0.257
+    ],
+    "fiocco": [
+     0.64,
+     0.15,
+     25
+    ],
+    "spalla": [
+     0.86,
+     0.1
+    ]
+   }
+  }
+ }
+}

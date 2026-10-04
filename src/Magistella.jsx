@@ -17,6 +17,7 @@ const MG_BTN_SQ = { background:"linear-gradient(180deg,#B39BFF,#6D42F2)", border
 const MG_BTN_BACK = { background:"linear-gradient(180deg,#B39BFF,#6D42F2)", border:"3px solid #27134F", boxShadow:"0 4px 0 #27134F",
   color:"white", borderRadius:14, padding:"7px 14px", cursor:"pointer", fontSize:14, fontFamily:"'Fredoka One', sans-serif" };
 import { posa3d, premio3d, ui3d, isola3d, reliquia3d, sfondo3d } from "./data/grafica3d.js";
+import { OGGETTI, posaOggetto, normalizzaLook, alternaLook } from "./data/look.js";
 import ErrorBoundary from "./ErrorBoundary.jsx";
 import canvasConfetti from "canvas-confetti";
 // Caricato a parte: la sezione Puzzle pesa ~17KB gzip e non serve finché il
@@ -279,10 +280,34 @@ const companionCharSrc = (id) => COMPANION_IMG[id]
   ? `${import.meta.env.BASE_URL}characters/${COMPANION_IMG[id]}_cutout.png`
   : null;
 
-function CompanionAvatar({ c, size = 64, anim = "", cosmetic = null, mood = "idle", talking = false, worldId = null, showBody = false, decorativa = false }) {
+// Gli accessori del look, agganciati al compagno (testa, occhi, orecchio, spalla).
+// Stanno dentro il contenitore animato del compagno: si muovono con lui quando
+// respira, parla o salta, invece di fluttuare per conto loro.
+function Accessori({ look, compagno, posa, s, dietro = false }) {
+  if (!look.length) return null;
+  return look.map(id => {
+    const o = OGGETTI[id];
+    // sotto i 40px gli sfondi e le aure grandi diventano macchie: solo ciò che si indossa
+    if (s < 40 && (o.slot === "sfondo" || o.slot === "aura")) return null;
+    const p = posaOggetto(id, compagno, posa);
+    if (!p || p.dietro !== dietro) return null;
+    const fluttua = o.slot === "spalla" || o.suSpalla || o.vicinoTesta;
+    return (
+      <img key={id} src={premio3d(o.img)} alt="" aria-hidden="true" draggable={false}
+        style={{position:"absolute",left:p.x * s,top:p.y * s,width:p.w * s,height:p.w * o.ar * s,
+          transform:p.rot ? `rotate(${p.rot}deg)` : undefined,zIndex:dietro ? 0 : 2,pointerEvents:"none",
+          filter:"drop-shadow(0 2px 3px rgba(0,0,0,.35))",
+          animation:fluttua ? "float 2.6s ease-in-out infinite" : undefined}} />
+    );
+  });
+}
+
+function CompanionAvatar({ c, size = 64, anim = "", look = null, mood = "idle", talking = false, worldId = null, showBody = false, decorativa = false }) {
   const s = size;
-  const auraCols = { "🔥":"#FF6B00","❄️":"#60D0FF","✨":"#FFD700","🏆":"#C084FC" };
-  const auraCol  = cosmetic?.type === "aura" ? (auraCols[cosmetic.emoji] || "#C084FC") : null;
+  // look: lista di cosmetici indossati (uno per slot), vedi src/data/look.js
+  const indossati = normalizzaLook(look);
+  const auraId   = indossati.find(id => OGGETTI[id]?.slot === "aura");
+  const auraCol  = auraId ? OGGETTI[auraId].colore : null;
   const reacting = mood === "excited" || mood === "celebrating";
   // "vita" del companion (PNG senza faccia): movimento espressivo per stato
   const lifeAnim = talking  ? "compTalk 0.44s ease-in-out infinite"
@@ -303,10 +328,11 @@ function CompanionAvatar({ c, size = 64, anim = "", cosmetic = null, mood = "idl
           background:`conic-gradient(transparent,${auraCol}66,transparent,${auraCol}44,transparent)`,
           animation:"wiggle 2.4s ease-in-out infinite",pointerEvents:"none",zIndex:0}} />
       )}
-      <div style={{display:"inline-flex",transformOrigin:"50% 92%",zIndex:1,
+      <div style={{display:"inline-flex",transformOrigin:"50% 92%",zIndex:1,position:"relative",
         animation:lifeAnim,animationDelay:idleDelay,willChange:"transform"}}>
+        {src && <Accessori look={indossati} compagno={c.id} posa={posa || "base"} s={s} dietro />}
         {src ? (
-          <picture>
+          <picture style={{position:"relative",zIndex:1,display:"block",lineHeight:0}}>
             <source srcSet={srcWebp} type="image/webp" />
             <img src={src} alt={decorativa ? "" : c.name} draggable={false} width={s} height={s} decoding="async"
               style={{width:s,height:s,objectFit:"contain",userSelect:"none",
@@ -318,6 +344,7 @@ function CompanionAvatar({ c, size = 64, anim = "", cosmetic = null, mood = "idl
             {c.emoji}
           </div>
         )}
+        {src && <Accessori look={indossati} compagno={c.id} posa={posa || "base"} s={s} />}
       </div>
       {/* Reazione: stelle Sigillo che aumentano con l'intensità (oro=magia, verde=logica) */}
       {reacting && size >= 40 && (
@@ -355,21 +382,6 @@ function CompanionAvatar({ c, size = 64, anim = "", cosmetic = null, mood = "idl
           pointerEvents:"none",zIndex:3,boxShadow:"0 2px 6px rgba(0,0,0,.55)"}}>
           <WorldIcon id={worldId} size={Math.round(s*.26)} />
         </div>
-      )}
-      {cosmetic?.type === "hat" && (
-        <div style={{position:"absolute",top:`-${Math.round(s*.28)}px`,left:"50%",transform:"translateX(-50%)",
-          fontSize:Math.round(s*.44),filter:"drop-shadow(0 2px 5px rgba(0,0,0,.6))",
-          pointerEvents:"none",zIndex:3,animation:"float 3s ease-in-out infinite"}}>{cosmetic.emoji}</div>
-      )}
-      {cosmetic?.type === "acc" && (
-        <div style={{position:"absolute",right:`-${Math.round(s*.16)}px`,top:"28%",
-          fontSize:Math.round(s*.36),filter:"drop-shadow(0 2px 4px rgba(0,0,0,.5))",
-          pointerEvents:"none",zIndex:3,animation:"float 2.6s ease-in-out infinite"}}>{cosmetic.emoji}</div>
-      )}
-      {cosmetic?.type === "aura" && size >= 48 && (
-        <div style={{position:"absolute",top:`-${Math.round(s*.26)}px`,right:`-${Math.round(s*.08)}px`,
-          fontSize:Math.round(s*.26),filter:"drop-shadow(0 0 4px rgba(255,255,255,.8))",
-          pointerEvents:"none",zIndex:3,animation:"float 1.8s ease-in-out infinite"}}>{cosmetic.emoji}</div>
       )}
     </div>
   );
@@ -2899,7 +2911,7 @@ export default function Magistella() {
             <div className="mg-hud">
               {comp && (
                 <button className="mg-ava" onClick={() => navigate("profile")} aria-label="Apri il profilo del compagno">
-                  <CompanionAvatar c={comp} size={46} mood="idle" decorativa />
+                  <CompanionAvatar c={comp} size={46} mood="idle" decorativa look={equippedCosmetic[comp.id]} />
                   <span className="mg-lvl" aria-label={`Livello ${PLAYER_LEVELS.indexOf(mapLvl) + 1}`}>{PLAYER_LEVELS.indexOf(mapLvl) + 1}</span>
                 </button>
               )}
@@ -3385,7 +3397,7 @@ export default function Magistella() {
             )}
             {combo >= 2 && <span style={{fontSize:12,color:"#F97316",fontWeight:900,display:"inline-flex",alignItems:"center",gap:2}}><Icon name="flame" color="#F97316" size={14} />×{combo}</span>}
           </div>
-          {comp && <CompanionAvatar c={comp} size={56} anim={compAnim} talking={compTalking} mood={compMood} worldId={world?.id} />}
+          {comp && <CompanionAvatar c={comp} size={56} anim={compAnim} talking={compTalking} mood={compMood} worldId={world?.id} look={equippedCosmetic[comp.id]} />}
         </div>
         {/* Progress bar — Duolingo style */}
         <div style={{position:"relative",zIndex:1,marginBottom:14,display:"flex",alignItems:"center",gap:10}}>
@@ -4152,7 +4164,7 @@ export default function Magistella() {
                 )}
               </div>
               {comp && (
-                <CompanionAvatar c={comp} size={youngBg?52:44} anim="bounce" talking={compTalking} mood={compMood} />
+                <CompanionAvatar c={comp} size={youngBg?52:44} anim="bounce" talking={compTalking} mood={compMood} look={equippedCosmetic[comp.id]} />
               )}
             </div>
             <button onClick={next} className={isCorrect ? "mg-cta mg-verde" : "mg-cta"} style={{
@@ -4539,13 +4551,20 @@ export default function Magistella() {
   if (screen === "cosmetics" && comp) {
     const owned    = COSMETICS.filter(c => ownedCosmetics.includes(c.id));
     const notOwned = COSMETICS.filter(c => !ownedCosmetics.includes(c.id));
-    const equipped = equippedCosmetic[comp.id] || null;
-    const equippedObj = COSMETICS.find(c => c.id === equipped) || null;
+    // Il look è una lista (uno per slot): corona, occhiali e fiocco insieme.
+    // I salvataggi vecchi avevano una stringa sola: normalizzaLook li legge uguale.
+    const equipped = normalizzaLook(equippedCosmetic[comp.id]);
+    const equippedObjs = equipped.map(id => COSMETICS.find(c => c.id === id)).filter(Boolean);
+    const alterna = (id) => setEquippedCosmetic(prev => ({...prev, [comp.id]: alternaLook(prev[comp.id], id)}));
     function buyCosmetic(c) {
       if (coins < c.coinCost) return;
       setCoins(cx => cx - c.coinCost);
       setOwnedCosmetics(prev => [...prev, c.id]);
-      setEquippedCosmetic(prev => ({...prev, [comp.id]: c.id}));
+      // appena comprato lo indossa (nel suo slot, al posto di quello che c'era)
+      setEquippedCosmetic(prev => {
+        const look = normalizzaLook(prev[comp.id]);
+        return {...prev, [comp.id]: look.includes(c.id) ? look : alternaLook(look, c.id)};
+      });
       SFX.achievement();
     }
     return (
@@ -4563,9 +4582,11 @@ export default function Magistella() {
         {/* Current look preview */}
         <div style={{background:SG_CARD,border:SG_BR,boxShadow:"0 4px 0 #27134F",borderRadius:24,padding:"20px",marginBottom:18,display:"flex",flexDirection:"column",alignItems:"center",gap:10}}>
           <div style={{fontSize:11,opacity:.7,letterSpacing:1,fontWeight:800}}>IL TUO {comp.name.toUpperCase()} ADESSO</div>
-          <CompanionAvatar c={comp} size={96} anim="float" cosmetic={equippedObj} showBody />
-          <div style={{fontSize:13,opacity:.7}}>{equippedObj ? `${equippedObj.emoji} ${equippedObj.name}` : "Nessun cosmetico equipaggiato"}</div>
-          {equipped && (
+          <div style={{padding:"26px 34px 6px"}}>
+            <CompanionAvatar c={comp} size={128} anim="float" look={equipped} showBody />
+          </div>
+          <div style={{fontSize:13,opacity:.7,textAlign:"center"}}>{equippedObjs.length ? equippedObjs.map(o => o.name).join(" · ") : "Nessun cosmetico equipaggiato"}</div>
+          {equipped.length > 0 && (
             <button onClick={() => setEquippedCosmetic(prev => { const n = {...prev}; delete n[comp.id]; return n; })}
               style={{background:"rgba(255,255,255,.1)",border:"none",color:"rgba(255,255,255,.6)",borderRadius:20,padding:"6px 16px",fontSize:12,cursor:"pointer"}}>
               Rimuovi
@@ -4578,15 +4599,15 @@ export default function Magistella() {
             <div style={{fontSize:11,opacity:.45,fontWeight:800,letterSpacing:1,marginBottom:10}}>I TUOI COSMETICI ({owned.length})</div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
               {owned.map(c => {
-                const isEq = equipped === c.id;
+                const isEq = equipped.includes(c.id);
                 return (
-                  <button key={c.id} onClick={() => setEquippedCosmetic(prev => ({...prev, [comp.id]: isEq ? undefined : c.id}))}
+                  <button key={c.id} onClick={() => alterna(c.id)} aria-pressed={isEq}
                     className={isEq ? "pulse" : ""}
                     style={{background:isEq?"linear-gradient(180deg,#E9DEFF,#CDB8FF)":MG_TILE,border:`3px solid ${MG_INK}`,boxShadow:isEq?"inset 0 -5px 0 #9E82F0, 0 4px 0 #27134F, 0 0 0 4px rgba(123,77,255,.5)":MG_TILE_SHADOW,borderRadius:18,padding:"12px 6px",cursor:"pointer",textAlign:"center",color:MG_INK,position:"relative"}}>
                     {isEq && <div style={{position:"absolute",top:4,right:6,fontSize:10,fontWeight:900,color:"#5329D6"}}>IN USO</div>}
                     <div style={{height:56,marginBottom:4,display:"flex",alignItems:"center",justifyContent:"center"}}>{COSMETIC_3D[c.id] ? <img src={premio3d(COSMETIC_3D[c.id])} alt="" style={{height:56,width:"auto",maxWidth:"100%",objectFit:"contain",filter:"drop-shadow(0 3px 3px rgba(0,0,0,.25))"}} /> : <span style={{fontSize:32}}>{c.emoji}</span>}</div>
                     <div style={{fontSize:11,fontWeight:700,lineHeight:1.2}}>{c.name}</div>
-                    <div style={{fontSize:9,opacity:.65,marginTop:2}}>{isEq?"Lo indossa":"Tocca per indossare"}</div>
+                    <div style={{fontSize:9,opacity:.65,marginTop:2}}>{isEq?"Lo indossa · tocca per togliere":"Tocca per indossare"}</div>
                   </button>
                 );
               })}
@@ -4708,7 +4729,7 @@ export default function Magistella() {
     <div key="profile" className={`${screenAnim} mm-schermo`} style={{minHeight:"100dvh",background:comp.bg,color:"white",padding:28,display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center"}}>
       {G}
       <button onClick={() => navigate("map")} style={{...MG_BTN_BACK,alignSelf:"flex-start",marginBottom:24}}>← Indietro</button>
-      <CompanionAvatar c={comp} size={110} anim="float" cosmetic={COSMETICS.find(c => c.id === equippedCosmetic[comp.id]) || null} showBody />
+      <CompanionAvatar c={comp} size={110} anim="float" look={equippedCosmetic[comp.id]} showBody />
       <h1 style={{fontSize:28,fontWeight:900,marginBottom:4}}>{comp.name}</h1>
       <div style={{fontSize:14,opacity:.7,marginBottom:8}}>{comp.type} · Il tuo compagno magico</div>
       <button onClick={() => navigate("cosmetics")} style={{background:"rgba(255,255,255,.15)",border:"none",color:"white",borderRadius:20,padding:"6px 18px",fontSize:12,fontWeight:700,cursor:"pointer",marginBottom:22}}>

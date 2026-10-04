@@ -26,6 +26,8 @@ Thumbs.db
 
 # Schermate dello smoke test (si rigenerano con `npm run smoke`)
 .smoke/
+# anteprime del look (scripts/look-prova.py)
+.look/
 
 # Artefatti Lighthouse / spazzatura accidentale
 C:\\Users\\*
