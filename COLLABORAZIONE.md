@@ -190,7 +190,7 @@ sbagliata, se una fascia d'età resta senza sfide, o se una frase perde la voce 
 
 ## 4-ter. 🧩 La sezione Puzzle
 
-Quattro giochi in `src/PuzzleMagico.jsx`, sulla falsariga di *Puzzle Kids — Jigsaw
+Cinque giochi in `src/PuzzleMagico.jsx`, sulla falsariga di *Puzzle Kids — Jigsaw
 Puzzles* di RV AppStudios: **Ombre** (sagome) · **Costruttore** (tessere) ·
 **Indovina** (si scopre poco alla volta) · **Incastro** (puzzle vero con le linguette).
 
@@ -201,6 +201,20 @@ Puzzles* di RV AppStudios: **Ombre** (sagome) · **Costruttore** (tessere) ·
   riporta alla mappa invece di spegnere tutta l'app.
 - I progressi (adesivi) stanno in un `localStorage` suo — `mondomago_puzzle_v1` —
   e non toccano il profilo del bambino.
+
+### Il Puzzle degli animali (ottobre 2026)
+Quinto gioco, in evidenza nell'hub: si sceglie un animale, si ricompone la sua **foto
+vera** (stesso motore dell'Incastro) e alla fine si sente il suo **verso vero**, poi la
+voce dice nome e curiosità. Gli animali finiti restano nell'album e si riascoltano.
+- Dati in `src/data/animali.js` (nome + `frase` letta dalla voce: `gen-tts.py` la
+  raccoglie da lì, quindi niente template).
+- Foto in `public/img/animali/` (1200×720 + miniatura 320), versi in `public/audio/versi/`.
+  **Solo CC0 o pubblico dominio**, licenza verificata sulla fonte: elenco in
+  `public/img/animali/CREDITI.md`. Si rigenerano con `scripts/prepara-animali.py`.
+- Un animale nuovo: foto + verso CC0/PD → `prepara-animali.py` → voce in `animali.js`
+  → `npm run voce` → `check-tts` controlla anche che i tre file esistano.
+- Ombre e "Cosa si nasconde" hanno la **scelta del tema** (Animali, Mare, Natura,
+  Cibo, Magia, Tutti), salvata nel localStorage del puzzle.
 
 ### Le ricompense: monete sì, stelle no
 

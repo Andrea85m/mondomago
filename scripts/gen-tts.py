@@ -40,6 +40,7 @@ ROOT = Path(__file__).resolve().parent.parent
 # Il testo parlato sta nel gioco e nei suoi dati (compagni, mondi, sfide)
 SOURCES = [ROOT / "src" / "Magistella.jsx", ROOT / "src" / "data" / "mondi.js", ROOT / "src" / "data" / "sfide.js"]
 SOURCE_PUZZLE = ROOT / "src" / "PuzzleMagico.jsx"
+SOURCE_ANIMALI = ROOT / "src" / "data" / "animali.js"
 AUDIO_DIR = ROOT / "public" / "audio"
 MAP_OUT = ROOT / "src" / "ttsMap.json"
 
@@ -145,6 +146,13 @@ def collect(jsx: str) -> set[str]:
         for m in re.finditer(r'nome:\s*"([^"]+)"', pz):             # adesivi, scene, livelli
             add(m.group(1))
         for m in re.finditer(r'speak\?\.\(\s*"((?:[^"\\]|\\.)*)"', pz):
+            add(m.group(1))
+        for m in re.finditer(r'consegna\s*=\s*"((?:[^"\\]|\\.)*)"', pz):  # consegne passate come prop
+            add(m.group(1))
+    # Puzzle degli animali: nome e frase finale (verso + curiosità)
+    if SOURCE_ANIMALI.exists():
+        an = SOURCE_ANIMALI.read_text(encoding="utf-8")
+        for m in re.finditer(r'(?:nome|frase):\s*"((?:[^"\\]|\\.)*)"', an):
             add(m.group(1))
 
     # 8 · Righe fisse dell'interfaccia

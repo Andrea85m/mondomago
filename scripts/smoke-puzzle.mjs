@@ -272,6 +272,76 @@ async function main() {
     await page.waitForTimeout(500);
   });
 
+  // ── il puzzle degli animali ────────────────────────────────────────────────
+  // Foto vera da ricomporre, poi il verso vero e il nome; l'animale resta nell'album.
+  await passo('il puzzle degli animali mostra i 12 animali con le foto', async () => {
+    await page.getByRole('button', { name: /Puzzle degli animali/i }).first().click();
+    await page.waitForSelector('text=Scegli', { state: 'detached', timeout: 100 }).catch(() => {});
+    await page.waitForTimeout(900);
+    const foto = await page.evaluate(() => [...document.querySelectorAll('img[src*="/img/animali/"]')]
+      .map(i => ({ ok: i.complete && i.naturalWidth > 0, src: i.getAttribute('src') })));
+    if (foto.length < 12) throw new Error(`solo ${foto.length} animali nella griglia`);
+    const rotte = foto.filter(f => !f.ok).map(f => f.src);
+    if (rotte.length) throw new Error(`foto che non si caricano: ${rotte.join(', ')}`);
+    await scatta(page, 'animali-scelta');
+  });
+
+  await passo('finire un animale fa sentire il verso, dice il nome e lo mette nell\'album', async () => {
+    await page.evaluate(() => {
+      window.__suonati = [];
+      const play = HTMLMediaElement.prototype.play;
+      HTMLMediaElement.prototype.play = function () { window.__suonati.push(this.src); return play.call(this).catch(() => {}); };
+    });
+    await page.getByRole('button', { name: /^Leone$/ }).click();
+    await page.waitForTimeout(800);
+    await page.getByRole('button', { name: 'Facile' }).click();
+    await page.waitForTimeout(1200);
+    const usaFoto = await page.evaluate(() => !!document.querySelector('svg[viewBox^="0 0 360"] image[href*="/img/animali/leone"]'));
+    if (!usaFoto) throw new Error('il puzzle non usa la foto del leone');
+    for (let i = 0; i < 5; i++) {
+      const t = await page.evaluate(() => {
+        const s = document.querySelector('svg[viewBox^="0 0 360"]');
+        const g = [...s.querySelectorAll('g[role="button"]')][0];
+        if (!g) return null;
+        const m = g.getAttribute('transform').match(/translate\(([-\d.]+) ([-\d.]+)\) scale\(([\d.]+)\)/);
+        const [tx, ty, sc] = [+m[1], +m[2], +m[3]];
+        const [, r, c] = g.getAttribute('aria-label').match(/Pezzo (\d+)-(\d+)/).map(Number);
+        const sb = s.getBoundingClientRect(); const k = sb.width / 360;
+        const cw = 360 / 2, ch = Math.round(360 * 240 / 400) / 2;
+        const cx = (c - 1 + 0.5) * cw, cy = (r - 1 + 0.5) * ch;
+        return { presa: { x: sb.x + (tx + cx * sc) * k, y: sb.y + (ty + cy * sc) * k },
+                 casa:  { x: sb.x + cx * k, y: sb.y + cy * k } };
+      });
+      if (!t) break;
+      await page.mouse.move(t.presa.x, t.presa.y);
+      await page.mouse.down();
+      await page.mouse.move(t.casa.x, t.casa.y, { steps: 10 });
+      await page.mouse.up();
+      await page.waitForTimeout(400);
+    }
+    await page.waitForSelector('text=Un altro!', { timeout: 6000 });
+    await page.waitForTimeout(1200);
+    await scatta(page, 'animali-vittoria');
+    const suonati = await page.evaluate(() => window.__suonati);
+    if (!suonati.some(u => /\/audio\/versi\/leone\.mp3$/.test(u))) throw new Error(`il verso non è partito (suonati: ${suonati.join(', ')})`);
+    await page.getByRole('button', { name: 'Tutti gli animali' }).click();
+    await page.waitForTimeout(500);
+    if (!(await page.getByRole('button', { name: /Leone, già nel tuo album/ }).count())) throw new Error("il leone non risulta nell'album");
+    await page.getByRole('button', { name: 'Indietro' }).first().click();
+    await page.waitForTimeout(400);
+  });
+
+  await passo('il tema scelto vale per Ombre magiche', async () => {
+    await page.getByRole('radio', { name: /Mare/ }).click();
+    await page.getByRole('button', { name: /Ombre magiche/i }).first().click();
+    await page.waitForTimeout(900);
+    const nomi = await page.evaluate(() => [...document.querySelectorAll('button[aria-label]')].map(b => b.getAttribute('aria-label')).join(' | '));
+    if (!/Delfino|Balena|Pesce|Polpo|Squalo|Granchio|Conchiglia|Calamaro|Aragosta|Lumaca/.test(nomi)) throw new Error(`nessuna cosa di mare in gioco: ${nomi.slice(0, 160)}`);
+    await page.getByRole('button', { name: 'Indietro' }).first().click();
+    await page.waitForTimeout(400);
+    await page.getByRole('radio', { name: /Animali/ }).click();
+  });
+
   // ── le sfide nuove del laboratorio a 3-4 anni ─────────────────────────────
   await passo('il laboratorio ora è giocabile anche a 4 anni', async () => {
     const n = await page.evaluate(() => {
