@@ -6,6 +6,7 @@ import WorldScene from "./WorldScene.jsx";
 import { WorldIcon, Icon, SkillIcon, RankIcon } from "./icons.jsx";
 import SvgAsset from "./SvgAssets.jsx";
 import Emo from "./Emo.jsx";
+import Programma from "./Programma.jsx";
 // Restyling 3D: tessera crema con spessore e contorno inchiostro (vedi stile3d.css)
 const MG_TILE = "linear-gradient(180deg,#FFFFFF 0%,#FFF7E6 55%,#FBEACB 100%)";
 const MG_TILE_SHADOW = "inset 0 -5px 0 #E3CFA6, 0 4px 0 #27134F";
@@ -5263,23 +5264,23 @@ export default function Magistella() {
         const tips = {
           logica:     {
             struggle: ["Fai puzzle fisici insieme ogni sera — incastri, Lego, giochi di logica.", "Gioca a 'cosa succede dopo?' mentre leggete una storia.", "I giochi in sequenza come le filastrocche aiutano molto la logica."],
-            strong:   ["È pronto per sfide più complesse: prova a fargli creare le sue regole di gioco.", "Introduci i giochi di strategia come gli scacchi semplificati per bambini."],
+            strong:   ["È il momento di sfide più complesse: inventate insieme nuove regole di gioco.", "Introduci i giochi di strategia come gli scacchi semplificati per bambini."],
           },
           numeri:     {
-            struggle: ["Conta oggetti concreti ogni giorno: scalini, mele, macchine.", "Usa monete vere per insegnargli i numeri in contesto.", "Le canzoni con i numeri aiutano molto la memoria numerica."],
-            strong:   ["Introduce l'addizione con oggetti fisici: 3 mele + 2 mele.", "È pronto per le prime misurazioni: altezza, peso, tempo."],
+            struggle: ["Conta oggetti concreti ogni giorno: scalini, mele, macchine.", "Usate monete vere per scoprire i numeri nella vita di tutti i giorni.", "Le canzoni con i numeri aiutano molto la memoria numerica."],
+            strong:   ["Introduce l'addizione con oggetti fisici: 3 mele + 2 mele.", "È il momento delle prime misurazioni: altezza, peso, tempo."],
           },
           creativita: {
             struggle: ["Disegna insieme senza tema fisso — lascia fluire la sua fantasia.", "Costruite una storia con 3 oggetti casuali trovati in casa.", "La creta e il disegno libero stimolano molto la creatività."],
-            strong:   ["Inventa storie insieme ogni sera prima di dormire.", "Proponigli di creare il suo personaggio immaginario con nome e poteri."],
+            strong:   ["Inventa storie insieme ogni sera prima di dormire.", "Proponete di creare un personaggio immaginario con nome e poteri."],
           },
           empatia:    {
             struggle: ["Parla di come si sentono i personaggi dei suoi libri preferiti.", "Guarda cartoni animati insieme e chiedi 'come si sente quel personaggio?'.", "I giochi di ruolo con bambole o pupazzi sviluppano l'empatia."],
-            strong:   ["Chiedigli sempre come si sente il suo compagno di giochi dopo una sessione.", "Coinvolgilo in piccoli gesti di cura: annaffiare piante, dare da mangiare agli animali."],
+            strong:   ["Dopo il gioco, chiedete insieme come si sente il compagno di giochi.", "Coinvolgilo in piccoli gesti di cura: annaffiare piante, dare da mangiare agli animali."],
           },
           parole:     {
             struggle: ["Leggi ad alta voce ogni giorno, anche solo 10 minuti.", "Raccontate storie a turno aggiungendo una frase ciascuno.", "Giocate alle rime durante i pasti — è divertente e formativo."],
-            strong:   ["Sfidatevi a trovare parole che iniziano con la stessa lettera.", "È pronto per i primi giochi di parole scritte: completa la parola mancante."],
+            strong:   ["Sfidatevi a trovare parole che iniziano con la stessa lettera.", "È il momento dei primi giochi di parole scritte: completate la parola mancante."],
           },
         };
         const tipArr = tips[sk.id]?.[pct < 55 ? "struggle" : "strong"] || [];
@@ -5294,7 +5295,7 @@ export default function Magistella() {
         ? { emoji:"flame", title:`Streak di ${streak} giorni consecutivi — straordinario!`, tip:`Condividi questo risultato con ${childName}: riconosce i propri progressi e si motiva ancora di più.`, color:"#FB923C", priority:1 }
         : null,
       streak >= 2 && !playedToday
-        ? { emoji:"bolt", title:`Streak a rischio! ${streak} giorni di fila ma oggi non ha ancora giocato.`, tip:`Un solo minuto di gioco basta per mantenere la serie. Suggeriscigli di fare la sfida del giorno prima di cena.`, color:"#F87171", priority:1 }
+        ? { emoji:"bolt", title:`Streak a rischio! ${streak} giorni di fila ma oggi non ha ancora giocato.`, tip:`Un solo minuto di gioco basta per mantenere la serie. Proponete la sfida del giorno prima di cena.`, color:"#F87171", priority:1 }
         : null,
       recentSessions.length === 0 && activeDays > 0
         ? { emoji:"moon", title:`${childName} non ha giocato negli ultimi 7 giorni.`, tip:`Una pausa lunga è normale. Riprendi con la sfida del giorno — è breve e rilascia dopamina positiva.`, color:"#93C5FD", priority:2 }
@@ -5303,16 +5304,16 @@ export default function Magistella() {
         ? { emoji:"⏱", title:`Le sessioni di ${childName} sono molto brevi (media ${avgMinPerSession} min).`, tip:`È normale per i bambini 3-5 anni. Prova a giocare insieme: la co-presenza prolunga l'attenzione fino a 3x.`, color:"#C4B5FD", priority:3 }
         : null,
       avgMinPerSession >= 15 && sessionLog.length >= 3
-        ? { emoji:"target", title:`${childName} è molto concentrato: sessioni da ${avgMinPerSession} min in media!`, tip:`Ottima capacità attentiva. Assicurati che faccia anche pause fisiche ogni 20-30 minuti.`, color:"#6DE0C6", priority:3 }
+        ? { emoji:"target", title:`${childName} mantiene bene l'attenzione: sessioni da ${avgMinPerSession} min in media!`, tip:`Ottima capacità attentiva. Assicurati che faccia anche pause fisiche ogni 20-30 minuti.`, color:"#6DE0C6", priority:3 }
         : null,
       overallPct !== null && overallPct < 45 && totalAttempts >= 20
         ? { emoji:"bulb", title:`Precisione generale bassa: ${overallPct}%. Le sfide potrebbero essere troppo difficili.`, tip:`Prova a cambiare la fascia d'età in questa sezione (vai su "Età di ${childName}"). Le sfide si adatteranno automaticamente.`, color:"#FCD34D", priority:1 }
         : null,
       overallPct !== null && overallPct >= 88 && totalAttempts >= 20
-        ? { emoji:"bolt", title:`${childName} risponde correttamente a ${overallPct}% delle domande — è pronto per qualcosa di più!`, tip:`Aumenta la fascia d'età nelle impostazioni per offrirgli sfide più stimolanti.`, color:"#34d399", priority:2 }
+        ? { emoji:"bolt", title:`${childName} risponde correttamente a ${overallPct}% delle domande — è il momento di qualcosa di più!`, tip:`Aumenta la fascia d'età nelle impostazioni per sfide più stimolanti.`, color:"#34d399", priority:2 }
         : null,
       achievements.length >= 8
-        ? { emoji:"trophy", title:`${childName} ha sbloccato ${achievements.length} obiettivi su ${ACHIEVEMENTS.length}!`, tip:`Condividere questi traguardi rafforza l'autostima. Chiedigli di mostrarti i suoi trofei nella sezione obiettivi.`, color:"#FCD34D", priority:3 }
+        ? { emoji:"trophy", title:`${childName} ha sbloccato ${achievements.length} obiettivi su ${ACHIEVEMENTS.length}!`, tip:`Condividere questi traguardi rafforza l'autostima. Fatevi mostrare i trofei nella sezione obiettivi.`, color:"#FCD34D", priority:3 }
         : null,
       worldsDone >= 5
         ? { emoji:"map", title:`Ha esplorato ${worldsDone} mondi diversi — ottima varietà!`, tip:`La varietà delle attività sviluppa più aree cognitive contemporaneamente. Continua così!`, color:"#60A5FA", priority:3 }
@@ -5351,6 +5352,9 @@ export default function Magistella() {
           </div>
         </div>
 
+        <Programma childName={childName} childAge={childAge} percorso={percorso} visti={visti} missed={missed}
+          tappe={TAPPE} medaglie={MEDAGLIE} stile={{ P_CARD, P_TILE, P_BR, GOLD, PARCH }} />
+
         {/* Spotlight: coding (il differenziatore unico) */}
         <div style={{background:"linear-gradient(135deg,rgba(109,224,198,.16),rgba(45,27,84,.55))",
           border:"1.5px solid rgba(109,224,198,.45)",borderRadius:20,padding:"16px 18px",marginBottom:14}}>
@@ -5359,7 +5363,7 @@ export default function Magistella() {
             <div style={{fontFamily:FF_DISPLAY,fontSize:14,fontWeight:900,letterSpacing:.3,color:RUNE}}>Impara a pensare come un computer</div>
           </div>
           <p style={{fontSize:12,opacity:.8,lineHeight:1.5,marginBottom:8}}>
-            Nel <b>Laboratorio Logico</b>, con il robot Pixel, tuo figlio sviluppa il <b>pensiero
+            Nel <b>Laboratorio Logico</b>, con il robot Pixel, {childName} sviluppa il <b>pensiero
             computazionale</b>: sequenze, condizioni e debug, le basi del coding spiegate col gioco.
           </p>
           <p style={{fontSize:11,opacity:.6,lineHeight:1.5}}>
