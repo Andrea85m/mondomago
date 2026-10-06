@@ -23,7 +23,7 @@ import { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback, use
 import SvgAsset, { ASSET_MAP } from "./SvgAssets.jsx";
 import { Icon } from "./icons.jsx";
 import { ANIMALI } from "./data/animali.js";
-import { emoji3dHd, sfondo3d } from "./data/grafica3d.js";
+import { emoji3dHd } from "./data/grafica3d.js";
 import {
   FF, FF_DISPLAY, FF_NUM,
   SG_GOLD, SG_RUNE, SG_PARCH, SG_INK, SG_BG, SG_CARD, SG_BR, SG_GOLD_GRAD, SG_TILE,
@@ -381,9 +381,13 @@ function useTrascinamento(svgRef, onRilascio) {
 // ═══════════════════════════════════════════════════════════════════════════
 // PEZZI COMUNI DI INTERFACCIA
 // ═══════════════════════════════════════════════════════════════════════════
+// Su PC e tablet il gioco resta della misura di un telefono grande, centrato:
+// a tutto schermo un pezzo diventava largo 30 cm e la vaschetta finiva sotto la piega.
+const LARGHEZZA_MAX = 520;
+
 function Cornice({ titolo, sottotitolo, onIndietro, azione, children }) {
   return (
-    <div style={{
+    <div style={{ maxWidth: LARGHEZZA_MAX, margin: "0 auto",
       minHeight: "var(--vvh,100dvh)", background: SG_BG, color: SG_PARCH,
       display: "flex", flexDirection: "column",
       padding: "14px 14px max(env(safe-area-inset-bottom,0px),18px)",
@@ -412,7 +416,7 @@ function SceltaLivello({ valore, onCambia }) {
         <button key={l.id} onClick={() => onCambia(l)}
           aria-pressed={l.id === valore.id}
           style={{
-            flex: 1, padding: "9px 4px", borderRadius: 12, cursor: "pointer",
+            flex: 1, padding: "9px 4px", minHeight: 44, borderRadius: 12, cursor: "pointer",
             background: l.id === valore.id ? SG_GOLD_GRAD : "rgba(255,255,255,.07)",
             color: l.id === valore.id ? SG_INK : SG_PARCH,
             border: l.id === valore.id ? "none" : "1px solid rgba(255,194,75,.16)",
@@ -690,8 +694,8 @@ function GiocoIndovina({ livello, seme, tema = "tutti", speak, sfx, onVinto, onI
               <span role="button" tabIndex={0} aria-label={`Ascolta: ${c.nome}`}
                 onClick={(e) => { e.stopPropagation(); sfx?.tap?.(); speak?.(c.nome); }}
                 onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); speak?.(c.nome); } }}
-                style={{ position: "absolute", top: 6, right: 7, padding: 4, lineHeight: 0, opacity: .55, cursor: "pointer" }}>
-                <Icon name="audio" color={SG_GOLD} size={14} />
+                style={{ position: "absolute", top: 0, right: 0, width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", opacity: .7, cursor: "pointer" }}>
+                <Icon name="audio" color={SG_GOLD} size={18} />
               </span>
             </button>
           );
@@ -702,191 +706,8 @@ function GiocoIndovina({ livello, seme, tema = "tutti", speak, sfx, onVinto, onI
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 4 · INCASTRO  (Jigsaw)
-// Il puzzle vero: pezzi con le linguette, vaschetta in basso, si trascinano
-// col dito e scattano in posizione quando sono abbastanza vicini.
+// 4 · INCASTRO — GiocoSagomato con le linguette, sull'isola 3D di un mondo.
 // ═══════════════════════════════════════════════════════════════════════════
-function GiocoIncastro({ livello, seme, speak, sfx, onVinto, onIndietro, onLivello, onNuovaImmagine, titolo = "Puzzle a incastro", consegna = "Trascina ogni pezzo al suo posto!" }) {
-  const [cols, rows] = livello.incastro;
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- seme cambia apposta: nuova immagine
-  const scena = useMemo(() => pick(SCENES), [seme]);
-
-  // Il quadro è lo sfondo dipinto del mondo (verticale): se ne prende il
-  // quadrato centrale, dove stanno castello, meduse, alberi.
-  const W = 360, H = 360;
-  const VASSOIO_Y = H + 26;
-  const SCALA_VASSOIO = 0.5;
-  const url = sfondo3d(scena.id);
-  const clipId = useId().replace(/:/g, "");
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- seme cambia apposta: tagli nuovi
-  const pezzi = useMemo(() => tagliaPuzzle(cols, rows, W, H), [cols, rows, H, seme]);
-  const [posti, setPosti] = useState({});          // id → true
-  const [dove, setDove] = useState({});            // id → {x,y} nel vassoio
-  const [selezionato, setSelezionato] = useState(null);
-  const svgRef = useRef(null);
-
-  // disposizione iniziale nella vaschetta.
-  // La cella deve contenere anche le linguette, altrimenti i pezzi dell'ultima
-  // colonna escono dal bordo destro e si tagliano.
-  useEffect(() => {
-    const pw = (W / cols) * SCALA_VASSOIO;
-    const ph = (H / rows) * SCALA_VASSOIO;
-    const sporgenza = Math.max(pw, ph) * 0.30 * AMPIEZZA;
-    const cellaW = pw + sporgenza * 2 + 6;
-    const cellaH = ph + sporgenza * 2 + 6;
-    const perRiga = Math.max(2, Math.floor(W / cellaW));
-    const margine = (W - perRiga * cellaW) / 2 + cellaW / 2;
-    const d = {};
-    shuffle(pezzi).forEach((p, i) => {
-      d[p.id] = {
-        x: margine + (i % perRiga) * cellaW,
-        y: VASSOIO_Y + Math.floor(i / perRiga) * cellaH + cellaH / 2,
-      };
-    });
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- pezzi nuovi: si ridispone la vaschetta
-    setDove(d);
-    setPosti({});
-    setSelezionato(null);
-  }, [pezzi, cols, rows, H, VASSOIO_Y]);
-
-  useEffect(() => {
-    const t = setTimeout(() => speak?.(consegna), 350);
-    return () => clearTimeout(t);
-  }, [speak, consegna]);
-
-  // Man mano che i pezzi salgono sul tabellone la vaschetta si accorcia, ma non
-  // può sparire: a puzzle finito tutte le y stanno sopra VASSOIO_Y e senza un
-  // minimo il rettangolo della vaschetta finiva con un'altezza negativa.
-  const altezzaVassoio = useMemo(() => {
-    const ys = Object.values(dove).map(p => p.y);
-    const bordoBasso = ys.length
-      ? Math.max(...ys) + (H / rows) * SCALA_VASSOIO / 2 + 20
-      : VASSOIO_Y + 120;
-    return Math.max(VASSOIO_Y + 40, bordoBasso);
-  }, [dove, H, rows, VASSOIO_Y]);
-
-  const centroCasa = (p) => ({ x: p.ax + p.cw / 2, y: p.ay + p.ch / 2 });
-  const SCATTO = Math.max(26, Math.min(W / cols, H / rows) * 0.45);
-
-  const rilascia = useCallback((s) => {
-    const p = pezzi.find(q => q.id === s.id);
-    if (!p) return;
-    if (!s.mosso) { setSelezionato(sel => (sel === s.id ? null : s.id)); sfx?.tap?.(); return; }
-    const casa = centroCasa(p);
-    if (Math.hypot(s.x - casa.x, s.y - casa.y) < SCATTO) {
-      sfx?.correct?.();
-      setDove(d => ({ ...d, [s.id]: casa }));
-      setPosti(pz => {
-        const n = { ...pz, [s.id]: true };
-        if (Object.keys(n).length === pezzi.length) setTimeout(() => onVinto(scena), 560);
-        return n;
-      });
-    } else {
-      setDove(d => ({ ...d, [s.id]: { x: clamp(s.x, 10, W - 10), y: clamp(s.y, 10, altezzaVassoio - 10) } }));
-    }
-  }, [pezzi, SCATTO, sfx, onVinto, scena, altezzaVassoio]);
-
-  const { preso, inizia, muovi, finisci } = useTrascinamento(svgRef, rilascia);
-
-  // due tocchi: pezzo selezionato + tocco sul tabellone
-  function toccaTabellone(e) {
-    if (!selezionato) return;
-    const p = pezzi.find(q => q.id === selezionato);
-    if (!p) return;
-    const svg = svgRef.current;
-    const pt = svg.createSVGPoint();
-    pt.x = e.clientX; pt.y = e.clientY;
-    const loc = pt.matrixTransform(svg.getScreenCTM().inverse());
-    const casa = centroCasa(p);
-    if (Math.hypot(loc.x - casa.x, loc.y - casa.y) < SCATTO * 1.6) {
-      sfx?.correct?.();
-      setDove(d => ({ ...d, [p.id]: casa }));
-      setSelezionato(null);
-      setPosti(pz => {
-        const n = { ...pz, [p.id]: true };
-        if (Object.keys(n).length === pezzi.length) setTimeout(() => onVinto(scena), 560);
-        return n;
-      });
-    } else { sfx?.wrong?.(); }
-  }
-
-  const messi = Object.keys(posti).length;
-
-  return (
-    <Cornice titolo={titolo} sottotitolo={`${scena.nome} · ${messi}/${pezzi.length} pezzi`}
-      onIndietro={onIndietro}
-      azione={
-        <button onClick={onNuovaImmagine} aria-label="Nuova immagine"
-          style={{ background: "rgba(255,255,255,.10)", border: "none", color: SG_PARCH, borderRadius: 14, padding: "10px 12px", cursor: "pointer", flexShrink: 0 }}>
-          <Icon name="ricomincia" color={SG_GOLD} size={18} />
-        </button>
-      }>
-      <SceltaLivello valore={livello} onCambia={onLivello} />
-
-      <svg ref={svgRef}
-        viewBox={`0 0 ${W} ${altezzaVassoio}`}
-        style={{ width: "100%", height: "auto", touchAction: "none", display: "block" }}
-        onPointerMove={muovi} onPointerUp={finisci} onPointerCancel={finisci}>
-        <defs>
-          {url && <image id={`pic-${clipId}`} href={url} x="0" y="0" width={W} height={H} preserveAspectRatio="xMidYMid slice" />}
-          {pezzi.map(p => (
-            <clipPath key={p.id} id={`c-${clipId}-${p.id}`}><path d={p.d} /></clipPath>
-          ))}
-        </defs>
-
-        {/* il tabellone: sagome dei pezzi ancora da mettere */}
-        <g onPointerDown={toccaTabellone}>
-          <rect x="0" y="0" width={W} height={H} rx="14" fill="rgba(20,11,41,.55)" stroke="rgba(255,194,75,.22)" />
-          {url && <image href={url} x="0" y="0" width={W} height={H} opacity="0.18" preserveAspectRatio="xMidYMid slice" />}
-          {pezzi.map(p => (
-            <path key={p.id} d={p.d} fill="none"
-              stroke={selezionato === p.id ? SG_GOLD : "rgba(255,194,75,.20)"}
-              strokeWidth={selezionato === p.id ? 2.2 : 1}
-              strokeDasharray={selezionato === p.id ? "5 3" : "none"} />
-          ))}
-        </g>
-
-        {/* la vaschetta */}
-        <rect x="0" y={VASSOIO_Y - 14} width={W} height={altezzaVassoio - VASSOIO_Y + 16} rx="14"
-          fill="rgba(255,255,255,.035)" stroke="rgba(255,255,255,.07)" />
-
-        {/* i pezzi: prima quelli a posto, poi quelli ancora in giro */}
-        {[...pezzi].sort((a, b) => (posti[a.id] ? -1 : 1) - (posti[b.id] ? -1 : 1)).map(p => {
-          const messo = posti[p.id];
-          const trascinato = preso?.id === p.id;
-          const pos = trascinato ? { x: preso.x, y: preso.y } : (dove[p.id] || centroCasa(p));
-          const s = messo || trascinato ? 1 : SCALA_VASSOIO;
-          const cx = p.ax + p.cw / 2, cy = p.ay + p.ch / 2;
-          return (
-            <g key={p.id}
-              transform={`translate(${pos.x - cx * s} ${pos.y - cy * s}) scale(${s})`}
-              onPointerDown={messo ? undefined : (e) => { e.stopPropagation(); inizia(e, p.id, pos.x, pos.y); }}
-              style={{ cursor: messo ? "default" : "grab", touchAction: "none" }}
-              role={messo ? undefined : "button"}
-              aria-label={messo ? undefined : `Pezzo ${p.r + 1}-${p.c + 1}`}
-              data-casa={`${cx.toFixed(1)},${cy.toFixed(1)}`}
-              data-pos={`${pos.x.toFixed(1)},${pos.y.toFixed(1)}`}>
-              {url && (
-                <g clipPath={`url(#c-${clipId}-${p.id})`}>
-                  <image href={url} x="0" y="0" width={W} height={H} preserveAspectRatio="xMidYMid slice" />
-                </g>
-              )}
-              <path d={p.d} fill="none"
-                stroke={trascinato ? SG_GOLD : messo ? "rgba(255,255,255,.14)" : "rgba(255,255,255,.42)"}
-                strokeWidth={trascinato ? 2.4 / s : 1.2 / s}
-                style={{ filter: trascinato ? "drop-shadow(0 6px 14px rgba(0,0,0,.55))" : messo ? "none" : "drop-shadow(0 2px 5px rgba(0,0,0,.45))" }} />
-            </g>
-          );
-        })}
-      </svg>
-
-      <div style={{ fontSize: 11, opacity: .45, textAlign: "center", marginTop: 8 }}>
-        Trascina un pezzo sul tabellone — oppure toccalo e poi tocca dove va.
-      </div>
-    </Cornice>
-  );
-}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // GIOCO SAGOMATO — il motore comune di "Puzzle degli animali" e "Costruttore"
@@ -992,8 +813,11 @@ function GiocoSagomato({
       )}>
       <SceltaLivello valore={livello} onCambia={onLivello} />
 
+      {/* Tabellone + vaschetta stanno sempre nello schermo: su PC (finestra bassa e
+          larga) e sui telefoni piccoli il gioco si rimpicciolisce invece di finire
+          sotto il bordo, dove il bambino non vede più i pezzi. */}
       <svg ref={svgRef} viewBox={`0 0 ${W} ${altezza}`} data-sagomato={soggetto.nome}
-        style={{ width: "100%", height: "auto", touchAction: "none", display: "block" }}
+        style={{ width: "100%", height: "auto", maxHeight: "calc(var(--vvh, 100dvh) - 170px)", touchAction: "none", display: "block", margin: "0 auto" }}
         onPointerMove={muovi} onPointerUp={finisci} onPointerCancel={finisci}>
         <defs>
           {/* bordo bianco da adesivo intorno alla sagoma del pezzo */}
@@ -1276,8 +1100,8 @@ function AnteprimaGioco({ id, colore, icona }) {
       <span style={{ position: "absolute", right: 0, bottom: -2, fontFamily: FF_DISPLAY, fontSize: 24, color: SG_GOLD, textShadow: "0 2px 0 #27134F" }}>?</span>
     </div>);
   if (id === "incastro") return (
-    <div style={{ ...box, borderRadius: 12, overflow: "hidden", border: `2px solid ${colore}88` }}>
-      <img src={sfondo3d("foresta")} alt="" aria-hidden="true" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+    <div style={box}>
+      <img src={`${import.meta.env.BASE_URL}img/3d/isole-hd/castello.webp`} alt="" aria-hidden="true" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
     </div>);
   return <Icon name={icona} color={colore} size={28} />;
 }
@@ -1286,7 +1110,7 @@ const GIOCHI = [
   { id: "ombre",       nome: "Ombre magiche",    desc: "Posa ogni cosa sulla sua ombra", icona: "mano",     colore: "#6DE0C6" },
   { id: "costruttore", nome: "Il Costruttore",   desc: "Rimetti insieme l'animale",       icona: "immagini", colore: "#FFC24B" },
   { id: "indovina",    nome: "Cosa si nasconde", desc: "Scopri e indovina",               icona: "lente",    colore: "#A78BFA" },
-  { id: "incastro",    nome: "Puzzle a incastro",desc: "Il puzzle vero, pezzo per pezzo", icona: "puzzle",   colore: "#F97316" },
+  { id: "incastro",    nome: "Puzzle a incastro",desc: "Ricomponi l'isola di un mondo", icona: "puzzle",   colore: "#F97316" },
 ];
 
 // ── Ricompense: monete sì, stelle no ─────────────────────────────────────────
@@ -1320,6 +1144,12 @@ export default function PuzzleMagico({ età = 5, speak, suona = null, sfx, onExi
   const animaliFatti = salvato.animali || [];
   const tema = salvato.tema || "animali";
   const scegliTema = (t) => setSalvato(s => ({ ...s, tema: t }));
+  // l'Incastro ricompone l'isola di un mondo (3D cartoon, HD), una nuova a ogni giro
+  const soggettoIncastro = useMemo(() => {
+    const sc = pick(SCENES);
+    return { nome: sc.nome, src: `${import.meta.env.BASE_URL}img/3d/isole-hd/${sc.id}.webp` };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- seme cambia apposta: isola nuova
+  }, [seme]);
   // il Costruttore ricompone un soggetto del tema (in HD), uno nuovo a ogni giro
   const soggettoCostruttore = useMemo(() => {
     const c = pick(cosePerTema(tema, 1));
@@ -1382,7 +1212,10 @@ export default function PuzzleMagico({ età = 5, speak, suona = null, sfx, onExi
       onNuovo={() => setSeme(n => n + 1)}
       onVinto={(sc) => vinci(`Hai ricostruito: ${sc.nome}!`)} />;
   if (schermo === "incastro")
-    gioco = <GiocoIncastro {...comuni} onNuovaImmagine={() => setSeme(n => n + 1)} onVinto={(sc) => vinci(`Puzzle completato: ${sc.nome}!`)} />;
+    gioco = <GiocoSagomato {...comuni} soggetto={soggettoIncastro} griglia={livello.incastro}
+      titolo="Puzzle a incastro" consegna="Trascina ogni pezzo al suo posto!"
+      onNuovo={() => setSeme(n => n + 1)}
+      onVinto={(sc) => vinci(`Puzzle completato: ${sc.nome}!`)} />;
   if (schermo === "animale" && animale)
     gioco = <GiocoSagomato {...comuni} soggetto={{ ...animale, src: animale.cartone }} griglia={livello.incastro}
       titolo="Puzzle degli animali" consegna="Rimetti insieme i pezzi dell'animale!"
@@ -1392,7 +1225,9 @@ export default function PuzzleMagico({ età = 5, speak, suona = null, sfx, onExi
   if (schermo === "ombre" || schermo === "indovina")
     gioco = schermo === "ombre"
       ? <GiocoOmbre {...comuni} tema={tema} onVinto={() => vinci("Tutte al loro posto!")} />
-      : <GiocoIndovina {...comuni} tema={tema} onVinto={(risparmiati) => vinci(risparmiati > 0 ? `Indovinato con ${risparmiati} pezzi ancora coperti!` : "Indovinato!")} />;
+      // key: a ogni turno il gioco riparte da zero. Prima, per mezzo secondo, le
+      // tessere "scoperte" del turno precedente lasciavano vedere l'animale nuovo.
+      : <GiocoIndovina key={`indovina-${seme}-${tema}-${livello.id}`} {...comuni} tema={tema} onVinto={(risparmiati) => vinci(risparmiati > 0 ? `Indovinato con ${risparmiati} pezzi ancora coperti!` : "Indovinato!")} />;
 
   if (gioco) return (
     <>
@@ -1410,6 +1245,7 @@ export default function PuzzleMagico({ età = 5, speak, suona = null, sfx, onExi
   return (
     <div style={{
       minHeight: "var(--vvh,100dvh)", background: SG_BG, color: SG_PARCH,
+      maxWidth: LARGHEZZA_MAX, margin: "0 auto",
       padding: barra ? "18px 16px calc(100px + env(safe-area-inset-bottom,0px))" : "18px 16px max(env(safe-area-inset-bottom,0px),24px)",
       isolation: "isolate",
     }}>
@@ -1456,7 +1292,7 @@ export default function PuzzleMagico({ età = 5, speak, suona = null, sfx, onExi
           const on = t.id === tema;
           return (
             <button key={t.id} role="radio" aria-checked={on} onClick={() => { sfx?.tap?.(); scegliTema(t.id); }}
-              style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 5, padding: "7px 12px", borderRadius: 30,
+              style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 5, padding: "7px 14px", minHeight: 44, borderRadius: 30,
                 cursor: "pointer", fontFamily: FF, fontSize: 13, fontWeight: 800,
                 background: on ? SG_GOLD_GRAD : "rgba(255,255,255,.07)", color: on ? SG_INK : SG_PARCH,
                 border: on ? "none" : "1px solid rgba(255,194,75,.18)" }}>

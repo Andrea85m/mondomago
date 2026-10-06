@@ -211,7 +211,7 @@ export const ALL_CHALLENGES = {
       options:["3️⃣","4️⃣","5️⃣","6️⃣"], correct:2 },
 
     { id:"m02", format:"visual_tap", type:"logica",    ageMin:3, ageMax:4,
-      visual:"🍎🍊🍋🍇",  prompt:"Quale è la frutta gialla?", emoji:"🍋",
+      visual:"🍎🍊🍋🍇",  prompt:"Qual è la frutta gialla?", emoji:"🍋",
       options:["🍋","🍎","🍊","🍇"],   correct:0 },
 
     { id:"m03", format:"visual_tap", type:"empatia",   ageMin:3, ageMax:4,
@@ -223,7 +223,7 @@ export const ALL_CHALLENGES = {
       options:["🔴","🟡","🔵","🟢"],   correct:0 },
 
     { id:"m05", format:"visual_tap", type:"logica",    ageMin:3, ageMax:4,
-      visual:"🍕🍔🌮🍎",  prompt:"Quale è il cibo più sano?", emoji:"🥗",
+      visual:"🍕🍔🌮🍎",  prompt:"Qual è il cibo più sano?", emoji:"🥗",
       options:["🍎","🍕","🍔","🌮"],   correct:0 },
 
     { id:"m06", format:"visual_tap", type:"logica",    ageMin:3, ageMax:4, isBoss:true,
@@ -269,7 +269,7 @@ export const ALL_CHALLENGES = {
       options:["1️⃣","2️⃣","3️⃣","4️⃣"], correct:2 },
 
     { id:"g02", format:"visual_tap", type:"logica",    ageMin:3, ageMax:4,
-      visual:"⭐🌙☀️🌍",  prompt:"Quale è il sole?", emoji:"☀️",
+      visual:"⭐🌙☀️🌍",  prompt:"Qual è il sole?", emoji:"☀️",
       options:["☀️","⭐","🌙","🌍"],   correct:0 },
 
     { id:"g03", format:"visual_tap", type:"empatia",   ageMin:3, ageMax:4,
@@ -281,7 +281,7 @@ export const ALL_CHALLENGES = {
       options:["🌍","🌕","⭐","🚀"],   correct:0 },
 
     { id:"g05", format:"visual_tap", type:"logica",    ageMin:3, ageMax:4,
-      visual:"🌑🌒🌓🌔🌕", prompt:"Quale è la luna piena?", emoji:"🌕",
+      visual:"🌑🌒🌓🌔🌕", prompt:"Qual è la luna piena?", emoji:"🌕",
       options:["🌕","🌑","🌒","🌓"],   correct:0 },
 
     { id:"g06", format:"visual_tap", type:"logica",    ageMin:3, ageMax:4, isBoss:true,
@@ -468,7 +468,7 @@ Object.assign(ALL_CHALLENGES, {
       visual:"🍊🍊🍊🍊🍊", prompt:"Quante arance?", emoji:"🍊",
       options:["3️⃣","4️⃣","5️⃣","6️⃣"], correct:2 },
     { id:"mb02", format:"visual_tap", type:"logica", ageMin:3, ageMax:4,
-      visual:"🍎🥦🍇🍓", prompt:"Quale è la verdura?", emoji:"🥗",
+      visual:"🍎🥦🍇🍓", prompt:"Qual è la verdura?", emoji:"🥗",
       options:["🍎","🥦","🍇","🍓"], correct:1 },
     { id:"mb03", format:"visual_tap", type:"empatia", ageMin:3, ageMax:4,
       visual:"👦😔", prompt:"Il bambino ha perso i soldi.\nCome si sente?", emoji:"💰",
@@ -512,7 +512,7 @@ Object.assign(ALL_CHALLENGES, {
       visual:"🌟🌟🌟🌟🌟", prompt:"Quante stelle?", emoji:"🚀",
       options:["3️⃣","4️⃣","5️⃣","6️⃣"], correct:2 },
     { id:"gb02", format:"visual_tap", type:"logica", ageMin:3, ageMax:4,
-      visual:"⭐🪐☀️🚀", prompt:"Quale è il pianeta?", emoji:"🔭",
+      visual:"⭐🪐☀️🚀", prompt:"Qual è il pianeta?", emoji:"🔭",
       options:["⭐","🪐","☀️","🚀"], correct:1 },
     { id:"gb03", format:"visual_tap", type:"empatia", ageMin:3, ageMax:4,
       visual:"👨‍🚀😨", prompt:"L'astronauta è spaventato!\nCome si sente?", emoji:"👨‍🚀",
@@ -1063,7 +1063,7 @@ ALL_CHALLENGES.vulcano = ALL_CHALLENGES.vulcano.concat([
     visual:"🌋🌋🌋🌋🌋", prompt:"Quanti vulcani?", emoji:"🔥",
     options:["3️⃣","4️⃣","5️⃣","6️⃣"], correct:2 },
   { id:"vb02", format:"visual_tap", type:"logica", ageMin:3, ageMax:4,
-    visual:"🔥💧🌿❄️", prompt:"Quale è il più caldo?", emoji:"🌡️",
+    visual:"🔥💧🌿❄️", prompt:"Qual è il più caldo?", emoji:"🌡️",
     options:["🔥","💧","🌿","❄️"], correct:0 },
   { id:"vb03", format:"visual_tap", type:"empatia", ageMin:3, ageMax:4,
     visual:"🦊😲", prompt:"La volpe è sorpresa!\nCome si sente?", emoji:"🦊",
@@ -1072,7 +1072,7 @@ ALL_CHALLENGES.vulcano = ALL_CHALLENGES.vulcano.concat([
     visual:"🌋💥🌋💥", prompt:"Cosa viene dopo?\n🌋💥🌋💥__", emoji:"💥",
     options:["🌋","💥","🔥","🪨"], correct:0 },
   { id:"vb05", format:"visual_tap", type:"logica", ageMin:3, ageMax:4,
-    visual:"🌋🗻🏔️🏕️", prompt:"Quale è il vulcano?", emoji:"🌋",
+    visual:"🌋🗻🏔️🏕️", prompt:"Qual è il vulcano?", emoji:"🌋",
     options:["🌋","🗻","🏔️","🏕️"], correct:0 },
   { id:"vb06", format:"visual_tap", type:"logica", ageMin:3, ageMax:4, isBoss:true,
     visual:"🦅💥🦅💥🦅", prompt:"🐦 La Fenice chiede:\ncosa viene dopo? 🦅💥🦅💥🦅__", emoji:"🐦",

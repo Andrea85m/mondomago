@@ -133,6 +133,11 @@ def to_speech(text: str) -> str:
     t = re.sub(r"([.!?:;,])\s*\n\s*", r"\1 ", t)
     t = re.sub(r"\s*\n\s*", ", ", t)
 
+    # "Gatto · Delfino · Orso" → pausa tra le opzioni (il "·" spariva: "orsorana")
+    t = re.sub(r"\s*·\s*", ", ", t)
+    # 'felice' tra apici: la voce leggeva l'apice come una "è" in più
+    t = re.sub(r"(?<![\w])'([^'\n]+?)'(?![\w])", r"\1", t)
+
     for pattern, repl in SYMBOL_WORDS:
         t = re.sub(pattern, repl, t)
 
