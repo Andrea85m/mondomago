@@ -17,11 +17,16 @@ le citiamo lo stesso. Rigenerare con `scripts/prepara-animali.py`.
 | mucca | [Keith Weller/USDA](https://commons.wikimedia.org/wiki/File:Cow_female_black_white.jpg) | Public domain | [Joseph SARDIN (BigSoundBank)](https://bigsoundbank.com/detail-2382-cow-moos-2.html) | CC0 |
 | pecora | [Hamdigumus](https://commons.wikimedia.org/wiki/File:Koyun,_Safranbolu_2014.jpg) | CC0 | [earthcalling](https://commons.wikimedia.org/wiki/File:Sheep_bleating.ogg) | Public domain |
 | rana | [Nosferattus](https://commons.wikimedia.org/wiki/File:Red-eyed_tree_frog_Belize_01.jpg) | CC0 | [Rabe19 (Diskussion)](https://commons.wikimedia.org/wiki/File:Laubfrosch_Balzruf.OGG) | Public domain |
+| gallina | [Pedalito](https://commons.wikimedia.org/wiki/File:SH_gelb_Henne.jpg) | CC0 | [flumpytripod (Freesound)](https://freesound.org/people/flumpytripod/sounds/830091/) | CC0 |
+| lupo | [NPS / Jim Peaco](https://commons.wikimedia.org/wiki/File:Wolf_(50088111867).jpg) | Public domain | [Nivatius (Freesound, Yellowstone NPS)](https://freesound.org/people/Nivatius/sounds/519592/) | CC0 |
+| orso | [Joselodos](https://commons.wikimedia.org/wiki/File:Brown_bear_walking_on_red_clay.jpg) | CC0 | [Nivatius (Freesound, Yellowstone NPS)](https://freesound.org/people/Nivatius/sounds/519599/) | CC0 |
 
 ## Controllo dei versi (6 ottobre 2026)
 Ogni verso è stato riconosciuto da un classificatore addestrato su AudioSet
-(sherpa-onnx zipformer audio tagging): mucca "Moo" 100%, gufo "Hoot" 99%,
-gallo 97%, gatto "Meow" 95%, anatra "Quack" 95%, rana 91%, pecora 90%,
-maiale "Oink" 77%, cavallo "Neigh" 75%, cane "Dog" 73%, leone "Roar" 62%.
+(sherpa-onnx zipformer audio tagging), sul file finale:
+lupo "Howl" 100%, mucca "Moo" 100%, gufo "Hoot" 99%, gallina "Chicken" 97%,
+gallo 97%, gatto "Meow" 95%, anatra "Quack" 95%, orso "Roar" 93%, rana 91%,
+pecora 90%, maiale "Oink" 77%, cavallo "Neigh" 75%, cane "Dog" 73%, leone "Roar" 62%.
 AudioSet non ha una classe "elefante": quel verso è una registrazione dal vero
 in uno zoo (descrizione dell'autore), classificata come "Roar".
+Gallo, pecora e maiale non sono ancora nel gioco (manca il loro cartoon HD).
