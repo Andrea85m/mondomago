@@ -56,3 +56,6 @@ __pycache__/
 
 # campioni di voce (gen-tts.py --demo)
 public/audio/_demo/
+
+# schermate del controllo dispositivi
+.dispositivi/

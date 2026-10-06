@@ -640,6 +640,7 @@ function toSpeech(text) {
   t = t.replace(/\b(Quant[ei])\s*((?:[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}]|\u{FE0F})+)/gu,
     (_, q, e) => { const w = SPEECH_COUNT_NOUNS[e] || SPEECH_COUNT_NOUNS[e.replace(/\u{FE0F}/gu, '')]; return w ? `${q} ${w}` : q; });
   t = t.replace(/([.!?:;,])\s*\n\s*/g, '$1 ').replace(/\s*\n\s*/g, ', ');
+  t = t.replace(/\s*·\s*/g, ", ").replace(/(?<![\w])'([^'\n]+?)'(?![\w])/g, "$1");
   for (const [re, w] of SPEECH_SYMBOLS) t = t.replace(re, w);
   // parole tutte maiuscole: la voce le leggeva come sigle ("M. U.")
   t = t.replace(/\b[A-ZÀÈÉÌÒÙ]{2,}\b/g, w => (SPEECH_SIGLE.has(w) ? w : w.toLowerCase()));
