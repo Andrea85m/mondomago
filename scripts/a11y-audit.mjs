@@ -92,6 +92,10 @@ async function main() {
   const mondo = page.locator('.mg-isola:not(.chiusa) button').first();
   await mondo.evaluate(el => el.scrollIntoView({ block: 'center' }));
   await mondo.dispatchEvent('click');
+  await page.waitForSelector('[aria-label^="Gioca la tappa"]', { timeout: 8000 });
+  await analizza(page, 'sentiero del mondo');
+  await page.locator('[aria-label^="Gioca la tappa"]').first().dispatchEvent('click');
+  await page.waitForTimeout(700);
   await page.waitForTimeout(900);
   await analizza(page, 'introduzione del mondo');
 

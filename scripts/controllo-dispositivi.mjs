@@ -138,6 +138,9 @@ for (const disp of DISPOSITIVI) {
     await misura(page, disp, '9-look');
     await page.locator('nav.mg-tabs').getByRole('button', { name: 'Mondi' }).click(); await page.waitForTimeout(700);
     await page.locator('.mg-isola:not(.chiusa) button').first().dispatchEvent('click'); await page.waitForTimeout(700);
+  await page.waitForSelector('[aria-label^="Gioca la tappa"]', { timeout: 8000 });
+  await page.locator('[aria-label^="Gioca la tappa"]').first().dispatchEvent('click');
+  await page.waitForTimeout(700);
     await page.getByRole('button', { name: /Inizia la Missione/i }).dispatchEvent('click'); await page.waitForTimeout(1200);
     const capito = page.getByRole('button', { name: /Capito/i });
     if (await capito.count()) await capito.click();
