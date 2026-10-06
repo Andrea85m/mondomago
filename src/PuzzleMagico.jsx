@@ -1,17 +1,18 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // PUZZLE MAGICO — la sezione puzzle di Magistella
 //
-// Quattro giochi, sulla falsariga di "Puzzle Kids — Jigsaw Puzzles"
+// Cinque giochi, sulla falsariga di "Puzzle Kids — Jigsaw Puzzles"
 // (com.rvappstudios.jigsaw.puzzles.kids, 50M+ download, Teacher Approved):
 //
+//   Animali      ← Animal Puzzles   · animale cartoon a pezzi sagomati, poi verso e foto vera
 //   Ombre        ← Shape Matching   · l'oggetto va sulla sua sagoma
-//   Costruttore  ← Object Builder   · i pezzi ricompongono una figura
+//   Costruttore  ← Object Builder   · l'animale del tema, pochi pezzi sagomati a taglio dritto
 //   Indovina     ← Guess the Object · si scopre poco alla volta, si indovina
-//   Incastro     ← Jigsaw Puzzles   · puzzle vero, a incastro, con la vaschetta
+//   Incastro     ← Jigsaw Puzzles   · il quadro dipinto di un mondo, a incastro classico
 //
-// Le immagini non arrivano da fuori: sono le 8 scene di WorldScene.jsx e le
-// 150 illustrazioni di SvgAssets.jsx, già dentro il bundle. Zero KB di asset
-// nuovi, e il puzzle ha la faccia dei mondi che il bambino già conosce.
+// Immagini: i soggetti 3D cartoon in alta definizione (public/img/3d/emoji-hd,
+// scripts/emoji-hd.py) e gli sfondi dipinti dei mondi (public/img/3d/sfondi).
+// Animali e Costruttore usano GiocoSagomato: i pezzi seguono il contorno.
 //
 // Il file è tutto suo: non tocca né la logica né i dati di Magistella.jsx.
 // Riceve `speak` e `sfx` come prop invece di importarli, così la sezione resta
@@ -19,10 +20,10 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback, useId } from "react";
-import WorldScene from "./WorldScene.jsx";
 import SvgAsset, { ASSET_MAP } from "./SvgAssets.jsx";
 import { Icon } from "./icons.jsx";
 import { ANIMALI } from "./data/animali.js";
+import { emoji3dHd, sfondo3d } from "./data/grafica3d.js";
 import {
   FF, FF_DISPLAY, FF_NUM,
   SG_GOLD, SG_RUNE, SG_PARCH, SG_INK, SG_BG, SG_CARD, SG_BR, SG_GOLD_GRAD, SG_TILE,
@@ -197,14 +198,14 @@ function bordo(P, Q, segno) {
  * Restituisce, per ogni pezzo: dove sta nell'immagine (ax, ay), il tracciato
  * in coordinate assolute, e il riquadro che lo contiene linguette comprese.
  */
-function tagliaPuzzle(cols, rows, W, H) {
+function tagliaPuzzle(cols, rows, W, H, linguette = true) {
   const cw = W / cols, ch = H / rows;
   // segno delle linguette: verso destra e verso il basso si estraggono a caso,
   // il pezzo accanto eredita l'opposto — così i due bordi combaciano sempre
-  const vert = Array.from({ length: rows }, () =>
-    Array.from({ length: cols - 1 }, () => (Math.random() < 0.5 ? 1 : -1)));
-  const oriz = Array.from({ length: rows - 1 }, () =>
-    Array.from({ length: cols }, () => (Math.random() < 0.5 ? 1 : -1)));
+  // senza linguette (Costruttore) i tagli sono dritti, come un puzzle di legno
+  const verso = () => (linguette ? (Math.random() < 0.5 ? 1 : -1) : 0);
+  const vert = Array.from({ length: rows }, () => Array.from({ length: cols - 1 }, verso));
+  const oriz = Array.from({ length: rows - 1 }, () => Array.from({ length: cols }, verso));
 
   const pezzi = [];
   for (let r = 0; r < rows; r++) {
@@ -219,7 +220,8 @@ function tagliaPuzzle(cols, rows, W, H) {
         `M${TL[0].toFixed(2)},${TL[1].toFixed(2)}` +
         bordo(TL, TR, top) + bordo(TR, BR, right) +
         bordo(BR, BL, bottom) + bordo(BL, TL, left) + "Z";
-      const sp = Math.max(cw, ch) * 0.23 * AMPIEZZA + 2;
+      // la linguetta sporge fino a 0.30 del lato (vedi PROFILO), più il tratto
+      const sp = Math.max(cw, ch) * 0.30 * AMPIEZZA + 3;
       pezzi.push({
         id: `p${r}_${c}`, r, c, ax: x, ay: y, cw, ch, d,
         box: {
@@ -234,56 +236,101 @@ function tagliaPuzzle(cols, rows, W, H) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// RASTERIZZAZIONE DELLA SCENA
-// Le scene sono SVG con gradienti e id interni. Ritagliarle 20 volte a colpi
-// di clipPath significherebbe 20 copie dello stesso disegno nel DOM (e id
-// duplicati che si rubano i gradienti a vicenda). Si disegna una volta sola su
-// canvas e i pezzi ritagliano quell'unica immagine.
+// PUZZLE SAGOMATO — i pezzi seguono il contorno dell'animale
+// Si taglia la griglia come sempre, poi si guarda quanto animale c'è in ogni
+// cella (canale alfa dell'immagine): le celle vuote spariscono, quelle con
+// solo un pezzetto (una punta d'orecchio, una zampa) si fondono con la vicina
+// più piena. Ogni pezzo ritaglia l'immagine trasparente, quindi il suo bordo
+// esterno È il contorno dell'animale: niente rettangoli.
 // ═══════════════════════════════════════════════════════════════════════════
-function useScenaRasterizzata(worldId, W, H) {
-  const nascosto = useRef(null);
-  const [url, setUrl] = useState(null);
+const SOGLIA_PEZZO = 0.28;    // sotto questa frazione di cella piena, il pezzo si fonde
 
+/** Riquadro (x,y,w,h) in cui l'immagine sta nel tabellone W×H, centrata e intera. */
+function adatta(iw, ih, W, H, margine = 0.04) {
+  const k = Math.min(W * (1 - margine * 2) / iw, H * (1 - margine * 2) / ih);
+  const w = iw * k, h = ih * k;
+  return { x: (W - w) / 2, y: (H - h) / 2, w, h };
+}
+
+/**
+ * Carica l'immagine e misura quanta parte opaca c'è in ogni rettangolo.
+ * Ritorna null finché l'immagine non è pronta.
+ */
+function useCopertura(src, W, H) {
+  const [stato, setStato] = useState(null);
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- via la scena vecchia mentre si disegna la nuova
-    setUrl(null);
-    if (!worldId) return;                 // il puzzle usa una foto: niente da disegnare
-    const svg = nascosto.current?.querySelector("svg");
-    if (!svg) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- immagine nuova: si rimisura
+    setStato(null);
+    if (!src) return;
     let annullato = false;
-
-    const clone = svg.cloneNode(true);
-    clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-    clone.setAttribute("width", W);
-    clone.setAttribute("height", H);
-    const testo = new XMLSerializer().serializeToString(clone);
-    const src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(testo);
-
     const img = new Image();
+    img.crossOrigin = "anonymous";
     img.onload = () => {
       if (annullato) return;
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const r = adatta(img.naturalWidth, img.naturalHeight, W, H);
       const cv = document.createElement("canvas");
-      cv.width = Math.round(W * dpr);
-      cv.height = Math.round(H * dpr);
-      const ctx = cv.getContext("2d");
-      ctx.scale(dpr, dpr);
-      ctx.drawImage(img, 0, 0, W, H);
-      try { setUrl(cv.toDataURL("image/webp", 0.9)); }
-      catch { setUrl(src); }              // se webp non c'è, si tiene l'SVG
+      cv.width = W; cv.height = H;
+      const cx = cv.getContext("2d", { willReadFrequently: true });
+      cx.drawImage(img, r.x, r.y, r.w, r.h);
+      let A;
+      try { A = cx.getImageData(0, 0, W, H).data; } catch { A = null; }
+      const copertura = (x, y, w, h) => {
+        if (!A) return 1;                      // senza alfa leggibile: pezzi pieni
+        let n = 0, t = 0;
+        const x0 = Math.max(0, Math.floor(x)), x1 = Math.min(W, Math.ceil(x + w));
+        const y0 = Math.max(0, Math.floor(y)), y1 = Math.min(H, Math.ceil(y + h));
+        for (let j = y0; j < y1; j += 2) for (let i = x0; i < x1; i += 2) { t++; if (A[(j * W + i) * 4 + 3] > 48) n++; }
+        return t ? n / t : 0;
+      };
+      setStato({ rect: r, copertura });
     };
-    img.onerror = () => { if (!annullato) setUrl(src); };
+    img.onerror = () => { if (!annullato) setStato({ rect: { x: 0, y: 0, w: W, h: H }, copertura: () => 1 }); };
     img.src = src;
     return () => { annullato = true; };
-  }, [worldId, W, H]);
+  }, [src, W, H]);
+  return stato;
+}
 
-  // il contenitore nascosto serve solo a far esistere l'SVG da serializzare
-  const sorgente = !worldId ? null : (
-    <div ref={nascosto} aria-hidden style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", opacity: 0, pointerEvents: "none" }}>
-      <WorldScene worldId={worldId} variant="full" />
-    </div>
-  );
-  return [url, sorgente];
+/** Taglia e sagoma: pezzi con { id, cells, d, ax, ay, cw, ch, box }. */
+function tagliaSagomato(cols, rows, W, H, copertura, linguette) {
+  let pezzi = tagliaPuzzle(cols, rows, W, H, linguette).map(p => ({
+    ...p, cells: [[p.r, p.c]], paths: [p.d], pieno: copertura(p.ax, p.ay, p.cw, p.ch),
+  })).filter(p => p.pieno > 0.003);
+  const cw = W / cols, ch = H / rows;
+  const vicini = (a, b) => a.cells.some(([r, c]) => b.cells.some(([r2, c2]) => Math.abs(r - r2) + Math.abs(c - c2) === 1));
+  // quanto animale attraversa il bordo comune: fondere due celle che si toccano
+  // solo con lo sfondo trasparente darebbe un pezzo fatto di due isole
+  const contatto = (a, b) => {
+    let t = 0;
+    for (const [r, c] of a.cells) for (const [r2, c2] of b.cells) {
+      if (r === r2 && Math.abs(c - c2) === 1) t += copertura(Math.max(c, c2) * cw - 3, r * ch, 6, ch);
+      if (c === c2 && Math.abs(r - r2) === 1) t += copertura(c * cw, Math.max(r, r2) * ch - 3, cw, 6);
+    }
+    return t;
+  };
+  // si fonde sempre il più vuoto, finché tutti sono abbastanza pieni
+  for (;;) {
+    const piccolo = pezzi.filter(p => p.pieno / p.cells.length < SOGLIA_PEZZO && pezzi.length > 2)
+      .sort((a, b) => a.pieno - b.pieno)[0];
+    if (!piccolo) break;
+    const dove = pezzi.filter(q => q !== piccolo && vicini(q, piccolo))
+      .sort((a, b) => (contatto(b, piccolo) - contatto(a, piccolo)) || (b.pieno - a.pieno))[0];
+    if (!dove) break;
+    dove.cells.push(...piccolo.cells);
+    dove.paths.push(...piccolo.paths);
+    dove.pieno += piccolo.pieno;
+    dove.box = {
+      x: Math.min(dove.box.x, piccolo.box.x), y: Math.min(dove.box.y, piccolo.box.y),
+      w: Math.max(dove.box.x + dove.box.w, piccolo.box.x + piccolo.box.w) - Math.min(dove.box.x, piccolo.box.x),
+      h: Math.max(dove.box.y + dove.box.h, piccolo.box.y + piccolo.box.h) - Math.min(dove.box.y, piccolo.box.y),
+    };
+    pezzi = pezzi.filter(q => q !== piccolo);
+  }
+  return pezzi.map(p => {
+    const xs = p.cells.map(([, c]) => c), ys = p.cells.map(([r]) => r);
+    const ax = Math.min(...xs) * cw, ay = Math.min(...ys) * ch;
+    return { ...p, d: p.paths.join(" "), ax, ay, cw: (Math.max(...xs) + 1) * cw - ax, ch: (Math.max(...ys) + 1) * ch - ay };
+  });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -519,120 +566,9 @@ function GiocoOmbre({ livello, seme, tema = "tutti", speak, sfx, onVinto, onIndi
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 2 · COSTRUTTORE  (Object Builder)
-// La figura è divisa in tessere rettangolari. Le caselle vuote restano
-// disegnate a tratteggio: si vede sempre dove manca un pezzo.
+// 2 · COSTRUTTORE — è GiocoSagomato con i tagli dritti: l'animale del tema,
+// diviso in pochi pezzi grandi che seguono il suo contorno (vedi sotto).
 // ═══════════════════════════════════════════════════════════════════════════
-function GiocoCostruttore({ livello, seme, speak, sfx, onVinto, onIndietro, onLivello }) {
-  const [cols, rows] = livello.costruttore;
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- seme cambia apposta: nuova immagine
-  const scena = useMemo(() => pick(SCENES), [seme]);
-  const LATO = 300, ALTO = Math.round(LATO * 240 / 400);
-  const [url, sorgente] = useScenaRasterizzata(scena.id, LATO * 2, ALTO * 2);
-
-  const caselle = useMemo(
-    () => Array.from({ length: cols * rows }, (_, i) => i),
-    [cols, rows],
-  );
-  const [vassoio, setVassoio] = useState([]);
-  const [messi, setMessi] = useState({});     // casella → indice tessera
-  const [preso, setPreso] = useState(null);
-  const [errore, setErrore] = useState(null);
-
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- immagine o griglia nuova: tessere rimescolate
-  useEffect(() => { setVassoio(shuffle(caselle)); setMessi({}); setPreso(null); }, [caselle, scena]);
-  useEffect(() => {
-    const t = setTimeout(() => speak?.("Rimetti a posto i pezzi dell'immagine!"), 350);
-    return () => clearTimeout(t);
-  }, [speak]);
-
-  const tw = LATO / cols, th = ALTO / rows;
-  const completo = Object.keys(messi).length === caselle.length;
-
-  function posa(casella) {
-    if (preso === null) return;
-    if (preso === casella) {
-      sfx?.correct?.();
-      const n = { ...messi, [casella]: preso };
-      setMessi(n);
-      setVassoio(v => v.filter(i => i !== preso));
-      setPreso(null);
-      if (Object.keys(n).length === caselle.length) setTimeout(() => onVinto(scena), 520);
-    } else {
-      sfx?.wrong?.();
-      setErrore(casella);
-      setTimeout(() => setErrore(null), 400);
-    }
-  }
-
-  const stiloTessera = (i, w, h) => ({
-    width: w, height: h,
-    backgroundImage: url ? `url(${url})` : "none",
-    backgroundSize: `${LATO}px ${ALTO}px`,
-    backgroundPosition: `-${(i % cols) * tw}px -${Math.floor(i / cols) * th}px`,
-  });
-
-  return (
-    <Cornice titolo="Il Costruttore" sottotitolo={scena.nome} onIndietro={onIndietro}>
-      {sorgente}
-      <SceltaLivello valore={livello} onCambia={onLivello} />
-
-      {/* Il fantasma dell'immagine sotto le caselle: senza, il tabellone è un
-          rettangolo nero e il bambino non ha idea di cosa stia ricostruendo. */}
-      <div style={{
-        position: "relative", width: LATO, margin: "0 auto 20px",
-        borderRadius: 16, overflow: "hidden", border: SG_BR, background: SG_TILE,
-      }}>
-      {url && <div aria-hidden style={{
-        position: "absolute", inset: 0, backgroundImage: `url(${url})`,
-        backgroundSize: "100% 100%", opacity: .17, pointerEvents: "none",
-      }} />}
-      <div style={{
-        position: "relative",
-        display: "grid", gridTemplateColumns: `repeat(${cols},${tw}px)`,
-      }}>
-        {caselle.map(i => {
-          const pieno = messi[i] !== undefined;
-          const err = errore === i;
-          return (
-            <button key={i} onClick={() => posa(i)}
-              aria-label={pieno ? "Tessera al suo posto" : "Casella vuota"}
-              style={{
-                padding: 0, border: `1px ${pieno ? "solid rgba(0,0,0,0)" : "dashed rgba(255,194,75,.32)"}`,
-                background: pieno ? "transparent" : err ? "rgba(239,68,68,.22)" : preso !== null ? "rgba(255,194,75,.10)" : "rgba(0,0,0,.22)",
-                cursor: preso !== null ? "pointer" : "default", boxSizing: "border-box",
-                transition: "background .2s",
-                ...(pieno ? stiloTessera(i, tw, th) : { width: tw, height: th }),
-              }} />
-          );
-        })}
-      </div>
-      </div>
-
-      <div style={{ fontSize: 11, letterSpacing: 1.4, fontWeight: 800, opacity: .5, marginBottom: 8 }}>
-        <Icon name="immagini" color={SG_GOLD} size={13} style={{ verticalAlign: "-2px", marginRight: 6 }} />
-        TOCCA UN PEZZO, POI LA SUA CASELLA
-      </div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
-        {vassoio.map(i => (
-          <button key={i} onClick={() => { sfx?.tap?.(); setPreso(preso === i ? null : i); }}
-            aria-label={`Pezzo ${i + 1}`} aria-pressed={preso === i}
-            style={{
-              padding: 0, borderRadius: 8, overflow: "hidden", cursor: "pointer",
-              border: `2px solid ${preso === i ? SG_GOLD : "rgba(255,255,255,.14)"}`,
-              transform: preso === i ? "scale(1.08)" : "none",
-              transition: "all .18s cubic-bezier(.34,1.56,.64,1)",
-              boxShadow: preso === i ? "0 6px 20px rgba(255,194,75,.32)" : "none",
-              ...stiloTessera(i, tw * 0.82, th * 0.82),
-              backgroundSize: `${LATO * 0.82}px ${ALTO * 0.82}px`,
-              backgroundPosition: `-${(i % cols) * tw * 0.82}px -${Math.floor(i / cols) * th * 0.82}px`,
-            }} />
-        ))}
-      </div>
-      {completo && <div aria-live="polite" className="sr-only">Immagine completata!</div>}
-    </Cornice>
-  );
-}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 3 · INDOVINA  (Guess the Object)
@@ -700,7 +636,10 @@ function GiocoIndovina({ livello, seme, tema = "tutti", speak, sfx, onVinto, onI
         borderRadius: 22, overflow: "hidden", border: SG_BR,
         background: "rgba(0,0,0,.3)", display: "flex", alignItems: "center", justifyContent: "center",
       }}>
-        <SvgAsset emoji={soluzione.emoji} size={LATO - 24} />
+        {emoji3dHd(soluzione.emoji)
+          ? <img src={emoji3dHd(soluzione.emoji)} alt="" draggable={false} decoding="async"
+              style={{ width: LATO - 24, height: LATO - 24, objectFit: "contain", userSelect: "none" }} />
+          : <SvgAsset emoji={soluzione.emoji} size={LATO - 24} />}
         <div style={{
           position: "absolute", inset: 0,
           display: "grid", gridTemplateColumns: `repeat(${cols},1fr)`, gridTemplateRows: `repeat(${rows},1fr)`,
@@ -767,22 +706,21 @@ function GiocoIndovina({ livello, seme, tema = "tutti", speak, sfx, onVinto, onI
 // Il puzzle vero: pezzi con le linguette, vaschetta in basso, si trascinano
 // col dito e scattano in posizione quando sono abbastanza vicini.
 // ═══════════════════════════════════════════════════════════════════════════
-// `immagine` ({ nome, foto }): una foto al posto della scena di un mondo — è il
-// Puzzle degli animali. La foto è già ritagliata a 5:3, come il tabellone.
-function GiocoIncastro({ livello, seme, speak, sfx, onVinto, onIndietro, onLivello, onNuovaImmagine, immagine = null, titolo = "Puzzle a incastro", consegna = "Trascina ogni pezzo al suo posto!" }) {
+function GiocoIncastro({ livello, seme, speak, sfx, onVinto, onIndietro, onLivello, onNuovaImmagine, titolo = "Puzzle a incastro", consegna = "Trascina ogni pezzo al suo posto!" }) {
   const [cols, rows] = livello.incastro;
   // eslint-disable-next-line react-hooks/exhaustive-deps -- seme cambia apposta: nuova immagine
-  const scena = useMemo(() => immagine || pick(SCENES), [seme, immagine]);
+  const scena = useMemo(() => pick(SCENES), [seme]);
 
-  const W = 360, H = Math.round(W * 240 / 400);
+  // Il quadro è lo sfondo dipinto del mondo (verticale): se ne prende il
+  // quadrato centrale, dove stanno castello, meduse, alberi.
+  const W = 360, H = 360;
   const VASSOIO_Y = H + 26;
-  const SCALA_VASSOIO = 0.56;
-  const [urlScena, sorgente] = useScenaRasterizzata(immagine ? null : scena.id, W * 2, H * 2);
-  const url = immagine ? immagine.foto : urlScena;
+  const SCALA_VASSOIO = 0.5;
+  const url = sfondo3d(scena.id);
   const clipId = useId().replace(/:/g, "");
 
   // eslint-disable-next-line react-hooks/exhaustive-deps -- seme cambia apposta: tagli nuovi
-  const pezzi = useMemo(() => tagliaPuzzle(cols, rows, W, H), [cols, rows, H, seme, immagine]);
+  const pezzi = useMemo(() => tagliaPuzzle(cols, rows, W, H), [cols, rows, H, seme]);
   const [posti, setPosti] = useState({});          // id → true
   const [dove, setDove] = useState({});            // id → {x,y} nel vassoio
   const [selezionato, setSelezionato] = useState(null);
@@ -794,7 +732,7 @@ function GiocoIncastro({ livello, seme, speak, sfx, onVinto, onIndietro, onLivel
   useEffect(() => {
     const pw = (W / cols) * SCALA_VASSOIO;
     const ph = (H / rows) * SCALA_VASSOIO;
-    const sporgenza = Math.max(pw, ph) * 0.23 * AMPIEZZA;
+    const sporgenza = Math.max(pw, ph) * 0.30 * AMPIEZZA;
     const cellaW = pw + sporgenza * 2 + 6;
     const cellaH = ph + sporgenza * 2 + 6;
     const perRiga = Math.max(2, Math.floor(W / cellaW));
@@ -879,12 +817,11 @@ function GiocoIncastro({ livello, seme, speak, sfx, onVinto, onIndietro, onLivel
     <Cornice titolo={titolo} sottotitolo={`${scena.nome} · ${messi}/${pezzi.length} pezzi`}
       onIndietro={onIndietro}
       azione={
-        <button onClick={onNuovaImmagine} aria-label={immagine ? "Un altro animale" : "Nuova immagine"}
+        <button onClick={onNuovaImmagine} aria-label="Nuova immagine"
           style={{ background: "rgba(255,255,255,.10)", border: "none", color: SG_PARCH, borderRadius: 14, padding: "10px 12px", cursor: "pointer", flexShrink: 0 }}>
           <Icon name="ricomincia" color={SG_GOLD} size={18} />
         </button>
       }>
-      {sorgente}
       <SceltaLivello valore={livello} onCambia={onLivello} />
 
       <svg ref={svgRef}
@@ -892,7 +829,7 @@ function GiocoIncastro({ livello, seme, speak, sfx, onVinto, onIndietro, onLivel
         style={{ width: "100%", height: "auto", touchAction: "none", display: "block" }}
         onPointerMove={muovi} onPointerUp={finisci} onPointerCancel={finisci}>
         <defs>
-          {url && <image id={`pic-${clipId}`} href={url} x="0" y="0" width={W} height={H} preserveAspectRatio="none" />}
+          {url && <image id={`pic-${clipId}`} href={url} x="0" y="0" width={W} height={H} preserveAspectRatio="xMidYMid slice" />}
           {pezzi.map(p => (
             <clipPath key={p.id} id={`c-${clipId}-${p.id}`}><path d={p.d} /></clipPath>
           ))}
@@ -901,7 +838,7 @@ function GiocoIncastro({ livello, seme, speak, sfx, onVinto, onIndietro, onLivel
         {/* il tabellone: sagome dei pezzi ancora da mettere */}
         <g onPointerDown={toccaTabellone}>
           <rect x="0" y="0" width={W} height={H} rx="14" fill="rgba(20,11,41,.55)" stroke="rgba(255,194,75,.22)" />
-          {url && <image href={url} x="0" y="0" width={W} height={H} opacity="0.13" preserveAspectRatio="none" />}
+          {url && <image href={url} x="0" y="0" width={W} height={H} opacity="0.18" preserveAspectRatio="xMidYMid slice" />}
           {pezzi.map(p => (
             <path key={p.id} d={p.d} fill="none"
               stroke={selezionato === p.id ? SG_GOLD : "rgba(255,194,75,.20)"}
@@ -927,10 +864,12 @@ function GiocoIncastro({ livello, seme, speak, sfx, onVinto, onIndietro, onLivel
               onPointerDown={messo ? undefined : (e) => { e.stopPropagation(); inizia(e, p.id, pos.x, pos.y); }}
               style={{ cursor: messo ? "default" : "grab", touchAction: "none" }}
               role={messo ? undefined : "button"}
-              aria-label={messo ? undefined : `Pezzo ${p.r + 1}-${p.c + 1}`}>
+              aria-label={messo ? undefined : `Pezzo ${p.r + 1}-${p.c + 1}`}
+              data-casa={`${cx.toFixed(1)},${cy.toFixed(1)}`}
+              data-pos={`${pos.x.toFixed(1)},${pos.y.toFixed(1)}`}>
               {url && (
                 <g clipPath={`url(#c-${clipId}-${p.id})`}>
-                  <image href={url} x="0" y="0" width={W} height={H} preserveAspectRatio="none" />
+                  <image href={url} x="0" y="0" width={W} height={H} preserveAspectRatio="xMidYMid slice" />
                 </g>
               )}
               <path d={p.d} fill="none"
@@ -950,6 +889,183 @@ function GiocoIncastro({ livello, seme, speak, sfx, onVinto, onIndietro, onLivel
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// GIOCO SAGOMATO — il motore comune di "Puzzle degli animali" e "Costruttore"
+// Il soggetto è un'immagine trasparente (animale cartoon): sul tabellone resta
+// la sua ombra, i pezzi seguono il contorno, ognuno con il bordo bianco da
+// adesivo. Toccando o prendendo un pezzo, il suo posto si illumina in
+// trasparenza: per un bambino di 3-4 anni è l'aiuto che fa la differenza.
+// ═══════════════════════════════════════════════════════════════════════════
+function GiocoSagomato({
+  livello, seme, speak, sfx, onVinto, onIndietro, onLivello, onNuovo,
+  soggetto, griglia, linguette = true, titolo, consegna,
+}) {
+  const W = 360, H = 320;
+  const [cols, rows] = griglia;
+  const misura = useCopertura(soggetto.src, W, H);
+  const pezzi = useMemo(
+    () => (misura ? tagliaSagomato(cols, rows, W, H, misura.copertura, linguette) : []),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- seme cambia apposta: tagli nuovi
+    [misura, cols, rows, linguette, seme],
+  );
+  const uid = useId().replace(/:/g, "");
+  const SCALA = 0.52;
+  const VASSOIO_Y = H + 20;
+
+  const [posti, setPosti] = useState({});
+  const [dove, setDove] = useState({});
+  const [selezionato, setSelezionato] = useState(null);
+  const svgRef = useRef(null);
+  const casa = (p) => ({ x: p.ax + p.cw / 2, y: p.ay + p.ch / 2 });
+
+  // vaschetta: i pezzi in fila come su uno scaffale, ognuno con il suo ingombro vero
+  const { posIniziali, fondoVassoio } = useMemo(() => {
+    const pos = {};
+    let x = 6, y = VASSOIO_Y, alto = 0;
+    for (const p of shuffle(pezzi)) {
+      const w = p.box.w * SCALA, h = p.box.h * SCALA;
+      if (x + w > W - 6 && x > 6) { x = 6; y += alto + 10; alto = 0; }
+      const c = casa(p);
+      pos[p.id] = { x: x - p.box.x * SCALA + c.x * SCALA, y: y - p.box.y * SCALA + c.y * SCALA };
+      x += w + 10; alto = Math.max(alto, h);
+    }
+    return { posIniziali: pos, fondoVassoio: y + alto + 14 };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- dipende solo dai pezzi
+  }, [pezzi]);
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- pezzi nuovi: vaschetta piena, tabellone vuoto
+  useEffect(() => { setDove(posIniziali); setPosti({}); setSelezionato(null); }, [posIniziali]);
+  useEffect(() => {
+    const t = setTimeout(() => speak?.(consegna), 350);
+    return () => clearTimeout(t);
+  }, [speak, consegna]);
+
+  const altezza = Math.max(VASSOIO_Y + 60, fondoVassoio);
+  const SCATTO = Math.max(30, Math.min(W / cols, H / rows) * 0.5);
+
+  const metti = useCallback((p) => {
+    sfx?.correct?.();
+    setDove(d => ({ ...d, [p.id]: casa(p) }));
+    setSelezionato(null);
+    setPosti(pz => {
+      const n = { ...pz, [p.id]: true };
+      if (Object.keys(n).length === pezzi.length) setTimeout(() => onVinto(soggetto), 560);
+      return n;
+    });
+  }, [pezzi, sfx, onVinto, soggetto]);
+
+  const rilascia = useCallback((st) => {
+    const p = pezzi.find(q => q.id === st.id);
+    if (!p) return;
+    if (!st.mosso) { setSelezionato(sel => (sel === st.id ? null : st.id)); sfx?.tap?.(); return; }
+    const c = casa(p);
+    if (Math.hypot(st.x - c.x, st.y - c.y) < SCATTO) metti(p);
+    else setDove(d => ({ ...d, [st.id]: { x: clamp(st.x, 10, W - 10), y: clamp(st.y, 10, altezza - 10) } }));
+  }, [pezzi, SCATTO, metti, sfx, altezza]);
+
+  const { preso, inizia, muovi, finisci, puntoSvg } = useTrascinamento(svgRef, rilascia);
+
+  // due tocchi: pezzo scelto, poi un tocco dentro la sua ombra
+  function toccaTabellone(e) {
+    if (!selezionato) return;
+    const p = pezzi.find(q => q.id === selezionato);
+    if (!p) return;
+    const t = puntoSvg(e);
+    const dentro = t.x >= p.ax - 8 && t.x <= p.ax + p.cw + 8 && t.y >= p.ay - 8 && t.y <= p.ay + p.ch + 8;
+    if (dentro) metti(p); else sfx?.wrong?.();
+  }
+
+  const r = misura?.rect;
+  const img = (extra = {}) => r && (
+    <image href={soggetto.src} x={r.x} y={r.y} width={r.w} height={r.h} preserveAspectRatio="none" {...extra} />
+  );
+  const evidenziato = preso?.id || selezionato;
+  const messi = Object.keys(posti).length;
+
+  return (
+    <Cornice titolo={titolo} sottotitolo={pezzi.length ? `${soggetto.nome} · ${messi}/${pezzi.length} pezzi` : soggetto.nome}
+      onIndietro={onIndietro}
+      azione={onNuovo && (
+        <button onClick={onNuovo} aria-label="Un altro"
+          style={{ background: "rgba(255,255,255,.10)", border: "none", color: SG_PARCH, borderRadius: 14, padding: "10px 12px", cursor: "pointer", flexShrink: 0 }}>
+          <Icon name="ricomincia" color={SG_GOLD} size={18} />
+        </button>
+      )}>
+      <SceltaLivello valore={livello} onCambia={onLivello} />
+
+      <svg ref={svgRef} viewBox={`0 0 ${W} ${altezza}`} data-sagomato={soggetto.nome}
+        style={{ width: "100%", height: "auto", touchAction: "none", display: "block" }}
+        onPointerMove={muovi} onPointerUp={finisci} onPointerCancel={finisci}>
+        <defs>
+          {/* bordo bianco da adesivo intorno alla sagoma del pezzo */}
+          <filter id={`bordo-${uid}`} x="-15%" y="-15%" width="130%" height="130%">
+            <feMorphology in="SourceAlpha" operator="dilate" radius="2.6" result="spesso" />
+            <feFlood floodColor="#FFFFFF" />
+            <feComposite in2="spesso" operator="in" result="bianco" />
+            <feMerge><feMergeNode in="bianco" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+          <filter id={`ombra-${uid}`} x="-20%" y="-20%" width="140%" height="150%">
+            <feDropShadow dx="0" dy="5" stdDeviation="4" floodColor="#0B0619" floodOpacity="0.55" />
+          </filter>
+          {/* l'animale tutto nero e trasparente: la sua ombra sul tabellone */}
+          <filter id={`ombra-animale-${uid}`}>
+            <feColorMatrix type="matrix" values="0 0 0 0 0.08  0 0 0 0 0.04  0 0 0 0 0.16  0 0 0 0.55 0" />
+          </filter>
+          {pezzi.map(p => <clipPath key={p.id} id={`c-${uid}-${p.id}`}><path d={p.d} /></clipPath>)}
+        </defs>
+
+        <g onPointerDown={toccaTabellone}>
+          <rect x="0" y="0" width={W} height={H} rx="18" fill="rgba(255,255,255,.05)" stroke="rgba(255,194,75,.18)" />
+          {img({ filter: `url(#ombra-animale-${uid})` })}
+          {/* dove va il pezzo che il bambino ha in mano */}
+          {evidenziato && !posti[evidenziato] && (
+            <g clipPath={`url(#c-${uid}-${evidenziato})`} opacity="0.5" className="pulse" pointerEvents="none">{img()}</g>
+          )}
+        </g>
+
+        <rect x="0" y={VASSOIO_Y - 10} width={W} height={altezza - VASSOIO_Y + 8} rx="16"
+          fill="rgba(255,255,255,.035)" stroke="rgba(255,255,255,.07)" />
+
+        {!misura && <text x={W / 2} y={H / 2} textAnchor="middle" fill={SG_PARCH} opacity=".6" fontSize="14">Preparo i pezzi…</text>}
+
+        {[...pezzi].sort((a, b) => (posti[a.id] ? -1 : 1) - (posti[b.id] ? -1 : 1) || (preso?.id === a.id) - (preso?.id === b.id)).map((p, i) => {
+          const messo = posti[p.id];
+          const trascinato = preso?.id === p.id;
+          const pos = trascinato ? { x: preso.x, y: preso.y } : (dove[p.id] || casa(p));
+          const sc = messo || trascinato ? 1 : SCALA;
+          const c = casa(p);
+          return (
+            <g key={p.id}
+              transform={`translate(${pos.x - c.x * sc} ${pos.y - c.y * sc}) scale(${sc})`}
+              onPointerDown={messo ? undefined : (e) => { e.stopPropagation(); inizia(e, p.id, pos.x, pos.y); }}
+              style={{ cursor: messo ? "default" : "grab", touchAction: "none" }}
+              role={messo ? undefined : "button"}
+              aria-label={messo ? undefined : `Pezzo ${i + 1} di ${soggetto.nome}`}
+              data-casa={`${c.x.toFixed(1)},${c.y.toFixed(1)}`}
+              data-pos={`${pos.x.toFixed(1)},${pos.y.toFixed(1)}`}
+              data-presa={`${((p.cells[0][1] + 0.5) * W / cols).toFixed(1)},${((p.cells[0][0] + 0.5) * H / rows).toFixed(1)}`}>
+              <g filter={messo ? undefined : `url(#ombra-${uid})`}>
+                <g filter={messo ? undefined : `url(#bordo-${uid})`}>
+                  <g clipPath={`url(#c-${uid}-${p.id})`}>{img()}</g>
+                </g>
+              </g>
+              {/* zona da afferrare: tutto il pezzo, anche dove l'animale è trasparente */}
+              {!messo && <path d={p.d} fill="rgba(0,0,0,0)" />}
+              {selezionato === p.id && !messo && (
+                <path d={p.d} fill="none" stroke={SG_GOLD} strokeWidth={3 / sc} strokeDasharray="6 4" pointerEvents="none" />
+              )}
+            </g>
+          );
+        })}
+      </svg>
+
+      <div style={{ fontSize: 11, opacity: .45, textAlign: "center", marginTop: 8 }}>
+        Trascina un pezzo sulla sua ombra — oppure toccalo e poi tocca dove va.
+      </div>
+    </Cornice>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // 5 · PUZZLE DEGLI ANIMALI
 // Si sceglie un animale, si ricompone la sua foto vera (il motore è quello del
 // puzzle a incastro) e alla fine si sente il suo verso vero, poi la voce dice
@@ -961,7 +1077,11 @@ function GiocoIncastro({ livello, seme, speak, sfx, onVinto, onIndietro, onLivel
 // Il verso è un mp3 a parte, non una clip della voce: si suona da solo e, quando
 // finisce, parla la voce. `poi` parte comunque (file mancante, autoplay negato,
 // verso troppo lungo): la frase non deve mai restare muta.
+// Magistella passa il suo lettore già sbloccato (Safari suona solo elementi
+// avviati in un tocco): se c'è, si usa quello.
+let _suonaEsterno = null;
 function suonaVerso(src, poi) {
+  if (_suonaEsterno) return _suonaEsterno(src, poi);
   const a = new Audio(src);
   let fatto = false;
   const fine = () => { if (fatto) return; fatto = true; clearTimeout(t); poi?.(); };
@@ -988,10 +1108,11 @@ function SceltaAnimale({ completati, onScegli, onIndietro, speak, sfx }) {
               style={{
                 position: "relative", padding: 0, borderRadius: 18, overflow: "hidden", cursor: "pointer",
                 border: fatto ? "3px solid #FFC24B" : "3px solid rgba(255,255,255,.14)",
-                background: "#140B29", aspectRatio: "1", boxShadow: "0 4px 14px rgba(0,0,0,.35)",
+                background: "radial-gradient(circle at 50% 40%, #3B2A78, #1B1035 75%)", aspectRatio: "1", boxShadow: "0 4px 14px rgba(0,0,0,.35)",
               }}>
-              <img src={a.mini} alt="" loading="lazy" decoding="async"
-                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              <img src={a.cartone} alt="" loading="lazy" decoding="async"
+                style={{ position: "absolute", inset: "8% 10% 24%", width: "80%", height: "68%", objectFit: "contain",
+                  filter: "drop-shadow(0 4px 6px rgba(0,0,0,.45))" }} />
               <span style={{
                 position: "absolute", left: 0, right: 0, bottom: 0, padding: "14px 4px 5px",
                 background: "linear-gradient(transparent, rgba(11,6,25,.85))",
@@ -1009,7 +1130,7 @@ function SceltaAnimale({ completati, onScegli, onIndietro, speak, sfx }) {
         })}
       </div>
       <div style={{ fontSize: 11, opacity: .45, textAlign: "center", marginTop: 12 }}>
-        A puzzle finito senti il verso vero dell'animale.
+        A puzzle finito vedi l'animale vero e senti il suo verso.
       </div>
     </Cornice>
   );
@@ -1035,8 +1156,12 @@ function VittoriaAnimale({ animale, monete = 0, adesivo, speak, onAncora, onAltr
         background: SG_CARD, border: SG_BR, borderRadius: 28, padding: "18px 18px 20px",
         maxWidth: 360, width: "100%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,.5)",
       }}>
-        <div style={{ borderRadius: 20, overflow: "hidden", border: "3px solid #FFC24B", marginBottom: 12, aspectRatio: "5 / 3", background: "#140B29" }}>
-          <img src={animale.foto} alt={animale.nome} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+        <div style={{ position: "relative", borderRadius: 20, overflow: "hidden", border: "3px solid #FFC24B", marginBottom: 12, aspectRatio: "5 / 3", background: "#140B29" }}>
+          <img src={animale.foto} alt={`${animale.nome} vero`} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+          <span style={{ position: "absolute", left: 8, top: 8, background: "rgba(11,6,25,.72)", color: "#fff", borderRadius: 20,
+            padding: "3px 10px", fontSize: 12, fontWeight: 800 }}>Ecco quello vero!</span>
+          <img src={animale.cartone} alt="" className="pop-in" style={{ position: "absolute", right: 6, bottom: 4, width: "34%",
+            filter: "drop-shadow(0 4px 8px rgba(0,0,0,.6))" }} />
         </div>
         <div style={{ fontFamily: FF_DISPLAY, fontSize: 28, color: SG_GOLD, lineHeight: 1.1 }}>{animale.nome}</div>
         <div style={{ fontSize: 14, opacity: .85, margin: "6px 4px 10px", lineHeight: 1.35 }}>{animale.frase.replace(/^[^!]*!\s*/, "")}</div>
@@ -1094,7 +1219,7 @@ function Album({ vinti, animali = [], onIndietro, speak }) {
                 border: preso ? "2px solid rgba(255,194,75,.6)" : "2px dashed rgba(255,255,255,.12)", background: "rgba(0,0,0,.24)",
                 display: "flex", alignItems: "center", justifyContent: "center", color: SG_PARCH }}>
               {preso
-                ? <img src={a.mini} alt="" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                ? <img src={a.cartone} alt="" loading="lazy" style={{ width: "82%", height: "82%", objectFit: "contain", display: "block" }} />
                 : <span style={{ fontSize: 22, opacity: .35 }}>?</span>}
             </button>
           );
@@ -1131,9 +1256,35 @@ function Album({ vinti, animali = [], onIndietro, speak }) {
 // ═══════════════════════════════════════════════════════════════════════════
 // COMPONENTE PRINCIPALE
 // ═══════════════════════════════════════════════════════════════════════════
+// Anteprima cartoon di ogni gioco nell'hub (al posto dell'icona piatta)
+function AnteprimaGioco({ id, colore, icona }) {
+  const hd = (e, st) => <img src={emoji3dHd(e)} alt="" aria-hidden="true" draggable={false} style={{ position: "absolute", objectFit: "contain", ...st }} />;
+  const box = { position: "relative", width: 54, height: 54 };
+  if (id === "ombre") return (
+    <div style={box}>
+      {hd("🦊", { width: 34, height: 34, left: 16, top: 14, filter: "brightness(0) opacity(.45)" })}
+      {hd("🦊", { width: 34, height: 34, left: 4, top: 4 })}
+    </div>);
+  if (id === "costruttore") return (
+    <div style={box}>
+      {hd("🐘", { width: 46, height: 46, left: 4, top: 4, clipPath: "inset(0 50% 0 0)" })}
+      {hd("🐘", { width: 46, height: 46, left: 8, top: 1, clipPath: "inset(0 0 0 50%)", filter: "drop-shadow(0 2px 2px rgba(0,0,0,.5))" })}
+    </div>);
+  if (id === "indovina") return (
+    <div style={box}>
+      {hd("🦉", { width: 44, height: 44, left: 5, top: 5, clipPath: "inset(0 0 40% 0)" })}
+      <span style={{ position: "absolute", right: 0, bottom: -2, fontFamily: FF_DISPLAY, fontSize: 24, color: SG_GOLD, textShadow: "0 2px 0 #27134F" }}>?</span>
+    </div>);
+  if (id === "incastro") return (
+    <div style={{ ...box, borderRadius: 12, overflow: "hidden", border: `2px solid ${colore}88` }}>
+      <img src={sfondo3d("foresta")} alt="" aria-hidden="true" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+    </div>);
+  return <Icon name={icona} color={colore} size={28} />;
+}
+
 const GIOCHI = [
   { id: "ombre",       nome: "Ombre magiche",    desc: "Posa ogni cosa sulla sua ombra", icona: "mano",     colore: "#6DE0C6" },
-  { id: "costruttore", nome: "Il Costruttore",   desc: "Rimetti insieme la figura",       icona: "immagini", colore: "#FFC24B" },
+  { id: "costruttore", nome: "Il Costruttore",   desc: "Rimetti insieme l'animale",       icona: "immagini", colore: "#FFC24B" },
   { id: "indovina",    nome: "Cosa si nasconde", desc: "Scopri e indovina",               icona: "lente",    colore: "#A78BFA" },
   { id: "incastro",    nome: "Puzzle a incastro",desc: "Il puzzle vero, pezzo per pezzo", icona: "puzzle",   colore: "#F97316" },
 ];
@@ -1151,7 +1302,8 @@ const TETTO_MONETE_AL_GIORNO = 20;
 // `barra`: la barra delle sezioni di Magistella. Si vede solo nell'hub: dentro
 // un gioco il bambino è in un'attività e la barra lo distrarrebbe (come in una
 // sfida). Senza `barra` (sezione usata da sola) torna la freccia per uscire.
-export default function PuzzleMagico({ età = 5, speak, sfx, onExit, onMonete, barra = null }) {
+export default function PuzzleMagico({ età = 5, speak, suona = null, sfx, onExit, onMonete, barra = null }) {
+  useEffect(() => { _suonaEsterno = suona; return () => { _suonaEsterno = null; }; }, [suona]);
   const [salvato, setSalvato] = useState(loadSave);
   const [schermo, setSchermo] = useState("hub");
   const [livello, setLivello] = useState(() => livelloPerEtà(età));
@@ -1168,6 +1320,12 @@ export default function PuzzleMagico({ età = 5, speak, sfx, onExit, onMonete, b
   const animaliFatti = salvato.animali || [];
   const tema = salvato.tema || "animali";
   const scegliTema = (t) => setSalvato(s => ({ ...s, tema: t }));
+  // il Costruttore ricompone un soggetto del tema (in HD), uno nuovo a ogni giro
+  const soggettoCostruttore = useMemo(() => {
+    const c = pick(cosePerTema(tema, 1));
+    return { nome: c.nome, src: emoji3dHd(c.emoji) };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- seme cambia apposta: soggetto nuovo
+  }, [seme, tema]);
 
   // il prossimo animale da proporre: prima quelli non ancora nell'album
   function prossimoAnimale(dopo) {
@@ -1219,14 +1377,17 @@ export default function PuzzleMagico({ età = 5, speak, sfx, onExit, onMonete, b
 
   let gioco = null;
   if (schermo === "costruttore")
-    gioco = <GiocoCostruttore {...comuni} onVinto={(sc) => vinci(`Hai ricostruito ${sc.nome}!`)} />;
+    gioco = <GiocoSagomato {...comuni} soggetto={soggettoCostruttore} griglia={livello.costruttore} linguette={false}
+      titolo="Il Costruttore" consegna="Rimetti insieme i pezzi!"
+      onNuovo={() => setSeme(n => n + 1)}
+      onVinto={(sc) => vinci(`Hai ricostruito: ${sc.nome}!`)} />;
   if (schermo === "incastro")
     gioco = <GiocoIncastro {...comuni} onNuovaImmagine={() => setSeme(n => n + 1)} onVinto={(sc) => vinci(`Puzzle completato: ${sc.nome}!`)} />;
   if (schermo === "animale" && animale)
-    gioco = <GiocoIncastro {...comuni} immagine={animale} titolo="Puzzle degli animali"
-      consegna="Rimetti insieme la foto dell'animale!"
+    gioco = <GiocoSagomato {...comuni} soggetto={{ ...animale, src: animale.cartone }} griglia={livello.incastro}
+      titolo="Puzzle degli animali" consegna="Rimetti insieme i pezzi dell'animale!"
       onIndietro={() => setSchermo("animali")}
-      onNuovaImmagine={() => { setAnimale(prossimoAnimale(animale)); setSeme(n => n + 1); }}
+      onNuovo={() => { setAnimale(prossimoAnimale(animale)); setSeme(n => n + 1); }}
       onVinto={() => vinci(animale.nome, animale)} />;
   if (schermo === "ombre" || schermo === "indovina")
     gioco = schermo === "ombre"
@@ -1276,14 +1437,14 @@ export default function PuzzleMagico({ età = 5, speak, sfx, onExit, onMonete, b
         }}>
         <div style={{ position: "relative", width: 86, height: 62, flexShrink: 0 }} aria-hidden="true">
           {ANIMALI.slice(0, 3).map((a, i) => (
-            <img key={a.id} src={a.mini} alt="" loading="lazy"
-              style={{ position: "absolute", left: i * 18, top: i % 2 ? 8 : 0, width: 50, height: 50, objectFit: "cover",
-                borderRadius: 12, border: "2px solid #FFC24B", boxShadow: "0 3px 8px rgba(0,0,0,.4)", rotate: `${(i - 1) * 7}deg` }} />
+            <img key={a.id} src={a.cartone} alt="" loading="lazy"
+              style={{ position: "absolute", left: i * 20, top: i % 2 ? 10 : 0, width: 52, height: 52, objectFit: "contain",
+                filter: "drop-shadow(0 3px 5px rgba(0,0,0,.5))", rotate: `${(i - 1) * 8}deg` }} />
           ))}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontFamily: FF_DISPLAY, fontSize: 19, color: SG_GOLD, marginBottom: 2 }}>Puzzle degli animali</div>
-          <div style={{ fontSize: 12.5, opacity: .8 }}>Ricomponi la foto e senti il suo verso · {animaliFatti.length}/{ANIMALI.length}</div>
+          <div style={{ fontSize: 12.5, opacity: .8 }}>Ricomponi l'animale e senti il suo verso · {animaliFatti.length}/{ANIMALI.length}</div>
         </div>
         <div style={{ fontSize: 20, opacity: .5 }}>›</div>
       </button>
@@ -1319,7 +1480,7 @@ export default function PuzzleMagico({ età = 5, speak, sfx, onExit, onMonete, b
               background: `${g.colore}1f`, border: `1.5px solid ${g.colore}55`,
               display: "flex", alignItems: "center", justifyContent: "center",
             }}>
-              <Icon name={g.icona} color={g.colore} size={28} />
+              <AnteprimaGioco id={g.id} colore={g.colore} icona={g.icona} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontFamily: FF_DISPLAY, fontSize: 18, marginBottom: 3 }}>{g.nome}</div>

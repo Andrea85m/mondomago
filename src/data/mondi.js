@@ -13,9 +13,9 @@ export const COMPANIONS = [
     id:"fiamma", name:"Fiamma", emoji:"🐉", type:"Drago",
     color:"#FF6B6B", bg:"linear-gradient(135deg,#FF6B6B,#b91c1c)",
     onCorrect: () => pick([
-      "Bravo! Sei forte come il fuoco!",
+      "Evviva! Sei forte come il fuoco!",
       "Perfetto! Una risposta da drago!",
-      "Giusto! Sei un vero campione!",
+      "Giusto! Che grinta!",
       "Wow! Che bella risposta!",
       "Eccellente! Sei davvero in gamba!",
     ]),
@@ -27,16 +27,16 @@ export const COMPANIONS = [
       "I draghi imparano cadendo! Su!",
     ]),
     onStreak: () => pick([
-      "Sei in serie! Bravissimo!",
+      "Sei in serie! Fantastico!",
       "Una dopo l'altra! Grandioso!",
       "Che forza! Continua così!",
       "Stai volando! Fantastico!",
       "Nessuno ti ferma più!",
     ]),
     onReturn: () => pick([
-      "Bentornato! Pronti per una nuova avventura?",
+      "Che bello rivederti! Pronti per una nuova avventura?",
       "Eccoti! Oggi ci divertiamo!",
-      "Sei pronto? Si parte!",
+      "Pronti? Si parte!",
     ]),
     onWorldStart: () => pick([
       "Fuoco e coraggio! Siamo pronti!",
@@ -55,7 +55,7 @@ export const COMPANIONS = [
     color:"#C084FC", bg:"linear-gradient(135deg,#C084FC,#7c3aed)",
     onCorrect: () => pick([
       "Sei una stella! Bellissimo!",
-      "Bravissimo! Hai fatto magia!",
+      "Fantastico! Hai fatto magia!",
       "Perfetto! Come sapevo!",
       "Che risposta meravigliosa!",
       "Hai fatto brillare tutto!",
@@ -85,9 +85,9 @@ export const COMPANIONS = [
       "Insieme faremo brillare tutto!",
     ]),
     onWorld: () => pick([
-      "Che viaggio meraviglioso! Bravissimo!",
-      "Abbiamo vinto! Sei un mago!",
-      "Fantastico! Sei stato bravissimo!",
+      "Che viaggio meraviglioso! Che bravura!",
+      "Abbiamo vinto! Che magia!",
+      "Fantastico! Che lavoro meraviglioso!",
     ]),
     onMeet: (name) => `${name}! Che bello incontrarsi! Sono Luna! Facciamo brillare questa avventura! ✨`,
   },
@@ -97,8 +97,8 @@ export const COMPANIONS = [
     onCorrect: () => pick([
       "Splash! Hai centrato il bersaglio!",
       "Esatto! Che bella scoperta!",
-      "Bravo! Risposta perfetta!",
-      "Sei un esploratore vero!",
+      "Evviva! Risposta perfetta!",
+      "Hai l'occhio di chi esplora davvero!",
       "Fantastico! Ci hai preso!",
     ]),
     onWrong: () => pick([
@@ -109,8 +109,8 @@ export const COMPANIONS = [
       "Riprova! Ce la fai!",
     ]),
     onStreak: () => pick([
-      "Nuoti velocissimo! Bravissimo!",
-      "Che serie! Bravissimo!",
+      "Nuoti velocissimo! Che bravura!",
+      "Che serie! Fantastico!",
       "Splash dopo splash! Grandioso!",
       "Non ti fermi più!",
       "Stai volando!",
@@ -126,7 +126,7 @@ export const COMPANIONS = [
       "Occhi aperti! Ogni sfida è una scoperta!",
     ]),
     onWorld: () => pick([
-      "Missione compiuta! Grande esploratore!",
+      "Missione compiuta! Che grande esplorazione!",
       "Abbiamo scoperto tutto! Fantastico!",
       "Ce l'abbiamo fatta! Sei magnifico!",
     ]),
@@ -138,7 +138,7 @@ export const COMPANIONS = [
     onCorrect: () => pick([
       "Mossa da maestro! Geniale!",
       "Perfetto! Lo sapevo che ce la facevi!",
-      "Risposta da volpe astuta! Bravo!",
+      "Risposta da volpe astuta! Evviva!",
       "Sei un cervellone! Fantastico!",
       "Esatto! Ci hai pensato bene!",
     ]),
@@ -158,7 +158,7 @@ export const COMPANIONS = [
     ]),
     onReturn: () => pick([
       "Ho un piano segreto per te!",
-      "Sei pronto per una sfida?",
+      "Pronti per una sfida?",
       "Oggi scopriamo cose nuove!",
     ]),
     onWorldStart: () => pick([
@@ -180,7 +180,7 @@ export const COMPANIONS = [
       "Codice corretto! BEEP — sistema aggiornato!",
       "Elaborazione completata! Risposta esatta!",
       "Calcolo verificato! Sei un programmatore nato!",
-      "Dati confermati! Bravissimo!",
+      "Dati confermati! Ottimo lavoro!",
       "Output corretto! Il robot applaude!",
     ]),
     onWrong: () => pick([
@@ -209,7 +209,7 @@ export const COMPANIONS = [
     ]),
     onWorld: () => pick([
       "Missione completata al 100%! Sei un genio del codice!",
-      "Programma eseguito con successo! Bravo programmatore!",
+      "Programma eseguito con successo! Che programmazione perfetta!",
       "Sistema di vittoria attivato! Sei fantastico!",
     ]),
     onMeet: (name) => `BEEP-BOOP! Ciao ${name}! Sono Pixel! Sistema amicizia: ATTIVATO! 🤖`,
@@ -229,7 +229,7 @@ export const STORY_ARCS = {
   castello: {
     intro_title: "Il Castello delle Nuvole! 🏰",
     intro_text:  "La chiave magica del castello si è frantumata in 5 pezzi! Il Re delle Nuvole ha bisogno di te per raccoglierli tutti. Solo il più coraggioso può farcela.",
-    outro: "✨ La chiave è ricomposta! Il castello brilla di nuova luce e il Re delle Nuvole ti incoronerà campione per sempre!",
+    outro: "✨ La chiave è ricomposta! Il castello brilla di nuova luce e il Re delle Nuvole ti incoronerà per sempre!",
     reward_emoji: "⭐",
     reward_name:  "Stella Magica",
     color: "#A78BFA",
@@ -237,7 +237,7 @@ export const STORY_ARCS = {
   oceano: {
     intro_title: "L'Oceano Luminoso! 🌊",
     intro_text:  "Le perle magiche dell'oceano sono sparse sul fondo del mare! Il delfino Splash ti chiede aiuto: risolvi gli enigmi marini e riporta la luce alle profondità.",
-    outro: "🌊 Le perle brillano di nuovo! I pesci cantano e le balene danzano. L'oceano ti ringrazia, grande esploratore!",
+    outro: "🌊 Le perle brillano di nuovo! I pesci cantano e le balene danzano. L'oceano ti ringrazia per la tua grande esplorazione!",
     reward_emoji: "🐚",
     reward_name:  "Conchiglia Magica",
     color: "#38BDF8",
@@ -284,7 +284,7 @@ export const STORY_ARCS = {
   },
   daily: {
     intro_title: "Sfida del Giorno! 🌟",
-    intro_text:  "Ogni giorno ti aspettano 3 sfide speciali scelte per te! Completale tutte per guadagnare 3 stelle bonus. Pronto?",
+    intro_text:  "Ogni giorno ti aspettano 3 sfide speciali scelte per te! Completale tutte per guadagnare 3 stelle bonus. Pronti?",
     outro: "🌟 Sfida del Giorno completata! Hai guadagnato 3 stelle bonus! Torna domani per una nuova avventura.",
     reward_emoji: "🌟",
     reward_name:  "Stella del Giorno",

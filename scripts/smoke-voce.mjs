@@ -17,7 +17,7 @@
 // Esce 1 se un controllo fallisce.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { chromium } from 'playwright';
+import { chromium, webkit } from 'playwright';
 
 const argUrl = process.argv.indexOf('--url');
 const URL = argUrl > -1 ? process.argv[argUrl + 1] : 'http://localhost:5173/app/';
@@ -56,7 +56,11 @@ const STRUMENTI = () => {
 };
 
 async function main() {
-  const browser = await chromium.launch({ channel: 'chrome', args: ['--autoplay-policy=no-user-gesture-required'] });
+  // --webkit: il motore di Safari (iPhone, iPad, Mac), che blocca l'audio
+  // avviato fuori da un tocco. Senza: Chrome vero.
+  const browser = process.argv.includes('--webkit')
+    ? await webkit.launch()
+    : await chromium.launch({ channel: 'chrome', args: ['--autoplay-policy=no-user-gesture-required'] });
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, serviceWorkers: 'block' });
   const page = await ctx.newPage();
   page.on('pageerror', e => problemi.push(`eccezione → ${e.message}`));

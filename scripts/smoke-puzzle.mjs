@@ -157,7 +157,7 @@ async function main() {
   // ── il puzzle a incastro disegna davvero i pezzi ───────────────────────────
   await passo('il puzzle a incastro genera i pezzi ritagliati', async () => {
     await page.getByRole('button', { name: /Puzzle a incastro/i }).first().click();
-    await page.waitForTimeout(1600);          // attesa della rasterizzazione
+    await page.waitForTimeout(1600);          // attesa del caricamento del quadro
     const info = await page.evaluate(() => {
       const svg = document.querySelector('svg[viewBox^="0 0 360"]');
       if (!svg) return { errore: 'svg del puzzle assente' };
@@ -169,101 +169,61 @@ async function main() {
     });
     if (info.errore) throw new Error(info.errore);
     if (info.clip < 4) throw new Error(`solo ${info.clip} ritagli: il taglio non ha funzionato`);
-    if (info.immagini < 2) throw new Error('la scena non è stata rasterizzata dentro i pezzi');
+    if (info.immagini < 2) throw new Error('il quadro non è dentro i pezzi');
     await scatta(page, 'incastro-pezzi');
   });
 
   // ── il cuore del gioco: un pezzo trascinato deve scattare in posizione ────
-  await passo('trascinare un pezzo lo incastra', async () => {
-    // Il punto di presa NON si ricava da getBoundingClientRect: su un <g> con
-    // clip-path quel riquadro è quello dell'immagine intera, non della sagoma
-    // ritagliata. Si calcola dal transform, come fa il gioco.
-    const W = 360, H = Math.round(W * 240 / 400), cols = 3, rows = 2;   // livello "Medio"
-    const t = await page.evaluate(({ W, cols, rows, H }) => {
-      const s = document.querySelector('svg[viewBox^="0 0 360"]');
-      const g = [...s.querySelectorAll('g[role="button"]')][0];
-      if (!g) return null;
-      const m = g.getAttribute('transform').match(/translate\(([-\d.]+) ([-\d.]+)\) scale\(([\d.]+)\)/);
-      const [tx, ty, sc] = [+m[1], +m[2], +m[3]];
-      const [, r, c] = g.getAttribute('aria-label').match(/Pezzo (\d+)-(\d+)/).map(Number);
-      const sb = s.getBoundingClientRect();
-      const k = sb.width / W;
-      const cellaW = W / cols, cellaH = H / rows;
-      // Il centro del pezzo nelle SUE coordinate locali è il centro della sua
-      // cella d'origine, non (cellaW/2, cellaH/2): quello vale solo per il
-      // pezzo in alto a sinistra. Sbagliarlo significa cliccare sul vicino.
-      const cx = (c - 1 + 0.5) * cellaW, cy = (r - 1 + 0.5) * cellaH;
-      return {
-        presa: { x: sb.x + (tx + cx * sc) * k, y: sb.y + (ty + cy * sc) * k },
-        casa:  { x: sb.x + cx * k,             y: sb.y + cy * k },
-      };
-    }, { W, cols, rows, H });
-    if (!t) throw new Error('nessun pezzo trascinabile trovato');
-
+  // Le coordinate si leggono dai pezzi (data-pos, data-casa, data-presa in
+  // coordinate del tabellone) e si portano sullo schermo con getScreenCTM:
+  // vale per l'Incastro rettangolare e per i giochi sagomati, a ogni misura.
+  const unPezzo = () => page.evaluate(() => {
+    const g = document.querySelector('svg g[role="button"][data-casa]');
+    if (!g) return null;
+    const svg = g.ownerSVGElement;
+    const num = (a) => g.getAttribute(a).split(',').map(Number);
+    const [px, py] = num('data-pos'), [cx, cy] = num('data-casa');
+    const [hx, hy] = g.hasAttribute('data-presa') ? num('data-presa') : [cx, cy];
+    const sc = +g.getAttribute('transform').match(/scale\(([\d.]+)\)/)[1];
+    const m = svg.getScreenCTM();
+    const pt = (x, y) => { const p = svg.createSVGPoint(); p.x = x; p.y = y; const q = p.matrixTransform(m); return { x: q.x, y: q.y }; };
+    return { presa: pt(px + (hx - cx) * sc, py + (hy - cy) * sc), casa: pt(hx, hy), liberi: svg.querySelectorAll('g[role="button"][data-casa]').length };
+  });
+  const trascina = async (t) => {
     await page.mouse.move(t.presa.x, t.presa.y);
     await page.mouse.down();
-    await page.mouse.move(t.casa.x, t.casa.y, { steps: 14 });
+    await page.mouse.move(t.casa.x, t.casa.y, { steps: 10 });
     await page.mouse.up();
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(380);
+  };
+  const completa = async (max = 30) => {
+    for (let i = 0; i < max; i++) { const t = await unPezzo(); if (!t) return; await trascina(t); }
+  };
 
-    const testo = await page.locator('text=/\\d\\/6 pezzi/').first().innerText();
-    if (!/[1-6]\/6 pezzi/.test(testo)) throw new Error(`il contatore dice "${testo}": il pezzo non è scattato`);
-    await scatta(page, 'incastro-un-pezzo');
+  await passo('trascinare un pezzo lo incastra', async () => {
+    const t = await unPezzo();
+    if (!t) throw new Error('nessun pezzo libero');
+    await trascina(t);
+    const dopo = await unPezzo();
+    if (dopo && dopo.liberi !== t.liberi - 1) throw new Error(`pezzi liberi: ${t.liberi} → ${dopo.liberi}`);
   });
 
-  // ── la via alternativa al trascinamento: tocca il pezzo, tocca dove va ────
-  // Sotto i cinque anni il trascinamento continuo è ancora incerto: il doppio
-  // tocco è la strada che salva la partita, e va provata.
   await passo('il doppio tocco piazza un pezzo', async () => {
-    const prima = await page.locator('text=/\\d\\/6 pezzi/').first().innerText();
-    const t = await page.evaluate(() => {
-      const s = document.querySelector('svg[viewBox^="0 0 360"]');
-      const g = [...s.querySelectorAll('g[role="button"]')][0];
-      if (!g) return null;
-      const m = g.getAttribute('transform').match(/translate\(([-\d.]+) ([-\d.]+)\) scale\(([\d.]+)\)/);
-      const [tx, ty, sc] = [+m[1], +m[2], +m[3]];
-      const [, r, c] = g.getAttribute('aria-label').match(/Pezzo (\d+)-(\d+)/).map(Number);
-      const sb = s.getBoundingClientRect(); const k = sb.width / 360;
-      const cx = (c - 1 + 0.5) * 120, cy = (r - 1 + 0.5) * 108;
-      return {
-        pezzo: { x: sb.x + (tx + cx * sc) * k, y: sb.y + (ty + cy * sc) * k },
-        casa:  { x: sb.x + cx * k,             y: sb.y + cy * k },
-      };
-    });
+    const t = await unPezzo();
     if (!t) throw new Error('nessun pezzo libero da provare');
-    await page.mouse.click(t.pezzo.x, t.pezzo.y);
+    await page.mouse.click(t.presa.x, t.presa.y);
     await page.waitForTimeout(250);
     await page.mouse.click(t.casa.x, t.casa.y);
     await page.waitForTimeout(450);
-    const dopo = await page.locator('text=/\\d\\/6 pezzi/').first().innerText();
-    if (dopo === prima) throw new Error(`il contatore è fermo su "${dopo}": il doppio tocco non piazza`);
+    const dopo = await unPezzo();
+    if (dopo && dopo.liberi !== t.liberi - 1) throw new Error('il doppio tocco non piazza');
   });
 
   // ── un puzzle finito davvero: modale di vittoria, monete, adesivo ─────────
   await passo('completare un puzzle paga monete e apre la vittoria', async () => {
-    await page.getByRole('button', { name: 'Facile' }).click();   // 2×2 = 3 pezzi
-    await page.waitForTimeout(1500);
-    for (let i = 0; i < 4; i++) {
-      const t = await page.evaluate(() => {
-        const s = document.querySelector('svg[viewBox^="0 0 360"]');
-        const g = [...s.querySelectorAll('g[role="button"]')][0];
-        if (!g) return null;
-        const m = g.getAttribute('transform').match(/translate\(([-\d.]+) ([-\d.]+)\) scale\(([\d.]+)\)/);
-        const [tx, ty, sc] = [+m[1], +m[2], +m[3]];
-        const [, r, c] = g.getAttribute('aria-label').match(/Pezzo (\d+)-(\d+)/).map(Number);
-        const sb = s.getBoundingClientRect(); const k = sb.width / 360;
-        const cw = 360 / 2, ch = Math.round(360 * 240 / 400) / 2;
-        const cx = (c - 1 + 0.5) * cw, cy = (r - 1 + 0.5) * ch;
-        return { presa: { x: sb.x + (tx + cx * sc) * k, y: sb.y + (ty + cy * sc) * k },
-                 casa:  { x: sb.x + cx * k, y: sb.y + cy * k } };
-      });
-      if (!t) break;                                  // finiti i pezzi
-      await page.mouse.move(t.presa.x, t.presa.y);
-      await page.mouse.down();
-      await page.mouse.move(t.casa.x, t.casa.y, { steps: 10 });
-      await page.mouse.up();
-      await page.waitForTimeout(400);
-    }
+    await page.getByRole('button', { name: 'Facile' }).click();
+    await page.waitForTimeout(1200);
+    await completa();
     await page.waitForSelector('text=Ancora!', { timeout: 6000 });
     const modale = await page.locator('text=Ancora!').first().locator('xpath=ancestor::div[3]').innerText();
     if (!/\+\d/.test(modale)) throw new Error(`la vittoria non mostra monete: "${modale.replace(/\n/g, ' | ')}"`);
@@ -272,58 +232,55 @@ async function main() {
     await page.waitForTimeout(500);
   });
 
+  // ── Costruttore: l'animale del tema a pezzi sagomati ──────────────────────
+  await passo('il Costruttore è sagomato e si completa', async () => {
+    await page.getByRole('button', { name: /Il Costruttore/i }).first().click();
+    await page.waitForSelector('svg[data-sagomato] g[role="button"]', { timeout: 8000 });
+    const nPezzi = await page.locator('svg[data-sagomato] g[role="button"]').count();
+    if (nPezzi < 2) throw new Error(`solo ${nPezzi} pezzi`);
+    await scatta(page, 'costruttore');
+    await completa();
+    await page.waitForSelector('text=Ancora!', { timeout: 6000 });
+    await page.getByRole('button', { name: 'Torna ai giochi' }).click();
+    await page.waitForTimeout(500);
+  });
+
   // ── il puzzle degli animali ────────────────────────────────────────────────
-  // Foto vera da ricomporre, poi il verso vero e il nome; l'animale resta nell'album.
-  await passo('il puzzle degli animali mostra i 12 animali con le foto', async () => {
+  // Animale cartoon a pezzi sagomati; a puzzle finito la foto vera e il verso.
+  await passo('il puzzle degli animali mostra i 12 animali cartoon', async () => {
     await page.getByRole('button', { name: /Puzzle degli animali/i }).first().click();
-    await page.waitForSelector('text=Scegli', { state: 'detached', timeout: 100 }).catch(() => {});
-    await page.waitForTimeout(900);
-    const foto = await page.evaluate(() => [...document.querySelectorAll('img[src*="/img/animali/"]')]
+    await page.waitForTimeout(1200);
+    const foto = await page.evaluate(() => [...document.querySelectorAll('button img[src*="/emoji-hd/"]')]
       .map(i => ({ ok: i.complete && i.naturalWidth > 0, src: i.getAttribute('src') })));
     if (foto.length < 12) throw new Error(`solo ${foto.length} animali nella griglia`);
     const rotte = foto.filter(f => !f.ok).map(f => f.src);
-    if (rotte.length) throw new Error(`foto che non si caricano: ${rotte.join(', ')}`);
+    if (rotte.length) throw new Error(`immagini che non si caricano: ${rotte.join(', ')}`);
     await scatta(page, 'animali-scelta');
   });
 
-  await passo('finire un animale fa sentire il verso, dice il nome e lo mette nell\'album', async () => {
+  await passo('finire un animale fa sentire il verso, mostra quello vero e lo mette nell\'album', async () => {
     await page.evaluate(() => {
       window.__suonati = [];
       const play = HTMLMediaElement.prototype.play;
       HTMLMediaElement.prototype.play = function () { window.__suonati.push(this.src); return play.call(this).catch(() => {}); };
     });
     await page.getByRole('button', { name: /^Leone$/ }).click();
-    await page.waitForTimeout(800);
+    await page.waitForTimeout(600);
     await page.getByRole('button', { name: 'Facile' }).click();
-    await page.waitForTimeout(1200);
-    const usaFoto = await page.evaluate(() => !!document.querySelector('svg[viewBox^="0 0 360"] image[href*="/img/animali/leone"]'));
-    if (!usaFoto) throw new Error('il puzzle non usa la foto del leone');
-    for (let i = 0; i < 5; i++) {
-      const t = await page.evaluate(() => {
-        const s = document.querySelector('svg[viewBox^="0 0 360"]');
-        const g = [...s.querySelectorAll('g[role="button"]')][0];
-        if (!g) return null;
-        const m = g.getAttribute('transform').match(/translate\(([-\d.]+) ([-\d.]+)\) scale\(([\d.]+)\)/);
-        const [tx, ty, sc] = [+m[1], +m[2], +m[3]];
-        const [, r, c] = g.getAttribute('aria-label').match(/Pezzo (\d+)-(\d+)/).map(Number);
-        const sb = s.getBoundingClientRect(); const k = sb.width / 360;
-        const cw = 360 / 2, ch = Math.round(360 * 240 / 400) / 2;
-        const cx = (c - 1 + 0.5) * cw, cy = (r - 1 + 0.5) * ch;
-        return { presa: { x: sb.x + (tx + cx * sc) * k, y: sb.y + (ty + cy * sc) * k },
-                 casa:  { x: sb.x + cx * k, y: sb.y + cy * k } };
-      });
-      if (!t) break;
-      await page.mouse.move(t.presa.x, t.presa.y);
-      await page.mouse.down();
-      await page.mouse.move(t.casa.x, t.casa.y, { steps: 10 });
-      await page.mouse.up();
-      await page.waitForTimeout(400);
-    }
+    await page.waitForSelector('svg[data-sagomato="Leone"] g[role="button"]', { timeout: 8000 });
+    const sagoma = await page.evaluate(() => {
+      const svg = document.querySelector('svg[data-sagomato="Leone"]');
+      return { ombra: !!svg.querySelector('image[filter]'), clip: svg.querySelectorAll('clipPath').length };
+    });
+    if (!sagoma.ombra || sagoma.clip < 2) throw new Error(`sagoma o pezzi mancanti: ${JSON.stringify(sagoma)}`);
+    await scatta(page, 'animali-gioco');
+    await completa();
     await page.waitForSelector('text=Un altro!', { timeout: 6000 });
     await page.waitForTimeout(1200);
     await scatta(page, 'animali-vittoria');
     const suonati = await page.evaluate(() => window.__suonati);
     if (!suonati.some(u => /\/audio\/versi\/leone\.mp3$/.test(u))) throw new Error(`il verso non è partito (suonati: ${suonati.join(', ')})`);
+    if (!(await page.locator('img[alt="Leone vero"]').count())) throw new Error('manca la foto vera del leone');
     await page.getByRole('button', { name: 'Tutti gli animali' }).click();
     await page.waitForTimeout(500);
     if (!(await page.getByRole('button', { name: /Leone, già nel tuo album/ }).count())) throw new Error("il leone non risulta nell'album");

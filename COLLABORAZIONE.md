@@ -202,6 +202,20 @@ Puzzles* di RV AppStudios: **Ombre** (sagome) · **Costruttore** (tessere) ·
 - I progressi (adesivi) stanno in un `localStorage` suo — `mondomago_puzzle_v1` —
   e non toccano il profilo del bambino.
 
+### Grafica cartoon e pezzi sagomati (6 ottobre 2026)
+- **`GiocoSagomato`** è il motore del Puzzle degli animali e del Costruttore: il soggetto
+  è un'immagine trasparente, la griglia si taglia come sempre e poi `tagliaSagomato` guarda
+  il canale alfa. Le celle vuote spariscono, quelle quasi vuote si fondono con la vicina con
+  cui l'animale **si tocca** davvero (`contatto`). Il bordo esterno del pezzo è il contorno
+  dell'animale. Sul tabellone c'è l'ombra, e il pezzo in mano si illumina dove va.
+- Costruttore = stesso motore con `linguette={false}` (tagli dritti, pezzi grandi).
+- Soggetti in **alta definizione**: `public/img/3d/emoji-hd/` (640 px), dalle immagini 3D
+  ingrandite 4× con Real-ESRGAN x4plus-anime → `scripts/emoji-hd.py --esrgan <binario>`.
+  `emoji3dHd()` usa l'HD solo se il file esiste (`src/data/emojiHd.js`, generato).
+- L'Incastro usa i **quadri dipinti** dei mondi (`sfondo3d`), quadrato centrale.
+- I test (`smoke-puzzle`) leggono `data-pos` / `data-casa` / `data-presa` dai pezzi: niente
+  misure del tabellone scritte a mano.
+
 ### Il Puzzle degli animali (ottobre 2026)
 Quinto gioco, in evidenza nell'hub: si sceglie un animale, si ricompone la sua **foto
 vera** (stesso motore dell'Incastro) e alla fine si sente il suo **verso vero**, poi la
@@ -237,6 +251,10 @@ esiste perché senza, il puzzle diventa una macchinetta da monete.
   vive su `/app/` ma i file di `public/` stanno alla radice: `./audio/x.mp3` diventava
   `/app/audio/x.mp3` (404) e dal trasloco su `/app/` ogni frase ripiegava sulla voce robotica
   del telefono, senza un errore visibile. `npm run smoke:voce` lo controlla in Chrome.
+- **Cache audio cache-first**: se rigeneri un mp3 con lo **stesso nome** (voce nuova, verso
+  migliore) alza `CACHE_AUDIO` in `public/app/sw.js`, o chi l'ha già sentito tiene il vecchio.
+- **Audio e Safari**: si suona solo con i lettori di `lettore()` (sbloccati al primo tocco),
+  mai con `new Audio()` dentro un setTimeout: su iPhone verrebbe bloccato.
 - **La voce ha due priorità** (`speak` per le consegne, `speakCommento` per le battute del
   compagno): un commento su una risposta sbagliata non copre la domanda. Non tornare a
   chiamare `speak()` nudo per il feedback.
