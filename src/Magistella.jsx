@@ -562,6 +562,21 @@ function genMathChallenge(worldId, age) {
     prompt:`${tens} + ${add} = ?`, options, correct };
 }
 
+// ── Il sentiero dei mondi ────────────────────────────────────────────────────
+// Prima un mondo era UNA partita: dopo 8 partite il gioco era finito. Ora ogni
+// mondo è un sentiero di 12 tappe brevi (5-6 sfide), con un boss alla 6ª e alla
+// 12ª; finito il sentiero si riapre ad Argento e poi a Oro, con le sfide della
+// fascia d'età successiva. È lo schema delle app educative più giocate: tante
+// tappe corte, sempre una prossima, e la padronanza che sale di livello.
+const TAPPE = 12;
+const TAPPE_BOSS = new Set([5, 11]);            // indici: 6ª e 12ª tappa
+const MEDAGLIE = [
+  { livello: 1, nome: "Bronzo",  colore: "#E39A62" },
+  { livello: 2, nome: "Argento", colore: "#D5DEEA" },
+  { livello: 3, nome: "Oro",     colore: "#FFC24B" },
+];
+const statoSentiero = (percorso, worldId) => percorso?.[worldId] || { tappa: 0, livello: 1 };
+
 // visti: { idSfida: numero della sessione in cui è uscita l'ultima volta }.
 // Prima ogni partita pescava 6 sfide a caso senza memoria: con 10-30 sfide per
 // mondo e per età, già alla seconda partita il bambino rivedeva le stesse.
@@ -580,7 +595,7 @@ function genContaFulmine(age) {
     visual: e.repeat(n), options, correct: options.indexOf(String(n)) };
 }
 
-function filterByAge(worldId, age, skills = null, visti = {}) {
+function filterByAge(worldId, age, skills = null, visti = {}, conBoss = true) {
   const all = (ALL_CHALLENGES[worldId] || []).filter(c => age >= c.ageMin && age <= c.ageMax);
   const recenza = (c) => (visti[c.id] ?? -1);
   const bosses = all.filter(c => c.isBoss).sort((a, b) => recenza(a) - recenza(b) || Math.random() - 0.5);
@@ -593,7 +608,7 @@ function filterByAge(worldId, age, skills = null, visti = {}) {
     .map(c => ({ c, r: recenza(c), k: Math.random() * (skills ? (skills[getSkill(c.type)] ?? 1) : 1) }))
     .sort((a, b) => (a.r - b.r) || (a.k - b.k))
     .map(x => x.c);
-  const boss = bosses[0];
+  const boss = conBoss ? bosses[0] : null;
   // Inject 1 procedural math challenge per session, swap out 1 normal
   const proc = genMathChallenge(worldId, age);
   const slice = boss ? normals.slice(0, 4) : normals.slice(0, 5);
@@ -1513,6 +1528,8 @@ export default function Magistella() {
   const [sessionLog,        setSessionLog]        = useState([]); // [{date,stars,world,correct,total}]
   const [missed,            setMissed]            = useState([]); // SRS: [{id,world,s}] sfide sbagliate da ripassare
   const [visti,             setVisti]             = useState({}); // { idSfida: sessione } per non ripetere
+  const [percorso,          setPercorso]          = useState({}); // { mondo: { tappa, livello } } — il sentiero
+  const [fineTappa,         setFineTappa]         = useState(null); // esito dell'ultima tappa, per la schermata di fine
   const [fulminoTime,       setFulminoTime]       = useState(60);  // countdown seconds
   const [fulminoScore,      setFulminoScore]      = useState(0);   // correct answers
   const [fulminoCi,         setFulminoCi]         = useState(0);   // challenge index in pool
@@ -1600,7 +1617,7 @@ export default function Magistella() {
     setMissionsDone([]); setDailyCompletedDate('');
     setWrongStreak(0); setShowFeedback(false);
     setAchievements([]); setDailyCount(0); setActiveProfileId(null);
-    setEquippedCosmetic({}); setSessionLog([]); setVisti({});
+    setEquippedCosmetic({}); setSessionLog([]); setVisti({}); setPercorso({});
     setCoins(0); setOwnedCosmetics([]);
     setSchoolMode(false); setSchoolCode(""); setSchoolAssigned([]);
     navigate(remaining.length > 0 ? 'profile_select' : 'name');
@@ -1864,7 +1881,18 @@ export default function Magistella() {
       setCi(i => i + 1);
       setSelected(null); setStoryChoice(null); setSeqTaps([]); setSeqError(false); setDragPicked(null); setDragPlaced({}); setMmFlipped([]); setMmMatched([]); setMmLocked(false); setColorZoneColors({}); setColorZonePicked(null); setPuzzleGrid(null); setPuzzleMoves(0);
     } else {
-      const firstComplete = arc && !items.find(it => it.emoji === arc.reward_emoji);
+      // avanza il sentiero (non per la Sfida del Giorno)
+      let sentieroFinito = false;
+      if (world && world.id !== "daily") {
+        const { tappa, livello } = statoSentiero(percorso, world.id);
+        sentieroFinito = tappa + 1 >= TAPPE;
+        const nuovo = sentieroFinito ? { tappa: 0, livello: Math.min(3, livello + 1) } : { tappa: tappa + 1, livello };
+        setPercorso(prev => ({ ...prev, [world.id]: nuovo }));
+        setFineTappa({ tappa: tappa + 1, livello, sentieroFinito, medagliaNuova: sentieroFinito ? MEDAGLIE[Math.min(2, livello)] : null });
+        if (sentieroFinito) { setCoins(c => c + 10 * livello); }
+      } else setFineTappa(null);
+      // il premio del mondo (frammento del Sigillo) a fine sentiero di bronzo
+      const firstComplete = arc && sentieroFinito && !items.find(it => it.emoji === arc.reward_emoji);
       setIsFirstWorldComplete(!!firstComplete);
       if (firstComplete) {
         setItems(prev => [...prev, { emoji: arc.reward_emoji, name: arc.reward_name }]);
@@ -1922,9 +1950,22 @@ export default function Magistella() {
     setScreen(newScreen);
   }
 
+  /** Apre il sentiero del mondo (dalla mappa). */
+  function apriSentiero(w) {
+    if (!w.unlocked) return;
+    setWorld(w);
+    navigate("sentiero");
+  }
+
+  /** Avvia la prossima tappa del sentiero del mondo. */
   function startWorld(w) {
     if (!w.unlocked) return;
-    const base = filterByAge(w.id, childAge || 5, skills, visti); // novità prima, poi skill deboli
+    const { tappa, livello } = statoSentiero(percorso, w.id);
+    // Argento e Oro: le sfide della fascia d'età successiva (fino a 8 anni)
+    const eta = childAge || 5;
+    const etaSentiero = Math.min(8, eta + (livello - 1));
+    let base = filterByAge(w.id, etaSentiero, skills, visti, TAPPE_BOSS.has(tappa));
+    if (base.length < 4) base = filterByAge(w.id, eta, skills, visti, TAPPE_BOSS.has(tappa));
     if (!base.length) return;
     // SRS: anteponi fino a 2 sfide sbagliate in sessioni PRECEDENTI (ripasso spaziato).
     let list = base;
@@ -1954,7 +1995,8 @@ export default function Magistella() {
     setMysteryBox(null); setDoubleStar(false); setBurstPos(null); setGuidedTap(false); setBossHPAnimated(100);
     // eslint-disable-next-line react-hooks/purity -- gira al tocco del bambino, non durante il render
     setSessionStart(Date.now());
-    navigate((childAge || 5) <= 4 ? "coplay_intro" : "world_intro");
+    // la storia del mondo si racconta alla prima tappa; poi si gioca subito
+    navigate(tappa === 0 && livello === 1 ? ((childAge || 5) <= 4 ? "coplay_intro" : "world_intro") : "challenge");
   }
   function startDaily() {
     const list = getDailyChallenges(childAge || 5, activeProfileId); // M6: per-profile daily
@@ -1989,6 +2031,7 @@ export default function Magistella() {
     if (p.sessionLog)                     setSessionLog(p.sessionLog);
     if (p.missed)                         setMissed(p.missed);
     setVisti(p.visti || {});
+    setPercorso(p.percorso || {});
     if (typeof p.coins === 'number')      setCoins(p.coins);
     if (p.ownedCosmetics)                 setOwnedCosmetics(p.ownedCosmetics);
     if (p.schoolMode)                     setSchoolMode(p.schoolMode);
@@ -2026,7 +2069,7 @@ export default function Magistella() {
     setCombo(0); setResults([]); setStreak(1);
     setMissionsDone([]); setDailyCompletedDate('');
     setAchievements([]); setDailyCount(0);
-    setEquippedCosmetic({}); setSessionLog([]); setVisti({});
+    setEquippedCosmetic({}); setSessionLog([]); setVisti({}); setPercorso({});
     setSchoolMode(false); setSchoolCode(""); setSchoolAssigned([]);
     setCoins(0); setOwnedCosmetics([]);
     setIsReturning(false);
@@ -2119,11 +2162,13 @@ export default function Magistella() {
   useEffect(() => {
     if (!import.meta.env.DEV || screen !== 'map' || !activeProfileId) return;
     const url = new URL(window.location.href);
-    if (url.searchParams.get('schermata') !== 'fine') return;
+    const quale = url.searchParams.get('schermata');
+    if (quale !== 'fine' && quale !== 'tappa') return;
     url.searchParams.delete('schermata');
     window.history.replaceState(null, '', url);
     // eslint-disable-next-line react-hooks/set-state-in-effect -- scorciatoia di sviluppo
     setWorld(WORLDS.find(w => w.id === "foresta"));
+    setFineTappa(quale === 'tappa' ? { tappa: 4, livello: 1, sentieroFinito: false, medagliaNuova: null } : null);
     setResults([{ type:"logica", ok:true }, { type:"numeri", ok:true }, { type:"empatia", ok:false }]);
     setSessionStars(6);
     navigate("world_end");
@@ -2141,7 +2186,7 @@ export default function Magistella() {
       return;
     }
     const today = new Date().toISOString().slice(0,10);
-    const data = { id: activeProfileId, childName, childAge, companion, totalStars, skills, items, streak, missionsDone, dailyCompletedDate, lastDate: today, achievements, dailyCount, equippedCosmetic, sessionLog, missed, visti, schoolMode, schoolCode, schoolAssigned, coins, ownedCosmetics };
+    const data = { id: activeProfileId, childName, childAge, companion, totalStars, skills, items, streak, missionsDone, dailyCompletedDate, lastDate: today, achievements, dailyCount, equippedCosmetic, sessionLog, missed, visti, percorso, schoolMode, schoolCode, schoolAssigned, coins, ownedCosmetics };
     setAllProfiles(prev => {
       const updated = prev.some(p => p.id === activeProfileId)
         ? prev.map(p => p.id === activeProfileId ? data : p)
@@ -2149,7 +2194,7 @@ export default function Magistella() {
       writeAllProfiles(updated);
       return updated;
     });
-  }, [activeProfileId, childName, childAge, companion, totalStars, skills, items, streak, missionsDone, dailyCompletedDate, achievements, dailyCount, equippedCosmetic, sessionLog, missed, visti, schoolMode, schoolCode, schoolAssigned, coins, ownedCosmetics]);
+  }, [activeProfileId, childName, childAge, companion, totalStars, skills, items, streak, missionsDone, dailyCompletedDate, achievements, dailyCount, equippedCosmetic, sessionLog, missed, visti, percorso, schoolMode, schoolCode, schoolAssigned, coins, ownedCosmetics]);
 
   // Achievement check
   useEffect(() => {
@@ -2260,6 +2305,13 @@ export default function Magistella() {
     SFX.achievement();
     setTimeout(() => setNewCosmetics([]), 4000);
   }, [coins]); // eslint-disable-line
+
+  // Sentiero: si scorre da soli fino alla tappa da giocare
+  useEffect(() => {
+    if (screen !== "sentiero") return;
+    const t = setTimeout(() => document.querySelector('[aria-label^="Gioca la tappa"]')?.scrollIntoView({ block: "center", behavior: "smooth" }), 450);
+    return () => clearTimeout(t);
+  }, [screen]);
 
   // [C1] Sfida Fulmine — countdown timer
   useEffect(() => {
@@ -2421,7 +2473,9 @@ export default function Magistella() {
       stopMusic(); stopSong();
       SFX.victory();
       triggerConfetti(true);
-      if (arc) setTimeout(() => speak(arc.outro, 0.85), 1400);
+      // il racconto finale del mondo a fine sentiero; a fine tappa basta la festa
+      if (arc && (!fineTappa || fineTappa.sentieroFinito)) setTimeout(() => speak(arc.outro, 0.85), 1400);
+      else setTimeout(() => speak("Tappa completata!"), 900);
     } else if (screen === "map" || screen === "session_stats") {
       stopMusic(); stopSong();
     }
@@ -3117,13 +3171,23 @@ export default function Magistella() {
                 return (
                   <div key={w.id} className={`mg-isola${locked ? " chiusa" : ""}${isCur ? " attuale" : ""}`} style={{left:`${x}%`,top:y}}>
                     {isCur && <div className="mg-alone" />}
-                    <button onClick={() => { if (isSpot) setMapSpotDismissed(true); locked ? speak(`Questo mondo è ancora chiuso. Guadagna altre stelle per aprire ${w.name}!`) : startWorld(w); }}
+                    <button onClick={() => { if (isSpot) setMapSpotDismissed(true); locked ? speak(`Questo mondo è ancora chiuso. Guadagna altre stelle per aprire ${w.name}!`) : apriSentiero(w); }}
                       aria-label={locked ? `${w.name}, servono ${w.starsNeeded} stelle` : has ? `${w.name}, completato` : w.name}>
                       <img src={isola3d(w.id)} alt="" style={{animationDelay:`${-i * 0.7}s`}} />
                       {locked && <img className="lucchetto" src={ui3d("padlock")} alt="" />}
                     </button>
                     {has && <div className="mg-stelline"><img src={premio3d("star")} alt="" /><img src={premio3d("star")} alt="" /><img src={premio3d("star")} alt="" /></div>}
                     <div className="mg-nome">{shortWorldName(w.name)}</div>
+                    {!locked && (() => {
+                      const st = statoSentiero(percorso, w.id);
+                      const md = MEDAGLIE[st.livello - 1];
+                      return (
+                        <div className="mg-tappe" aria-hidden="true" style={{display:"inline-flex",alignItems:"center",gap:4,marginTop:2,background:"rgba(20,11,41,.75)",
+                          border:`2px solid ${md.colore}`,borderRadius:20,padding:"1px 8px",fontSize:11,fontWeight:800,color:md.colore}}>
+                          <span style={{width:9,height:9,borderRadius:"50%",background:md.colore}} />{st.tappa}/{TAPPE}
+                        </div>
+                      );
+                    })()}
                     {locked && w.starsNeeded > 0 && <div className="mg-serve"><img src={premio3d("star")} alt="" />{w.starsNeeded}</div>}
                     {w.id === "laboratorio" && !has && !locked && <div className="mg-novita">NOVITÀ</div>}
                     {isCur && comp && <img className="mg-guida" src={posa3d(comp.id, "indica")} alt="" style={{[i % 2 ? "left" : "right"]:-78}} />}
@@ -4350,6 +4414,101 @@ export default function Magistella() {
   }
 
   // ════════════════════ SCREEN: WORLD END ══════════════════════════════════
+  // ════════════════════ SCREEN: SENTIERO DEL MONDO ═════════════════════════
+  if (screen === "sentiero" && world) {
+    const { tappa, livello } = statoSentiero(percorso, world.id);
+    const medaglia = MEDAGLIE[livello - 1];
+    const NODI = Array.from({ length: TAPPE }, (_, i) => i);
+    const ALTO = 112;
+    const xDi = (i) => [50, 74, 64, 36, 26, 50][i % 6];
+    return (
+      <div key="sentiero" className={`${screenAnim} mm-schermo`} style={{minHeight:"100dvh",color:"#F6ECD4",padding:"16px 16px 40px",position:"relative",isolation:"isolate"}}>
+        {G}
+        <div aria-hidden="true" style={{position:"fixed",inset:0,zIndex:-1,background:`linear-gradient(180deg,rgba(20,11,41,.55),rgba(20,11,41,.88)), url(${sfondo3d(world.id)}) center/cover`}} />
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+          <button onClick={() => navigate("map")} style={MG_BTN_BACK}>← Mappa</button>
+          <div style={{flex:1}} />
+          <div style={{display:"inline-flex",alignItems:"center",gap:8,background:"rgba(20,11,41,.75)",border:`2px solid ${medaglia.colore}`,borderRadius:30,padding:"6px 14px"}}>
+            <span style={{width:18,height:18,borderRadius:"50%",background:`radial-gradient(circle at 35% 30%, #fff, ${medaglia.colore} 60%)`}} />
+            <b style={{color:medaglia.colore}}>{medaglia.nome}</b>
+          </div>
+        </div>
+        <div style={{textAlign:"center",marginBottom:6}}>
+          <div className="float" style={{display:"flex",justifyContent:"center"}}>
+            <img src={isola3d(world.id)} alt="" style={{width:96,height:96,objectFit:"contain",filter:"drop-shadow(0 8px 12px rgba(0,0,0,.5))"}} />
+          </div>
+          <h1 className="mg-ribbon viola" style={{margin:"4px auto 4px"}}><span>{world.name}</span></h1>
+          <div style={{fontSize:14,opacity:.85}}>Tappa {tappa + 1} di {TAPPE}</div>
+        </div>
+        <div style={{position:"relative",height:TAPPE * ALTO + 40,maxWidth:420,margin:"0 auto"}}>
+          <svg aria-hidden="true" style={{position:"absolute",inset:0,width:"100%",height:"100%",overflow:"visible"}} viewBox={`0 0 100 ${TAPPE * ALTO + 40}`} preserveAspectRatio="none">
+            <path d={NODI.map((i) => `${i ? "L" : "M"} ${xDi(i)} ${i * ALTO + 56}`).join(" ")} fill="none" stroke="rgba(255,236,190,.45)" strokeWidth="1.6" strokeDasharray="3 3" vectorEffect="non-scaling-stroke" />
+          </svg>
+          {NODI.map(i => {
+            const fatta = i < tappa, attuale = i === tappa, boss = TAPPE_BOSS.has(i);
+            const lato = 76 + (attuale ? 18 : 0) + (boss ? 8 : 0);
+            return (
+              <div key={i} style={{position:"absolute",left:`${xDi(i)}%`,top:i * ALTO + 56,transform:"translate(-50%,-50%)",display:"flex",flexDirection:"column",alignItems:"center"}}>
+                {attuale && comp && <div style={{position:"absolute",right:"100%",marginRight:6,top:-6}}><CompanionAvatar c={comp} size={54} mood="happy" look={equippedCosmetic[comp.id]} decorativa /></div>}
+                <button onClick={() => { if (attuale) startWorld(world); else if (!fatta) speak("Prima finisci la tappa che brilla!"); }}
+                  aria-label={fatta ? `Tappa ${i + 1}, completata` : attuale ? `Gioca la tappa ${i + 1}${boss ? ", tappa del boss" : ""}` : `Tappa ${i + 1}, ancora chiusa`}
+                  className={attuale ? "pulse" : ""}
+                  style={{width:lato,height:lato,borderRadius:"50%",cursor:"pointer",padding:0,display:"flex",alignItems:"center",justifyContent:"center",
+                    border:`4px solid ${MG_INK}`,boxShadow:`0 6px 0 ${MG_INK}${attuale ? ", 0 0 0 8px rgba(255,194,75,.35)" : ""}`,
+                    background: fatta ? "linear-gradient(180deg,#FFE08A,#F5A623)" : attuale ? "linear-gradient(180deg,#B39BFF,#6D42F2)" : "linear-gradient(180deg,#5A4A86,#3A2D63)",
+                    opacity: fatta || attuale ? 1 : .8}}>
+                  {boss
+                    ? <img src={premio3d(i === TAPPE - 1 ? "trophy" : "royal-crown")} alt="" style={{width:"62%",height:"62%",objectFit:"contain",filter:fatta || attuale ? "none" : "grayscale(.6) brightness(.8)"}} />
+                    : fatta
+                      ? <img src={premio3d("star")} alt="" style={{width:"60%",height:"60%"}} />
+                      : attuale
+                        ? <img src={ui3d("play-triangle")} alt="" style={{width:"48%",height:"48%"}} />
+                        : <span style={{fontFamily:FF_DISPLAY,fontSize:24,color:"#D8CCFF"}}>{i + 1}</span>}
+                </button>
+                {attuale && <span className="mg-cta" style={{marginTop:8,fontSize:14,padding:"6px 16px",pointerEvents:"none"}}>{boss ? "Boss!" : "Gioca"}</span>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // ════════════════════ SCREEN: FINE TAPPA ══════════════════════════════════
+  // Finita una tappa (non tutto il sentiero): avanzamento e prossima tappa.
+  if (screen === "world_end" && world && world.id !== "daily" && fineTappa && !fineTappa.sentieroFinito) {
+    const fatti = fineTappa.tappa;
+    return (
+      <div key="fine-tappa" className={`${screenAnim} mm-schermo`} style={{minHeight:"100dvh",background:SG_BG,color:"#F6ECD4",padding:24,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center",isolation:"isolate"}}>
+        {G}
+        <SigilloSky zIndex={-1} />
+        <div className="mg-hero" aria-hidden="true">
+          <div className="mg-rays" /><div className="mg-glow" />
+          <img className="st a" src={premio3d("star")} alt="" />
+          <img className="st c" src={premio3d("star")} alt="" />
+          <img className="st b" src={premio3d("star")} alt="" />
+          {comp && <img className="cp" src={posa3d(comp.id, "festa")} alt="" />}
+        </div>
+        <h1 className="mg-ribbon slide-up"><span>Tappa {fatti} completata!</span></h1>
+        <div style={{display:"flex",gap:5,justifyContent:"center",margin:"14px 0 6px",flexWrap:"wrap",maxWidth:340}} aria-label={`${fatti} tappe su ${TAPPE}`}>
+          {Array.from({ length: TAPPE }, (_, i) => (
+            <span key={i} style={{width:20,height:20,borderRadius:"50%",border:`2px solid ${MG_INK}`,
+              background: i < fatti ? "linear-gradient(180deg,#FFE08A,#F5A623)" : TAPPE_BOSS.has(i) ? "rgba(255,194,75,.25)" : "rgba(255,255,255,.12)"}} />
+          ))}
+        </div>
+        <div style={{fontSize:14,opacity:.8,marginBottom:14}}>{TAPPE - fatti === 1 ? "Manca solo una tappa!" : `Mancano ${TAPPE - fatti} tappe a fine sentiero`}</div>
+        <div className="pop-in" style={{display:"inline-flex",alignItems:"center",gap:8,background:"rgba(255,194,75,.14)",border:"2px solid rgba(255,194,75,.45)",borderRadius:30,padding:"8px 18px",marginBottom:12}}>
+          <img src={premio3d("star")} alt="" style={{width:28,height:28}} /><b style={{color:SG_GOLD}}>+{sessionStars} {sessionStars === 1 ? "stella" : "stelle"}</b>
+        </div>
+        {perfectBonus && <div style={{fontSize:14,color:"#6DE0C6",marginBottom:12}}>Tutto giusto! +5 monete</div>}
+        <div style={{display:"flex",gap:12,width:"100%",maxWidth:340,marginTop:8}}>
+          <button className="mg-cta" onClick={() => startWorld(world)} style={{flex:1.3,fontSize:17}}>{TAPPE_BOSS.has(fatti) ? "Sfida il boss!" : "Prossima tappa"}</button>
+          <button onClick={() => navigate("sentiero")} style={{...MG_BTN_BACK,flex:1,justifyContent:"center"}}>Sentiero</button>
+        </div>
+      </div>
+    );
+  }
+
   if (screen === "world_end" && arc) {
     const correct = results.filter(r => r.ok).length;
     const pct     = results.length ? Math.round((correct/results.length)*100) : 0;
@@ -4366,7 +4525,13 @@ export default function Magistella() {
           {comp && <img className="cp" src={posa3d(comp.id, "festa")} alt="" />}
         </div>
         <h1 className="mg-ribbon slide-up" style={{animationDelay:".5s"}}><span>Fantastico!</span></h1>
-        <p style={{fontFamily:FF,fontSize:17,margin:"8px 0 12px",color:"#FFF6E0",textShadow:"0 2px 4px rgba(0,0,0,.6)"}}>Mondo completato: {world.name}</p>
+        <p style={{fontFamily:FF,fontSize:17,margin:"8px 0 12px",color:"#FFF6E0",textShadow:"0 2px 4px rgba(0,0,0,.6)"}}>Sentiero completato: {world.name}</p>
+        {fineTappa?.medagliaNuova && fineTappa.livello < 3 && (
+          <div className="pop-in" style={{display:"inline-flex",alignItems:"center",gap:8,marginBottom:12,background:"rgba(20,11,41,.6)",border:`2px solid ${fineTappa.medagliaNuova.colore}`,borderRadius:30,padding:"6px 16px"}}>
+            <span style={{width:20,height:20,borderRadius:"50%",background:`radial-gradient(circle at 35% 30%, #fff, ${fineTappa.medagliaNuova.colore} 60%)`}} />
+            <b>Si apre il sentiero {fineTappa.medagliaNuova.nome}! +{10 * fineTappa.livello} monete</b>
+          </div>
+        )}
         <p className="fade-in" style={{fontSize:15,lineHeight:1.75,opacity:.9,marginBottom:24,maxWidth:360,animationDelay:".7s"}}><Emo text={arc.outro} /></p>
         {comp && (
           <div className="slide-up" style={{background:SG_CARD,border:SG_BR,borderRadius:20,padding:"12px 18px",marginBottom:22,fontSize:14,maxWidth:360,animationDelay:".95s",display:"flex",alignItems:"center",gap:12}}>
@@ -4384,7 +4549,7 @@ export default function Magistella() {
           <div className="pop-in glow" style={{background:"linear-gradient(135deg,rgba(255,215,0,.18),rgba(255,170,0,.1))",borderRadius:24,padding:"16px 24px",marginBottom:18,border:"2px solid rgba(255,215,0,.55)",textAlign:"center",width:"100%",maxWidth:360,animationDelay:"1.25s"}}>
             <div style={{marginBottom:6,display:"flex",justifyContent:"center"}}><Icon name="trophy" color="#FFD95A" size={44} /></div>
             <div style={{fontFamily:FF,fontSize:18,color:"#FFD95A",marginBottom:2}}>Prima volta!</div>
-            <div style={{fontSize:13,color:"rgba(255,255,255,.75)",lineHeight:1.5}}>Hai completato questo mondo per la prima volta. Sei un vero campione!</div>
+            <div style={{fontSize:13,color:"rgba(255,255,255,.75)",lineHeight:1.5}}>Hai completato questo mondo per la prima volta. Che bravura!</div>
           </div>
         )}
         {/* Bonus 100% accuratezza */}

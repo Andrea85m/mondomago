@@ -355,6 +355,31 @@ async function main() {
     await page.waitForSelector('text=I Mondi Magici', { timeout: 8000 });
   });
 
+  // ── il sentiero ricorda la tappa: salvata nel profilo, si vede sulla mappa ──
+  await passo('il sentiero riparte dalla tappa giusta, anche dopo un ricaricamento', async () => {
+    await page.evaluate(() => {
+      const k = 'mondomago_profiles_v1'; const ps = JSON.parse(localStorage.getItem(k));
+      ps[0].percorso = { foresta: { tappa: 3, livello: 2 } }; localStorage.setItem(k, JSON.stringify(ps));
+    });
+    await page.reload({ waitUntil: 'networkidle' });
+    await page.waitForSelector('text=I Mondi Magici', { timeout: 10000 });
+    const evviva = page.getByRole('button', { name: 'Evviva!' });
+    if (await evviva.count()) await evviva.click();
+    const mondo = page.getByRole('button', { name: /^Foresta Magica/ }).first();
+    await mondo.evaluate(el => el.scrollIntoView({ block: 'center' }));
+    await mondo.click({ force: true });
+    await page.waitForSelector('[aria-label^="Gioca la tappa 4"]', { timeout: 8000 });
+    if (!(await page.getByText('Argento').count())) throw new Error('la medaglia Argento non si vede');
+    await page.getByRole('button', { name: '← Mappa' }).click();
+    await page.waitForTimeout(500);
+    await page.evaluate(() => {
+      const k = 'mondomago_profiles_v1'; const ps = JSON.parse(localStorage.getItem(k));
+      ps[0].percorso = {}; localStorage.setItem(k, JSON.stringify(ps));
+    });
+    await page.reload({ waitUntil: 'networkidle' });
+    await page.waitForSelector('text=I Mondi Magici', { timeout: 10000 });
+  });
+
   // ── una sfida normale, per controllare che non abbia rotto niente ──────────
   await passo('una sfida del percorso si apre ancora', async () => {
     await page.waitForTimeout(300);
@@ -365,6 +390,13 @@ async function main() {
     await mondo.evaluate(el => el.scrollIntoView({ block: 'center' }));
     await page.waitForTimeout(300);
     await mondo.click({ force: true });
+    await page.waitForTimeout(700);
+    // l'isola apre il sentiero del mondo: 12 tappe, la prima brilla
+    await page.waitForSelector('[aria-label^="Gioca la tappa 1"]', { timeout: 8000 });
+    const nodi = await page.locator('[aria-label^="Tappa "], [aria-label^="Gioca la tappa"]').count();
+    if (nodi !== 12) throw new Error(`il sentiero ha ${nodi} tappe invece di 12`);
+    await scatta(page, 'sentiero');
+    await page.locator('[aria-label^="Gioca la tappa"]').first().dispatchEvent('click');
     await page.waitForTimeout(900);
     const vai = page.getByRole('button', { name: /Inizia la Missione|Iniziamo|Comincia|Partiamo|Avanti/i }).first();
     if (await vai.count()) { await vai.click(); await page.waitForTimeout(1200); }

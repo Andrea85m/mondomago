@@ -94,6 +94,9 @@ async function main() {
   // primo mondo aperto → intro → sfida
   // la prima volta un riflettore guida il dito sull'isola: si tocca l'isola sotto
   await page.locator('.mg-isola:not(.chiusa) button').first().dispatchEvent('click');
+  await page.waitForSelector('[aria-label^="Gioca la tappa"]', { timeout: 8000 });
+  await page.locator('[aria-label^="Gioca la tappa"]').first().dispatchEvent('click');
+  await page.waitForTimeout(700);
   await page.waitForTimeout(800);
   await page.getByRole('button', { name: /Inizia la Missione/i }).dispatchEvent('click', {}, { timeout: 10000 });
   await page.waitForSelector('[aria-label="Rileggi la domanda"]', { timeout: 10000 });
