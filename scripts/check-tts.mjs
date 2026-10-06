@@ -125,6 +125,13 @@ for (const m of source.matchAll(/onMeet\s*:\s*\(\s*(\w+)\s*\)\s*=>\s*`((?:[^`\\]
   }
 }
 
+// ═══ 3c · Domande dei generatori di esercizi ═════════════════════════════════
+{
+  const { engine } = await import('./lib/extract-challenges.mjs');
+  for (const f of engine.frasiGenerate())
+    if (!has(f)) errors.push(`generatore · domanda senza voce: "${f}"`);
+}
+
 // ═══ 4 · Integrità del manifest ══════════════════════════════════════════════
 const onDisk = new Set(readdirSync(AUDIO).filter(f => /^tts_.*\.mp3$/.test(f)));
 for (const [text, file] of Object.entries(ttsMap)) {

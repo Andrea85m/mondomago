@@ -219,6 +219,14 @@ def collect(jsx: str) -> set[str]:
             add(m.group(1))
 
     # 8 · Righe fisse dell'interfaccia
+    # Domande dei generatori di esercizi (tutte le varianti possibili)
+    try:
+        r = subprocess.run(["node", str(ROOT / "scripts" / "frasi-generate.mjs")], capture_output=True, text=True, check=True)
+        for f in json.loads(r.stdout):
+            found.add(f.strip())       # anche "7 + 5 = ?", che di lettere non ne ha
+    except Exception as e:                     # senza node: si dice, non si salta in silenzio
+        print(f"  ! frasi dei generatori non lette: {e}")
+
     found.update({
         "Quanti sono?",                       # Sfida Fulmine: si conta guardando
         "Come ti chiami?",
