@@ -2,7 +2,7 @@ const CACHE_CORE  = 'magistella-core-v13';
 // Le clip audio sono cache-first: se si rigenera un file con lo STESSO nome
 // (voce nuova, verso migliore) questa versione va alzata, o chi l'aveva già
 // ascoltato si tiene il vecchio per sempre.
-const CACHE_AUDIO = 'magistella-audio-v10';
+const CACHE_AUDIO = 'magistella-audio-v11';
 
 // Assets to precache on install — relative paths so they work under any base URL
 const PRECACHE_URLS = [

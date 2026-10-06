@@ -12,7 +12,9 @@ Le due devono restare allineate — c'è un test: `node scripts/check-tts.mjs`.
 """
 
 import hashlib
+import json
 import re
+from pathlib import Path
 import unicodedata
 
 # ── Simboli che vanno detti, non saltati ─────────────────────────────────────
@@ -93,11 +95,28 @@ def strip_name(text: str) -> str:
     return t.strip()
 
 
+# Sigle che vanno davvero lette lettera per lettera
+SIGLE = {"DNA", "TV", "USA", "UE", "OK"}
+
+# "Puzzle a incastro" veniva fuso in "Pasola incastro"; con l'articolo è pulito.
+PRONUNCE = [
+    (r"^Puzzle a incastro", "Il puzzle a incastro"),
+]
+
+
+# I nomi delle cose del Puzzle, detti da soli ("Orso", "Pesce"), uscivano poco
+# nitidi; con l'articolo ("l'orso", "il pesce") sono chiari, ed è anche il modo
+# in cui un bambino impara il nome. Lo schermo resta senza articolo.
+ARTICOLI = json.loads((Path(__file__).resolve().parents[2] / "src" / "data" / "articoli.json").read_text(encoding="utf-8"))
+
+
 def to_speech(text: str) -> str:
     """Dal testo che sta a schermo al testo che la voce deve leggere."""
     t = str(text)
     t = t.replace("\\n", "\n")
     t = strip_name(t)
+    if t.strip() in ARTICOLI:
+        return ARTICOLI[t.strip()][0].upper() + ARTICOLI[t.strip()][1:]
 
     # numeri-emoji prima di tutto: sono opzioni di risposta lette ad alta voce
     for emo, word in DIGIT_EMOJI.items():
@@ -115,6 +134,14 @@ def to_speech(text: str) -> str:
     t = re.sub(r"\s*\n\s*", ", ", t)
 
     for pattern, repl in SYMBOL_WORDS:
+        t = re.sub(pattern, repl, t)
+
+    # Parole tutte maiuscole ("MUU", "NON", "PRIMA"): la voce le leggeva come
+    # sigle, lettera per lettera ("M. U."). Si abbassano, tranne le sigle vere.
+    t = re.sub(r"\b[A-ZÀÈÉÌÒÙ]{2,}\b", lambda m: m.group(0) if m.group(0) in SIGLE else m.group(0).lower(), t)
+
+    # Pronunce verificate con Whisper sulla voce registrata (ottobre 2026)
+    for pattern, repl in PRONUNCE:
         t = re.sub(pattern, repl, t)
 
     t = EMOJI_RE.sub(" ", t)

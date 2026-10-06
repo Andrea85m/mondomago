@@ -1,6 +1,7 @@
 import { useState, useEffect, useLayoutEffect, useRef, useMemo, lazy, Suspense } from "react";
 import { createPortal } from "react-dom";
 import TTS_MAP from "./ttsMap.json";
+import ARTICOLI from "./data/articoli.json";
 import WorldScene from "./WorldScene.jsx";
 import { WorldIcon, Icon, SkillIcon, RankIcon } from "./icons.jsx";
 import SvgAsset from "./SvgAssets.jsx";
@@ -628,15 +629,21 @@ const SPEECH_SYMBOLS = [
   [/(\d)\s*°\s*C\b/g, '$1 gradi'], [/(\d)\s*°/g, '$1 gradi'],
   [/\bkm\/h\b/g, " chilometri all'ora"], [/\bkm\b/g, ' chilometri'],
 ];
+const SPEECH_SIGLE = new Set(["DNA", "TV", "USA", "UE", "OK"]);
 const EMOJI_STRIP = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{1F1E6}-\u{1F1FF}\u{2190}-\u{21FF}]|\u{FE0F}|\u{20E3}|\u{200D}/gu;
 
 function toSpeech(text) {
   let t = stripName(text);
+  // nomi del Puzzle detti con l'articolo ("l'orso"), gemello di ARTICOLI in tts_text.py
+  if (ARTICOLI[t.trim()]) { const a = ARTICOLI[t.trim()]; return a[0].toUpperCase() + a.slice(1); }
   for (const [e, w] of Object.entries(SPEECH_DIGITS)) t = t.split(e).join(w);
   t = t.replace(/\b(Quant[ei])\s*((?:[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}]|\u{FE0F})+)/gu,
     (_, q, e) => { const w = SPEECH_COUNT_NOUNS[e] || SPEECH_COUNT_NOUNS[e.replace(/\u{FE0F}/gu, '')]; return w ? `${q} ${w}` : q; });
   t = t.replace(/([.!?:;,])\s*\n\s*/g, '$1 ').replace(/\s*\n\s*/g, ', ');
   for (const [re, w] of SPEECH_SYMBOLS) t = t.replace(re, w);
+  // parole tutte maiuscole: la voce le leggeva come sigle ("M. U.")
+  t = t.replace(/\b[A-ZÀÈÉÌÒÙ]{2,}\b/g, w => (SPEECH_SIGLE.has(w) ? w : w.toLowerCase()));
+  t = t.replace(/^Puzzle a incastro/, "Il puzzle a incastro");
   t = t.replace(/_{2,}/g, '').replace(EMOJI_STRIP, ' ');
   return t
     .replace(/[^\w\s.,!?:;'’"()\-àèéìòùÀÈÉÌÒÙ]/g, ' ')
