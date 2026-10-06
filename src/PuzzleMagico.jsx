@@ -110,6 +110,7 @@ function cosePerTema(tema, quante) {
 // nel gioco di riferimento è proprio la voce che i genitori regolano più spesso.
 // ═══════════════════════════════════════════════════════════════════════════
 const LIVELLI = [
+  // costruttore = griglia di tutti i puzzle sagomati: 4, 6, 9, 12 pezzi al massimo
   { id: "facile",   nome: "Facile",   perEtà: 4, ombre: 3, costruttore: [2, 2], indovina: 6,  incastro: [2, 2] },
   { id: "medio",    nome: "Medio",    perEtà: 6, ombre: 4, costruttore: [3, 2], indovina: 9,  incastro: [3, 2] },
   { id: "difficile",nome: "Difficile",perEtà: 8, ombre: 6, costruttore: [3, 3], indovina: 12, incastro: [4, 3] },
@@ -198,7 +199,7 @@ function bordo(P, Q, segno) {
  * Restituisce, per ogni pezzo: dove sta nell'immagine (ax, ay), il tracciato
  * in coordinate assolute, e il riquadro che lo contiene linguette comprese.
  */
-function tagliaPuzzle(cols, rows, W, H, linguette = true) {
+function tagliaPuzzle(cols, rows, W, H, linguette = true, ox = 0, oy = 0) {
   const cw = W / cols, ch = H / rows;
   // segno delle linguette: verso destra e verso il basso si estraggono a caso,
   // il pezzo accanto eredita l'opposto — così i due bordi combaciano sempre
@@ -210,7 +211,7 @@ function tagliaPuzzle(cols, rows, W, H, linguette = true) {
   const pezzi = [];
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
-      const x = c * cw, y = r * ch;
+      const x = ox + c * cw, y = oy + r * ch;
       const TL = [x, y], TR = [x + cw, y], BR = [x + cw, y + ch], BL = [x, y + ch];
       const top    = r === 0 ? 0 : -oriz[r - 1][c];
       const right  = c === cols - 1 ? 0 : vert[r][c];
@@ -291,9 +292,15 @@ function useCopertura(src, W, H) {
   return stato;
 }
 
-/** Taglia e sagoma: pezzi con { id, cells, d, ax, ay, cw, ch, box }. */
-function tagliaSagomato(cols, rows, W, H, copertura, linguette) {
-  let pezzi = tagliaPuzzle(cols, rows, W, H, linguette).map(p => ({
+/**
+ * Taglia e sagoma: pezzi con { id, cells, d, ax, ay, cw, ch, box, presa }.
+ * La griglia copre solo il riquadro dell'animale (rect), non tutto il
+ * tabellone: così le celle sono quasi tutte piene e i pezzi escono di
+ * grandezza simile, invece di pezzi grandi accanto a pezzettini.
+ */
+function tagliaSagomato(cols, rows, rect, copertura, linguette) {
+  const { x: X, y: Y, w: W, h: H } = rect;
+  let pezzi = tagliaPuzzle(cols, rows, W, H, linguette, X, Y).map(p => ({
     ...p, cells: [[p.r, p.c]], paths: [p.d], pieno: copertura(p.ax, p.ay, p.cw, p.ch),
   })).filter(p => p.pieno > 0.003);
   const cw = W / cols, ch = H / rows;
@@ -303,8 +310,8 @@ function tagliaSagomato(cols, rows, W, H, copertura, linguette) {
   const contatto = (a, b) => {
     let t = 0;
     for (const [r, c] of a.cells) for (const [r2, c2] of b.cells) {
-      if (r === r2 && Math.abs(c - c2) === 1) t += copertura(Math.max(c, c2) * cw - 3, r * ch, 6, ch);
-      if (c === c2 && Math.abs(r - r2) === 1) t += copertura(c * cw, Math.max(r, r2) * ch - 3, cw, 6);
+      if (r === r2 && Math.abs(c - c2) === 1) t += copertura(X + Math.max(c, c2) * cw - 3, Y + r * ch, 6, ch);
+      if (c === c2 && Math.abs(r - r2) === 1) t += copertura(X + c * cw, Y + Math.max(r, r2) * ch - 3, cw, 6);
     }
     return t;
   };
@@ -328,8 +335,13 @@ function tagliaSagomato(cols, rows, W, H, copertura, linguette) {
   }
   return pezzi.map(p => {
     const xs = p.cells.map(([, c]) => c), ys = p.cells.map(([r]) => r);
-    const ax = Math.min(...xs) * cw, ay = Math.min(...ys) * ch;
-    return { ...p, d: p.paths.join(" "), ax, ay, cw: (Math.max(...xs) + 1) * cw - ax, ch: (Math.max(...ys) + 1) * ch - ay };
+    const ax = X + Math.min(...xs) * cw, ay = Y + Math.min(...ys) * ch;
+    const [r0, c0] = p.cells[0];
+    return {
+      ...p, d: p.paths.join(" "), ax, ay,
+      cw: X + (Math.max(...xs) + 1) * cw - ax, ch: Y + (Math.max(...ys) + 1) * ch - ay,
+      presa: { x: X + (c0 + 0.5) * cw, y: Y + (r0 + 0.5) * ch },     // un punto sicuramente dentro il pezzo
+    };
   });
 }
 
@@ -721,15 +733,17 @@ function GiocoSagomato({
   soggetto, griglia, linguette = true, titolo, consegna,
 }) {
   const W = 360, H = 320;
-  const [cols, rows] = griglia;
   const misura = useCopertura(soggetto.src, W, H);
+  // la griglia segue la forma dell'animale: più colonne se è largo, più righe se è alto
+  const [g1, g2] = griglia;
+  const largo = !misura || misura.rect.w >= misura.rect.h;
+  const [cols, rows] = largo ? [Math.max(g1, g2), Math.min(g1, g2)] : [Math.min(g1, g2), Math.max(g1, g2)];
   const pezzi = useMemo(
-    () => (misura ? tagliaSagomato(cols, rows, W, H, misura.copertura, linguette) : []),
+    () => (misura ? tagliaSagomato(cols, rows, misura.rect, misura.copertura, linguette) : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- seme cambia apposta: tagli nuovi
     [misura, cols, rows, linguette, seme],
   );
   const uid = useId().replace(/:/g, "");
-  const SCALA = 0.52;
   const VASSOIO_Y = H + 20;
 
   const [posti, setPosti] = useState({});
@@ -738,18 +752,28 @@ function GiocoSagomato({
   const svgRef = useRef(null);
   const casa = (p) => ({ x: p.ax + p.cw / 2, y: p.ay + p.ch / 2 });
 
-  // vaschetta: i pezzi in fila come su uno scaffale, ognuno con il suo ingombro vero
-  const { posIniziali, fondoVassoio } = useMemo(() => {
+  // Vaschetta in ordine: caselle tutte uguali, in righe centrate, e tutti i
+  // pezzi alla stessa scala, ognuno al centro della sua casella. Prima erano
+  // sparsi a scaffale, e per un bambino sembravano buttati a caso.
+  const { posIniziali, fondoVassoio, SCALA } = useMemo(() => {
+    const n = pezzi.length;
+    if (!n) return { posIniziali: {}, fondoVassoio: VASSOIO_Y + 60, SCALA: 0.5 };
+    const perRiga = n <= 4 ? n : n <= 6 ? 3 : n <= 9 ? 3 : 4;
+    const casella = (W - 12) / perRiga;
+    const maxW = Math.max(...pezzi.map(p => p.box.w)), maxH = Math.max(...pezzi.map(p => p.box.h));
+    const sc = Math.min(0.62, (casella * 0.88) / maxW, (casella * 0.88) / maxH);
+    const altoCasella = Math.max(maxH * sc + 12, casella * 0.7);
     const pos = {};
-    let x = 6, y = VASSOIO_Y, alto = 0;
-    for (const p of shuffle(pezzi)) {
-      const w = p.box.w * SCALA, h = p.box.h * SCALA;
-      if (x + w > W - 6 && x > 6) { x = 6; y += alto + 10; alto = 0; }
+    shuffle(pezzi).forEach((p, i) => {
+      const riga = Math.floor(i / perRiga), inRiga = Math.min(perRiga, n - riga * perRiga);
+      const x0 = (W - inRiga * casella) / 2;
+      const cx = x0 + (i % perRiga + 0.5) * casella;
+      const cy = VASSOIO_Y + riga * altoCasella + altoCasella / 2;
       const c = casa(p);
-      pos[p.id] = { x: x - p.box.x * SCALA + c.x * SCALA, y: y - p.box.y * SCALA + c.y * SCALA };
-      x += w + 10; alto = Math.max(alto, h);
-    }
-    return { posIniziali: pos, fondoVassoio: y + alto + 14 };
+      const bx = p.box.x + p.box.w / 2, by = p.box.y + p.box.h / 2;   // centro del pezzo, linguette comprese
+      pos[p.id] = { x: cx + (c.x - bx) * sc, y: cy + (c.y - by) * sc };
+    });
+    return { posIniziali: pos, fondoVassoio: VASSOIO_Y + Math.ceil(n / perRiga) * altoCasella + 8, SCALA: sc };
   // eslint-disable-next-line react-hooks/exhaustive-deps -- dipende solo dai pezzi
   }, [pezzi]);
 
@@ -799,7 +823,6 @@ function GiocoSagomato({
   const img = (extra = {}) => r && (
     <image href={soggetto.src} x={r.x} y={r.y} width={r.w} height={r.h} preserveAspectRatio="none" {...extra} />
   );
-  const evidenziato = preso?.id || selezionato;
   const messi = Object.keys(posti).length;
 
   return (
@@ -830,6 +853,13 @@ function GiocoSagomato({
           <filter id={`ombra-${uid}`} x="-20%" y="-20%" width="140%" height="150%">
             <feDropShadow dx="0" dy="5" stdDeviation="4" floodColor="#0B0619" floodOpacity="0.55" />
           </filter>
+          {/* solco: il bordo della sagoma di ogni pezzo, una riga chiara sottile */}
+          <filter id={`solco-${uid}`} x="-5%" y="-5%" width="110%" height="110%">
+            <feMorphology in="SourceAlpha" operator="erode" radius="1.4" result="dentro" />
+            <feComposite in="SourceAlpha" in2="dentro" operator="out" result="bordo" />
+            <feFlood floodColor="#F6ECD4" floodOpacity="0.55" />
+            <feComposite in2="bordo" operator="in" />
+          </filter>
           {/* l'animale tutto nero e trasparente: la sua ombra sul tabellone */}
           <filter id={`ombra-animale-${uid}`}>
             <feColorMatrix type="matrix" values="0 0 0 0 0.08  0 0 0 0 0.04  0 0 0 0 0.16  0 0 0 0.55 0" />
@@ -840,10 +870,17 @@ function GiocoSagomato({
         <g onPointerDown={toccaTabellone}>
           <rect x="0" y="0" width={W} height={H} rx="18" fill="rgba(255,255,255,.05)" stroke="rgba(255,194,75,.18)" />
           {img({ filter: `url(#ombra-animale-${uid})` })}
-          {/* dove va il pezzo che il bambino ha in mano */}
-          {evidenziato && !posti[evidenziato] && (
-            <g clipPath={`url(#c-${uid}-${evidenziato})`} opacity="0.5" className="pulse" pointerEvents="none">{img()}</g>
-          )}
+          {/* il tabellone è già "fresato": il contorno di ogni pezzo inciso
+              sull'ombra, come nei puzzle di legno. Nessun suggerimento su
+              quale pezzo va dove: lo scopre il bambino. */}
+          {r && pezzi.map(p => (
+            // il filtro va su un gruppo ESTERNO al ritaglio: sullo stesso elemento
+            // SVG applica prima il filtro e poi il clip, e il solco veniva solo
+            // sul contorno dell'animale intero
+            <g key={`solco-${p.id}`} filter={`url(#solco-${uid})`} pointerEvents="none">
+              <g clipPath={`url(#c-${uid}-${p.id})`}>{img()}</g>
+            </g>
+          ))}
         </g>
 
         <rect x="0" y={VASSOIO_Y - 10} width={W} height={altezza - VASSOIO_Y + 8} rx="16"
@@ -866,7 +903,7 @@ function GiocoSagomato({
               aria-label={messo ? undefined : `Pezzo ${i + 1} di ${soggetto.nome}`}
               data-casa={`${c.x.toFixed(1)},${c.y.toFixed(1)}`}
               data-pos={`${pos.x.toFixed(1)},${pos.y.toFixed(1)}`}
-              data-presa={`${((p.cells[0][1] + 0.5) * W / cols).toFixed(1)},${((p.cells[0][0] + 0.5) * H / rows).toFixed(1)}`}>
+              data-presa={`${p.presa.x.toFixed(1)},${p.presa.y.toFixed(1)}`}>
               <g filter={messo ? undefined : `url(#ombra-${uid})`}>
                 <g filter={messo ? undefined : `url(#bordo-${uid})`}>
                   <g clipPath={`url(#c-${uid}-${p.id})`}>{img()}</g>
@@ -1212,12 +1249,12 @@ export default function PuzzleMagico({ età = 5, speak, suona = null, sfx, onExi
       onNuovo={() => setSeme(n => n + 1)}
       onVinto={(sc) => vinci(`Hai ricostruito: ${sc.nome}!`)} />;
   if (schermo === "incastro")
-    gioco = <GiocoSagomato {...comuni} soggetto={soggettoIncastro} griglia={livello.incastro}
+    gioco = <GiocoSagomato {...comuni} soggetto={soggettoIncastro} griglia={livello.costruttore}
       titolo="Puzzle a incastro" consegna="Trascina ogni pezzo al suo posto!"
       onNuovo={() => setSeme(n => n + 1)}
       onVinto={(sc) => vinci(`Puzzle completato: ${sc.nome}!`)} />;
   if (schermo === "animale" && animale)
-    gioco = <GiocoSagomato {...comuni} soggetto={{ ...animale, src: animale.cartone }} griglia={livello.incastro}
+    gioco = <GiocoSagomato {...comuni} soggetto={{ ...animale, src: animale.cartone }} griglia={livello.costruttore}
       titolo="Puzzle degli animali" consegna="Rimetti insieme i pezzi dell'animale!"
       onIndietro={() => setSchermo("animali")}
       onNuovo={() => { setAnimale(prossimoAnimale(animale)); setSeme(n => n + 1); }}
