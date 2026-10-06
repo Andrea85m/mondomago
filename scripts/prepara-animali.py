@@ -55,7 +55,6 @@ def verso(src: Path, dest: Path, inizio: float, durata: float):
     durata = min(durata, 4.0)
     fade = min(0.4, durata / 4)
     af = (f"atrim=start={inizio}:duration={durata},asetpts=PTS-STARTPTS,"
-          "silenceremove=start_periods=1:start_threshold=-45dB:detection=peak,"
           f"afade=t=out:st={max(0, durata - fade)}:d={fade},"
           "loudnorm=I=-16:TP=-1.5:LRA=11")
     r = subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(src), "-af", af,
