@@ -83,7 +83,7 @@ for (const c of flatChallenges) {
 // ═══════════════════════════════════════════════════════════════════════════
 const CONTRACTS = {
   multiple_choice: ['prompt', 'options', 'correct'],
-  visual_tap:      ['visual', 'prompt', 'options', 'correct'],
+  visual_tap:      ['prompt', 'options', 'correct'],   // visual facoltativo: se manca, le opzioni-immagine bastano ("Qual è la faccia triste?")
   rhyme_complete:  ['prompt', 'options', 'correct'],
   quiz_cartoon:    ['cartoonEmoji', 'options', 'correct'],
   word_picture:    ['word', 'options', 'correct'],
@@ -337,7 +337,7 @@ for (const c of flatChallenges) {
     W('STORY_TOO_YOUNG', `${tag} story_choice a 3-4 anni: le scelte sono frasi scritte.`);
 
   // 3.3 operazioni scritte fuori fascia (solo calcolo vero: cifra-operatore-cifra)
-  const hasMultDiv = /\d\s*[×÷x]\s*\d|\d+\s*:\s*\d/.test(c.prompt || '');
+  const hasMultDiv = /\d\s*[×÷x]\s*\d|(?<!in\s)\b\d+\s*:\s*\d/.test(c.prompt || '');   // \"di 2 in 2: 2, 4\" è contare, non dividere
   if (band === '3-4' && /\d\s*[+\-−×÷]\s*\d/.test(c.prompt || ''))
     W('SYMBOLIC_MATH_TOO_YOUNG', `${tag} 3-4 anni con calcolo simbolico: "${String(c.prompt).replace(/\n/g, ' ')}".`);
   if (hasMultDiv && c.ageMax <= 6)
@@ -448,12 +448,14 @@ for (const age of SELECTABLE_AGES) {
   const examples = {};
   for (let i = 0; i < PROC_RUNS; i++) {
     const c = genMathChallenge(WORLD_IDS[i % WORLD_IDS.length], age);
-    const opts = c.options.map(Number);
+    // le opzioni sono numeri, oppure immagini ("Quale inizia con la lettera A?")
+    const numerico = c.options.every(o => /^\d+$/.test(o));
+    const opts = numerico ? c.options.map(Number) : c.options;
     // la fascia dichiarata deve contenere l'età per cui è stata generata
     if (!(age >= c.ageMin && age <= c.ageMax)) { bad.band++; examples.band ??= JSON.stringify(c); }
     if (c.options.length !== 4) { bad.count++; examples.count ??= JSON.stringify(c); }
     if (new Set(opts).size !== opts.length) { bad.dup++; examples.dup ??= JSON.stringify(c); }
-    if (opts.some(v => v <= 0)) { bad.neg++; examples.neg ??= JSON.stringify(c); }
+    if (numerico && opts.some(v => v <= 0)) { bad.neg++; examples.neg ??= JSON.stringify(c); }
     // verifica aritmetica reale della consegna
     const m = c.prompt.match(/(\d+)\s*([+−×÷])\s*(\d+)/);
     if (m) {
@@ -462,7 +464,11 @@ for (const age of SELECTABLE_AGES) {
       if (opts[c.correct] !== truth) { bad.arith++; examples.arith ??= `${c.prompt} → dice ${opts[c.correct]}, giusto ${truth}`; }
       const lim = LIMITS[age <= 4 ? '3-4' : age <= 6 ? '5-6+' : '7-8'];
       if (Math.max(+a, +b, truth) > lim.maxNumber) { bad.range++; examples.range ??= c.prompt; }
-    } else if (!/Quanti/.test(c.prompt)) {
+    } else if (/Che numero viene (dopo|prima di) (\d+)/.test(c.prompt)) {
+      const [, verso, n] = c.prompt.match(/Che numero viene (dopo|prima di) (\d+)/);
+      const truth = verso === 'dopo' ? +n + 1 : n - 1;
+      if (opts[c.correct] !== truth) { bad.arith++; examples.arith ??= `${c.prompt} → dice ${opts[c.correct]}, giusto ${truth}`; }
+    } else if (!/Quanti|Quale inizia con la lettera/.test(c.prompt)) {
       bad.missing++; examples.missing ??= c.prompt;
     }
   }

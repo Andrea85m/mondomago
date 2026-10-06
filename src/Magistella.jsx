@@ -515,51 +515,84 @@ function _opts(correct, spread, count = 4) {
   const arr = [...vals].sort(() => Math.random() - 0.5);
   return { options: arr.map(String), correct: arr.indexOf(correct) };
 }
+// ── Generatori di esercizi ──────────────────────────────────────────────────
+// Esercizi creati da regole: varianti a non finire, sempre corretti per
+// costruzione. Ogni domanda possibile è elencata in frasiGenerate(), così la
+// voce registrata le copre tutte (prima "7 + 5 = ?" non aveva una clip e la
+// leggeva la voce robotica del telefono, una volta a partita).
+// Restano dentro questo blocco (da _rnd a initSkills) perché i controlli
+// (scripts/audit-esercizi.mjs) valutano proprio questo pezzo di codice.
+const GEN_EMOJI = { foresta:"🐿️", castello:"👑", oceano:"🐬", mercato:"🧙", galassia:"🚀", vulcano:"🌋", biblioteca:"📖", laboratorio:"🤖" };
+const GEN_CONTA = ["🍎", "⭐", "🐟", "🦋", "🍓", "🌸", "🍄", "🎈"];
+const GEN_CIFRE = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣"];   // numeri illustrati (Num1…Num7 in SvgAssets): chi ha 3 anni non legge le cifre
+// parole con l'immagine 3D, per "Quale inizia con la lettera…?"
+const GEN_PAROLE = [["🍎","Mela"],["🐱","Gatto"],["🐶","Cane"],["🌙","Luna"],["☀️","Sole"],["🐸","Rana"],["🐟","Pesce"],["🍄","Fungo"],
+  ["🐻","Orso"],["🦁","Leone"],["🐘","Elefante"],["🍋","Limone"],["🍓","Fragola"],["🚀","Razzo"],["⭐","Stella"],["🐢","Tartaruga"],
+  ["🦉","Gufo"],["🍕","Pizza"],["🏰","Castello"],["🐭","Topo"],["🌈","Arcobaleno"],["🐝","Ape"],["🦋","Farfalla"],["🍌","Banana"]];
+const GEN_LETTERE = [...new Set(GEN_PAROLE.map(([, n]) => n[0]))].sort();
+
+function _genBase(worldId, eta, extra) {
+  return { id: `gen_${worldId}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`, emoji: GEN_EMOJI[worldId] || "⭐",
+    ...extra, ageMin: eta <= 4 ? 3 : eta <= 6 ? 5 : 7, ageMax: eta <= 4 ? 4 : eta <= 6 ? 6 : 8 };
+}
+function _numOpts(giusta, min, max) {
+  const vals = new Set([giusta]);
+  for (let g = 0; vals.size < 4 && g < 100; g++) { const v = giusta + _rnd(-3, 3); if (v >= min && v <= max) vals.add(v); }
+  for (let v = min; vals.size < 4; v++) vals.add(v);
+  const arr = [...vals].sort(() => Math.random() - 0.5);
+  return { options: arr.map(String), correct: arr.indexOf(giusta) };
+}
+
 function genMathChallenge(worldId, age) {
-  const id = `proc_${worldId}_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;
-  const emojis = { foresta:"🐿️", castello:"👑", oceano:"🐬", mercato:"🧙", galassia:"🚀", vulcano:"🌋", biblioteca:"📖", laboratorio:"🤖" };
-  const e = emojis[worldId] || "⭐";
-  if (age <= 4) {
-    // Simple addition with pictures
-    const a = _rnd(1, 4), b = _rnd(1, 3);
-    const things = pick(["🍎","⭐","🌸","🐟","🌙","🦋"]);
-    const { options, correct } = _opts(a + b, 2);
-    return { id, format:"multiple_choice", type:"numeri", ageMin:3, ageMax:4, emoji:e,
-      prompt:`${things.repeat(a)} e ${things.repeat(b)}\nQuanti ${things} in tutto?`, options, correct };
-  }
-  if (age <= 6) {
-    const type = _rnd(0, 1);
-    if (type === 0) {
-      const a = _rnd(3, 12), b = _rnd(1, Math.min(a - 1, 8));
-      const { options, correct } = _opts(a + b, 3);
-      return { id, format:"multiple_choice", type:"numeri", ageMin:5, ageMax:6, emoji:e,
-        prompt:`${a} + ${b} = ?`, options, correct };
+  const eta = age || 5;
+  if (eta <= 4) {
+    if (Math.random() < 0.6) {                                           // contare fino a 5
+      const n = _rnd(1, 5), cosa = pick(GEN_CONTA);
+      const opz = [...new Set([n, ...[1, 2, 3, 4, 5].sort(() => Math.random() - 0.5)])].slice(0, 4).sort(() => Math.random() - 0.5);
+      return _genBase(worldId, eta, { format: "visual_tap", type: "conteggio", visual: cosa.repeat(n), prompt: "Quanti sono?",
+        options: opz.map(x => GEN_CIFRE[x - 1]), correct: opz.indexOf(n) });
     }
-    const a = _rnd(5, 15), b = _rnd(1, a - 1);
-    const { options, correct } = _opts(a - b, 3);
-    return { id, format:"multiple_choice", type:"numeri", ageMin:5, ageMax:6, emoji:e,
-      prompt:`${a} − ${b} = ?`, options, correct };
+    const a = _rnd(1, 3), b = _rnd(1, 2), cosa = pick(GEN_CONTA);      // aggiungere, contando le figure
+    const opz = [...new Set([a + b, ...[2, 3, 4, 5].sort(() => Math.random() - 0.5)])].slice(0, 4).sort(() => Math.random() - 0.5);
+    return _genBase(worldId, eta, { format: "visual_tap", type: "numeri", visual: `${cosa.repeat(a)} + ${cosa.repeat(b)}`, prompt: "Quanti sono in tutto?",
+      options: opz.map(x => GEN_CIFRE[x - 1]), correct: opz.indexOf(a + b) });
   }
-  // age 7-8
-  const type = _rnd(0, 2);
-  if (type === 0) {
-    const a = _rnd(3, 9), b = _rnd(3, 9);
-    const { options, correct } = _opts(a * b, 5);
-    return { id, format:"multiple_choice", type:"numeri", ageMin:7, ageMax:8, emoji:e,
-      prompt:`${a} × ${b} = ?`, options, correct };
+  if (eta <= 6) {
+    const t = _rnd(0, 3);
+    if (t === 0) { const a = _rnd(2, 12), b = _rnd(1, Math.min(9, 20 - a)); return _genBase(worldId, eta, { format: "multiple_choice", type: "numeri", prompt: `${a} + ${b} = ?`, ..._numOpts(a + b, 1, 20) }); }
+    if (t === 1) { const a = _rnd(4, 20), b = _rnd(1, Math.min(9, a - 1)); return _genBase(worldId, eta, { format: "multiple_choice", type: "numeri", prompt: `${a} − ${b} = ?`, ..._numOpts(a - b, 1, 20) }); }
+    if (t === 2) {
+      const dopo = Math.random() < 0.5, n = dopo ? _rnd(1, 19) : _rnd(2, 20);
+      return _genBase(worldId, eta, { format: "multiple_choice", type: "numeri", prompt: dopo ? `Che numero viene dopo ${n}?` : `Che numero viene prima di ${n}?`, ..._numOpts(dopo ? n + 1 : n - 1, 1, 21) });
+    }
+    const lettera = pick(GEN_LETTERE);
+    const giusta = pick(GEN_PAROLE.filter(([, w]) => w[0] === lettera));
+    const altre = GEN_PAROLE.filter(([, w]) => w[0] !== lettera).sort(() => Math.random() - 0.5).slice(0, 3);
+    const opz = [giusta, ...altre].sort(() => Math.random() - 0.5);
+    return _genBase(worldId, eta, { format: "visual_tap", type: "parole", prompt: `Quale inizia con la lettera ${lettera}?`,
+      options: opz.map(([e]) => e), correct: opz.indexOf(giusta) });
   }
-  if (type === 1) {
-    // La risposta di "(b×c) ÷ b" è c, non b×c: i distrattori vanno costruiti
-    // intorno al quoziente, altrimenti la sfida marca giusto il dividendo.
-    const b = _rnd(2, 9), c = _rnd(2, 9);
-    const { options, correct } = _opts(c, 4);
-    return { id, format:"multiple_choice", type:"numeri", ageMin:7, ageMax:8, emoji:e,
-      prompt:`${b * c} ÷ ${b} = ?`, options, correct };
-  }
-  const tens = _rnd(2, 9) * 10, add = _rnd(15, 45);
-  const { options, correct } = _opts(tens + add, 8);
-  return { id, format:"multiple_choice", type:"numeri", ageMin:7, ageMax:8, emoji:e,
-    prompt:`${tens} + ${add} = ?`, options, correct };
+  const t = _rnd(0, 3);
+  if (t === 0) { const a = _rnd(2, 10), b = _rnd(2, 10); return _genBase(worldId, eta, { format: "multiple_choice", type: "numeri", prompt: `${a} × ${b} = ?`, ..._numOpts(a * b, 1, 100) }); }
+  if (t === 1) { const b = _rnd(2, 10), c = _rnd(2, 10); return _genBase(worldId, eta, { format: "multiple_choice", type: "numeri", prompt: `${b * c} ÷ ${b} = ?`, ..._numOpts(c, 1, 12) }); }
+  if (t === 2) { const a = _rnd(2, 6) * 10, b = _rnd(11, 29); return _genBase(worldId, eta, { format: "multiple_choice", type: "numeri", prompt: `${a} + ${b} = ?`, ..._numOpts(a + b, 1, 100) }); }
+  const a = _rnd(4, 9) * 10, b = _rnd(11, 19);
+  return _genBase(worldId, eta, { format: "multiple_choice", type: "numeri", prompt: `${a} − ${b} = ?`, ..._numOpts(a - b, 1, 100) });
+}
+
+/** Tutte le domande che i generatori possono fare: la voce le registra in anticipo. */
+// eslint-disable-next-line no-unused-vars -- la usano gen-tts e i controlli (scripts/lib/extract-challenges.mjs)
+function frasiGenerate() {
+  const f = new Set(["Quanti sono?", "Quanti sono in tutto?"]);
+  for (let a = 2; a <= 12; a++) for (let b = 1; b <= Math.min(9, 20 - a); b++) f.add(`${a} + ${b} = ?`);
+  for (let a = 4; a <= 20; a++) for (let b = 1; b <= Math.min(9, a - 1); b++) f.add(`${a} − ${b} = ?`);
+  for (let n = 1; n <= 19; n++) f.add(`Che numero viene dopo ${n}?`);
+  for (let n = 2; n <= 20; n++) f.add(`Che numero viene prima di ${n}?`);
+  for (const l of GEN_LETTERE) f.add(`Quale inizia con la lettera ${l}?`);
+  for (let a = 2; a <= 10; a++) for (let b = 2; b <= 10; b++) { f.add(`${a} × ${b} = ?`); f.add(`${a * b} ÷ ${a} = ?`); }
+  for (let a = 20; a <= 60; a += 10) for (let b = 11; b <= 29; b++) f.add(`${a} + ${b} = ?`);
+  for (let a = 40; a <= 90; a += 10) for (let b = 11; b <= 19; b++) f.add(`${a} − ${b} = ?`);
+  return [...f];
 }
 
 // ── Il sentiero dei mondi ────────────────────────────────────────────────────
@@ -3772,16 +3805,24 @@ export default function Magistella() {
             <div onClick={() => { SFX.tap(); speak(ch.format==="story_choice"?ch.situation:(ch.prompt||ch.question)); }}
               role="button" aria-label="Ascolta la domanda" {...TASTIERA}
               style={{fontSize:youngBg?52:40,marginBottom:12,cursor:"pointer",display:"inline-block"}}><Emo text={ch.emoji} size={youngBg?64:52} /></div>
-            {isVis && (() => {
-              const segs = typeof Intl?.Segmenter === "function"
-                ? [...new Intl.Segmenter().segment(ch.visual)].map(s => s.segment).filter(s => s.trim())
-                : Array.from(ch.visual).filter(c => c.trim());
+            {isVis && ch.visual && (() => {
+              // Gli spazi separano i gruppi ("⭐ ⭐⭐⭐ ⭐⭐" = tre gruppi da confrontare):
+              // ogni gruppo resta unito, i gruppi si distanziano.
+              const segm = (t) => typeof Intl?.Segmenter === "function"
+                ? [...new Intl.Segmenter().segment(t)].map(s => s.segment)
+                : Array.from(t);
+              const gruppi = ch.visual.split(/\s+/).filter(Boolean).map(segm);
+              const tanti = gruppi.flat().length;
+              const lato = youngBg ? (tanti > 9 ? 44 : 60) : (tanti > 9 ? 38 : 50);
               return (
                 <div onClick={() => { SFX.tap(); speak(ch.prompt); }}
                   role="button" aria-label="Ascolta la domanda" {...TASTIERA}
-                  style={{display:"flex",flexWrap:"wrap",gap:youngBg?10:8,justifyContent:"center",marginBottom:14,cursor:"pointer"}}>
-                  {segs.map((em, i) => (
-                    <SvgAsset key={i} emoji={em} size={youngBg?60:50} state="default" />
+                  style={{display:"flex",flexWrap:"wrap",gap:gruppi.length > 1 ? 18 : 0,justifyContent:"center",alignItems:"center",marginBottom:14,cursor:"pointer"}}>
+                  {gruppi.map((g, j) => (
+                    <div key={j} style={{display:"flex",flexWrap:"wrap",gap:youngBg?8:6,justifyContent:"center",alignItems:"center",
+                      ...(gruppi.length > 1 && g.length > 1 ? {background:youngBg?"rgba(0,0,0,.04)":"rgba(255,255,255,.06)",borderRadius:16,padding:"6px 8px"} : {})}}>
+                      {g.map((em, i) => <SvgAsset key={i} emoji={em} size={lato} state="default" />)}
+                    </div>
                   ))}
                 </div>
               );

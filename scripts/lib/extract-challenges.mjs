@@ -68,7 +68,7 @@ export const engine = (() => {
     }
     function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
     ${helpers}
-    return { _rnd, _opts, genMathChallenge, filterByAge, getDailyChallenges, getSkill, SKILL_MAP };
+    return { _rnd, _opts, genMathChallenge, frasiGenerate, filterByAge, getDailyChallenges, getSkill, SKILL_MAP };
   `;
   return new Function(code)();
 })();
