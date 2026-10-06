@@ -16,26 +16,33 @@
 // niente numeri a effetto che non si possono verificare.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import { emoji3dHd } from "./grafica3d.js";
+
 const BASE = import.meta.env.BASE_URL;
 
-const A = ({ id, nome, frase }) => ({
-  id, nome, frase,
+// `cartone`: l'animale in 3D cartoon, trasparente, da tagliare in pezzi sagomati.
+// `foto`: l'animale vero, che compare a puzzle finito insieme al suo verso.
+const A = ({ id, nome, emoji, frase }) => ({
+  id, nome, emoji, frase,
+  cartone: emoji3dHd(emoji),
   foto: `${BASE}img/animali/${id}.webp`,
   mini: `${BASE}img/animali/${id}-mini.webp`,
   verso: `${BASE}audio/versi/${id}.mp3`,
 });
 
+// Gallo, pecora e maiale tornano quando avranno un cartoon all'altezza: foto e
+// versi sono già pronti in public/ (vedi CREDITI.md).
 export const ANIMALI = [
-  A({ id: "leone", nome: "Leone", frase: "Il leone! Il suo ruggito si sente da lontanissimo." }),
-  A({ id: "elefante", nome: "Elefante", frase: "L'elefante! Con la proboscide beve, annusa e afferra le cose." }),
-  A({ id: "mucca", nome: "Mucca", frase: "La mucca! Mangia tanta erba e ci dà il latte." }),
-  A({ id: "cane", nome: "Cane", frase: "Il cane! Sente gli odori molto meglio di noi." }),
-  A({ id: "gatto", nome: "Gatto", frase: "Il gatto! Quando è contento fa le fusa." }),
-  A({ id: "gallo", nome: "Gallo", frase: "Il gallo! Canta chicchirichì al mattino presto." }),
-  A({ id: "cavallo", nome: "Cavallo", frase: "Il cavallo! Riesce a dormire anche stando in piedi." }),
-  A({ id: "pecora", nome: "Pecora", frase: "La pecora! Con la sua lana si fanno maglioni caldi." }),
-  A({ id: "maiale", nome: "Maiale", frase: "Il maiale! Si rotola nel fango per stare fresco." }),
-  A({ id: "rana", nome: "Rana", frase: "La rana! Da piccola è un girino e nuota nell'acqua." }),
-  A({ id: "gufo", nome: "Gufo", frase: "Il gufo! Esce di notte e vede bene anche al buio." }),
-  A({ id: "anatra", nome: "Anatra", frase: "L'anatra! Le sue zampe palmate sono perfette per nuotare." }),
+  A({ id: "leone", nome: "Leone", emoji: "🦁", frase: "Il leone! Il suo ruggito si sente da lontanissimo." }),
+  A({ id: "elefante", nome: "Elefante", emoji: "🐘", frase: "L'elefante! Con la proboscide beve, annusa e afferra le cose." }),
+  A({ id: "mucca", nome: "Mucca", emoji: "🐮", frase: "La mucca! Mangia tanta erba e ci dà il latte." }),
+  A({ id: "cane", nome: "Cane", emoji: "🐕", frase: "Il cane! Sente gli odori molto meglio di noi." }),
+  A({ id: "gatto", nome: "Gatto", emoji: "🐱", frase: "Il gatto! Quando è contento fa le fusa." }),
+  A({ id: "gallina", nome: "Gallina", emoji: "🐔", frase: "La gallina! Fa le uova e dice coccodè." }),
+  A({ id: "cavallo", nome: "Cavallo", emoji: "🐴", frase: "Il cavallo! Riesce a dormire anche stando in piedi." }),
+  A({ id: "lupo", nome: "Lupo", emoji: "🐺", frase: "Il lupo! Ulula per chiamare gli altri lupi del suo branco." }),
+  A({ id: "orso", nome: "Orso", emoji: "🐻", frase: "L'orso! D'inverno dorme a lungo nella sua tana." }),
+  A({ id: "rana", nome: "Rana", emoji: "🐸", frase: "La rana! Da piccola è un girino e nuota nell'acqua." }),
+  A({ id: "gufo", nome: "Gufo", emoji: "🦉", frase: "Il gufo! Esce di notte e vede bene anche al buio." }),
+  A({ id: "anatra", nome: "Anatra", emoji: "🦆", frase: "L'anatra! Le sue zampe palmate sono perfette per nuotare." }),
 ];

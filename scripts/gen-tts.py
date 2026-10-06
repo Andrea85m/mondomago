@@ -221,7 +221,7 @@ def collect(jsx: str) -> set[str]:
         "Quanti anni hai?",
         "Scegli il tuo compagno magico!",
         "Tocca per ascoltare la domanda!",
-        "Bravo! Hai finito le sfide di oggi!",
+        "Evviva! Hai finito le sfide di oggi!",
         "Ottimo lavoro! Ci vediamo domani!",
     })
 

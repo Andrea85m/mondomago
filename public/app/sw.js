@@ -1,5 +1,8 @@
-const CACHE_CORE  = 'magistella-core-v12';
-const CACHE_AUDIO = 'magistella-audio-v9';
+const CACHE_CORE  = 'magistella-core-v13';
+// Le clip audio sono cache-first: se si rigenera un file con lo STESSO nome
+// (voce nuova, verso migliore) questa versione va alzata, o chi l'aveva già
+// ascoltato si tiene il vecchio per sempre.
+const CACHE_AUDIO = 'magistella-audio-v10';
 
 // Assets to precache on install — relative paths so they work under any base URL
 const PRECACHE_URLS = [
@@ -78,7 +81,13 @@ self.addEventListener('fetch', e => {
         if (res.ok && !res.redirected) cache.put(key, res.clone());
         return res;
       });
+      // Prima la rete, la copia salvata solo se la rete manca o è lenta.
+      // Con "prima la copia" il primo avvio dopo un aggiornamento mostrava la
+      // versione vecchia (e chi non toccava il banner ci restava).
       if (cached) {
+        const tardi = new Promise(r => setTimeout(() => r(null), 3500));
+        const fresca = await Promise.race([network.catch(() => null), tardi]);
+        if (fresca && fresca.ok) return fresca;
         e.waitUntil(network.catch(() => {}));
         return cached;
       }

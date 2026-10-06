@@ -4,6 +4,8 @@
 // Le emoji che non sono in questa mappa restano emoji: nessuna sfida si rompe.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import { EMOJI_HD } from "./emojiHd.js";
+
 export const EMOJI_3D = {
   "☀":"2600",
   "☁":"2601",
@@ -254,6 +256,19 @@ export function emoji3d(e) {
   if (!e) return null;
   const k = EMOJI_3D[e] || EMOJI_3D[pulisci(e)];
   return k ? `${BASE}emoji/${k}.webp` : null;
+}
+
+/**
+ * La stessa immagine in alta definizione (640 px, ingrandita 4× con
+ * Real-ESRGAN x4plus-anime): esiste per i soggetti del Puzzle, dove l'immagine
+ * è grande e va tagliata a pezzi. L'elenco è generato dai file che esistono
+ * davvero (scripts/emoji-hd.py), quindi non punta mai a un file mancante.
+ */
+export function emoji3dHd(e) {
+  if (!e) return null;
+  const k = EMOJI_3D[e] || EMOJI_3D[pulisci(e)];
+  if (!k) return null;
+  return EMOJI_HD.has(k) ? `${BASE}emoji-hd/${k}.webp` : `${BASE}emoji/${k}.webp`;
 }
 
 /** Posa dei compagni: "festa" | "incoraggia" | "indica". */

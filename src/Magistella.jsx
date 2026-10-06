@@ -676,6 +676,50 @@ let _onTalkingEnd = null; // callback to clear compTalking
 // Le canzoni usavano già BASE_URL e infatti funzionavano.
 const VOCE_BASE = `${import.meta.env.BASE_URL}audio/`;
 
+// ── Lettori audio riutilizzati (Safari, iPhone, iPad) ───────────────────────
+// Safari fa suonare un elemento <audio> solo se è stato avviato almeno una
+// volta dentro un tocco. Le frasi del gioco partono dopo un setTimeout (es.
+// "Quanti anni hai?" 300 ms dopo il cambio schermata): con un `new Audio()`
+// ogni volta Safari le bloccava e si sentiva la voce di sistema dell'iPhone.
+// Qui pochi lettori fissi, sbloccati al primo tocco ovunque: poi suonano sempre.
+const SILENZIO = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==";
+const _lettori = {};
+function lettore(nome) {
+  if (!_lettori[nome]) { _lettori[nome] = new Audio(); _lettori[nome].preload = "auto"; }
+  return _lettori[nome];
+}
+let _voceAlterna = 0;
+/** Due lettori per la voce: la frase nuova parte sull'altro mentre la vecchia sfuma. */
+function lettoreVoce() { _voceAlterna = 1 - _voceAlterna; return lettore(`voce${_voceAlterna}`); }
+function sbloccaLettori() {
+  for (const n of ["voce0", "voce1", "verso", "canzone"]) {
+    const a = lettore(n);
+    if (a.src && a.src !== SILENZIO) continue;    // già in uso: è sbloccato
+    a.src = SILENZIO;
+    a.play().then(() => a.pause()).catch(() => {});
+  }
+}
+if (typeof document !== "undefined") {
+  const primo = () => { sbloccaLettori(); document.removeEventListener("pointerdown", primo, true); document.removeEventListener("keydown", primo, true); };
+  document.addEventListener("pointerdown", primo, true);
+  document.addEventListener("keydown", primo, true);
+}
+/** Suona una clip (verso di un animale) sul lettore sbloccato; `poi` parte comunque. */
+function suonaClip(src, poi) {
+  const a = lettore("verso");
+  const turno = (a._turno || 0) + 1;
+  a._turno = turno;
+  let fatto = false;
+  const fine = () => { if (fatto || a._turno !== turno) return; fatto = true; clearTimeout(t); abbassaMusicaFine(); poi?.(); };
+  const t = setTimeout(fine, 5000);
+  a.onended = fine; a.onerror = fine;
+  a.volume = 1; a.src = src;
+  abbassaMusica();
+  a.play().catch(fine);
+  return () => { fatto = true; clearTimeout(t); if (a._turno === turno) a.pause(); abbassaMusicaFine(); };
+}
+function abbassaMusicaFine() { if (!_currentAudio) alzaMusica(); }
+
 // ── Priorità della voce ──────────────────────────────────────────────────────
 // CONSEGNA = la domanda, l'intro del mondo: è quello che il bambino deve sentire.
 // COMMENTO = la battuta del compagno dopo una risposta.
@@ -690,10 +734,13 @@ let _currentPrio = 0;
 
 function sfumaEFerma(audio) {
   // iOS ignora audio.volume: lì il fade non c'è e resta lo stop secco di prima.
+  // Il lettore viene riusato: se nel frattempo ha ricevuto una frase nuova, ci si ferma.
+  const turno = audio._turno;
   const passi = 6;
   let i = 0;
   const v0 = audio.volume;
   const t = setInterval(() => {
+    if (audio._turno !== turno) { clearInterval(t); return; }
     i++;
     try { audio.volume = Math.max(0, v0 * (1 - i / passi)); } catch { /* volume non scrivibile */ }
     if (i >= passi) { clearInterval(t); audio.pause(); }
@@ -738,14 +785,19 @@ function speak(text, rate = 0.85, onEnd, { prio = VOCE_CONSEGNA, cedeA = false }
   _currentKey = key; _currentPrio = prio;
 
   if (file) {
-    const audio = new Audio(VOCE_BASE + file);
+    const audio = lettoreVoce();
+    const turno = (audio._turno || 0) + 1;
+    audio._turno = turno;
+    audio.onended = null;
+    try { audio.volume = 1; } catch { /* iOS */ }
+    audio.src = VOCE_BASE + file;
     // Niente playbackRate: allungare o accorciare un mp3 sposta le formanti e
     // la voce diventa metallica. La cadenza giusta è già dentro il file
     // (gen-tts.py registra tutto a rate -10%), quindi si riproduce a 1×.
     _currentAudio = audio;
     abbassaMusica();
     audio.onended = () => {
-      if (_currentAudio !== audio) return;   // nel frattempo è partita un'altra frase
+      if (_currentAudio !== audio || audio._turno !== turno) return;   // nel frattempo è partita un'altra frase
       _currentAudio = null;
       chiudiParlato();
     };
@@ -754,7 +806,7 @@ function speak(text, rate = 0.85, onEnd, { prio = VOCE_CONSEGNA, cedeA = false }
       // file stava ancora scaricando). Non è un errore: la frase nuova è già in
       // onda. Prima qui si azzerava _currentAudio — perdendo quella nuova — e si
       // rileggeva la VECCHIA con la voce di sistema, sopra la nuova.
-      if (_currentAudio !== audio || err?.name === "AbortError") return;
+      if (_currentAudio !== audio || audio._turno !== turno || err?.name === "AbortError") return;
       _currentAudio = null;
       // Errore vero (file non scaricabile, offline senza cache): la voce di
       // sistema è meglio del silenzio per un bambino che non sa ancora leggere.
@@ -813,10 +865,7 @@ function warmUpAudio() {
   _audioUnlocked = true;
   // Unlock AudioContext
   try { getCtxRaw(); } catch { /* niente AudioContext: si gioca senza effetti sonori */ }
-  // Unlock HTMLAudio with a silent 100ms WAV
-  const a = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==");
-  a.volume = 0.001;
-  a.play().catch(() => {});
+  sbloccaLettori();
 }
 // ── SOUND ENGINE ─────────────────────────────────────────────────────────────
 let _ctx = null;
@@ -956,7 +1005,8 @@ function _playSongLine() {
   if (!_songActive || !_songWorld) return;
   const lines = WORLD_SONGS[_songWorld]; if (!lines) return;
   const idx = _songLine % lines.length;
-  _songAudio = new Audio(`${import.meta.env.BASE_URL}audio/song_${_songWorld}_${idx}.mp3`);
+  _songAudio = lettore("canzone");
+  _songAudio.src = `${import.meta.env.BASE_URL}audio/song_${_songWorld}_${idx}.mp3`;
   _songAudio.volume = _musicaSotto ? SONG_VOL_SOTTO_VOCE : SONG_VOL;
   if (_onSongTick) _onSongTick(lines[idx]);
   _songAudio.onended = () => { if (_songActive) { _songLine++; _playSongLine(); } };
@@ -2261,7 +2311,7 @@ export default function Magistella() {
       return;
     }
     if (screen === "name") { setTimeout(() => speak("Come ti chiami?", 0.8), 300); return; }
-    if (screen === "age")  { setTimeout(() => speak(`Benvenuto ${childName || ""}! Quanti anni hai?`, 0.8), 300); return; }
+    if (screen === "age")  { setTimeout(() => speak(`Ciao ${childName || ""}! Quanti anni hai?`, 0.8), 300); return; }
     if (screen === "companion") {
       setTimeout(() => speak("Scegli il tuo compagno magico!", 0.8), 400); return;
     }
@@ -2298,7 +2348,7 @@ export default function Magistella() {
   useEffect(() => {
     if (screen !== "onboarding") return;
     const titles = [
-      "Benvenuto in Magistella! Il gioco educativo per bambini da tre a otto anni.",
+      "Ti diamo il benvenuto in Magistella! Il gioco educativo per bambini da tre a otto anni.",
       "Sfide che fanno crescere! Calibrate per la tua età, sempre nuove.",
       "Guadagna stelle e premi! Sblocca nuovi mondi e personalizza il tuo compagno.",
     ];
@@ -2798,6 +2848,7 @@ export default function Magistella() {
         <PuzzleMagico
           età={childAge || 5}
           speak={speak}
+          suona={suonaClip}
           sfx={SFX}
           // Monete sì, stelle no: le stelle aprono i mondi e fanno salire di
           // grado, e un puzzle non deve poter scavalcare le sfide. Le monete
