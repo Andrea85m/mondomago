@@ -1061,6 +1061,50 @@ function VittoriaAnimale({ animale, monete = 0, adesivo, speak, onAncora, onAltr
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// SCELTA DEL TEMA — "Con cosa giochiamo?"
+// Prima il tema era una fila di pillole nell'hub: un bambino che non sa leggere
+// non capiva cosa fossero, e l'effetto si vedeva solo dentro il gioco. Ora è il
+// primo passo del gioco: riquadri grandi con le cose del tema, la voce dice il
+// nome, un tocco e si parte.
+// ═══════════════════════════════════════════════════════════════════════════
+function SceltaTema({ attuale, onScegli, onIndietro, speak, sfx, titolo }) {
+  useEffect(() => {
+    const t = setTimeout(() => speak?.("Con cosa giochiamo?"), 300);
+    return () => clearTimeout(t);
+  }, [speak]);
+  const voci = [...TEMI.map(t => ({ id: t.id, nome: t.nome, cose: t.cose.slice(0, 3).map(([e]) => e) })),
+    { id: "tutti", nome: "Tutti", cose: ["🦁", "🍎", "🚀"] }];
+  return (
+    <Cornice titolo={titolo} sottotitolo="Con cosa giochiamo?" onIndietro={onIndietro}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        {voci.map(t => {
+          const on = t.id === attuale;
+          return (
+            <button key={t.id} onClick={() => { sfx?.tap?.(); speak?.(t.nome); onScegli(t.id); }}
+              aria-label={t.nome} aria-pressed={on}
+              style={{
+                position: "relative", aspectRatio: "1 / 0.9", borderRadius: 22, cursor: "pointer", padding: "10px 8px 8px",
+                background: on ? "linear-gradient(180deg,#5B3FD0,#3A2290)" : "radial-gradient(circle at 50% 35%, #3B2A78, #22144F 80%)",
+                border: on ? "3px solid #FFC24B" : "3px solid rgba(255,255,255,.12)", boxShadow: "0 5px 0 #140B29",
+                display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-between", color: "#fff",
+              }}>
+              <div style={{ position: "relative", width: "100%", flex: 1 }} aria-hidden="true">
+                {t.cose.map((e, i) => (
+                  <img key={e} src={emoji3dHd(e)} alt="" draggable={false}
+                    style={{ position: "absolute", width: i === 1 ? "50%" : "38%", left: ["2%", "25%", "60%"][i], top: i === 1 ? "4%" : "22%",
+                      objectFit: "contain", filter: "drop-shadow(0 4px 5px rgba(0,0,0,.45))", zIndex: i === 1 ? 2 : 1 }} />
+                ))}
+              </div>
+              <span style={{ fontFamily: FF_DISPLAY, fontSize: 19, textShadow: "0 2px 0 #27134F" }}>{t.nome}</span>
+            </button>
+          );
+        })}
+      </div>
+    </Cornice>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // ALBUM DEGLI ADESIVI
 // ═══════════════════════════════════════════════════════════════════════════
 function Album({ vinti, animali = [], onIndietro, speak }) {
@@ -1143,6 +1187,9 @@ function AnteprimaGioco({ id, colore, icona }) {
   return <Icon name={icona} color={colore} size={28} />;
 }
 
+// questi giochi chiedono prima "Con cosa giochiamo?"
+const CON_TEMA = new Set(["ombre", "costruttore", "indovina"]);
+
 const GIOCHI = [
   { id: "ombre",       nome: "Ombre magiche",    desc: "Posa ogni cosa sulla sua ombra", icona: "mano",     colore: "#6DE0C6" },
   { id: "costruttore", nome: "Il Costruttore",   desc: "Rimetti insieme l'animale",       icona: "immagini", colore: "#FFC24B" },
@@ -1171,6 +1218,7 @@ export default function PuzzleMagico({ età = 5, speak, suona = null, sfx, onExi
   const [vittoria, setVittoria] = useState(null);
   const [seme, setSeme] = useState(0);   // cambiarlo rimescola soggetti e tagli
   const [animale, setAnimale] = useState(null);   // l'animale del puzzle in corso
+  const [dopoTema, setDopoTema] = useState(null);  // il gioco da aprire dopo la scelta del tema
 
   useEffect(() => { writeSave(salvato); }, [salvato]);
   // eslint-disable-next-line react-hooks/set-state-in-effect -- cambia il bambino: il livello riparte dalla sua età
@@ -1231,6 +1279,12 @@ export default function PuzzleMagico({ età = 5, speak, suona = null, sfx, onExi
   if (schermo === "album")
     return <Album vinti={adesiviVinti} animali={animaliFatti} onIndietro={() => setSchermo("hub")} speak={speak} />;
 
+  if (schermo === "tema")
+    return <SceltaTema attuale={tema} speak={speak} sfx={sfx}
+      titolo={GIOCHI.find(g => g.id === dopoTema)?.nome || "Puzzle Magico"}
+      onIndietro={() => setSchermo("hub")}
+      onScegli={(t) => { scegliTema(t); setSeme(n => n + 1); setTimeout(() => setSchermo(dopoTema), 350); }} />;
+
   if (schermo === "animali")
     return <SceltaAnimale completati={animaliFatti} speak={speak} sfx={sfx}
       onIndietro={() => setSchermo("hub")}
@@ -1238,7 +1292,7 @@ export default function PuzzleMagico({ età = 5, speak, suona = null, sfx, onExi
 
   const comuni = {
     livello, seme, speak, sfx,
-    onIndietro: () => setSchermo("hub"),
+    onIndietro: () => setSchermo(CON_TEMA.has(schermo) ? "tema" : "hub"),
     onLivello: setLivello,
   };
 
@@ -1322,26 +1376,9 @@ export default function PuzzleMagico({ età = 5, speak, suona = null, sfx, onExi
         <div style={{ fontSize: 20, opacity: .5 }}>›</div>
       </button>
 
-      {/* tema di Ombre e "Cosa si nasconde" */}
-      <div style={{ fontSize: 11, opacity: .55, fontWeight: 800, letterSpacing: 1, margin: "0 0 6px" }}>TEMA DEI GIOCHI</div>
-      <div role="radiogroup" aria-label="Tema dei giochi" style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4, marginBottom: 12 }}>
-        {[...TEMI.map(t => ({ id: t.id, nome: t.nome, icona: t.icona })), { id: "tutti", nome: "Tutti", icona: "🎲" }].map(t => {
-          const on = t.id === tema;
-          return (
-            <button key={t.id} role="radio" aria-checked={on} onClick={() => { sfx?.tap?.(); scegliTema(t.id); }}
-              style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 5, padding: "7px 14px", minHeight: 44, borderRadius: 30,
-                cursor: "pointer", fontFamily: FF, fontSize: 13, fontWeight: 800,
-                background: on ? SG_GOLD_GRAD : "rgba(255,255,255,.07)", color: on ? SG_INK : SG_PARCH,
-                border: on ? "none" : "1px solid rgba(255,194,75,.18)" }}>
-              <span aria-hidden="true">{t.icona}</span>{t.nome}
-            </button>
-          );
-        })}
-      </div>
-
       <div style={{ display: "grid", gap: 12, marginBottom: 16 }}>
         {GIOCHI.map(g => (
-          <button key={g.id} onClick={() => { sfx?.tap?.(); setSchermo(g.id); }}
+          <button key={g.id} onClick={() => { sfx?.tap?.(); if (CON_TEMA.has(g.id)) { setDopoTema(g.id); setSchermo("tema"); } else setSchermo(g.id); }}
             style={{
               display: "flex", alignItems: "center", gap: 16, textAlign: "left",
               background: SG_CARD, border: SG_BR, borderRadius: 24, padding: "18px 18px",

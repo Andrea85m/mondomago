@@ -132,6 +132,24 @@ async function main() {
     await scatta(page, 'puzzle-hub');
   });
 
+
+  // I giochi con tema chiedono prima "Con cosa giochiamo?": si sceglie e si entra.
+  const apriGioco = async (nome, tema = 'Animali') => {
+    await page.getByRole('button', { name: new RegExp(nome, 'i') }).first().click();
+    await page.waitForTimeout(500);
+    if (await page.getByText('Con cosa giochiamo?').count()) {
+      await page.getByRole('button', { name: tema, exact: true }).click();
+      await page.waitForTimeout(800);
+    }
+  };
+  const tornaHub = async () => {
+    for (let i = 0; i < 3; i++) {
+      if (await page.getByText('Cinque giochi per costruire').count()) return;
+      await page.getByRole('button', { name: 'Indietro' }).first().click();
+      await page.waitForTimeout(400);
+    }
+  };
+
   // ── i quattro giochi ──────────────────────────────────────────────────────
   const giochi = [
     ['Ombre magiche', 'ombre'],
@@ -141,16 +159,15 @@ async function main() {
   ];
   for (const [nome, slug] of giochi) {
     await passo(`gioco "${nome}" si apre e disegna`, async () => {
-      await page.getByRole('button', { name: new RegExp(nome, 'i') }).first().click();
-      await page.waitForTimeout(900);
+      await apriGioco(nome);
+      await page.waitForTimeout(400);
       await scatta(page, slug);
       const corpo = await page.evaluate(() => document.body.innerText.length);
       if (corpo < 20) throw new Error('schermata praticamente vuota');
       // niente scroll orizzontale
       const over = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 2);
       if (over) throw new Error('la pagina scrolla in orizzontale');
-      await page.getByRole('button', { name: 'Indietro' }).first().click();
-      await page.waitForTimeout(500);
+      await tornaHub();
     });
   }
 
@@ -234,7 +251,7 @@ async function main() {
 
   // ── Costruttore: l'animale del tema a pezzi sagomati ──────────────────────
   await passo('il Costruttore è sagomato e si completa', async () => {
-    await page.getByRole('button', { name: /Il Costruttore/i }).first().click();
+    await apriGioco('Il Costruttore');
     await page.waitForSelector('svg[data-sagomato] g[role="button"]', { timeout: 8000 });
     const nPezzi = await page.locator('svg[data-sagomato] g[role="button"]').count();
     if (nPezzi < 2) throw new Error(`solo ${nPezzi} pezzi`);
@@ -288,18 +305,13 @@ async function main() {
     await page.waitForTimeout(400);
   });
 
-  await passo('il tema scelto vale per Ombre magiche', async () => {
-    await page.getByRole('radio', { name: /Mare/ }).click();
-    await page.getByRole('button', { name: /Ombre magiche/i }).first().click();
-    await page.waitForTimeout(900);
+  await passo('"Con cosa giochiamo?" sceglie il tema di Ombre magiche', async () => {
+    await apriGioco('Ombre magiche', 'Mare');
     const nomi = await page.evaluate(() => [...document.querySelectorAll('button[aria-label]')].map(b => b.getAttribute('aria-label')).join(' | '));
     if (!/Delfino|Balena|Pesce|Polpo|Squalo|Granchio|Conchiglia|Calamaro|Aragosta|Lumaca/.test(nomi)) throw new Error(`nessuna cosa di mare in gioco: ${nomi.slice(0, 160)}`);
-    await page.getByRole('button', { name: 'Indietro' }).first().click();
-    await page.waitForTimeout(400);
-    await page.getByRole('radio', { name: /Animali/ }).click();
+    await tornaHub();
   });
 
-  // ── le sfide nuove del laboratorio a 3-4 anni ─────────────────────────────
   await passo('il laboratorio ora è giocabile anche a 4 anni', async () => {
     const n = await page.evaluate(() => {
       // conteggio statico sul bundle: le sfide lab_a* devono esistere
@@ -335,11 +347,9 @@ async function main() {
   await passo('dentro un gioco del puzzle la barra si nasconde, e torna nell\'hub', async () => {
     await page.locator('nav.mg-tabs').getByRole('button', { name: 'Puzzle' }).click();
     await page.waitForSelector('text=Puzzle Magico', { timeout: 8000 });
-    await page.getByRole('button', { name: /Ombre magiche/i }).first().click();
-    await page.waitForTimeout(600);
+    await apriGioco('Ombre magiche');
     if (await page.locator('nav.mg-tabs').count()) throw new Error('la barra copre il gioco');
-    await page.getByRole('button', { name: 'Indietro' }).first().click();
-    await page.waitForTimeout(400);
+    await tornaHub();
     if (!(await page.locator('nav.mg-tabs').count())) throw new Error("tornando all'hub la barra non c'è");
     await page.locator('nav.mg-tabs').getByRole('button', { name: 'Mondi' }).click();
     await page.waitForSelector('text=I Mondi Magici', { timeout: 8000 });

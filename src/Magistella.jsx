@@ -426,6 +426,44 @@ function BarraSezioni({ attiva, onVai }) {
   );
 }
 
+// La fiamma spiegata a un bambino: quanti giorni di fila, la settimana accesa
+// giorno per giorno, e il regalo di oggi. Prima era solo un numero accanto a
+// una fiammella, senza nessun significato per chi gioca.
+function FinestraFiamma({ streak, bonus, aRischio, comp, look, onChiudi }) {
+  useEffect(() => {
+    const t = setTimeout(() => speak("Ogni giorno che giochi, la fiamma cresce e ti regala monete!"), 350);
+    return () => clearTimeout(t);
+  }, []);
+  const settimana = Array.from({ length: 7 }, (_, i) => i < Math.min(streak, 7));
+  return (
+    <div onClick={onChiudi} role="dialog" aria-label="La tua fiamma"
+      style={{position:"fixed",inset:0,zIndex:705,background:"rgba(10,6,25,.88)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div className="pop-in" onClick={e => e.stopPropagation()}
+        style={{background:SG_BG,border:`3px solid ${SG_GOLD}`,borderRadius:28,padding:"24px 22px",maxWidth:340,width:"100%",textAlign:"center",color:SG_PARCH,boxShadow:"0 0 60px rgba(251,146,60,.35)"}}>
+        <img src={ui3d("flame")} alt="" style={{width:96,height:96,objectFit:"contain",animation:"wiggle 0.9s ease-in-out infinite"}} />
+        <div style={{fontFamily:FF_DISPLAY,fontSize:34,color:SG_GOLD,lineHeight:1.05,marginTop:4}}>{streak} {streak === 1 ? "giorno" : "giorni"} di fila</div>
+        <div style={{display:"flex",justifyContent:"center",gap:6,margin:"14px 0"}} aria-hidden="true">
+          {settimana.map((acceso, i) => (
+            <div key={i} style={{width:34,height:34,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",
+              background:acceso ? "linear-gradient(180deg,#FDBA74,#F97316)" : "rgba(255,255,255,.08)",border:`2px solid ${acceso ? "#FED7AA" : "rgba(255,255,255,.15)"}`}}>
+              {acceso && <img src={ui3d("flame")} alt="" style={{width:20,height:20}} />}
+            </div>
+          ))}
+        </div>
+        <div style={{fontSize:15,lineHeight:1.4,marginBottom:12}}>Ogni giorno che giochi la fiamma cresce e ti regala monete!</div>
+        {bonus > 0 && (
+          <div className="pop-in" style={{display:"inline-flex",alignItems:"center",gap:8,background:"rgba(255,194,75,.14)",border:"2px solid rgba(255,194,75,.5)",borderRadius:30,padding:"6px 16px",marginBottom:12}}>
+            <img src={premio3d("coin")} alt="" style={{width:26,height:26}} /><b style={{color:SG_GOLD}}>+{bonus} monete di oggi</b>
+          </div>
+        )}
+        {aRischio && <div style={{fontSize:13,color:"#FDBA74",marginBottom:12}}>Gioca oggi per non far spegnere la fiamma!</div>}
+        {comp && <div style={{marginBottom:12}}><CompanionAvatar c={comp} size={64} mood="celebrating" look={look} decorativa /></div>}
+        <button className="mg-cta" onClick={onChiudi} style={{fontSize:18,padding:"12px 44px"}}>Evviva!</button>
+      </div>
+    </div>
+  );
+}
+
 const FAMILY_MISSIONS = [
   { id:1, emoji:"🍳", title:"Chef Magico",          desc:"Cucinare insieme! Conta ingredienti, misura le porzioni, segui una ricetta semplice.", skill:"numeri",     dur:"20 min" },
   { id:2, emoji:"🌱", title:"Giardino Segreto",      desc:"Pianta un seme. Disegna come cresce ogni giorno per una settimana!",                   skill:"logica",     dur:"Settimana" },
@@ -524,20 +562,38 @@ function genMathChallenge(worldId, age) {
     prompt:`${tens} + ${add} = ?`, options, correct };
 }
 
-function filterByAge(worldId, age, skills = null) {
+// visti: { idSfida: numero della sessione in cui è uscita l'ultima volta }.
+// Prima ogni partita pescava 6 sfide a caso senza memoria: con 10-30 sfide per
+// mondo e per età, già alla seconda partita il bambino rivedeva le stesse.
+// Ora escono prima quelle mai viste, poi quelle viste più tempo fa: si fa il
+// giro di tutto il mazzo prima di ripetere.
+// Fulmine: "Quanti sono?" — si conta guardando, adatto anche a chi non legge.
+const CONTA_COSE = ["🍎", "⭐", "🐟", "🦋", "🍓", "🐞", "🌸", "🍄", "🐥", "🎈"];
+function genContaFulmine(age) {
+  const max = age <= 4 ? 5 : 8;
+  const n = 1 + Math.floor(Math.random() * max);
+  const e = CONTA_COSE[Math.floor(Math.random() * CONTA_COSE.length)];
+  const opz = new Set([n]);
+  while (opz.size < 4) { const d = n + (Math.floor(Math.random() * 5) - 2); if (d >= 1 && d <= max + 2) opz.add(d); }
+  const options = [...opz].sort(() => Math.random() - 0.5).map(String);
+  return { id: `conta_${n}_${e}_${Math.random().toString(36).slice(2, 6)}`, format: "visual_tap", prompt: "Quanti sono?",
+    visual: e.repeat(n), options, correct: options.indexOf(String(n)) };
+}
+
+function filterByAge(worldId, age, skills = null, visti = {}) {
   const all = (ALL_CHALLENGES[worldId] || []).filter(c => age >= c.ageMin && age <= c.ageMax);
-  const bosses = all.filter(c => c.isBoss);
+  const recenza = (c) => (visti[c.id] ?? -1);
+  const bosses = all.filter(c => c.isBoss).sort((a, b) => recenza(a) - recenza(b) || Math.random() - 0.5);
   // Selezione ADATTIVA per skill: se sono note le competenze del bambino, le sfide
   // delle skill più DEBOLI (mastery più basso) hanno più probabilità di uscire.
   // Random × livello: un livello basso comprime il punteggio → ordina prima = esce di più.
   // Senza skills → shuffle puro (retrocompatibile, comportamento originale).
-  const normals = skills
-    ? all.filter(c => !c.isBoss)
-         .map(c => ({ c, k: Math.random() * (skills[getSkill(c.type)] ?? 1) }))
-         .sort((a, b) => a.k - b.k)
-         .map(x => x.c)
-    : all.filter(c => !c.isBoss).sort(() => Math.random() - 0.5);
-  const boss = bosses[Math.floor(Math.random() * bosses.length)];
+  // prima la novità (mai viste / viste da più tempo), poi la skill più debole
+  const normals = all.filter(c => !c.isBoss)
+    .map(c => ({ c, r: recenza(c), k: Math.random() * (skills ? (skills[getSkill(c.type)] ?? 1) : 1) }))
+    .sort((a, b) => (a.r - b.r) || (a.k - b.k))
+    .map(x => x.c);
+  const boss = bosses[0];
   // Inject 1 procedural math challenge per session, swap out 1 normal
   const proc = genMathChallenge(worldId, age);
   const slice = boss ? normals.slice(0, 4) : normals.slice(0, 5);
@@ -1403,6 +1459,9 @@ export default function Magistella() {
   const [newLevel,        setNewLevel]        = useState(null);
   const [lastKnownLevel,  setLastKnownLevel]  = useState(null);
   const [streakCelebrate, setStreakCelebrate] = useState(false);
+  // La fiamma: toccandola si capisce cosa vuol dire, e ogni giorno nuovo regala monete
+  const [fiammaAperta, setFiammaAperta] = useState(false);
+  const [fiammaBonus,  setFiammaBonus]  = useState(0);
   const [tutorialSeen,    setTutorialSeen]    = useState(() => !!localStorage.getItem('mondomago_tutorial'));
   // drag-drop state
   const [dragPicked,      setDragPicked]      = useState(null);   // index of picked item
@@ -1453,11 +1512,15 @@ export default function Magistella() {
   const [schoolAssigned,    setSchoolAssigned]    = useState([]);  // challenge ids from teacher
   const [sessionLog,        setSessionLog]        = useState([]); // [{date,stars,world,correct,total}]
   const [missed,            setMissed]            = useState([]); // SRS: [{id,world,s}] sfide sbagliate da ripassare
+  const [visti,             setVisti]             = useState({}); // { idSfida: sessione } per non ripetere
   const [fulminoTime,       setFulminoTime]       = useState(60);  // countdown seconds
   const [fulminoScore,      setFulminoScore]      = useState(0);   // correct answers
   const [fulminoCi,         setFulminoCi]         = useState(0);   // challenge index in pool
   const [fulminoPool,       setFulminoPool]       = useState([]); // shuffled visual_tap challenges
   const [fulminoRunning,    setFulminoRunning]    = useState(false);
+  const [fulminoCombo,      setFulminoCombo]      = useState(0);     // risposte giuste di fila
+  const [fulminoEsito,      setFulminoEsito]      = useState(null);  // { idx, giusto } per mezzo secondo
+  const [fulminoRecord,     setFulminoRecord]     = useState(0);
   const [obSlide,           setObSlide]           = useState(0);
   const [mapSpotDismissed,  setMapSpotDismissed]  = useState(false);
   const [screenFlash,  setScreenFlash]  = useState(null);   // null | "ok" | "bad"
@@ -1537,7 +1600,7 @@ export default function Magistella() {
     setMissionsDone([]); setDailyCompletedDate('');
     setWrongStreak(0); setShowFeedback(false);
     setAchievements([]); setDailyCount(0); setActiveProfileId(null);
-    setEquippedCosmetic({}); setSessionLog([]);
+    setEquippedCosmetic({}); setSessionLog([]); setVisti({});
     setCoins(0); setOwnedCosmetics([]);
     setSchoolMode(false); setSchoolCode(""); setSchoolAssigned([]);
     navigate(remaining.length > 0 ? 'profile_select' : 'name');
@@ -1861,7 +1924,7 @@ export default function Magistella() {
 
   function startWorld(w) {
     if (!w.unlocked) return;
-    const base = filterByAge(w.id, childAge || 5, skills); // selezione adattiva per skill
+    const base = filterByAge(w.id, childAge || 5, skills, visti); // novità prima, poi skill deboli
     if (!base.length) return;
     // SRS: anteponi fino a 2 sfide sbagliate in sessioni PRECEDENTI (ripasso spaziato).
     let list = base;
@@ -1881,6 +1944,8 @@ export default function Magistella() {
     }
     stopMusic(); stopSong();
     preScaricaVoce([...list.map(consegnaDi), STORY_ARCS[w.id]?.intro_text, STORY_ARCS[w.id]?.outro]);
+    // queste sfide ora sono "viste": la prossima volta escono per ultime
+    setVisti(v => { const n = { ...v }; for (const c of list) n[c.id] = sessionLog.length; return n; });
     setWorld(w); setChallenges(list); setCi(0);
     setSelected(null); setStoryChoice(null); setSeqTaps([]); setSeqError(false); setDragPicked(null); setDragPlaced({}); setColorZoneColors({}); setColorZonePicked(null); setPuzzleGrid(null); setPuzzleMoves(0);
     setFeedbackMsg(""); setWrongStreak(0); setShowFeedback(false);
@@ -1923,6 +1988,7 @@ export default function Magistella() {
     if (p.equippedCosmetic)               setEquippedCosmetic(p.equippedCosmetic);
     if (p.sessionLog)                     setSessionLog(p.sessionLog);
     if (p.missed)                         setMissed(p.missed);
+    setVisti(p.visti || {});
     if (typeof p.coins === 'number')      setCoins(p.coins);
     if (p.ownedCosmetics)                 setOwnedCosmetics(p.ownedCosmetics);
     if (p.schoolMode)                     setSchoolMode(p.schoolMode);
@@ -1933,11 +1999,17 @@ export default function Magistella() {
       const diff = Math.floor((parseDateLocal(today) - parseDateLocal(p.lastDate)) / 86400000);
       const newStreak = diff === 0 ? (p.streak||1) : diff === 1 ? (p.streak||0)+1 : 1;
       setStreak(newStreak);
-      if (diff === 1 && newStreak >= 3) {
-        if (newStreak % 7 === 0 || newStreak === 3) {
-          setStreakCelebrate(true);
-          setTimeout(() => SFX.milestone(), 400);
-        }
+      // giorno nuovo: la fiamma regala tante monete quanti sono i giorni di fila (max 5)
+      if (diff >= 1) {
+        const bonus = Math.min(newStreak, 5);
+        setCoins(c => (typeof p.coins === 'number' ? p.coins : c) + bonus);
+        setFiammaBonus(bonus);
+      }
+      if (diff === 1 && newStreak >= 3 && (newStreak % 7 === 0 || newStreak === 3)) {
+        setStreakCelebrate(true);
+        setTimeout(() => SFX.milestone(), 400);
+      } else if (diff >= 1) {
+        setTimeout(() => setFiammaAperta(true), 900);
       }
     }
     setIsReturning(true);
@@ -1954,7 +2026,7 @@ export default function Magistella() {
     setCombo(0); setResults([]); setStreak(1);
     setMissionsDone([]); setDailyCompletedDate('');
     setAchievements([]); setDailyCount(0);
-    setEquippedCosmetic({}); setSessionLog([]);
+    setEquippedCosmetic({}); setSessionLog([]); setVisti({});
     setSchoolMode(false); setSchoolCode(""); setSchoolAssigned([]);
     setCoins(0); setOwnedCosmetics([]);
     setIsReturning(false);
@@ -2069,7 +2141,7 @@ export default function Magistella() {
       return;
     }
     const today = new Date().toISOString().slice(0,10);
-    const data = { id: activeProfileId, childName, childAge, companion, totalStars, skills, items, streak, missionsDone, dailyCompletedDate, lastDate: today, achievements, dailyCount, equippedCosmetic, sessionLog, missed, schoolMode, schoolCode, schoolAssigned, coins, ownedCosmetics };
+    const data = { id: activeProfileId, childName, childAge, companion, totalStars, skills, items, streak, missionsDone, dailyCompletedDate, lastDate: today, achievements, dailyCount, equippedCosmetic, sessionLog, missed, visti, schoolMode, schoolCode, schoolAssigned, coins, ownedCosmetics };
     setAllProfiles(prev => {
       const updated = prev.some(p => p.id === activeProfileId)
         ? prev.map(p => p.id === activeProfileId ? data : p)
@@ -2077,7 +2149,7 @@ export default function Magistella() {
       writeAllProfiles(updated);
       return updated;
     });
-  }, [activeProfileId, childName, childAge, companion, totalStars, skills, items, streak, missionsDone, dailyCompletedDate, achievements, dailyCount, equippedCosmetic, sessionLog, missed, schoolMode, schoolCode, schoolAssigned, coins, ownedCosmetics]);
+  }, [activeProfileId, childName, childAge, companion, totalStars, skills, items, streak, missionsDone, dailyCompletedDate, achievements, dailyCount, equippedCosmetic, sessionLog, missed, visti, schoolMode, schoolCode, schoolAssigned, coins, ownedCosmetics]);
 
   // Achievement check
   useEffect(() => {
@@ -2194,10 +2266,14 @@ export default function Magistella() {
     if (screen !== "fulmine" || !fulminoRunning) return;
     if (fulminoTime <= 0) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- tempo scaduto: la Sfida Fulmine si ferma
-      setFulminoRunning(false); return;
+      setFulminoRunning(false);
+      SFX.victory?.();
+      if (fulminoScore > fulminoRecord && fulminoScore > 0) triggerConfetti(true);   // nuovo record
+      return;
     }
     const t = setInterval(() => setFulminoTime(s => s - 1), 1000);
     return () => clearInterval(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- punteggio e record si leggono solo allo scadere del tempo
   }, [screen, fulminoRunning, fulminoTime]);
 
   // Save parent settings when they change
@@ -2426,6 +2502,10 @@ export default function Magistella() {
         );
       })()}
       {/* Streak milestone celebration */}
+      {fiammaAperta && (
+        <FinestraFiamma streak={streak} bonus={fiammaBonus} aRischio={streak >= 2 && !sessionLog.some(x => x.date === new Date().toISOString().slice(0, 10))} comp={comp} look={comp ? equippedCosmetic[comp.id] : null}
+          onChiudi={() => { setFiammaAperta(false); setFiammaBonus(0); }} />
+      )}
       {streakCelebrate && (
         <div onClick={() => setStreakCelebrate(false)} style={{position:"fixed",inset:0,background:"radial-gradient(120% 90% at 50% 38%, rgba(45,27,84,.92), rgba(10,6,25,.96))",zIndex:710,display:"flex",alignItems:"center",justifyContent:"center",padding:24,cursor:"pointer"}}>
           <div className="pop-in" style={{background:SG_BG,border:`2px solid ${SG_GOLD}`,borderRadius:28,padding:"32px 26px 26px",textAlign:"center",maxWidth:320,width:"100%",boxShadow:"0 0 70px rgba(255,194,75,.35), inset 0 0 44px rgba(255,194,75,.06)"}}>
@@ -2945,11 +3025,17 @@ export default function Magistella() {
           // Le sole visual_tap si fermano a 7 anni → a 8 anni il pool restava vuoto e la sfida
           // partiva senza domande; multiple_choice copre la fascia alta.
           const RAPID = new Set(["visual_tap", "multiple_choice"]);
+          // Nel Fulmine si risponde in 2-3 secondi: solo domande brevi (la voce le
+          // legge in un attimo), niente problemi a più righe da leggere.
+          const breve = (c) => (c.prompt || c.question || "").replace(/\n/g, " ").length <= 46;
           const pool = Object.values(ALL_CHALLENGES).flat().filter(c =>
-            RAPID.has(c.format) && Array.isArray(c.options) && c.options.length >= 2 &&
+            RAPID.has(c.format) && Array.isArray(c.options) && c.options.length >= 2 && breve(c) &&
             c.ageMin <= (childAge||5) && c.ageMax >= (childAge||5));
-          const shuffled = [...pool].sort(() => Math.random() - 0.5);
+          const conta = (childAge || 5) <= 6 ? Array.from({ length: 24 }, () => genContaFulmine(childAge || 5)) : [];
+          const shuffled = [...pool, ...conta].sort(() => Math.random() - 0.5);
           setFulminoPool(shuffled); setFulminoCi(0); setFulminoScore(0); setFulminoTime(60); setFulminoRunning(false);
+          setFulminoCombo(0); setFulminoEsito(null);
+          try { setFulminoRecord(+localStorage.getItem(`mondomago_fulmine_${activeProfileId}`) || 0); } catch { setFulminoRecord(0); }
           navigate("fulmine");
         };
         const h = new Date().getHours();
@@ -2976,7 +3062,8 @@ export default function Magistella() {
               )}
               <div className="mg-res" aria-label={`${totalStars} stelle`}><img src={premio3d("star")} alt="" /><b>{totalStars}</b></div>
               <div className="mg-res" aria-label={`${coins} monete`}><img src={premio3d("coin")} alt="" /><b>{coins}</b></div>
-              <div className={`mg-res${streakAtRisk ? " rischio" : ""}`} style={{flex:.8}} aria-label={`Serie di ${streak} giorni${streakAtRisk ? ", a rischio" : ""}`}><img src={ui3d("flame")} alt="" /><b>{streak}</b></div>
+              <button className={`mg-res${streakAtRisk ? " rischio" : ""}`} style={{flex:.8,cursor:"pointer",font:"inherit",color:"inherit",minHeight:44}} onClick={() => { setFiammaBonus(0); setFiammaAperta(true); }}
+                aria-label={`La tua fiamma: ${streak} ${streak === 1 ? "giorno" : "giorni"} di fila${streakAtRisk ? ", gioca oggi per non spegnerla" : ""}`}><img src={ui3d("flame")} alt="" /><b>{streak}</b></button>
             </div>
 
             <div style={{textAlign:"center",padding:"6px 16px 0"}}>
@@ -3129,121 +3216,146 @@ export default function Magistella() {
 
   // ════════════════════ SCREEN: SFIDA FULMINE ══════════════════════════════
   if (screen === "fulmine") {
+    // ── SFIDA FULMINE ─────────────────────────────────────────────────────────
+    // Rifatta nel linguaggio del resto del gioco (ottobre 2026): prima era la
+    // schermata più vecchia dell'app — icone piatte, problemi lunghi da leggere
+    // in pochi secondi, nessuna voce, nessuna reazione alla risposta.
     const fc = fulminoPool[fulminoCi % Math.max(1, fulminoPool.length)];
-    const pct = (fulminoTime / 60) * 100;
+    const DURATA = 60;
+    const frazione = fulminoTime / DURATA;
     const timerColor = fulminoTime > 30 ? "#22C55E" : fulminoTime > 15 ? "#F59E0B" : "#EF4444";
     const starsWon = Math.floor(fulminoScore / 3);
+    const nuovoRecord = fulminoScore > fulminoRecord && fulminoScore > 0;
 
     function fulminoAnswer(idx) {
-      if (!fulminoRunning || fulminoTime <= 0) return;
-      SFX.tap();
-      if (idx === fc.correct) {
-        SFX.correct(); navigator.vibrate?.(40);
-        setFulminoScore(s => s + 1);
-      } else {
-        SFX.wrong(); navigator.vibrate?.(80);
-      }
-      setFulminoCi(i => i + 1);
+      if (!fulminoRunning || fulminoTime <= 0 || fulminoEsito) return;
+      const giusto = idx === fc.correct;
+      if (giusto) { SFX.correct(); navigator.vibrate?.(30); setFulminoScore(x => x + 1); setFulminoCombo(c => c + 1); }
+      else { SFX.wrong(); navigator.vibrate?.([60, 40, 60]); setFulminoCombo(0); }
+      setFulminoEsito({ idx, giusto });
+      // mezzo secondo per vedere verde/rosso, poi la domanda dopo (letta dalla voce)
+      setTimeout(() => {
+        setFulminoEsito(null);
+        setFulminoCi(i => i + 1);
+        const prossima = fulminoPool[(fulminoCi + 1) % Math.max(1, fulminoPool.length)];
+        if (prossima) speak(consegnaDi(prossima));
+      }, giusto ? 420 : 650);
     }
 
-    // Results screen when time is up
+    function chiudiFulmine(rigioca) {
+      if (starsWon > 0) setTotalStars(x => x + starsWon);
+      if (nuovoRecord) { try { localStorage.setItem(`mondomago_fulmine_${activeProfileId}`, String(fulminoScore)); } catch { /* storage pieno o bloccato */ } setFulminoRecord(fulminoScore); }
+      if (rigioca) {
+        const pool = [...fulminoPool].sort(() => Math.random() - 0.5);
+        setFulminoPool(pool); setFulminoCi(0); setFulminoScore(0); setFulminoTime(DURATA); setFulminoRunning(false); setFulminoCombo(0);
+      } else navigate("map");
+    }
+
+    const lampo = (size) => <img src={premio3d("lightning-bolt")} alt="" style={{ width: size, height: size, objectFit: "contain", filter: "drop-shadow(0 6px 10px rgba(0,0,0,.45))" }} />;
+
+    // ── fine partita
     if (!fulminoRunning && fulminoTime <= 0) {
       return (
-        <div key="fulmine-end" className={`${screenAnim} mm-schermo`} style={{minHeight:"100dvh",background:SG_BG,color:"#F6ECD4",padding:28,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center",isolation:"isolate"}}>
+        <div key="fulmine-end" className={`${screenAnim} mm-schermo`} style={{minHeight:"100dvh",background:SG_BG,color:"#F6ECD4",padding:24,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center",isolation:"isolate"}}>
           {G}
           <SigilloSky zIndex={-1} />
-          <div className="pop-in" style={{marginBottom:8,display:"flex",justifyContent:"center"}}><Icon name="bolt" color="#FCD34D" size={80} /></div>
-          <h1 className="slide-up" style={{fontFamily:FF_DISPLAY,fontSize:26,fontWeight:900,marginBottom:6,color:SG_GOLD}}>Sfida Fulmine!</h1>
-          <div className="fade-in" style={{fontSize:64,fontWeight:900,margin:"16px 0",color:"#FCD34D"}}>{fulminoScore}</div>
-          <div style={{opacity:.7,marginBottom:24}}>risposte corrette in 60 secondi</div>
-          {starsWon > 0 && (
-            <div className="pop-in glow" style={{background:"rgba(255,215,0,.15)",borderRadius:24,padding:"18px 28px",marginBottom:24,border:"2px solid rgba(255,215,0,.45)"}}>
-              <div style={{marginBottom:6,display:"flex",justifyContent:"center",gap:3,flexWrap:"wrap"}}>{Array.from({length:Math.min(starsWon,10)}).map((_,i) => <Icon key={i} name="star" color="#FCD34D" size={28} />)}</div>
-              <div style={{fontWeight:900,color:"#FCD34D"}}>+{starsWon} stelle guadagnate!</div>
-            </div>
-          )}
-          {starsWon === 0 && (
-            <div style={{background:P_CARD,border:P_BR,borderRadius:20,padding:"14px 22px",marginBottom:24,fontSize:14,opacity:.7}}>
-              Fai 3 risposte giuste per guadagnare stelle
-            </div>
-          )}
-          <div style={{display:"flex",gap:12,width:"100%",maxWidth:320}}>
-            <button onClick={() => {
-              if (starsWon > 0) setTotalStars(s => s + starsWon);
-              const pool = [...fulminoPool].sort(() => Math.random() - 0.5);
-              setFulminoPool(pool); setFulminoCi(0); setFulminoScore(0); setFulminoTime(60); setFulminoRunning(false);
-            }} style={{flex:1,background:"linear-gradient(135deg,#FBBF24,#F59E0B)",color:"#1a1a2e",border:"none",borderRadius:50,padding:14,cursor:"pointer",fontSize:15,fontWeight:900,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
-              <Icon name="bolt" color="#1a1a2e" size={16} /> Ancora!
-            </button>
-            <button onClick={() => { if (starsWon > 0) setTotalStars(s => s + starsWon); navigate("map"); }}
-              style={{flex:1,background:"rgba(255,255,255,.12)",color:"white",border:"none",borderRadius:50,padding:14,cursor:"pointer",fontSize:15,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
-              <Icon name="map" color="#F6ECD4" size={16} /> Mappa
-            </button>
+          <div className="pop-in">{lampo(96)}</div>
+          <h1 className="mg-ribbon viola" style={{margin:"10px auto 6px"}}><span>{nuovoRecord ? "Nuovo record!" : "Tempo scaduto!"}</span></h1>
+          <div className="pop-in" style={{fontFamily:FF_NUM,fontSize:76,fontWeight:900,color:SG_GOLD,lineHeight:1,margin:"8px 0 2px",textShadow:"0 4px 0 #27134F"}}>{fulminoScore}</div>
+          <div style={{opacity:.8,marginBottom:6}}>risposte giuste</div>
+          {fulminoRecord > 0 && !nuovoRecord && <div style={{fontSize:13,opacity:.6,marginBottom:10}}>Il tuo record: {fulminoRecord}</div>}
+          <div className="pop-in" style={{display:"flex",justifyContent:"center",gap:4,flexWrap:"wrap",minHeight:56,margin:"12px 0 4px",maxWidth:320}}>
+            {starsWon > 0
+              ? Array.from({ length: Math.min(starsWon, 10) }).map((_, i) => <img key={i} src={premio3d("star")} alt="" className="star-pop" style={{ width: 48, height: 48, animationDelay: `${i * 0.08}s` }} />)
+              : <div style={{fontSize:14,opacity:.75,alignSelf:"center"}}>Con 3 risposte giuste vinci una stella!</div>}
+          </div>
+          {starsWon > 0 && <div style={{fontWeight:900,color:SG_GOLD,marginBottom:18}}>+{starsWon} {starsWon === 1 ? "stella" : "stelle"}</div>}
+          {comp && <div style={{margin:"4px 0 18px"}}><CompanionAvatar c={comp} size={84} mood="celebrating" look={equippedCosmetic[comp.id]} /></div>}
+          <div style={{display:"flex",gap:12,width:"100%",maxWidth:340}}>
+            <button className="mg-cta" onClick={() => chiudiFulmine(true)} style={{flex:1.2,fontSize:17}}>Ancora!</button>
+            <button onClick={() => chiudiFulmine(false)} style={{...MG_BTN_BACK,flex:1,justifyContent:"center"}}>Mappa</button>
           </div>
         </div>
       );
     }
 
-    // Countdown / ready screen
+    // ── partenza
     if (!fulminoRunning) {
       return (
-        <div key="fulmine-ready" className={`${screenAnim} mm-schermo`} style={{minHeight:"100dvh",background:SG_BG,color:"#F6ECD4",padding:28,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center",isolation:"isolate"}}>
+        <div key="fulmine-start" className={`${screenAnim} mm-schermo`} style={{minHeight:"100dvh",background:SG_BG,color:"#F6ECD4",padding:24,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center",isolation:"isolate"}}>
           {G}
           <SigilloSky zIndex={-1} />
-          <div className="float" style={{marginBottom:12,display:"flex",justifyContent:"center"}}><Icon name="bolt" color="#FCD34D" size={80} /></div>
-          <h1 className="slide-up" style={{fontFamily:FF_DISPLAY,fontSize:26,fontWeight:900,color:SG_GOLD,marginBottom:10}}>Sfida Fulmine!</h1>
-          <p className="fade-in" style={{fontSize:15,lineHeight:1.75,opacity:.85,marginBottom:8,maxWidth:320,animationDelay:".1s"}}>
-            Risposta rapida! Tocca la risposta giusta il più veloce possibile.
-          </p>
-          <div className="fade-in" style={{background:"rgba(255,255,255,.07)",borderRadius:18,padding:"14px 20px",marginBottom:28,maxWidth:320,fontSize:13,lineHeight:1.7,animationDelay:".2s",display:"flex",flexDirection:"column",gap:6}}>
-            <div style={{display:"flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="clock" color="#FCD34D" size={16} /><span><strong>60 secondi</strong> di sfide rapide</span></div>
-            <div style={{display:"flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="star" color="#FFC24B" size={16} /><span><strong>1 stella ogni 3</strong> risposte giuste</span></div>
-            <div style={{display:"flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="flame" color="#FB923C" size={16} /><span>Vai più veloce che puoi!</span></div>
+          <div className="float">{lampo(110)}</div>
+          <h1 className="mg-ribbon viola" style={{margin:"12px auto 18px"}}><span>Sfida Fulmine</span></h1>
+          {/* le regole in tre figure: per chi non legge ancora */}
+          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,width:"100%",maxWidth:340,marginBottom:22}}>
+            {[[ui3d("alarm-clock"), "60 secondi"], [ui3d("check-mark"), "Rispondi veloce"], [premio3d("star"), "3 giuste = 1 stella"]].map(([src, t]) => (
+              <div key={t} style={{background:MG_TILE,border:`3px solid ${MG_INK}`,boxShadow:MG_TILE_SHADOW,borderRadius:18,padding:"10px 6px",color:MG_INK}}>
+                <img src={src} alt="" style={{width:44,height:44,objectFit:"contain"}} />
+                <div style={{fontSize:12,fontWeight:800,lineHeight:1.2,marginTop:4}}>{t}</div>
+              </div>
+            ))}
           </div>
-          <button className="pop-in" onClick={() => setFulminoRunning(true)}
-            style={{background:"linear-gradient(135deg,#FBBF24,#F59E0B)",color:"#1a1a2e",border:"none",borderRadius:50,padding:"18px 56px",fontWeight:900,fontSize:20,cursor:"pointer",boxShadow:"0 8px 32px rgba(251,191,36,.45)",animationDelay:".3s",display:"inline-flex",alignItems:"center",gap:8}}>
-            VIA! <Icon name="bolt" color="#1a1a2e" size={20} />
-          </button>
-          <button onClick={() => navigate("map")} style={{marginTop:14,background:"none",border:"none",color:"rgba(255,255,255,.4)",cursor:"pointer",fontSize:14}}>← Torna alla mappa</button>
+          {fulminoRecord > 0 && (
+            <div style={{display:"inline-flex",alignItems:"center",gap:8,marginBottom:18,background:"rgba(255,194,75,.12)",border:"2px solid rgba(255,194,75,.4)",borderRadius:30,padding:"6px 16px"}}>
+              <img src={premio3d("trophy")} alt="" style={{width:26,height:26}} /><b>Il tuo record: {fulminoRecord}</b>
+            </div>
+          )}
+          <button className="mg-cta pop-in" onClick={() => { setFulminoRunning(true); if (fc) speak(consegnaDi(fc)); }} style={{fontSize:22,padding:"16px 56px"}}>Via!</button>
+          <button onClick={() => navigate("map")} style={{...MG_BTN_BACK,marginTop:16}}>Mappa</button>
         </div>
       );
     }
 
-    // Active challenge
+    // ── partita
+    const R0 = 26, CIRC = 2 * Math.PI * R0;
     return (
-      <div key={`ful-${fulminoCi}`} style={{minHeight:"100dvh",background:SG_BG,color:"#F6ECD4",padding:20,display:"flex",flexDirection:"column",position:"relative"}}>
+      <div key="fulmine-gioco" className="mm-schermo" style={{minHeight:"100dvh",background:SG_BG,color:"#F6ECD4",padding:"16px 18px",display:"flex",flexDirection:"column",position:"relative",isolation:"isolate"}}>
         {G}
-        {/* Timer bar */}
-        <div style={{marginBottom:10}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
-            <span style={{fontWeight:900,fontSize:18,color:timerColor,display:"inline-flex",alignItems:"center",gap:5}}><Icon name="bolt" color={timerColor} size={17} /> {fulminoTime}s</span>
-            <span style={{fontSize:14,fontWeight:700,color:"#FCD34D",display:"inline-flex",alignItems:"center",gap:5}}><Icon name="check" color="#6DE0C6" size={15} /> {fulminoScore}</span>
+        <SigilloSky zIndex={-1} />
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+          {/* cronometro ad anello */}
+          <div style={{position:"relative",width:64,height:64}} aria-label={`${fulminoTime} secondi`}>
+            <svg width="64" height="64" viewBox="0 0 64 64" style={{transform:"rotate(-90deg)"}}>
+              <circle cx="32" cy="32" r={R0} fill="rgba(20,11,41,.7)" stroke="rgba(255,255,255,.12)" strokeWidth="6" />
+              <circle cx="32" cy="32" r={R0} fill="none" stroke={timerColor} strokeWidth="6" strokeLinecap="round"
+                strokeDasharray={CIRC} strokeDashoffset={CIRC * (1 - frazione)} style={{transition:"stroke-dashoffset 1s linear, stroke .3s"}} />
+            </svg>
+            <span style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:FF_NUM,fontWeight:900,fontSize:20,color:"#fff"}}>{fulminoTime}</span>
           </div>
-          <div style={{background:"rgba(255,255,255,.12)",borderRadius:8,height:10,overflow:"hidden"}}>
-            <div style={{background:timerColor,height:"100%",borderRadius:8,width:`${pct}%`,transition:"width 1s linear"}} />
+          {comp && <CompanionAvatar c={comp} size={58} mood={fulminoEsito ? (fulminoEsito.giusto ? "excited" : "sad") : "idle"} look={equippedCosmetic[comp.id]} decorativa />}
+          <div style={{textAlign:"right"}}>
+            <div className="mg-res" style={{flex:"none",minWidth:84}} aria-label={`${fulminoScore} giuste`}><img src={premio3d("star")} alt="" /><b>{fulminoScore}</b></div>
+            {fulminoCombo >= 2 && (
+              <div className="pop-in" key={fulminoCombo} style={{marginTop:6,display:"inline-flex",alignItems:"center",gap:4,fontFamily:FF_DISPLAY,color:"#FB923C",fontSize:16}}>
+                <img src={ui3d("flame")} alt="" style={{width:22,height:22}} /> x{fulminoCombo}
+              </div>
+            )}
           </div>
         </div>
-        {/* Challenge */}
         {fc && (
-          <>
-            <div className="pop-in" style={{background:"rgba(255,255,255,.1)",borderRadius:24,padding:"24px 20px",marginBottom:14,textAlign:"center",border:"1px solid rgba(255,255,255,.14)",boxShadow:"0 8px 32px rgba(0,0,0,.4)"}}>
-              {fc.visual && <div style={{fontSize:64,letterSpacing:8,marginBottom:10}}><Emo text={fc.visual} /></div>}
-              <p style={{fontSize:18,fontWeight:700,margin:0,whiteSpace:"pre-line"}}>{fc.prompt || fc.question}</p>
-            </div>
+          <div key={`d-${fulminoCi}`} className="pop-in" style={{flex:1,display:"flex",flexDirection:"column",gap:14}}>
+            <button onClick={() => speak(consegnaDi(fc))} aria-label="Riascolta la domanda"
+              style={{background:"rgba(255,255,255,.08)",border:"2px solid rgba(255,194,75,.25)",borderRadius:24,padding:"18px 16px",textAlign:"center",color:"#fff",cursor:"pointer"}}>
+              {fc.visual && <div style={{marginBottom:8,lineHeight:1.2}}><Emo text={fc.visual} size={fc.visual.length > 8 ? 40 : 58} /></div>}
+              <div style={{fontFamily:FF_DISPLAY,fontSize:20,whiteSpace:"pre-line"}}>{fc.prompt || fc.question}</div>
+            </button>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
               {fc.options.map((opt, idx) => {
-                // Le opzioni a 8 anni sono parole, non emoji: 42px le manderebbe fuori dal bottone.
                 const wordy = /[a-zA-ZÀ-ÿ]/.test(String(opt));
+                const es = fulminoEsito;
+                const colore = es && (idx === fc.correct ? "#6DE0C6" : es.idx === idx ? "#F87171" : null);
                 return (
-                <button key={idx} onClick={() => fulminoAnswer(idx)}
-                  className="ans-btn"
-                  style={{background:MG_TILE,boxShadow:MG_TILE_SHADOW,color:MG_INK,border:`3px solid ${MG_INK}`,borderRadius:22,minHeight:88,padding:wordy?"10px 12px":0,fontSize:wordy?(String(opt).length>12?15:18):42,fontWeight:wordy?800:400,lineHeight:1.25,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>
-                  <Emo text={opt} />
-                </button>
+                  <button key={idx} onClick={() => fulminoAnswer(idx)} className={es && es.idx === idx && !es.giusto ? "shake" : ""}
+                    style={{background:colore ? colore : MG_TILE,boxShadow:MG_TILE_SHADOW,color:MG_INK,border:`3px solid ${MG_INK}`,borderRadius:22,
+                      minHeight:92,padding:wordy?"10px 12px":0,fontFamily:FF_DISPLAY,fontSize:wordy?(String(opt).length>12?17:21):42,cursor:"pointer",
+                      transition:"background .15s"}}>
+                    <Emo text={opt} size={wordy ? undefined : 54} />
+                  </button>
                 );
               })}
             </div>
-          </>
+          </div>
         )}
       </div>
     );
