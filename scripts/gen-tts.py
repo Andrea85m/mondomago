@@ -220,6 +220,7 @@ def collect(jsx: str) -> set[str]:
 
     # 8 · Righe fisse dell'interfaccia
     found.update({
+        "Quanti sono?",                       # Sfida Fulmine: si conta guardando
         "Come ti chiami?",
         "Quanti anni hai?",
         "Scegli il tuo compagno magico!",

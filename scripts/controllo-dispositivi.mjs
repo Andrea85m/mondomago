@@ -81,6 +81,22 @@ async function onboarding(page) {
   await page.waitForSelector('text=I Mondi Magici', { timeout: 10000 });
 }
 
+async function apriGioco(page, nome) {
+  await page.getByRole('button', { name: new RegExp(nome, 'i') }).first().click();
+  await page.waitForTimeout(500);
+  if (await page.getByText('Con cosa giochiamo?').count()) {
+    await page.getByRole('button', { name: 'Animali', exact: true }).click();
+    await page.waitForTimeout(800);
+  }
+}
+async function tornaHub(page) {
+  for (let i = 0; i < 3; i++) {
+    if (await page.getByText('Cinque giochi per costruire').count()) return;
+    await page.getByRole('button', { name: 'Indietro' }).first().click();
+    await page.waitForTimeout(400);
+  }
+}
+
 for (const disp of DISPOSITIVI) {
   mkdirSync(`.dispositivi/${disp.nome}`, { recursive: true });
   const browser = await disp.motore.launch();
@@ -93,6 +109,9 @@ for (const disp of DISPOSITIVI) {
     await misura(page, disp, '1-mappa');
     await page.locator('nav.mg-tabs').getByRole('button', { name: 'Puzzle' }).click(); await page.waitForTimeout(900);
     await misura(page, disp, '2-puzzle-hub');
+    await page.getByRole('button', { name: /Ombre magiche/i }).first().click(); await page.waitForTimeout(700);
+    await misura(page, disp, '2b-scelta-tema');
+    await page.getByRole('button', { name: 'Indietro' }).first().click(); await page.waitForTimeout(400);
     await page.getByRole('button', { name: /Puzzle degli animali/i }).first().click(); await page.waitForTimeout(800);
     await misura(page, disp, '3-animali-scelta');
     await page.getByRole('button', { name: /^Leone$/ }).click();
@@ -105,15 +124,15 @@ for (const disp of DISPOSITIVI) {
     await page.getByRole('button', { name: 'Indietro' }).first().click(); await page.waitForTimeout(300);
     await page.getByRole('button', { name: 'Indietro' }).first().click(); await page.waitForTimeout(500);
     for (const [nome, slug] of [['Il Costruttore', '5-costruttore'], ['Puzzle a incastro', '6-incastro']]) {
-      await page.getByRole('button', { name: new RegExp(nome, 'i') }).first().click();
+      await apriGioco(page, nome);
       await page.waitForSelector('svg[data-sagomato] g[role="button"]', { timeout: 10000 }); await page.waitForTimeout(500);
       await misura(page, disp, slug, { gioco: true });
-      await page.getByRole('button', { name: 'Indietro' }).first().click(); await page.waitForTimeout(400);
+      await tornaHub(page);
     }
     for (const [nome, slug] of [['Cosa si nasconde', '7-indovina'], ['Ombre magiche', '8-ombre']]) {
-      await page.getByRole('button', { name: new RegExp(nome, 'i') }).first().click(); await page.waitForTimeout(900);
+      await apriGioco(page, nome); await page.waitForTimeout(400);
       await misura(page, disp, slug);
-      await page.getByRole('button', { name: 'Indietro' }).first().click(); await page.waitForTimeout(400);
+      await tornaHub(page);
     }
     await page.locator('nav.mg-tabs').getByRole('button', { name: 'Look' }).click(); await page.waitForTimeout(800);
     await misura(page, disp, '9-look');
