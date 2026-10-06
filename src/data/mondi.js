@@ -169,7 +169,7 @@ export const COMPANIONS = [
     onWorld: () => pick([
       "Piano eseguito alla perfezione! Sei un genio!",
       "Missione riuscita! Sei straordinario!",
-      "Ce l'abbiamo fatta! Grande mente!",
+      "Ce l'abbiamo fatta! Che mente brillante!",
     ]),
     onMeet: (name) => `Ehilà ${name}! Sono Foglia! Ho già un piano perfetto per noi! 🦊`,
   },
@@ -193,7 +193,7 @@ export const COMPANIONS = [
     onStreak: () => pick([
       "Istruzioni perfette di fila! Sei un vero programmatore!",
       "Serie di successi! Il robot è impressionato!",
-      "COMBO attivata! Stai hackando la sfida!",
+      "COMBO attivata! Stai conquistando la sfida!",
       "Prestazioni eccellenti! Livello ESPERTO raggiunto!",
       "Processore al massimo! Inarrestabile!",
     ]),

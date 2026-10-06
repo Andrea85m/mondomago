@@ -118,10 +118,13 @@ def google_sintesi(testo: str, voce: str, path: Path, chiave: str):
 # Senza questo alcune battute arrivavano più forti di altre e il genitore
 # doveva star dietro al volume. -16 LUFS è lo standard per il parlato mobile.
 LOUDNORM = "loudnorm=I=-16:TP=-1.5:LRA=11"
-TRIM = ("silenceremove=start_periods=1:start_duration=0.02:start_threshold=-45dB:"
-        "detection=peak,areverse,"
-        "silenceremove=start_periods=1:start_duration=0.02:start_threshold=-45dB:"
-        "detection=peak,areverse")
+# Si toglie il silenzio in testa e in coda, ma lasciando un margine: senza
+# start_silence il taglio si mangiava l'attacco della prima consonante
+# ("Papera" → "apera", "Mucca" → "ucca": verificato con Whisper, ottobre 2026).
+TRIM = ("silenceremove=start_periods=1:start_duration=0.02:start_threshold=-50dB:"
+        "start_silence=0.08:detection=peak,areverse,"
+        "silenceremove=start_periods=1:start_duration=0.02:start_threshold=-50dB:"
+        "start_silence=0.12:detection=peak,areverse")
 
 DEMO_PHRASE = ("Bravo! Sei un vero mago. Adesso proviamo insieme: "
                "quante mele vedi? Tocca la risposta giusta!")

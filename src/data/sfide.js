@@ -1249,7 +1249,7 @@ ALL_CHALLENGES.vulcano = ALL_CHALLENGES.vulcano.concat([
   { id:"qc18", world:"biblioteca", ageMin:6, ageMax:8, cartoonEmoji:"🔭", question:"Si usa per guardare le stelle lontane, cos'è?",
     options:["Telescopio","Microscopio","Binocolo","Lente"], correct:0 },
   // Vulcano — natura potente
-  { id:"qc19", world:"vulcano", ageMin:4, ageMax:6, cartoonEmoji:"🌋", question:"Erutto lava e fumo, cosa sono?",
+  { id:"qc19", world:"vulcano", ageMin:4, ageMax:6, cartoonEmoji:"🌋", question:"Faccio uscire lava e fumo, cosa sono?",
     options:["Vulcano","Montagna","Collina","Geyser"], correct:0 },
   // Laboratorio — scienza e logica
   { id:"qc20", world:"laboratorio", ageMin:6, ageMax:8, cartoonEmoji:"🌡️", question:"Si usa per misurare la temperatura, cos'è?",
