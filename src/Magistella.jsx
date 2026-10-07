@@ -427,6 +427,50 @@ function BarraSezioni({ attiva, onVai }) {
   );
 }
 
+// Stelle e monete spiegate come la fiamma: un tocco sul contatore dice a cosa
+// servono e quanto manca al prossimo traguardo (prima erano solo numeri muti).
+function FinestraRisorsa({ tipo, totalStars, coins, prossimoMondo, livello, onChiudi, onVaiLook }) {
+  const stelle = tipo === "stelle";
+  useEffect(() => {
+    // due speak() con la frase scritta per intero: gen-tts registra solo quelle
+    const t = setTimeout(() => {
+      if (stelle) speak("Ogni risposta giusta ti regala stelle. Con le stelle si aprono nuovi mondi!");
+      else speak("Con le monete compri vestiti e accessori per il tuo compagno, nel Look!");
+    }, 350);
+    return () => clearTimeout(t);
+  }, [stelle]);
+  return (
+    <div onClick={onChiudi} role="dialog" aria-label={stelle ? "Le tue stelle" : "Le tue monete"}
+      style={{position:"fixed",inset:0,zIndex:705,background:"rgba(10,6,25,.88)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div className="pop-in" onClick={e => e.stopPropagation()}
+        style={{background:SG_BG,border:`3px solid ${SG_GOLD}`,borderRadius:28,padding:"24px 22px",maxWidth:340,width:"100%",textAlign:"center",color:SG_PARCH,boxShadow:"0 0 60px rgba(255,194,75,.3)"}}>
+        <img src={premio3d(stelle ? "star" : "moneta")} alt="" style={{width:96,height:96,objectFit:"contain",animation:"wiggle 0.9s ease-in-out infinite"}} />
+        <div style={{fontFamily:FF_DISPLAY,fontSize:34,color:SG_GOLD,lineHeight:1.05,marginTop:4}}>{stelle ? totalStars : coins} {stelle ? (totalStars === 1 ? "stella" : "stelle") : (coins === 1 ? "moneta" : "monete")}</div>
+        <div style={{fontSize:15,lineHeight:1.4,margin:"12px 0"}}>
+          {stelle ? "Ogni risposta giusta ti regala stelle. Con le stelle si aprono nuovi mondi!" : "Con le monete compri vestiti e accessori per il tuo compagno, nel Look!"}
+        </div>
+        {stelle && prossimoMondo && (
+          <div style={{display:"flex",alignItems:"center",gap:12,background:"rgba(255,255,255,.07)",borderRadius:18,padding:"10px 14px",marginBottom:12,textAlign:"left"}}>
+            <img src={isola3d(prossimoMondo.id)} alt="" style={{width:58,height:58,objectFit:"contain",filter:"grayscale(.6) brightness(.8)"}} />
+            <div style={{flex:1}}>
+              <div style={{fontWeight:800}}>{prossimoMondo.name}</div>
+              <div style={{fontSize:13,opacity:.85}}>si apre con {prossimoMondo.starsNeeded} stelle: ne mancano <b style={{color:SG_GOLD}}>{prossimoMondo.starsNeeded - totalStars}</b></div>
+              <div style={{background:"rgba(255,255,255,.12)",borderRadius:5,height:7,marginTop:6}}>
+                <div style={{background:SG_GOLD,height:"100%",borderRadius:5,width:`${Math.min(100, (totalStars / prossimoMondo.starsNeeded) * 100)}%`}} />
+              </div>
+            </div>
+          </div>
+        )}
+        {stelle && !prossimoMondo && livello && <div style={{fontSize:13,opacity:.85,marginBottom:12}}>Tutti i mondi sono aperti! Le stelle ti fanno salire di livello{livello.toNext ? `: ne mancano ${livello.toNext} per ${livello.nextTitle}` : "."}</div>}
+        <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
+          {!stelle && <button className="mg-cta" onClick={onVaiLook} style={{fontSize:17,padding:"12px 26px"}}>Vai al Look</button>}
+          <button className={stelle ? "mg-cta" : "mg-mini"} onClick={onChiudi} style={stelle ? {fontSize:18,padding:"12px 44px"} : {minHeight:48,padding:"0 22px"}}>{stelle ? "Evviva!" : "Dopo"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // La fiamma spiegata a un bambino: quanti giorni di fila, la settimana accesa
 // giorno per giorno, e il regalo di oggi. Prima era solo un numero accanto a
 // una fiammella, senza nessun significato per chi gioca.
@@ -454,7 +498,7 @@ function FinestraFiamma({ streak, bonus, aRischio, comp, look, onChiudi }) {
         <div style={{fontSize:15,lineHeight:1.4,marginBottom:12}}>Ogni giorno che giochi la fiamma cresce e ti regala monete!</div>
         {bonus > 0 && (
           <div className="pop-in" style={{display:"inline-flex",alignItems:"center",gap:8,background:"rgba(255,194,75,.14)",border:"2px solid rgba(255,194,75,.5)",borderRadius:30,padding:"6px 16px",marginBottom:12}}>
-            <img src={premio3d("coin")} alt="" style={{width:26,height:26}} /><b style={{color:SG_GOLD}}>+{bonus} monete di oggi</b>
+            <img src={premio3d("moneta")} alt="" style={{width:26,height:26}} /><b style={{color:SG_GOLD}}>+{bonus} monete di oggi</b>
           </div>
         )}
         {aRischio && <div style={{fontSize:13,color:"#FDBA74",marginBottom:12}}>Gioca oggi per non far spegnere la fiamma!</div>}
@@ -1200,7 +1244,7 @@ function getCurrentSeason() {
   if (md >= 901 && md <= 915) return {
     color:'#2563EB', glyph:'bookmark', glyphs:['bookmark','matita','star'],
     tint:'radial-gradient(120% 70% at 50% -6%, rgba(37,99,235,.16) 0%, transparent 55%)',
-    banner:'Bentornato a scuola! Nuove sfide ti aspettano',
+    banner:'Si torna a scuola! Nuove sfide ti aspettano',
   };
   if (md >= 1025 && md <= 1102) return {
     color:'#F97316', glyph:'moon', glyphs:['moon','flame','sparkles'],
@@ -1511,6 +1555,7 @@ export default function Magistella() {
   // La fiamma: toccandola si capisce cosa vuol dire, e ogni giorno nuovo regala monete
   const [fiammaAperta, setFiammaAperta] = useState(false);
   const [fiammaBonus,  setFiammaBonus]  = useState(0);
+  const [risorsaAperta, setRisorsaAperta] = useState(null);   // "stelle" | "monete": la finestra che le spiega
   const [tutorialSeen,    setTutorialSeen]    = useState(() => !!localStorage.getItem('mondomago_tutorial'));
   // drag-drop state
   const [dragPicked,      setDragPicked]      = useState(null);   // index of picked item
@@ -2589,6 +2634,11 @@ export default function Magistella() {
           </div>
         );
       })()}
+      {risorsaAperta && (
+        <FinestraRisorsa tipo={risorsaAperta} totalStars={totalStars} coins={coins}
+          prossimoMondo={WORLDS.find(w => w.starsNeeded > totalStars)} livello={getLevelProgress(totalStars)}
+          onChiudi={() => setRisorsaAperta(null)} onVaiLook={() => { setRisorsaAperta(null); navigate("cosmetics"); }} />
+      )}
       {/* Streak milestone celebration */}
       {fiammaAperta && (
         <FinestraFiamma streak={streak} bonus={fiammaBonus} aRischio={streak >= 2 && !sessionLog.some(x => x.date === new Date().toISOString().slice(0, 10))} comp={comp} look={comp ? equippedCosmetic[comp.id] : null}
@@ -2772,7 +2822,7 @@ export default function Magistella() {
       {
         bg:    SG_BG,
         icon:  "sparkles",
-        title: "Benvenuto in Magistella!",
+        title: "Ti diamo il benvenuto!",
         sub:   "Il viaggio magico che fa crescere i bambini",
         body: (
           <div style={{display:"flex",gap:10,justifyContent:"center",margin:"20px 0 16px",flexWrap:"wrap"}}>
@@ -3148,15 +3198,17 @@ export default function Magistella() {
                   <span className="mg-lvl" aria-label={`Livello ${PLAYER_LEVELS.indexOf(mapLvl) + 1}`}>{PLAYER_LEVELS.indexOf(mapLvl) + 1}</span>
                 </button>
               )}
-              <div className="mg-res" aria-label={`${totalStars} stelle`}><img src={premio3d("star")} alt="" /><b>{totalStars}</b></div>
-              <div className="mg-res" aria-label={`${coins} monete`}><img src={premio3d("coin")} alt="" /><b>{coins}</b></div>
+              <button className="mg-res" style={{cursor:"pointer",font:"inherit",color:"inherit",minHeight:44}} onClick={() => { SFX.tap(); setRisorsaAperta("stelle"); }}
+                aria-label={`Le tue stelle: ${totalStars}. Tocca per sapere a cosa servono`}><img src={premio3d("star")} alt="" /><b>{totalStars}</b></button>
+              <button className="mg-res" style={{cursor:"pointer",font:"inherit",color:"inherit",minHeight:44}} onClick={() => { SFX.tap(); setRisorsaAperta("monete"); }}
+                aria-label={`Le tue monete: ${coins}. Tocca per sapere a cosa servono`}><img src={premio3d("moneta")} alt="" /><b>{coins}</b></button>
               <button className={`mg-res${streakAtRisk ? " rischio" : ""}`} style={{flex:.8,cursor:"pointer",font:"inherit",color:"inherit",minHeight:44}} onClick={() => { setFiammaBonus(0); setFiammaAperta(true); }}
                 aria-label={`La tua fiamma: ${streak} ${streak === 1 ? "giorno" : "giorni"} di fila${streakAtRisk ? ", gioca oggi per non spegnerla" : ""}`}><img src={ui3d("flame")} alt="" /><b>{streak}</b></button>
             </div>
 
             <div style={{textAlign:"center",padding:"6px 16px 0"}}>
               <h1 className="mg-ribbon viola"><span>I Mondi Magici</span></h1>
-              <div className="mg-saluto">{saluto}, {childName}! {isReturning ? "Bentornato nel regno." : "Dove andiamo oggi?"}</div>
+              <div className="mg-saluto">{saluto}, {childName}! {isReturning ? "Che bello rivederti nel regno!" : "Dove andiamo oggi?"}</div>
             </div>
 
             {/* livello */}
@@ -3853,7 +3905,7 @@ export default function Magistella() {
         {isLetterTrace && done && (
           <div style={{textAlign:"center",padding:"18px 0 4px",fontSize:18,fontFamily:FF,
             color:youngBg?"#15803D":"#6DE0C6"}}>
-            <Icon name="star" color={youngBg?"#C98A06":"#FFD95A"} size={16} style={{verticalAlign:"-3px",marginRight:7}} />Bravissimo! Lettera completata!
+            <Icon name="star" color={youngBg?"#C98A06":"#FFD95A"} size={16} style={{verticalAlign:"-3px",marginRight:7}} />Fantastico! Lettera completata!
           </div>
         )}
 
@@ -3981,7 +4033,7 @@ export default function Magistella() {
         )}
         {isMemMatch && done && (
           <div style={{textAlign:"center",padding:"12px 0 4px",fontSize:17,fontFamily:FF,color:youngBg?"#15803D":"#6DE0C6"}}>
-            <Icon name="carte" color={youngBg?"#C98A06":"#FFC24B"} ink={youngBg?"#3A2A10":undefined} size={16} style={{verticalAlign:"-3px",marginRight:7}} />Tutte le coppie trovate! Bravissimo!
+            <Icon name="carte" color={youngBg?"#C98A06":"#FFC24B"} ink={youngBg?"#3A2A10":undefined} size={16} style={{verticalAlign:"-3px",marginRight:7}} />Tutte le coppie trovate! Fantastico!
           </div>
         )}
 
@@ -4952,14 +5004,14 @@ export default function Magistella() {
         {/* Header */}
         <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
           <div style={{flex:1}} />
-          <div className="mg-res" style={{flex:"none",minWidth:86}} aria-label={`${coins} monete`}><img src={premio3d("coin")} alt="" /><b>{coins}</b></div>
+          <div className="mg-res" style={{flex:"none",minWidth:86}} aria-label={`${coins} monete`}><img src={premio3d("moneta")} alt="" /><b>{coins}</b></div>
         </div>
         <div style={{textAlign:"center",marginBottom:14}}>
           <h1 className="mg-ribbon viola" style={{margin:"0 auto"}}><span style={{fontSize:23}}>Negozio Magico</span></h1>
         </div>
         {/* Current look preview */}
         <div style={{background:SG_CARD,border:SG_BR,boxShadow:"0 4px 0 #27134F",borderRadius:24,padding:"20px",marginBottom:18,display:"flex",flexDirection:"column",alignItems:"center",gap:10}}>
-          <div style={{fontSize:11,opacity:.7,letterSpacing:1,fontWeight:800}}>IL TUO {comp.name.toUpperCase()} ADESSO</div>
+          <div style={{fontSize:11,opacity:.7,letterSpacing:1,fontWeight:800}}>COSÌ È {comp.name.toUpperCase()} ADESSO</div>
           <div style={{padding:"26px 34px 6px"}}>
             <CompanionAvatar c={comp} size={128} anim="float" look={equipped} showBody />
           </div>
@@ -5005,7 +5057,7 @@ export default function Magistella() {
                     {canAfford && <div style={{position:"absolute",top:4,left:"50%",transform:"translateX(-50%)",fontSize:8,fontWeight:900,color:"#1F7A4C",letterSpacing:.5,whiteSpace:"nowrap"}}>PUOI COMPRARLO</div>}
                     <div style={{height:56,marginBottom:4,marginTop:canAfford?8:0,display:"flex",alignItems:"center",justifyContent:"center",filter:canAfford?"none":"grayscale(.8) brightness(.8)"}}>{COSMETIC_3D[c.id] ? <img src={premio3d(COSMETIC_3D[c.id])} alt="" style={{height:56,width:"auto",maxWidth:"100%",objectFit:"contain",filter:"drop-shadow(0 3px 3px rgba(0,0,0,.25))"}} /> : <span style={{fontSize:32}}>{c.emoji}</span>}</div>
                     <div style={{fontSize:11,fontWeight:700,lineHeight:1.2}}>{c.name}</div>
-                    <div style={{display:"inline-flex",alignItems:"center",gap:3,marginTop:5,padding:"1px 9px 1px 3px",borderRadius:9,background:MG_INK,color:"#FFD95A",fontFamily:FF,fontSize:13}}><img src={premio3d("coin")} alt="" style={{width:18,height:18}} />{c.coinCost}</div>
+                    <div style={{display:"inline-flex",alignItems:"center",gap:3,marginTop:5,padding:"1px 9px 1px 3px",borderRadius:9,background:MG_INK,color:"#FFD95A",fontFamily:FF,fontSize:13}}><img src={premio3d("moneta")} alt="" style={{width:18,height:18}} />{c.coinCost}</div>
                   </button>
                 );
               })}

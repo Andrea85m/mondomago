@@ -68,6 +68,12 @@ for (const m of source.matchAll(/speak\(\s*"((?:[^"\\]|\\.)*)"/g)) {
   const t = unesc(m.group ? m.group(1) : m[1]);
   if (!has(t)) errors.push(`speak() letterale senza voce: "${t.slice(0, 66)}"`);
 }
+// speak(cond ? "a" : "b"): gen-tts non sa leggerlo, le frasi finirebbero sulla voce di sistema
+for (const f of ['Magistella.jsx', 'PuzzleMagico.jsx']) {
+  const src = readFileSync(new URL(`../src/${f}`, import.meta.url), 'utf8');
+  for (const m of src.matchAll(/speak\??\.?\(\s*[\w.]+\s*\?\s*["`]/g))
+    errors.push(`${f}: speak() con frasi in un ternario (${m[0]}…): scrivi due speak() con la frase intera`);
+}
 for (const m of source.matchAll(/speak\(\s*`((?:[^`\\]|\\.)*)`/g)) {
   let t = unesc(m[1]);
   // le interpolazioni col nome del bambino spariscono dal parlato

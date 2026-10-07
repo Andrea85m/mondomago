@@ -80,7 +80,7 @@ const WORLD_EMBLEM = {
 };
 
 // ─── RESTYLING 3D ───────────────────────────────────────────────────────────
-const ICON_3D = { coin: "premi/coin", trophy: "premi/trophy", flame: "ui/flame", star: "premi/star" };
+const ICON_3D = { coin: "premi/moneta", trophy: "premi/trophy", flame: "ui/flame", star: "premi/star" };
 function Img3d({ src, size, style }) {
   return (
     <img src={`${import.meta.env.BASE_URL}img/3d/${src}.webp`} alt="" aria-hidden="true" draggable={false}
