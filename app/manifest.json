@@ -83,11 +83,11 @@
       "label": "Sfida con il compagno"
     },
     {
-      "src": "/screenshots/screen-reward.png",
+      "src": "/screenshots/screen-sentiero.png",
       "sizes": "1080x1920",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "Mondo completato: tre stelle e trofeo"
+      "label": "Il sentiero di un mondo: 12 tappe e le medaglie"
     },
     {
       "src": "/screenshots/screen-puzzle.png",
