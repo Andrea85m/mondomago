@@ -318,7 +318,7 @@ export const SIGILLO_FRAGMENTS = [
 ];
 
 export const SIGILLO_STORY = {
-  0: "Benvenuto, giovane mago! Il Grande Sigillo Magico è in pezzi. Esplora i Mondi per ricomporlo...",
+  0: "Eccoti qui, giovane apprendista di magia! Il Grande Sigillo Magico è in pezzi. Esplora i Mondi per ricomporlo...",
   1: "Hai trovato il primo frammento! Il sigillo comincia a brillare. Continua la tua avventura!",
   2: "Due frammenti! Le magiche energie si svegliano. Ogni mondo ti rende più forte.",
   3: "Tre frammenti riuniti! I companion dei mondi si parlano nelle stelle della notte...",

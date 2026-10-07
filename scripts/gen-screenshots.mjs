@@ -17,6 +17,7 @@ import { chromium } from 'playwright';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { ALL_CHALLENGES } from './lib/extract-challenges.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(ROOT, 'public', 'screenshots');
@@ -34,6 +35,9 @@ const PROFILO = {
   totalStars: sogliaMax + 14, coins: 36, streak: 5, lastDate: giorno(0), dailyCount: 3,
   skills: { logica: 5, numeri: 6, creativita: 4, empatia: 5, parole: 4, coding: 3 },
   items: [], missionsDone: [], dailyCompletedDate: '', achievements: [], equippedCosmetic: {},
+  percorso: { foresta: { tappa: 5, livello: 2 }, castello: { tappa: 8, livello: 1 }, oceano: { tappa: 3, livello: 1 } },
+  visti: Object.fromEntries(['foresta', 'castello', 'oceano', 'mercato'].flatMap(w => ALL_CHALLENGES[w])
+    .filter(c => c.ageMin <= 6 && c.ageMax >= 6).map(c => [c.id, 1])),
   missed: [], schoolMode: false, schoolCode: '', schoolAssigned: [], ownedCosmetics: [],
   sessionLog: [1, 2, 3, 5, 6].map((n, i) => ({
     date: giorno(n), stars: 8 + i * 2, world: ['foresta', 'castello', 'oceano', 'mercato', 'galassia'][i],
@@ -74,48 +78,39 @@ async function main() {
   // si aspetta che sparisca il toast dei traguardi appena sbloccati
   await scatta('screen-map', 5200);
 
-  await page.getByRole('button', { name: 'Skill', exact: true }).first().click();
-  await scatta('screen-skills');
+  // il sentiero di un mondo (Foresta, in Argento a metà strada)
+  await page.locator('.mg-isola:not(.chiusa) button').first().dispatchEvent('click');
+  await page.waitForSelector('[aria-label^="Gioca la tappa"]', { timeout: 10000 });
+  await scatta('screen-sentiero', 1600);
 
-  await allaMappa();
-  const lab = page.locator('button').filter({ hasText: /Laboratorio/ }).filter({ hasText: /sfide/ }).first();
-  await lab.evaluate(el => el.scrollIntoView({ block: 'center' }));
-  await lab.click({ force: true });
-  await scatta('screen-world-intro', 1800);
-  const parti = page.getByRole('button', { name: /Inizia la Missione|Iniziamo|Comincia|Partiamo|Avanti/i }).first();
-  if (await parti.count()) await parti.click();
+  // una sfida: dalla tappa 5 si entra diretti, senza la storia
+  await page.locator('[aria-label^="Gioca la tappa"]').first().dispatchEvent('click');
+  const parti = page.getByRole('button', { name: /Inizia la Missione|Iniziamo|Comincia|Partiamo/i }).first();
+  await page.waitForTimeout(900);
+  if (await parti.count()) await parti.dispatchEvent('click');
   await scatta('screen-challenge', 2000);
 
+  // il Puzzle degli animali
   await allaMappa();
-  await page.getByRole('button', { name: 'Puzzle', exact: true }).first().click();
+  await page.locator('nav.mg-tabs').getByRole('button', { name: 'Puzzle' }).click();
   await page.waitForSelector('text=Puzzle Magico');
-  await page.getByRole('button', { name: /Puzzle a incastro/i }).first().click();
-  await page.getByRole('button', { name: 'Facile' }).click();
+  await page.getByRole('button', { name: /Puzzle degli animali/i }).first().click();
+  await page.getByRole('button', { name: /^Leone$/ }).click();
+  await page.waitForSelector('svg[data-sagomato] g[role="button"]', { timeout: 10000 });
   await scatta('screen-puzzle', 1800);
 
-  // si finisce il puzzle trascinando ogni pezzo a casa (vedi smoke-puzzle.mjs)
-  for (let i = 0; i < 6; i++) {
-    const t = await page.evaluate(() => {
-      const s = document.querySelector('svg[viewBox^="0 0 360"]');
-      const g = s && [...s.querySelectorAll('g[role="button"]')][0];
-      if (!g) return null;
-      const m = g.getAttribute('transform').match(/translate\(([-\d.]+) ([-\d.]+)\) scale\(([\d.]+)\)/);
-      const [tx, ty, sc] = [+m[1], +m[2], +m[3]];
-      const [, r, c] = g.getAttribute('aria-label').match(/Pezzo (\d+)-(\d+)/).map(Number);
-      const sb = s.getBoundingClientRect(); const k = sb.width / 360;
-      const cw = 180, ch = Math.round(360 * 240 / 400) / 2;
-      const cx = (c - 1 + 0.5) * cw, cy = (r - 1 + 0.5) * ch;
-      return { presa: { x: sb.x + (tx + cx * sc) * k, y: sb.y + (ty + cy * sc) * k }, casa: { x: sb.x + cx * k, y: sb.y + cy * k } };
-    });
-    if (!t) break;
-    await page.mouse.move(t.presa.x, t.presa.y);
-    await page.mouse.down();
-    await page.mouse.move(t.casa.x, t.casa.y, { steps: 10 });
-    await page.mouse.up();
-    await page.waitForTimeout(400);
-  }
-  await page.waitForSelector('text=Ancora!', { timeout: 8000 });
-  await scatta('screen-reward', 1600);
+  // l'area genitori: il programma con gli obiettivi del curricolo
+  await allaMappa();
+  await page.locator('.mg-genitori').first().click();
+  for (const n of '1234') await page.getByRole('button', { name: n, exact: true }).click();
+  await page.getByRole('button', { name: /^Matematica/ }).click();
+  await page.locator('section[aria-label="Cosa sta imparando"]').evaluate(el => el.scrollIntoView({ block: 'start' }));
+  await scatta('screen-programma', 1200);
+
+  // il negozio del Look
+  await allaMappa();
+  await page.locator('nav.mg-tabs').getByRole('button', { name: 'Look' }).click();
+  await scatta('screen-look', 1600);
 
   await feature(browser);
   await browser.close();

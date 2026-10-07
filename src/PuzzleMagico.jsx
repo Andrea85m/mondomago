@@ -1269,7 +1269,7 @@ export default function PuzzleMagico({ età = 5, speak, suona = null, sfx, onExi
     if (monete) onMonete?.(monete);
     sfx?.victory?.();
     // sul puzzle degli animali parla l'animale (verso + curiosità), non il "bravo" generico
-    if (!animaleVinto) speak?.(nuovo ? "Bravissimo! Hai vinto un adesivo nuovo!" : "Bravissimo! Puzzle completato!");
+    if (!animaleVinto) { if (nuovo) speak?.("Evviva! Hai vinto un adesivo nuovo!"); else speak?.("Evviva! Puzzle completato!"); }
     setVittoria({ testo, adesivo: nuovo, monete, animale: animaleVinto });
   }
 
