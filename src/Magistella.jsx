@@ -32,7 +32,8 @@ import {
   etichettaLeggibile,
 } from "./sigillo.js";
 import AnimationStyles from "./AnimationStyles.jsx";
-import { COMPANIONS, STORY_ARCS, WORLDS, SIGILLO_FRAGMENTS, SIGILLO_STORY, SKILLS, SKILL_MAP } from "./data/mondi.js";
+import { COMPANIONS, STORY_ARCS, WORLDS, SIGILLO_FRAGMENTS, SIGILLO_STORY, SKILLS, SKILL_MAP, LODI_RISPOSTA, LODI_TAPPA } from "./data/mondi.js";
+import { SentieroTappa, SentieroFineTappa } from "./SentieroProgresso.jsx";
 import { ALL_CHALLENGES } from "./data/sfide.js";
 import { pick, inchiostroSu } from "./util.js";
 
@@ -646,6 +647,15 @@ function frasiGenerate() {
 // 12ª; finito il sentiero si riapre ad Argento e poi a Oro, con le sfide della
 // fascia d'età successiva. È lo schema delle app educative più giocate: tante
 // tappe corte, sempre una prossima, e la padronanza che sale di livello.
+// Quanto aspetta il popup del giorno (fiamma) dopo l'apertura: il tempo che la
+// mappa entri (screen-enter, 0,4 s) e che le isole arrivino dalla cache.
+const RITARDO_POPUP_AVVIO = 1600;
+/** I premi dello scrigno magico (ogni 5 risposte giuste). */
+const SCRIGNI = [
+  { id: "stelle", titolo: "Tre stelle bonus!",        icona: "star" },
+  { id: "doppia", titolo: "Doppia stella alla prossima risposta!", icona: "sparkles" },
+  { id: "monete", titolo: "Cinque monete magiche!",   icona: "coin" },
+];
 const TAPPE = 12;
 const TAPPE_BOSS = new Set([5, 11]);            // indici: 6ª e 12ª tappa
 const MEDAGLIE = [
@@ -719,6 +729,14 @@ function addSkill(skills, type) {
 let _bestVoice    = undefined; // undefined = uncached; null = none found
 let _currentAudio = null;
 let _ttsEnabled   = true;     // toggled from parent panel
+// Musica ed effetti si spengono a parte (profilo e area genitori): prima c'era
+// solo l'interruttore della voce, e chi voleva il silenzio doveva togliere tutto.
+const _audioPref = (() => {
+  try { return { musica: true, effetti: true, ...JSON.parse(localStorage.getItem('mondomago_audio') || '{}') }; }
+  catch { return { musica: true, effetti: true }; }
+})();
+let _musicaOn  = _audioPref.musica !== false;
+let _effettiOn = _audioPref.effetti !== false;
 
 function getBestVoice() {
   if (_bestVoice !== undefined) return _bestVoice;
@@ -857,7 +875,7 @@ function sbloccaLettori() {
   }
 }
 if (typeof document !== "undefined") {
-  const primo = () => { sbloccaLettori(); document.removeEventListener("pointerdown", primo, true); document.removeEventListener("keydown", primo, true); };
+  const primo = () => { warmUpAudio(); sbloccaLettori(); document.removeEventListener("pointerdown", primo, true); document.removeEventListener("keydown", primo, true); };
   document.addEventListener("pointerdown", primo, true);
   document.addEventListener("keydown", primo, true);
 }
@@ -920,8 +938,21 @@ function staParlando(text) {
  *   opzioni.prio      VOCE_CONSEGNA (default) o VOCE_COMMENTO
  *   opzioni.cedeA     se true il commento rinuncia quando c'è una consegna in corso
  */
-function speak(text, rate = 0.85, onEnd, { prio = VOCE_CONSEGNA, cedeA = false } = {}) {
+function speak(text, rate = 0.85, onEnd, { prio = VOCE_CONSEGNA, cedeA = false, dopo = false } = {}) {
   if (!_ttsEnabled || !text) { if (onEnd) setTimeout(onEnd, 300); return; }
+  // dopo: aspetta che finisca la frase in corso (al massimo 3,5 s) invece di
+  // coprirla. Serve ai popup (scrigno, nuovo livello) che arrivano mentre il
+  // compagno sta ancora commentando la risposta.
+  if (dopo) {
+    const t0 = Date.now();
+    const prova = () => {
+      const occupata = (_currentAudio && !_currentAudio.paused && !_currentAudio.ended) || window.speechSynthesis?.speaking;
+      if (occupata && Date.now() - t0 < 3500) { setTimeout(prova, 150); return; }
+      speak(text, rate, onEnd, { prio, cedeA });
+    };
+    prova();
+    return;
+  }
   const key  = ttsKey(text);
   const file = TTS_MAP[key] || TTS_MAP[text];
 
@@ -1031,11 +1062,20 @@ function getCtxRaw() {
   if (_ctx.state === 'suspended') _ctx.resume();
   return _ctx;
 }
+// Avvio lento (feedback di Andrea, 7 Ott 2026): all'apertura i traguardi e la
+// fiamma chiamavano SFX prima di qualsiasi tocco, e il primo suono creava
+// l'AudioContext in mezzo al primo render. Creare il contesto apre l'uscita
+// audio del dispositivo: il profilo su CPU da Android medio mostrava un blocco
+// di 4 s, con lo splash fermo. E senza un gesto il browser non fa suonare
+// niente comunque. Ora il contesto nasce solo dopo il primo tocco (warmUpAudio,
+// agganciato sotto a pointerdown/keydown); prima, gli effetti tacciono.
 function getCtx() {
-  return getCtxRaw();
+  return _audioUnlocked ? getCtxRaw() : null;
 }
-function playTone(freq, type, start, dur, gainPeak = 0.28) {
+function playTone(freq, type, start, dur, gainPeak = 0.28, musica = false) {
+  if (musica ? !_musicaOn : !_effettiOn) return;
   const ctx = getCtx();
+  if (!ctx) return;
   const osc = ctx.createOscillator();
   const g   = ctx.createGain();
   osc.connect(g); g.connect(ctx.destination);
@@ -1123,7 +1163,7 @@ function alzaMusica() {
   if (_songAudio) try { _songAudio.volume = SONG_VOL; } catch { /* iOS: volume fisso */ }
 }
 function startMusic(worldId) {
-  if (_musicTimer) return; // already running
+  if (_musicTimer || !_musicaOn) return; // already running, o musica spenta
   // Una musica sola: se il mondo ha il suo brano (startSong), le note
   // sintetiche restano spente. Servono solo ai mondi senza brano.
   if (WORLD_SONGS[worldId]) return;
@@ -1131,8 +1171,8 @@ function startMusic(worldId) {
   function tick() {
     const f = scale.freqs[_musicStep % scale.freqs.length];
     const k = _musicaSotto ? 0.3 : 1;
-    playTone(f,   'sine', 0, scale.ms / 1000 * 0.85, 0.055 * k);
-    playTone(f/2, 'sine', 0, scale.ms / 1000 * 0.85, 0.028 * k);
+    playTone(f,   'sine', 0, scale.ms / 1000 * 0.85, 0.055 * k, true);
+    playTone(f/2, 'sine', 0, scale.ms / 1000 * 0.85, 0.028 * k, true);
     _musicStep++;
     _musicTimer = setTimeout(tick, scale.ms);
   }
@@ -1171,7 +1211,7 @@ function _playSongLine() {
 }
 function startSong(worldId) {
   stopSong();
-  if (!WORLD_SONGS[worldId]) return;
+  if (!WORLD_SONGS[worldId] || !_musicaOn) return;
   _songWorld = worldId; _songLine = 0; _songActive = true;
   _playSongLine();
 }
@@ -1500,7 +1540,6 @@ export default function Magistella() {
   const prevScreenRef = useRef("");
   const nextRef       = useRef(null);
   const dailyShortcutRef = useRef(new URLSearchParams(window.location.search).get('action') === 'daily');
-  const advancingRef  = useRef(false);
   const obTouchRef    = useRef(0);
   const [childName,    setChildName]    = useState("");
   const [childAge,     setChildAge]     = useState(null);
@@ -1529,7 +1568,9 @@ export default function Magistella() {
   const [exitConfirm,    setExitConfirm]    = useState(false);
   const [missionsDone,   setMissionsDone]   = useState([]);
   const [feedbackMsg,    setFeedbackMsg]    = useState("");
+  const [lode,           setLode]           = useState("Perfetto!");   // il titolo dopo una risposta giusta, scelto al tocco
   const [parentUnlocked, setParentUnlocked] = useState(false);
+  const [parentTab,      setParentTab]      = useState("progressi");   // area genitori: "progressi" | "impostazioni"
   const [pinInput,       setPinInput]       = useState("");
   const [pinSaved,       setPinSaved]       = useState(() => loadParent()?.pin || "");
   const [pinError,       setPinError]       = useState(false);
@@ -1574,6 +1615,8 @@ export default function Magistella() {
   const [songLyric,       setSongLyric]       = useState(null);
   // tts toggle (persisted)
   const [ttsEnabled,      setTtsEnabledState] = useState(() => localStorage.getItem('mondomago_tts') !== '0');
+  const [musicaOn,        setMusicaOn]        = useState(_musicaOn);
+  const [effettiOn,       setEffettiOn]       = useState(_effettiOn);
   // Preferenze di accessibilità (device-level, sopravvivono ai reset profilo)
   const [a11y, setA11y] = useState(() => {
     try { return JSON.parse(localStorage.getItem('mondomago_a11y') || 'null') || {}; }
@@ -1734,6 +1777,7 @@ export default function Magistella() {
   }
   function triggerOK(pts) {
     clearMiss(ch);
+    setLode(pick(combo >= 2 ? LODI_RISPOSTA.serie : LODI_RISPOSTA.base));
     const actualPts = doubleStar ? pts * 2 : pts;
     if (doubleStar) setDoubleStar(false);
     navigator.vibrate?.(combo >= 4 ? [30,20,30,20,80] : combo >= 2 ? [40,20,60] : [50]);
@@ -1754,17 +1798,21 @@ export default function Magistella() {
     triggerConfetti();
     setCompAnim("bounce"); setTimeout(() => setCompAnim("float"), 900);
     setTimeout(() => setCompMood("idle"), 2000);
-    // Mystery box: every 5 correct answers in session
+    // Scrigno magico: ogni 5 risposte giuste nella sessione. Prima il terzo premio
+    // diceva "Cosmetico sbloccato!" senza sbloccare niente: ora sono 5 monete vere.
+    // Lo scrigno si annuncia a voce quando il compagno ha finito di parlare, e
+    // finché è aperto la sfida successiva aspetta (vedi `celebrazione`).
     setResults(prev => {
       const nextCorrect = prev.filter(r=>r.ok).length + 1;
       if (nextCorrect > 0 && nextCorrect % 5 === 0) {
-        const rewards = ["⭐⭐⭐ Tre stelle bonus!", "✨ Doppia stella prossima risposta!", "🎁 Cosmetico sbloccato!"];
-        const reward = rewards[Math.floor(Math.random() * rewards.length)];
+        const premio = pick(SCRIGNI);
         setTimeout(() => {
-          setMysteryBox(reward);
-          if (reward.includes("Doppia")) setDoubleStar(true);
-          if (reward.includes("stelle bonus")) { setTotalStars(s => s + 3); setSessionStars(s => s + 3); setCoins(c => c + 3); }
-          setTimeout(() => setMysteryBox(null), 3500);
+          setMysteryBox(premio);
+          SFX.achievement();
+          if (premio.id === "doppia") { setDoubleStar(true); speak("Scrigno magico! Doppia stella alla prossima risposta!", 0.85, null, { prio: VOCE_COMMENTO, dopo: true }); }
+          if (premio.id === "stelle") { setTotalStars(s => s + 3); setSessionStars(s => s + 3); setCoins(c => c + 3); speak("Scrigno magico! Tre stelle bonus!", 0.85, null, { prio: VOCE_COMMENTO, dopo: true }); }
+          if (premio.id === "monete") { setCoins(c => c + 5); speak("Scrigno magico! Cinque monete magiche!", 0.85, null, { prio: VOCE_COMMENTO, dopo: true }); }
+          setTimeout(() => setMysteryBox(m => (m === premio ? null : m)), 3600);
         }, 800);
       }
       return prev;
@@ -1967,7 +2015,12 @@ export default function Magistella() {
         sentieroFinito = tappa + 1 >= TAPPE;
         const nuovo = sentieroFinito ? { tappa: 0, livello: Math.min(3, livello + 1) } : { tappa: tappa + 1, livello };
         setPercorso(prev => ({ ...prev, [world.id]: nuovo }));
-        setFineTappa({ tappa: tappa + 1, livello, sentieroFinito, medagliaNuova: sentieroFinito ? MEDAGLIE[Math.min(2, livello)] : null });
+        // la lode dipende da com'è andata; la seconda frase dice dove porta il sentiero
+        const giuste = results.filter(r => r.ok).length, totali = results.length || 1;
+        const quota = giuste / totali;
+        const lodeTappa = quota === 1 ? LODI_TAPPA.onPerfetta() : quota >= 0.6 ? LODI_TAPPA.onBella() : LODI_TAPPA.onImpegno();
+        const dopoTappa = tappa + 2 === TAPPE ? LODI_TAPPA.onVersoMedaglia() : TAPPE_BOSS.has(tappa + 1) ? LODI_TAPPA.onVersoBoss() : LODI_TAPPA.onAvanti();
+        setFineTappa({ tappa: tappa + 1, livello, sentieroFinito, medagliaNuova: sentieroFinito ? MEDAGLIE[Math.min(2, livello)] : null, lode: lodeTappa, dopo: dopoTappa, giuste, totali: results.length });
         if (sentieroFinito) { setCoins(c => c + 10 * livello); }
       } else setFineTappa(null);
       // il premio del mondo (frammento del Sigillo) a fine sentiero di bronzo
@@ -2127,11 +2180,13 @@ export default function Magistella() {
         setCoins(c => (typeof p.coins === 'number' ? p.coins : c) + bonus);
         setFiammaBonus(bonus);
       }
+      // Prima la mappa, poi la festa: aperta l'app il popup copriva tutto prima
+      // ancora che la mappa comparisse (feedback di Andrea: "all'avvio non c'è
+      // fluidità"). Ora arriva quando la schermata è entrata e le isole caricate.
       if (diff === 1 && newStreak >= 3 && (newStreak % 7 === 0 || newStreak === 3)) {
-        setStreakCelebrate(true);
-        setTimeout(() => SFX.milestone(), 400);
+        setTimeout(() => { setStreakCelebrate(true); SFX.milestone(); }, RITARDO_POPUP_AVVIO);
       } else if (diff >= 1) {
-        setTimeout(() => setFiammaAperta(true), 900);
+        setTimeout(() => setFiammaAperta(true), RITARDO_POPUP_AVVIO);
       }
     }
     setIsReturning(true);
@@ -2164,7 +2219,6 @@ export default function Magistella() {
     ch?.format === "puzzle_swap"   ? selected === 999 :
     selected === ch?.correct;
 
-  const progressPct = challenges.length ? ((ci + 1) / challenges.length) * 100 : 0;
 
   // Android hardware/gesture back button — navigate instead of closing PWA
   useEffect(() => {
@@ -2247,7 +2301,7 @@ export default function Magistella() {
     window.history.replaceState(null, '', url);
     // eslint-disable-next-line react-hooks/set-state-in-effect -- scorciatoia di sviluppo
     setWorld(WORLDS.find(w => w.id === "foresta"));
-    setFineTappa(quale === 'tappa' ? { tappa: 4, livello: 1, sentieroFinito: false, medagliaNuova: null } : null);
+    setFineTappa(quale === 'tappa' ? { tappa: 4, livello: 1, sentieroFinito: false, medagliaNuova: null, lode: "Grandioso! Tappa superata!", dopo: "Il sentiero continua!", giuste: 4, totali: 5 } : null);
     setResults([{ type:"logica", ok:true }, { type:"numeri", ok:true }, { type:"empatia", ok:false }]);
     setSessionStars(6);
     navigate("world_end");
@@ -2304,15 +2358,8 @@ export default function Magistella() {
   // Always keep nextRef current so the auto-advance closure never goes stale
   useLayoutEffect(() => { nextRef.current = next; });
 
-  // [C1+A1+A3] Auto-advance on correct answer — uses ref to avoid stale closure; youngBg gets longer delay
-  useEffect(() => {
-    if (screen !== "challenge" || !autoAdvancing) return;
-    if (advancingRef.current) return;
-    advancingRef.current = true;
-    const delay = young ? 3000 : 1550;
-    const t = setTimeout(() => { advancingRef.current = false; setAutoAdvancing(false); nextRef.current?.(); }, delay);
-    return () => { clearTimeout(t); advancingRef.current = false; };
-  }, [autoAdvancing, screen]); // eslint-disable-line
+  // L'avanzamento automatico sta più sotto, dopo `celebrazione` (serve lo stato
+  // dell'avviso di pausa, dichiarato là).
 
   // [B1] Boss HP bar animation — animates to target value on entering boss challenge
   useEffect(() => {
@@ -2372,14 +2419,19 @@ export default function Magistella() {
   }, [screen, ci, done]);
 
 
-  // Notify when coins cross a cosmetic's coinCost for the first time
+  // Avviso quando le monete guadagnate bastano per un cosmetico. Si confronta con
+  // il valore di prima: con la vecchia regola (coins - 2 < costo) l'avviso
+  // scattava anche al caricamento del profilo e copriva le risposte della sfida.
+  const moneteDiPrimaRef = useRef(null);
   useEffect(() => {
+    const prima = moneteDiPrimaRef.current;
+    moneteDiPrimaRef.current = coins;
     if (!childName || !activeProfileId) return;
+    if (prima === null || coins <= prima || coins - prima > 25) return;   // caricamento o cambio profilo, non un guadagno
     const newlyAffordable = COSMETICS.filter(c =>
-      !ownedCosmetics.includes(c.id) && coins >= c.coinCost && (coins - 2) < c.coinCost
+      !ownedCosmetics.includes(c.id) && coins >= c.coinCost && prima < c.coinCost
     );
     if (!newlyAffordable.length) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- avviso quando le monete bastano per un cosmetico
     setNewCosmetics([newlyAffordable[0].id]);
     SFX.achievement();
     setTimeout(() => setNewCosmetics([]), 4000);
@@ -2411,6 +2463,13 @@ export default function Magistella() {
   useEffect(() => {
     writeParent({ pin: pinSaved, timeLimit, notifTime });
   }, [pinSaved, timeLimit, notifTime]);
+
+  // Musica ed effetti: flag del modulo + memoria del dispositivo
+  useEffect(() => {
+    _musicaOn = musicaOn; _effettiOn = effettiOn;
+    if (!musicaOn) { stopMusic(); stopSong(); }
+    try { localStorage.setItem('mondomago_audio', JSON.stringify({ musica: musicaOn, effetti: effettiOn })); } catch { /* storage bloccato */ }
+  }, [musicaOn, effettiOn]);
 
   // Sync ttsEnabled to module-level flag
   useEffect(() => {
@@ -2448,19 +2507,25 @@ export default function Magistella() {
       const msg = streak >= 3
         ? `🔥 Streak di ${streak} giorni! Non dimenticare di giocare oggi per mantenerla!`
         : `✨ La sfida del giorno ti aspetta! Guadagna 3 stelle bonus oggi.`;
-      try {
-        new Notification('Magistella 🧙‍♂️', {
-          body: msg,
-          icon: `${import.meta.env.BASE_URL}icon-192.png`,
-          badge: `${import.meta.env.BASE_URL}icon-192.png`,
-          tag: 'mondomago-daily',
-        });
-      } catch { /* notifiche non supportate in questo contesto */ }
+      const opzioni = {
+        body: msg,
+        icon: `${import.meta.env.BASE_URL}icon-192.png`,
+        badge: `${import.meta.env.BASE_URL}icon-192.png`,
+        tag: 'mondomago-daily',
+      };
+      // Su Android `new Notification()` lancia "Illegal constructor": lì la
+      // notifica passa dal service worker. Il costruttore resta per il desktop.
+      navigator.serviceWorker?.getRegistration?.()
+        .then(reg => reg ? reg.showNotification('Magistella', opzioni) : new Notification('Magistella', opzioni))
+        .catch(() => { /* notifiche non supportate in questo contesto */ });
       localStorage.setItem(NOTIF_KEY, todayStr);
     }
-    checkAndNotify(); // immediate check
+    // Leggere Notification.permission durante il primo render bloccava l'avvio
+    // (2,1 s misurati in Chromium, con lo splash fermo): il primo controllo
+    // aspetta che l'app sia già in mano al bambino.
+    const primo = setTimeout(checkAndNotify, 8000);
     const id = setInterval(checkAndNotify, 60000); // check every minute
-    return () => clearInterval(id);
+    return () => { clearTimeout(primo); clearInterval(id); };
   }, [notifTime, sessionLog, streak]);
 
   // PIN check: when 4 digits entered in parent screen, verify or set
@@ -2505,6 +2570,48 @@ export default function Magistella() {
     }
   }, [nowTick, sessionStart, sessionAlertShown, screen]);
 
+  // Solo in sviluppo: la sfida corrente per i test automatici (scripts/smoke-popup.mjs)
+  useEffect(() => { if (import.meta.env.DEV) window.__mmSfida = ch; }, [ch]);
+
+  // ── Semaforo dei popup ─────────────────────────────────────────────────────
+  // Feedback di Andrea (7 Ott 2026): finita una sfida, la voce di quella dopo
+  // partiva mentre c'era ancora un popup aperto (lo scrigno resta 3,6 s, la
+  // sfida successiva partiva dopo 1,55 s; il nuovo livello resta finché non lo
+  // si tocca). Ora, finché un momento di festa è a schermo, la sfida aspetta;
+  // quando si chiude, riparte dopo una breve pausa e solo allora legge la domanda.
+  // Popup che coprono la sfida: fermano l'avanzamento e rimandano la domanda.
+  const celebrazione = !!newLevel || !!mysteryBox || showSessionAlert || !!comboPopup;
+  // Avvisi in basso (traguardo, cosmetico): fermano solo l'avanzamento, così non si
+  // cambia domanda sotto il naso del bambino, ma non zittiscono una domanda nuova.
+  const avvisoInBasso = newAchievements.length > 0 || newCosmetics.length > 0;
+  const celebrazioneRef = useRef(false);
+  const consegnaInAttesaRef = useRef(false);
+  const trattenutoRef = useRef(false);
+  useLayoutEffect(() => { celebrazioneRef.current = celebrazione; }, [celebrazione]);
+
+  // [C1+A1+A3] Avanzamento automatico dopo una risposta giusta
+  useEffect(() => {
+    if (screen !== "challenge" || !autoAdvancing) return;
+    if (celebrazione || avvisoInBasso) { trattenutoRef.current = true; return; }
+    const delay = trattenutoRef.current ? (young ? 1000 : 700) : (young ? 3000 : 1550);
+    const t = setTimeout(() => { trattenutoRef.current = false; setAutoAdvancing(false); nextRef.current?.(); }, delay);
+    return () => clearTimeout(t);
+  }, [autoAdvancing, screen, celebrazione, avvisoInBasso]); // eslint-disable-line react-hooks/exhaustive-deps -- `young` cambia solo con l'età
+
+  // La domanda rimasta in attesa si legge appena il popup si chiude
+  useEffect(() => {
+    if (celebrazione || !consegnaInAttesaRef.current) return;
+    consegnaInAttesaRef.current = false;
+    if (screen !== "challenge" || done) return;
+    const t = setTimeout(() => speak(consegnaDi(challenges[ci])), 350);
+    return () => clearTimeout(t);
+  }, [celebrazione]); // eslint-disable-line react-hooks/exhaustive-deps -- scatta solo alla chiusura del popup
+
+  // Nuovo livello: si annuncia (dopo il commento del compagno)
+  useEffect(() => {
+    if (newLevel) speak("Nuovo livello! Che bravura!", 0.85, null, { prio: VOCE_COMMENTO, dopo: true });
+  }, [newLevel]);
+
   // Il nome del bambino non è registrabile: speak() lo toglie dal parlato e lo
   // lascia solo a schermo, così la voce resta una sola per tutta la frase.
   useEffect(() => { setSpokenName(childName); }, [childName]);
@@ -2539,6 +2646,7 @@ export default function Magistella() {
       const c = challenges[ci];
       if (!c) return;
       if (c.isBoss) SFX.boss();
+      if (celebrazioneRef.current) { consegnaInAttesaRef.current = true; return; }
       speak(consegnaDi(c));
     } else if (screen === "world_intro" && arc) {
       startMusic(world?.id);
@@ -2554,6 +2662,7 @@ export default function Magistella() {
       triggerConfetti(true);
       // il racconto finale del mondo a fine sentiero; a fine tappa basta la festa
       if (arc && (!fineTappa || fineTappa.sentieroFinito)) setTimeout(() => speak(arc.outro, 0.85), 1400);
+      else if (fineTappa?.lode) setTimeout(() => speak(fineTappa.lode, 0.85, () => setTimeout(() => speak(fineTappa.dopo), 300)), 900);
       else setTimeout(() => speak("Tappa completata!"), 900);
     } else if (screen === "map" || screen === "session_stats") {
       stopMusic(); stopSong();
@@ -2665,11 +2774,11 @@ export default function Magistella() {
       )}
       {/* [B2] Mystery box reward */}
       {mysteryBox && (
-        <div style={{position:"fixed",inset:0,display:"flex",alignItems:"center",justifyContent:"center",zIndex:650,pointerEvents:"none"}}>
+        <div onClick={() => setMysteryBox(null)} role="dialog" aria-label={`Scrigno magico: ${mysteryBox.titolo}`} style={{position:"fixed",inset:0,display:"flex",alignItems:"center",justifyContent:"center",zIndex:650,background:"rgba(10,6,25,.45)",cursor:"pointer"}}>
           <div style={{animation:"mysteryOpen .45s cubic-bezier(.34,1.56,.64,1) both",background:SG_BG,border:`2px solid ${SG_GOLD}`,borderRadius:28,padding:"24px 32px",textAlign:"center",boxShadow:"0 0 50px rgba(255,194,75,.4), 0 20px 60px rgba(0,0,0,.6)",maxWidth:300}}>
-            <div style={{marginBottom:8,display:"flex",justifyContent:"center"}}><Icon name="gift" color={SG_GOLD} size={54} /></div>
+            <div style={{marginBottom:8,display:"flex",justifyContent:"center"}}><img src={ui3d("treasure-chest")} alt="" style={{width:76,height:76,filter:"drop-shadow(0 6px 14px rgba(255,194,75,.45))"}} /></div>
             <div style={{fontFamily:FF_MONO,color:SG_RUNE,fontWeight:700,fontSize:12,letterSpacing:2,textTransform:"uppercase",marginBottom:6}}>Scrigno magico</div>
-            <div style={{fontFamily:FF_DISPLAY,color:SG_PARCH,fontWeight:800,fontSize:18,lineHeight:1.3}}>{mysteryBox}</div>
+            <div style={{fontFamily:FF_DISPLAY,color:SG_PARCH,fontWeight:800,fontSize:18,lineHeight:1.3,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><Icon name={mysteryBox.icona} color={SG_GOLD} size={22} />{mysteryBox.titolo}</div>
           </div>
         </div>
       )}
@@ -3193,8 +3302,9 @@ export default function Magistella() {
             {/* barra risorse */}
             <div className="mg-hud">
               {comp && (
-                <button className="mg-ava" onClick={() => navigate("profile")} aria-label="Apri il profilo del compagno">
+                <button className="mg-ava" onClick={() => navigate("profile")} aria-label="Il mio profilo e le impostazioni">
                   <CompanionAvatar c={comp} size={46} mood="idle" decorativa look={equippedCosmetic[comp.id]} />
+                  <img className="mg-ingranaggio" src={ui3d("gear-settings")} alt="" />
                   <span className="mg-lvl" aria-label={`Livello ${PLAYER_LEVELS.indexOf(mapLvl) + 1}`}>{PLAYER_LEVELS.indexOf(mapLvl) + 1}</span>
                 </button>
               )}
@@ -3563,7 +3673,6 @@ export default function Magistella() {
     const pts     = ch.isBoss ? 3 : young ? 1 : 2;
 
     const worldColor = world?.color || "#22C55E";
-    const youngColors = ["#FF5252","#26C6DA","#66BB6A","#FFA726"];
     // limite di tempo scelto dal genitore: si rilegge l'orologio a ogni render (c'è un tick ogni 30s)
     // eslint-disable-next-line react-hooks/purity
     const minutiDiGioco = sessionStart > 0 ? Math.floor((Date.now() - sessionStart) / 60000) : 0;
@@ -3720,24 +3829,16 @@ export default function Magistella() {
           </div>
           {comp && <CompanionAvatar c={comp} size={56} anim={compAnim} talking={compTalking} mood={compMood} worldId={world?.id} look={equippedCosmetic[comp.id]} />}
         </div>
-        {/* Progress bar — Duolingo style */}
-        <div style={{position:"relative",zIndex:1,marginBottom:14,display:"flex",alignItems:"center",gap:10}}>
-          <div style={{flex:1,background:youngBg?"rgba(0,0,0,.08)":"rgba(255,255,255,.10)",borderRadius:50,height:youngBg?16:12,overflow:"hidden",boxShadow:"inset 0 1px 3px rgba(0,0,0,.15)"}}>
-            <div style={{
-              background:ch.isBoss?"linear-gradient(90deg,#FF4444,#FF8800)":youngBg?`linear-gradient(90deg,${youngColors[0]},${youngColors[2]})`:"linear-gradient(90deg,#22C55E,#6DE0C6)",
-              height:"100%", borderRadius:50,
-              width:`${progressPct}%`,
-              transition:"width .5s cubic-bezier(.22,1,.36,1)",
-              boxShadow: done && isCorrect && ci === challenges.length-1
-                ? "0 0 14px rgba(255,215,0,.9), 0 2px 6px rgba(34,197,94,.35)"
-                : youngBg?"0 2px 6px rgba(255,82,82,.35)":"0 2px 6px rgba(34,197,94,.35)",
-              animation: done && isCorrect && ci === challenges.length-1 ? "pulse .55s ease-in-out 3" : "none",
-            }} />
-          </div>
-          <div style={{fontSize:11,fontWeight:900,color:youngBg?"#666":"rgba(255,255,255,.5)",whiteSpace:"nowrap",minWidth:32,textAlign:"right"}}>
-            {ci+1}/{challenges.length}
-          </div>
-        </div>
+        {/* Il sentiero della tappa (feedback di Andrea): da questa tappa alla
+            prossima, la stella avanza di un passo a ogni risposta. */}
+        {(() => {
+          const st = world && world.id !== "daily" ? statoSentiero(percorso, world.id) : null;
+          return (
+            <SentieroTappa tappa={st ? st.tappa : null} totale={TAPPE} bossDi={i => TAPPE_BOSS.has(i)}
+              passi={ci + (done ? 1 : 0)} domande={challenges.length} coloreBoss={!!ch.isBoss}
+              avatar={<img src={premio3d("star")} alt="" style={{width:30,height:30,display:"block",filter:"drop-shadow(0 2px 4px rgba(0,0,0,.5)) drop-shadow(0 0 6px rgba(255,194,75,.7))"}} />} />
+          );
+        })()}
         {/* Lyric ticker */}
         {songLyric && !youngBg && (
           <div style={{textAlign:"center",fontSize:11,color:"rgba(255,255,255,.38)",fontStyle:"italic",marginBottom:4,overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis",letterSpacing:.2}}>
@@ -3745,7 +3846,7 @@ export default function Magistella() {
           </div>
         )}
         {/* [A3] Auto-advance countdown ring */}
-        {autoAdvancing && (
+        {autoAdvancing && !celebrazione && !avvisoInBasso && (
           <div style={{position:"fixed",bottom:28,right:24,zIndex:600,pointerEvents:"none"}}>
             <svg width={44} height={44} viewBox="0 0 44 44">
               <circle cx="22" cy="22" r="21" fill="rgba(0,0,0,.55)" stroke="rgba(255,255,255,.15)" strokeWidth="2"/>
@@ -4451,7 +4552,7 @@ export default function Magistella() {
                   marginBottom:3,
                 }}>
                   {isCorrect
-                    ? (isDrag ? "Abbinamenti perfetti!" : isSeq ? "Ordine perfetto!" : "Perfetto!")
+                    ? lode
                     : (["Quasi ci sei!","Riprova, ce la fai!","Non mollare!","Ancora un tentativo!","Ci siamo quasi!","Dai, una volta ancora!"])[Math.min((wrongStreak||1)-1,5)]}
                 </div>
                 {/* Story narrative outcome */}
@@ -4572,6 +4673,13 @@ export default function Magistella() {
   // Finita una tappa (non tutto il sentiero): avanzamento e prossima tappa.
   if (screen === "world_end" && world && world.id !== "daily" && fineTappa && !fineTappa.sentieroFinito) {
     const fatti = fineTappa.tappa;
+    const [titoloLode, ...restoParti] = (fineTappa.lode || `Tappa ${fatti} completata!`).split(/(?<=!)\s+/);
+    const restoLode = restoParti.join(" ");
+    const bossProssimo = [...TAPPE_BOSS].sort((x, y) => x - y).find(b => b >= fatti);
+    const prossimoObiettivo = fatti === TAPPE - 1 ? `Ultima tappa: vinci la medaglia ${MEDAGLIE[fineTappa.livello - 1].nome}!`
+      : bossProssimo === fatti ? "Prossima tappa: il boss!"
+      : bossProssimo === fatti + 1 ? `Prossima: tappa ${fatti + 1}, poi il boss!`
+      : `Prossima: tappa ${fatti + 1} · boss alla tappa ${bossProssimo + 1}`;
     return (
       <div key="fine-tappa" className={`${screenAnim} mm-schermo`} style={{minHeight:"100dvh",background:SG_BG,color:"#F6ECD4",padding:24,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center",isolation:"isolate"}}>
         {G}
@@ -4583,14 +4691,15 @@ export default function Magistella() {
           <img className="st b" src={premio3d("star")} alt="" />
           {comp && <img className="cp" src={posa3d(comp.id, "festa")} alt="" />}
         </div>
-        <h1 className="mg-ribbon slide-up"><span>Tappa {fatti} completata!</span></h1>
-        <div style={{display:"flex",gap:5,justifyContent:"center",margin:"14px 0 6px",flexWrap:"wrap",maxWidth:340}} aria-label={`${fatti} tappe su ${TAPPE}`}>
-          {Array.from({ length: TAPPE }, (_, i) => (
-            <span key={i} style={{width:20,height:20,borderRadius:"50%",border:`2px solid ${MG_INK}`,
-              background: i < fatti ? "linear-gradient(180deg,#FFE08A,#F5A623)" : TAPPE_BOSS.has(i) ? "rgba(255,194,75,.25)" : "rgba(255,255,255,.12)"}} />
-          ))}
+        <h1 className="mg-ribbon slide-up"><span>{titoloLode}</span></h1>
+        {restoLode && <div className="fade-in" style={{fontFamily:FF_DISPLAY,fontSize:19,color:"#FFF6E0",marginTop:8,textShadow:"0 2px 4px rgba(0,0,0,.5)",animationDelay:".2s"}}>{restoLode}</div>}
+        <div style={{fontSize:13,opacity:.75,marginTop:4}}>Tappa {fatti} di {TAPPE} completata{fineTappa.totali ? ` · ${fineTappa.giuste} giuste su ${fineTappa.totali}` : ""}</div>
+        {/* dove sei arrivato sul sentiero (feedback di Andrea) */}
+        <div className="fade-in" style={{width:"100%",maxWidth:360,background:"rgba(20,11,41,.6)",border:"1px solid rgba(255,236,190,.16)",borderRadius:22,padding:"8px 12px 12px",margin:"14px 0 12px",animationDelay:".3s"}}>
+          <SentieroFineTappa fatti={fatti} totale={TAPPE} bossDi={i => TAPPE_BOSS.has(i)}
+            avatar={comp ? <CompanionAvatar c={comp} size={40} mood="happy" decorativa look={equippedCosmetic[comp.id]} /> : null} />
+          <div style={{fontSize:14,fontWeight:800,color:SG_GOLD,marginTop:2}}>{prossimoObiettivo}</div>
         </div>
-        <div style={{fontSize:14,opacity:.8,marginBottom:14}}>{TAPPE - fatti === 1 ? "Manca solo una tappa!" : `Mancano ${TAPPE - fatti} tappe a fine sentiero`}</div>
         <div className="pop-in" style={{display:"inline-flex",alignItems:"center",gap:8,background:"rgba(255,194,75,.14)",border:"2px solid rgba(255,194,75,.45)",borderRadius:30,padding:"8px 18px",marginBottom:12}}>
           <img src={premio3d("star")} alt="" style={{width:28,height:28}} /><b style={{color:SG_GOLD}}>+{sessionStars} {sessionStars === 1 ? "stella" : "stelle"}</b>
         </div>
@@ -5155,57 +5264,151 @@ export default function Magistella() {
   }
 
   // ════════════════════ SCREEN: COMPANION PROFILE ═══════════════════════════
-  if (screen === "profile" && comp) return (
-    <div key="profile" className={`${screenAnim} mm-schermo`} style={{minHeight:"100dvh",background:comp.bg,color:"white",padding:28,display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center"}}>
-      {G}
-      <button onClick={() => navigate("map")} style={{...MG_BTN_BACK,alignSelf:"flex-start",marginBottom:24}}>← Indietro</button>
-      <CompanionAvatar c={comp} size={110} anim="float" look={equippedCosmetic[comp.id]} showBody />
-      <h1 style={{fontSize:28,fontWeight:900,marginBottom:4}}>{comp.name}</h1>
-      <div style={{fontSize:14,opacity:.7,marginBottom:8}}>{comp.type} · Il tuo compagno magico</div>
-      <button onClick={() => navigate("cosmetics")} style={{background:"rgba(255,255,255,.15)",border:"none",color:"white",borderRadius:20,padding:"6px 18px",fontSize:12,fontWeight:700,cursor:"pointer",marginBottom:22}}>
-        <Icon name="sparkles" color={SG_GOLD} size={17} style={{verticalAlign:"-3px",marginRight:7}} />Personalizza look
-      </button>
-      <div style={{width:"100%",maxWidth:360,background:"rgba(255,255,255,.12)",borderRadius:24,padding:"20px 24px",marginBottom:20}}>
-        <div style={{fontSize:13,fontWeight:800,opacity:.6,marginBottom:14,letterSpacing:1}}>OGGETTI RACCOLTI</div>
-        {items.length === 0
-          ? <div style={{opacity:.5,fontSize:14}}>Completa un mondo per sbloccare il primo oggetto!</div>
-          : <div style={{display:"flex",gap:16,flexWrap:"wrap",justifyContent:"center"}}>
-              {items.map((it,i) => (
-                <div key={i} className="pop-in" style={{textAlign:"center",background:"rgba(255,255,255,.15)",borderRadius:18,padding:"16px 20px",animationDelay:`${i*.1}s`}}>
-                  <div style={{fontSize:42}}><Emo text={it.emoji} size={48} /></div>
-                  <div style={{fontSize:12,marginTop:6,fontWeight:700}}>{it.name}</div>
-                </div>
+  // ════════════════════ SCREEN: PROFILO E IMPOSTAZIONI ═════════════════════
+  // Feedback di Andrea (7 Ott 2026): "manca una sezione del profilo con
+  // impostazioni da cambiare, anche per i genitori". Prima qui c'era solo la
+  // scheda del compagno; le impostazioni stavano in fondo al report genitori.
+  // Ora: suoni e compagno a portata del bambino, il resto dietro il PIN.
+  if (screen === "profile" && comp) {
+    const lvlP = getLevel(totalStars);
+    const SUONI = [
+      { id: "voce",    nome: "Voce",    on: ttsEnabled, set: setTtsEnabledState, img: ttsEnabled ? "speaker-with-sound-waves" : "speaker-muted" },
+      { id: "musica",  nome: "Musica",  on: musicaOn,   set: setMusicaOn,        icona: "music" },
+      { id: "effetti", nome: "Effetti", on: effettiOn,  set: setEffettiOn,       icona: "sparkles" },
+    ];
+    const CARD = { width:"100%", maxWidth:380, background:SG_CARD, border:SG_BR, borderRadius:24, padding:"16px 16px 18px", marginBottom:14 };
+    const ETICHETTA = { fontFamily:FF_MONO, fontSize:11, letterSpacing:2, textTransform:"uppercase", color:SG_RUNE, marginBottom:12, display:"flex", alignItems:"center", gap:8 };
+    return (
+      <div key="profile" className={`${screenAnim} mm-schermo`} style={{minHeight:"100dvh",background:SG_BG,color:SG_PARCH,padding:"20px 16px 40px",display:"flex",flexDirection:"column",alignItems:"center",isolation:"isolate"}}>
+        {G}
+        <SigilloSky zIndex={-1} />
+        <div style={{width:"100%",maxWidth:380,display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
+          <button onClick={() => navigate("map")} style={MG_BTN_BACK}>← Mappa</button>
+          <h1 style={{fontFamily:FF_DISPLAY,fontSize:24,color:SG_GOLD,margin:0,display:"flex",alignItems:"center",gap:8}}>
+            <img src={ui3d("gear-settings")} alt="" style={{width:28,height:28}} />Il mio profilo
+          </h1>
+        </div>
+
+        {/* chi gioca */}
+        <div className="slide-up" style={{...CARD,display:"flex",alignItems:"center",gap:14,background:`linear-gradient(135deg, ${comp.color}38, rgba(45,27,84,.75))`}}>
+          <CompanionAvatar c={comp} size={84} anim="float" look={equippedCosmetic[comp.id]} decorativa />
+          <div style={{flex:1,minWidth:0,textAlign:"left"}}>
+            <div style={{fontFamily:FF_DISPLAY,fontSize:26,color:SG_GOLD,lineHeight:1.1,overflow:"hidden",textOverflow:"ellipsis"}}>{childName}</div>
+            <div style={{fontSize:13,opacity:.85,margin:"2px 0 8px"}}>{lvlP.title} · {childAge} anni · con {comp.name}</div>
+            <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+              {[{img:premio3d("star"),v:totalStars,l:"stelle"},{img:premio3d("moneta"),v:coins,l:"monete"},{img:ui3d("flame"),v:streak,l:streak === 1 ? "giorno" : "giorni"}].map(r => (
+                <span key={r.l} style={{display:"inline-flex",alignItems:"center",gap:4,background:"rgba(20,11,41,.55)",borderRadius:20,padding:"3px 10px 3px 4px",fontSize:13,fontWeight:800}}>
+                  <img src={r.img} alt="" style={{width:20,height:20}} />{r.v}<span style={{fontWeight:600,opacity:.7,fontSize:11}}>{r.l}</span>
+                </span>
               ))}
             </div>
-        }
-      </div>
-      {/* Achievements */}
-      <div style={{width:"100%",maxWidth:360,background:"rgba(255,255,255,.1)",borderRadius:20,padding:"16px 20px",marginBottom:16}}>
-        <div style={{fontSize:13,fontWeight:800,opacity:.6,marginBottom:12,letterSpacing:1}}>OBIETTIVI</div>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:10}}>
-          {ACHIEVEMENTS.map(a => {
-            const earned = achievements.includes(a.id);
-            return (
-              <div key={a.id} style={{textAlign:"center",opacity:earned?1:.3,filter:earned?"none":"grayscale(1)",transition:"opacity .3s"}}>
-                <div style={{fontSize:26}}>{a.emoji}</div>
-                <div style={{fontSize:8,marginTop:3,fontWeight:700,color:"white",lineHeight:1.2}}>{a.name.split(" ").slice(0,2).join(" ")}</div>
-              </div>
-            );
-          })}
+          </div>
         </div>
-        <div style={{fontSize:11,opacity:.4,marginTop:12,textAlign:"center"}}>{achievements.length} / {ACHIEVEMENTS.length} sbloccati</div>
-      </div>
-      <div style={{width:"100%",maxWidth:360,background:"rgba(255,255,255,.1)",borderRadius:20,padding:"16px 20px"}}>
-        <div style={{fontSize:13,fontWeight:800,opacity:.6,marginBottom:10,letterSpacing:1}}>PERSONALITÀ</div>
-        <div style={{fontSize:14,lineHeight:1.75,opacity:.9}}>
-          {comp.id==="fiamma"&&"Coraggioso, diretto e sempre pronto a una sfida. Parla con energia pura e ti spinge sempre a dare il massimo!"}
-          {comp.id==="luna"  &&"Poetica, sognante e gentile. Vede la bellezza in ogni cosa e ti ricorda che ogni errore è un passo verso la luce."}
-          {comp.id==="onde"  &&"Curioso di tutto, ama esplorare e fare domande. Trasforma ogni sfida in una scoperta meravigliosa!"}
-          {comp.id==="foglia"&&"Furba e creativa, trova sempre un angolo inaspettato. Il suo modo di pensare è unico, proprio come te!"}
+
+        {/* suoni: tre interruttori grandi, toccabili anche da un bambino */}
+        <div className="slide-up" style={{...CARD,animationDelay:".05s"}}>
+          <div style={ETICHETTA}>Suoni</div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
+            {SUONI.map(x => (
+              <button key={x.id} aria-pressed={x.on} aria-label={`${x.nome}: ${x.on ? "accesa" : "spenta"}. Tocca per ${x.on ? "spegnere" : "accendere"}`}
+                onClick={() => { const nuovo = !x.on; x.set(nuovo); if (nuovo && x.id !== "voce") { warmUpAudio(); setTimeout(() => SFX.tap(), 30); } }}
+                style={{minHeight:96,borderRadius:20,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:6,
+                  background: x.on ? SG_GOLD_GRAD : "rgba(20,11,41,.6)", color: x.on ? SG_INK : "rgba(246,236,212,.7)",
+                  border: x.on ? `3px solid ${MG_INK}` : "2px dashed rgba(246,236,212,.25)", boxShadow: x.on ? `0 4px 0 ${MG_INK}` : "none", transition:"background .2s, transform .1s"}}>
+                {x.img
+                  ? <img src={ui3d(x.img)} alt="" style={{width:34,height:34,opacity:x.on ? 1 : .6}} />
+                  : <Icon name={x.icona} color={x.on ? SG_INK : "rgba(246,236,212,.55)"} size={30} />}
+                <b style={{fontSize:15}}>{x.nome}</b>
+                <span style={{fontSize:11,fontWeight:800,opacity:.75}}>{x.on ? "Accesa" : "Spenta"}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* il compagno */}
+        <div className="slide-up" style={{...CARD,animationDelay:".1s"}}>
+          <div style={ETICHETTA}>Il mio compagno</div>
+          <div role="radiogroup" aria-label="Scegli il compagno" style={{display:"grid",gridTemplateColumns:`repeat(${COMPANIONS.length},1fr)`,gap:8,marginBottom:12}}>
+            {COMPANIONS.map(c => {
+              const scelto = c.id === comp.id;
+              return (
+                <button key={c.id} role="radio" aria-checked={scelto} aria-label={`${c.name}, ${c.type}`}
+                  onClick={() => { if (scelto) return; SFX.tap(); setCompanion(c.id); setCompMood("happy"); }}
+                  style={{borderRadius:18,padding:"8px 2px 6px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2,
+                    background: scelto ? `${c.color}44` : "rgba(20,11,41,.45)", border: scelto ? `3px solid ${SG_GOLD}` : "2px solid transparent", color:SG_PARCH}}>
+                  <CompanionAvatar c={c} size={46} mood={scelto ? "happy" : "idle"} look={equippedCosmetic[c.id]} decorativa />
+                  <span style={{fontSize:12,fontWeight:800}}>{c.name}</span>
+                </button>
+              );
+            })}
+          </div>
+          <p style={{fontSize:13,lineHeight:1.5,opacity:.85,margin:"0 0 12px",textAlign:"left"}}>
+            {comp.id==="fiamma"&&"Coraggioso e diretto, sempre pronto a una sfida: ti spinge a dare il massimo!"}
+            {comp.id==="luna"  &&"Poetica e gentile: ti ricorda che ogni errore è un passo verso la luce."}
+            {comp.id==="onde"  &&"Curioso di tutto: trasforma ogni sfida in una scoperta."}
+            {comp.id==="foglia"&&"Furba e creativa, trova sempre un angolo inaspettato."}
+            {comp.id==="pixel" &&"Logico e preciso: ama i comandi in fila e i problemi da risolvere."}
+          </p>
+          <button className="mg-cta" onClick={() => navigate("cosmetics")} style={{width:"100%",fontSize:16,padding:"12px"}}>
+            Cambia il look di {comp.name}
+          </button>
+        </div>
+
+        {/* giocatori */}
+        <button className="slide-up" onClick={() => navigate("profile_select")}
+          style={{...CARD,display:"flex",alignItems:"center",gap:12,cursor:"pointer",color:SG_PARCH,textAlign:"left",padding:"14px 16px",animationDelay:".15s"}}>
+          <img src={ui3d("child-profile-avatar")} alt="" style={{width:38,height:38}} />
+          <div style={{flex:1}}>
+            <div style={{fontWeight:800,fontSize:15}}>{allProfiles.length > 1 ? "Cambia giocatore" : "Aggiungi un giocatore"}</div>
+            <div style={{fontSize:12,opacity:.7}}>{allProfiles.length > 1 ? `${allProfiles.length} giocatori su questo dispositivo` : "Un profilo per ogni bambino, fino a 4"}</div>
+          </div>
+          <span style={{fontSize:20,color:SG_GOLD}}>›</span>
+        </button>
+
+        {/* collezioni */}
+        <div className="slide-up" style={{...CARD,animationDelay:".2s"}}>
+          <div style={ETICHETTA}>Le mie collezioni</div>
+          {items.length === 0
+            ? <div style={{opacity:.65,fontSize:13,marginBottom:12}}>Finisci il sentiero di un mondo per vincere il primo frammento del Sigillo!</div>
+            : <div style={{display:"flex",gap:10,flexWrap:"wrap",justifyContent:"center",marginBottom:14}}>
+                {items.map((it,i) => (
+                  <div key={i} style={{textAlign:"center",background:"rgba(20,11,41,.45)",borderRadius:16,padding:"10px 12px",minWidth:84}}>
+                    <Emo text={it.emoji} size={40} />
+                    <div style={{fontSize:11,marginTop:4,fontWeight:700}}>{it.name}</div>
+                  </div>
+                ))}
+              </div>}
+          <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:8}}>
+            {ACHIEVEMENTS.map(a => {
+              const earned = achievements.includes(a.id);
+              return (
+                <div key={a.id} title={`${a.name}: ${a.desc}`} style={{textAlign:"center",opacity:earned?1:.32,filter:earned?"none":"grayscale(1)"}}>
+                  <div style={{fontSize:24}}>{a.emoji}</div>
+                  <div style={{fontSize:9,marginTop:2,fontWeight:700,lineHeight:1.2,hyphens:"auto"}} lang="it">{a.name}</div>
+                </div>
+              );
+            })}
+          </div>
+          <div style={{fontSize:11,opacity:.55,marginTop:10}}>{achievements.length} {achievements.length === 1 ? "obiettivo" : "obiettivi"} su {ACHIEVEMENTS.length}</div>
+        </div>
+
+        {/* per i genitori: tutto il resto, dietro il PIN */}
+        <div className="slide-up" style={{...CARD,background:"linear-gradient(135deg,rgba(109,224,198,.12),rgba(45,27,84,.7))",border:"1px solid rgba(109,224,198,.3)",animationDelay:".25s"}}>
+          <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12,textAlign:"left"}}>
+            <img src={ui3d("parent-shield-with-heart")} alt="" style={{width:44,height:44}} />
+            <div>
+              <div style={{fontFamily:FF_DISPLAY,fontSize:18,color:SG_PARCH}}>Per i genitori</div>
+              <div style={{fontSize:12,opacity:.75,lineHeight:1.4}}>Nome ed età, tempo di gioco, promemoria, accessibilità e i progressi. Protetto dal PIN.</div>
+            </div>
+          </div>
+          <div style={{display:"flex",gap:10}}>
+            <button onClick={() => { setParentTab("impostazioni"); navigate("parent"); }} style={{...MG_BTN_BACK,flex:1,justifyContent:"center",fontSize:14}}>Impostazioni</button>
+            <button onClick={() => { setParentTab("progressi"); navigate("parent"); }} style={{...MG_BTN_BACK,flex:1,justifyContent:"center",fontSize:14,background:"linear-gradient(180deg,#8EF0DA,#2FB89A)"}}>Progressi</button>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  }
 
   // ════════════════════ SCREEN: PARENT DASHBOARD ═══════════════════════════
   if (screen === "parent") {
@@ -5385,6 +5588,22 @@ export default function Magistella() {
           <h1 style={{fontFamily:FF_DISPLAY,margin:0,fontSize:24,color:GOLD,display:"flex",alignItems:"center",gap:9}}><Icon name="lock" color={GOLD} size={22} />Area Genitori</h1>
         </div>
 
+        {/* Due schede: prima le impostazioni stavano in fondo al report, dopo grafici
+            e suggerimenti, e nessuno le trovava (feedback di Andrea, 7 Ott 2026). */}
+        <div role="tablist" aria-label="Area genitori" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,background:"rgba(20,11,41,.6)",border:P_BR,borderRadius:16,padding:5,marginBottom:16,position:"sticky",top:"calc(8px + env(safe-area-inset-top,0px))",zIndex:5,backdropFilter:"blur(8px)"}}>
+          {[{id:"progressi",l:"Progressi",ic:"chart"},{id:"impostazioni",l:"Impostazioni",ic:"sparkles"}].map(t => {
+            const on = parentTab === t.id;
+            return (
+              <button key={t.id} role="tab" aria-selected={on} onClick={() => { setParentTab(t.id); window.scrollTo({ top: 0 }); }}
+                style={{borderRadius:12,padding:"11px 8px",fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7,
+                  background:on?GOLD:"transparent",color:on?INK:PARCH,border:"none"}}>
+                <Icon name={t.ic} color={on?INK:PARCH} size={16} />{t.l}
+              </button>
+            );
+          })}
+        </div>
+
+        {parentTab === "progressi" && <>
         {/* Child overview */}
         <div style={{background:P_CARD,border:P_BR,borderRadius:20,padding:"16px 18px",marginBottom:14}}>
           <div style={{fontSize:11,fontWeight:800,opacity:.5,marginBottom:10,letterSpacing:1}}>PROFILO DI {childName.toUpperCase()}</div>
@@ -5555,6 +5774,19 @@ export default function Magistella() {
           </div>
         )}
 
+        </>}
+
+        {parentTab === "impostazioni" && <>
+        {/* Nome del bambino: prima, una volta scelto all'inizio, non si poteva più cambiare */}
+        <div style={{background:P_CARD,border:P_BR,borderRadius:20,padding:"16px 18px",marginBottom:14}}>
+          <label htmlFor="nome-bambino" style={{display:"block",fontSize:11,fontWeight:800,opacity:.5,marginBottom:10,letterSpacing:1}}><Icon name="matita" color={GOLD} size={13} style={{verticalAlign:"-3px",marginRight:6}} />NOME</label>
+          <input id="nome-bambino" key={activeProfileId} defaultValue={childName} maxLength={20} autoComplete="off" enterKeyHint="done"
+            onBlur={e => { const v = e.target.value.trim(); if (v) setChildName(v); else e.target.value = childName; }}
+            onKeyDown={e => { if (e.key === "Enter") e.currentTarget.blur(); }}
+            style={{width:"100%",background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.18)",borderRadius:12,padding:"11px 14px",color:PARCH,fontSize:16,fontWeight:700,outline:"none"}} />
+          <p style={{fontSize:11,opacity:.45,marginTop:8,marginBottom:0}}>Compare sulla mappa e nei saluti. Stelle e progressi restano.</p>
+        </div>
+
         {/* Age change */}
         <div style={{background:P_CARD,border:P_BR,borderRadius:20,padding:"16px 18px",marginBottom:14}}>
           <div style={{fontSize:11,fontWeight:800,opacity:.5,marginBottom:10,letterSpacing:1}}><Icon name="gift" color={GOLD} size={13} style={{verticalAlign:"-3px",marginRight:6}} />ETÀ DI {childName.toUpperCase()}</div>
@@ -5595,6 +5827,23 @@ export default function Magistella() {
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Musica ed effetti, a parte dalla voce */}
+        <div style={{background:P_CARD,border:P_BR,borderRadius:20,padding:"16px 18px",marginBottom:14}}>
+          <div style={{fontSize:12,fontWeight:800,opacity:.5,marginBottom:10,letterSpacing:1}}><Icon name="music" color={GOLD} size={13} style={{verticalAlign:"-3px",marginRight:6}} />MUSICA ED EFFETTI</div>
+          <p style={{fontSize:12,opacity:.6,marginBottom:12}}>Si possono spegnere senza togliere la voce. Anche il bambino li trova nel suo profilo.</p>
+          {[{l:"Musica dei mondi",v:musicaOn,set:setMusicaOn},{l:"Effetti sonori",v:effettiOn,set:setEffettiOn}].map(r => (
+            <div key={r.l} style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+              <span style={{flex:1,fontSize:13,fontWeight:700}}>{r.l}</span>
+              {[{v:true,l:"Accesa"},{v:false,l:"Spenta"}].map(opt => (
+                <button key={String(opt.v)} onClick={() => r.set(opt.v)} aria-pressed={r.v===opt.v}
+                  style={{minWidth:78,background:r.v===opt.v?GOLD:"rgba(255,255,255,.08)",border:"none",borderRadius:10,padding:"9px 6px",color:r.v===opt.v?INK:PARCH,fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                  {opt.l}
+                </button>
+              ))}
+            </div>
+          ))}
         </div>
 
         {/* Accessibilità */}
@@ -5697,6 +5946,9 @@ export default function Magistella() {
           );
         })()}
 
+        </>}
+
+        {parentTab === "progressi" && <>
         {/* Weekly activity report */}
         {(() => {
           const today = new Date();
@@ -5807,6 +6059,9 @@ export default function Magistella() {
           );
         })()}
 
+        </>}
+
+        {parentTab === "impostazioni" && <>
         {/* School mode */}
         <button onClick={() => navigate("school")}
           style={{width:"100%",background:"rgba(37,99,235,.12)",border:"1px solid rgba(37,99,235,.3)",color:"white",borderRadius:14,padding:"13px 18px",cursor:"pointer",fontSize:13,fontWeight:700,marginBottom:14,display:"flex",alignItems:"center",gap:10,textAlign:"left"}}>
@@ -5859,6 +6114,7 @@ export default function Magistella() {
             </button>
           </div>
         )}
+        </>}
         <button onClick={() => setParentUnlocked(false)}
           style={{width:"100%",background:"rgba(255,255,255,.04)",border:"none",color:"rgba(255,255,255,.3)",borderRadius:14,padding:10,cursor:"pointer",fontSize:11}}>
           <Icon name="lock" color={"rgba(246,236,212,.7)"} size={14} style={{verticalAlign:"-3px",marginRight:7}} />Blocca area genitori

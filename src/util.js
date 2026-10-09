@@ -1,7 +1,22 @@
 // Piccoli aiuti condivisi fra il gioco e i suoi dati.
 
-/** Un elemento a caso dell'array. */
-export function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+/**
+ * Un elemento a caso dell'array, mai lo stesso della volta prima.
+ * Le battute stanno in array scritti dentro la funzione (pick([...]) a ogni
+ * chiamata), quindi l'array cambia identità: la "lista" si riconosce dal primo
+ * elemento. Con il caso puro, su 5 frasi una risposta su 5 ripeteva quella di
+ * prima, e il bambino sentiva due "Perfetto!" di fila (feedback di Andrea).
+ */
+const _ultimo = new Map();
+export function pick(arr) {
+  if (!arr?.length) return undefined;
+  if (arr.length === 1) return arr[0];
+  const chiave = String(arr[0]);
+  let i = Math.floor(Math.random() * arr.length);
+  if (arr[i] === _ultimo.get(chiave)) i = (i + 1 + Math.floor(Math.random() * (arr.length - 1))) % arr.length;
+  _ultimo.set(chiave, arr[i]);
+  return arr[i];
+}
 
 // ── Contrasto ─────────────────────────────────────────────────────────────────
 // Serve dove una scritta finisce sopra un colore deciso dai dati delle sfide, non

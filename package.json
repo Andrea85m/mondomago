@@ -20,7 +20,8 @@
     "lighthouse": "node scripts/lighthouse.mjs",
     "lighthouse:live": "node scripts/lighthouse.mjs --url https://magistella.com/app/",
     "smoke:voce": "node scripts/smoke-voce.mjs",
-    "dispositivi": "node scripts/controllo-dispositivi.mjs"
+    "dispositivi": "node scripts/controllo-dispositivi.mjs",
+    "smoke:popup": "node scripts/smoke-popup.mjs"
   },
   "dependencies": {
     "@fontsource/dm-mono": "^5.2.7",
