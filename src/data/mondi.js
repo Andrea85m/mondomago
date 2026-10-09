@@ -216,6 +216,45 @@ export const COMPANIONS = [
   },
 ];
 
+// ── LODI ──────────────────────────────────────────────────────────────────────
+// Feedback di Andrea (7 Ott 2026): alla fine di ogni esercizio il messaggio era
+// sempre lo stesso ("Perfetto!", "Tappa completata!"). Qui le varianti, tutte
+// neutre rispetto al genere (niente "bravo/brava", "arrivato/a").
+
+/** Il titolo grande dopo una risposta giusta: solo a schermo, la voce dice la
+ *  battuta del compagno. Più la serie è lunga, più la lode sale di tono. */
+export const LODI_RISPOSTA = {
+  base:  ["Perfetto!", "Esatto!", "Giusto!", "Super!", "Evviva!", "Che bravura!", "Ottimo!"],
+  serie: ["Grandioso!", "Fantastico!", "Spettacolare!", "Strepitoso!", "Magnifico!", "Che forza!", "Wow!"],
+};
+
+/** Fine tappa: la frase si sceglie su com'è andata e la voce la legge.
+ *  Le chiavi on…: () => pick([...]) le trova gen-tts.py e registra la clip. */
+export const LODI_TAPPA = {
+  onPerfetta: () => pick([
+    "Tutto giusto! Sei una stella!",
+    "Perfetto! Nemmeno un errore!",
+    "Incredibile! Tutte giuste!",
+    "Strepitoso! Una tappa perfetta!",
+  ]),
+  onBella: () => pick([
+    "Grandioso! Tappa superata!",
+    "Evviva! Un passo in più sul sentiero!",
+    "Che bravura! Avanti così!",
+    "Fantastico! Il sentiero ti aspetta!",
+    "Super! Stai facendo grandi cose!",
+  ]),
+  onImpegno: () => pick([
+    "Ce l'hai fatta! Ogni tappa ti fa crescere!",
+    "Bel lavoro! Con la pratica tutto diventa facile!",
+    "Tappa superata! Insieme impariamo tanto!",
+  ]),
+  // Dove porta il sentiero adesso: detto dopo la lode
+  onVersoBoss:      () => pick(["Ora ti aspetta il boss!", "Preparati: arriva il boss!"]),
+  onVersoMedaglia:  () => pick(["Ultima tappa: sfida il boss e vinci la medaglia!"]),
+  onAvanti:         () => pick(["Il sentiero continua!", "Avanti verso la prossima tappa!"]),
+};
+
 // ── STORY ARCS ────────────────────────────────────────────────────────────────
 export const STORY_ARCS = {
   foresta: {

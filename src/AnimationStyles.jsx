@@ -107,6 +107,14 @@ export default function AnimationStyles() {
       .glow     { animation: glow       2s   ease-in-out infinite; }
       .wiggle   { animation: wiggle     .42s ease both; }
       .pulse    { animation: pulse      1.6s ease-in-out infinite; }
+      /* il compagno che avanza sul sentiero (SentieroProgresso.jsx) */
+      @keyframes mgSaltello {
+        0%   { transform: translateY(0) scale(1); }
+        35%  { transform: translateY(-9px) scale(1.06, .96); }
+        70%  { transform: translateY(0) scale(.97, 1.04); }
+        100% { transform: translateY(0) scale(1); }
+      }
+      .mg-saltello { animation: mgSaltello .55s cubic-bezier(.34,1.4,.64,1) .25s both; }
       .boss-bg     { animation: bossFlash  1.8s ease-in-out infinite; }
       @keyframes screenEnter {
         from { opacity:0; transform:translateY(18px); }
