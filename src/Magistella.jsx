@@ -2422,12 +2422,14 @@ export default function Magistella() {
   // Avviso quando le monete guadagnate bastano per un cosmetico. Si confronta con
   // il valore di prima: con la vecchia regola (coins - 2 < costo) l'avviso
   // scattava anche al caricamento del profilo e copriva le risposte della sfida.
-  const moneteDiPrimaRef = useRef(null);
+  // Il primo cambio dopo il caricamento di un profilo (monete salvate + bonus
+  // della fiamma) non è un guadagno: si salta, per profilo.
+  const moneteDiPrimaRef = useRef({ profilo: null, monete: 0 });
   useEffect(() => {
-    const prima = moneteDiPrimaRef.current;
-    moneteDiPrimaRef.current = coins;
-    if (!childName || !activeProfileId) return;
-    if (prima === null || coins <= prima || coins - prima > 25) return;   // caricamento o cambio profilo, non un guadagno
+    const { profilo, monete: prima } = moneteDiPrimaRef.current;
+    moneteDiPrimaRef.current = { profilo: activeProfileId, monete: coins };
+    if (!childName || !activeProfileId || profilo !== activeProfileId) return;
+    if (coins <= prima) return;
     const newlyAffordable = COSMETICS.filter(c =>
       !ownedCosmetics.includes(c.id) && coins >= c.coinCost && prima < c.coinCost
     );
