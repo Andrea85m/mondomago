@@ -573,7 +573,9 @@ function _opts(correct, spread, count = 4) {
 // Restano dentro questo blocco (da _rnd a initSkills) perché i controlli
 // (scripts/audit-esercizi.mjs) valutano proprio questo pezzo di codice.
 const GEN_EMOJI = { foresta:"🐿️", castello:"👑", oceano:"🐬", mercato:"🧙", galassia:"🚀", vulcano:"🌋", biblioteca:"📖", laboratorio:"🤖" };
-const GEN_CONTA = ["🍎", "⭐", "🐟", "🦋", "🍓", "🌸", "🍄", "🎈"];
+// 30 oggetti con l'illustrazione 3D: con 8 i conteggi dei più piccoli finivano presto e si ripetevano
+const GEN_CONTA = ["🍎", "⭐", "🐟", "🦋", "🍓", "🌸", "🍄", "🎈", "🌻", "🍊", "🍋", "🍇", "🌰", "🍁", "🌷",
+  "🐢", "🐝", "🐞", "🐠", "🐚", "🦆", "🐸", "🥕", "⚽", "🐌", "🐙", "🦀", "🐰", "🐱", "🐶"];
 const GEN_CIFRE = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣"];   // numeri illustrati (Num1…Num7 in SvgAssets): chi ha 3 anni non legge le cifre
 // parole con l'immagine 3D, per "Quale inizia con la lettera…?"
 const GEN_PAROLE = [["🍎","Mela"],["🐱","Gatto"],["🐶","Cane"],["🌙","Luna"],["☀️","Sole"],["🐸","Rana"],["🐟","Pesce"],["🍄","Fungo"],
@@ -687,37 +689,110 @@ function genContaFulmine(age) {
     visual: e.repeat(n), options, correct: options.indexOf(String(n)) };
 }
 
+// ── Domande sempre nuove (11 Ott 2026) ───────────────────────────────────────
+// Emilio: "la stessa domanda tra due livelli dello stesso mondo". Argento e Oro
+// pescano dalla fascia d'età dopo, ma le fasce sono tre (3-4, 5-6, 7-8): due
+// livelli finivano sullo stesso mazzo, e un mazzo da ~50 non basta a 12 tappe.
+// Ora una domanda già vista (in qualsiasi mondo) non torna finché ce n'è una
+// nuova: prima le nuove della fascia giusta, poi quelle delle fasce vicine, poi
+// gli esercizi generati (sempre diversi), e solo alla fine le viste da più tempo.
+// La "firma" riconosce le domande identiche anche con id e mondi diversi.
+const _norm = (v) => String(v ?? "").toLowerCase().replace(/\s+/g, " ").trim();
+const SFIDA_PER_ID = new Map(Object.values(ALL_CHALLENGES).flat().map(c => [c.id, c]));
+const FIRME = new Map();
+function calcolaFirma(c) {
+  const opz = c.options || c.items || c.choices?.map(x => x.text) || c.pairs?.map(p => p.a + p.b) || c.zones?.map(z => z.label) || c.emojis || [];
+  return [c.format, _norm(c.prompt || c.question || c.situation), _norm(c.letter), _norm(c.visual), _norm(c.cartoonEmoji), opz.map(_norm).sort().join("|")].join("§");
+}
+/** Le sfide del gioco si memorizzano; quelle generate (id usa e getta) no. */
+function firmaDi(c) {
+  if (!SFIDA_PER_ID.has(c.id)) return calcolaFirma(c);
+  let f = FIRME.get(c.id);
+  if (f === undefined) { f = calcolaFirma(c); FIRME.set(c.id, f); }
+  return f;
+}
+/** Chiave con cui una sfida finisce in `visti`: l'id, o "g:" + firma per le generate. */
+const chiaveVisto = (c) => SFIDA_PER_ID.has(c.id) ? c.id : "g:" + firmaDi(c);
+function firmeViste(visti) {
+  const v = new Set();
+  for (const k in visti) {
+    if (k.startsWith("g:")) v.add(k.slice(2));
+    else { const c = SFIDA_PER_ID.get(k); if (c) v.add(firmaDi(c)); }
+  }
+  return v;
+}
+/** Un esercizio generato mai uscito (fino a 40 tentativi; poi va bene anche uno già visto). */
+function generaNuovo(worldId, age, viste, usate) {
+  let c = null;
+  for (let t = 0; t < 40; t++) {
+    c = genMathChallenge(worldId, age);
+    const f = firmaDi(c);
+    if (!viste.has(f) && !usate.has(f)) break;
+  }
+  usate.add(firmaDi(c));
+  return c;
+}
+
 function filterByAge(worldId, age, skills = null, visti = {}, conBoss = true) {
-  const all = (ALL_CHALLENGES[worldId] || []).filter(c => age >= c.ageMin && age <= c.ageMax);
+  const tutte = ALL_CHALLENGES[worldId] || [];
+  const viste = firmeViste(visti);
+  const usate = new Set();                                  // firme già in questa tappa
   const recenza = (c) => (visti[c.id] ?? -1);
-  const bosses = all.filter(c => c.isBoss).sort((a, b) => recenza(a) - recenza(b) || Math.random() - 0.5);
-  // Selezione ADATTIVA per skill: se sono note le competenze del bambino, le sfide
-  // delle skill più DEBOLI (mastery più basso) hanno più probabilità di uscire.
-  // Random × livello: un livello basso comprime il punteggio → ordina prima = esce di più.
-  // Senza skills → shuffle puro (retrocompatibile, comportamento originale).
-  // prima la novità (mai viste / viste da più tempo), poi la skill più debole
-  const normals = all.filter(c => !c.isBoss)
-    .map(c => ({ c, r: recenza(c), k: Math.random() * (skills ? (skills[getSkill(c.type)] ?? 1) : 1) }))
-    .sort((a, b) => (a.r - b.r) || (a.k - b.k))
-    .map(x => x.c);
-  const boss = conBoss ? bosses[0] : null;
-  // Inject 1 procedural math challenge per session, swap out 1 normal
-  const proc = genMathChallenge(worldId, age);
-  const slice = boss ? normals.slice(0, 4) : normals.slice(0, 5);
-  const mixed = [...slice, proc].sort(() => Math.random() - 0.5);
+  // fascia del livello, poi le vicine (prima la più difficile, ma al massimo di due anni)
+  const ordineEta = [...new Set([age, age + 1, age - 1, age + 2, age - 2].filter(a => a >= 3 && a <= 8))];
+  const nuove = (filtro) => {
+    const out = [];
+    for (const a of ordineEta) {
+      const qui = tutte.filter(c => filtro(c) && a >= c.ageMin && a <= c.ageMax && !viste.has(firmaDi(c)) && !usate.has(firmaDi(c)))
+        // Selezione ADATTIVA: le skill più deboli (livello basso) escono prima
+        .map(c => ({ c, k: Math.random() * (skills ? (skills[getSkill(c.type)] ?? 1) : 1) }))
+        .sort((x, y) => x.k - y.k).map(x => x.c);
+      for (const c of qui) if (!out.some(o => firmaDi(o) === firmaDi(c))) out.push(c);
+    }
+    return out;
+  };
+  const prendi = (c) => { usate.add(firmaDi(c)); return c; };
+  const nellaFascia = (c) => age >= c.ageMin && age <= c.ageMax;
+
+  let boss = null;
+  if (conBoss) {
+    boss = nuove(c => c.isBoss)[0]
+      || (() => { const c = nuove(c => !c.isBoss && c.ageMax >= age)[0]; return c ? { ...c, isBoss: true } : null; })()
+      || tutte.filter(c => c.isBoss && nellaFascia(c)).sort((a, b) => recenza(a) - recenza(b))[0] || null;
+    if (boss) prendi(boss);
+  }
+  const quante = boss ? 4 : 5;
+  const scelte = nuove(c => !c.isBoss).slice(0, quante).map(prendi);
+  while (scelte.length < quante) {
+    // mazzo finito: esercizi generati sempre nuovi, poi le sfide viste da più tempo
+    const gen = generaNuovo(worldId, age, viste, usate);
+    if (!viste.has(firmaDi(gen))) { scelte.push(gen); continue; }
+    const vecchia = tutte.filter(c => !c.isBoss && nellaFascia(c) && !usate.has(firmaDi(c))).sort((a, b) => recenza(a) - recenza(b))[0];
+    scelte.push(vecchia ? prendi(vecchia) : gen);
+  }
+  // più 1 esercizio generato a ogni tappa
+  const mixed = [...scelte, generaNuovo(worldId, age, viste, usate)].sort(() => Math.random() - 0.5);
   return boss ? [...mixed, boss] : mixed;
 }
-function getDailyChallenges(age, profileId = '') {
+function getDailyChallenges(age, profileId = '', visti = {}) {
   const d = new Date().toISOString().slice(0, 10);
   const pidHash = profileId.split('').reduce((a, c) => a * 31 + c.charCodeAt(0), 0);
   const seed = d.split('-').reduce((a, v) => a * 1000 + parseInt(v), 0) + pidHash; // M6: per-profile seed
-  const pool = Object.values(ALL_CHALLENGES).flat().filter(c => !c.isBoss && age >= c.ageMin && age <= c.ageMax);
-  if (!pool.length) return [];
-  const picks = []; const used = new Set();
+  const tutte = Object.values(ALL_CHALLENGES).flat().filter(c => !c.isBoss && age >= c.ageMin && age <= c.ageMax);
+  // anche qui prima le domande mai viste (una al giorno in più non deve ripetere i mondi)
+  const viste = firmeViste(visti);
+  const nuove = tutte.filter(c => !viste.has(firmaDi(c)));
+  // viste tutte (dopo mesi di gioco): le nuove rimaste più esercizi generati, mai le vecchie
+  if (nuove.length < 3) {
+    const usate = new Set(nuove.map(firmaDi));
+    return [...nuove, ...Array.from({ length: 3 - nuove.length }, () => generaNuovo("daily", age, viste, usate))];
+  }
+  const pool = nuove;
+  const picks = []; const used = new Set(); const firme = new Set();
   for (let i = 0; i < 3; i++) {
     let idx = Math.abs((seed * 31 + i * 919 + i * i * 137)) % pool.length;
-    let t = 0; while (used.has(idx) && t++ < 20) idx = (idx + 1) % pool.length;
-    used.add(idx); picks.push(pool[idx]);
+    let t = 0; while ((used.has(idx) || firme.has(firmaDi(pool[idx]))) && t++ < pool.length) idx = (idx + 1) % pool.length;
+    used.add(idx); firme.add(firmaDi(pool[idx])); picks.push(pool[idx]);
   }
   return picks;
 }
@@ -1550,6 +1625,7 @@ export default function Magistella() {
   const dailyShortcutRef = useRef(new URLSearchParams(window.location.search).get('action') === 'daily');
   const obTouchRef    = useRef(0);
   const domandaArrivataRef = useRef(0);
+  const ultimaVistaRef = useRef(null);
   const [childName,    setChildName]    = useState("");
   const [childAge,     setChildAge]     = useState(null);
   const [companion,    setCompanion]    = useState(null);
@@ -2112,31 +2188,12 @@ export default function Magistella() {
     // Argento e Oro: le sfide della fascia d'età successiva (fino a 8 anni)
     const eta = childAge || 5;
     const etaSentiero = Math.min(8, eta + (livello - 1));
-    let base = filterByAge(w.id, etaSentiero, skills, visti, TAPPE_BOSS.has(tappa));
-    if (base.length < 4) base = filterByAge(w.id, eta, skills, visti, TAPPE_BOSS.has(tappa));
-    if (!base.length) return;
-    // SRS: anteponi fino a 2 sfide sbagliate in sessioni PRECEDENTI (ripasso spaziato).
-    let list = base;
-    const due = (missed || [])
-      .filter(m => m.world === w.id && sessionLog.length > m.s)
-      .map(m => (ALL_CHALLENGES[w.id] || []).find(c => c.id === m.id))
-      .filter(Boolean)
-      .slice(0, 2);
-    if (due.length) {
-      const present = new Set(base.map(c => c.id));
-      const inject = due.filter(c => !present.has(c.id));
-      if (inject.length) {
-        list = [...inject, ...base];
-        const injectedIds = new Set(inject.map(c => c.id));
-        setMissed(prev => prev.filter(m => !injectedIds.has(m.id)));
-      }
-    }
+    // niente più ripasso delle sbagliate dentro il sentiero: Emilio vuole domande sempre
+    // nuove (11 Ott 2026). L'elenco "Da ripassare" resta nell'area genitori.
+    const list = filterByAge(w.id, etaSentiero, skills, visti, TAPPE_BOSS.has(tappa));
+    if (!list.length) return;
     stopMusic(); stopSong();
     preScaricaVoce([...list.map(consegnaDi), STORY_ARCS[w.id]?.intro_text, STORY_ARCS[w.id]?.outro]);
-    // queste sfide ora sono "viste": la prossima volta escono per ultime
-    setVisti(v => { const n = { ...v }; for (const c of list) if (!c.id.startsWith("gen_")) n[c.id] = sessionLog.length; return n; });
-    const gen = list.filter(c => c.id.startsWith("gen_"));
-    if (gen.length) setGenerati(g => { const n = { ...g }; for (const c of gen) n[c.type] = (n[c.type] || 0) + 1; return n; });
     setWorld(w); setChallenges(list); setCi(0);
     setSelected(null); setStoryChoice(null); setSeqTaps([]); setSeqError(false); setDragPicked(null); setDragPlaced({}); setColorZoneColors({}); setColorZonePicked(null); setPuzzleGrid(null); setPuzzleMoves(0);
     setFeedbackMsg(""); setWrongStreak(0); setShowFeedback(false);
@@ -2149,7 +2206,7 @@ export default function Magistella() {
     navigate(tappa === 0 && livello === 1 ? ((childAge || 5) <= 4 ? "coplay_intro" : "world_intro") : "challenge");
   }
   function startDaily() {
-    const list = getDailyChallenges(childAge || 5, activeProfileId); // M6: per-profile daily
+    const list = getDailyChallenges(childAge || 5, activeProfileId, visti); // M6: per-profile daily
     if (!list.length) return;
     stopMusic(); stopSong();
     preScaricaVoce(list.map(consegnaDi));
@@ -2616,6 +2673,17 @@ export default function Magistella() {
 
   // ora d'arrivo della domanda (vedi appenaArrivata)
   useLayoutEffect(() => { domandaArrivataRef.current = msDa(0); }, [ch]);
+
+  // Una domanda è "vista" quando compare davvero (prima: quando la tappa veniva preparata,
+  // anche se il bambino usciva subito). Le generate entrano come "g:" + firma.
+  useEffect(() => {
+    if (screen !== "challenge" || !ch || ultimaVistaRef.current === ch) return;
+    ultimaVistaRef.current = ch;                       // tornando dalla pausa non si conta di nuovo
+    /* eslint-disable react-hooks/set-state-in-effect -- registro di ciò che il bambino ha visto */
+    setVisti(v => ({ ...v, [chiaveVisto(ch)]: sessionLog.length }));
+    if (ch.id.startsWith("gen_")) setGenerati(g => ({ ...g, [ch.type]: (g[ch.type] || 0) + 1 }));
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [ch, screen]); // eslint-disable-line react-hooks/exhaustive-deps -- solo all'arrivo della domanda
 
   // Solo in sviluppo: la sfida corrente per i test automatici (scripts/smoke-popup.mjs)
   useEffect(() => { if (import.meta.env.DEV) window.__mmSfida = ch; }, [ch]);

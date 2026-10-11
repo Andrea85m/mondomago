@@ -10,7 +10,7 @@
     "lint": "eslint . --max-warnings 0",
     "audit:esercizi": "node scripts/audit-esercizi.mjs",
     "audit:voce": "node scripts/check-tts.mjs",
-    "audit": "node scripts/audit-esercizi.mjs --quiet && node scripts/check-tts.mjs",
+    "audit": "node scripts/audit-esercizi.mjs --quiet && node scripts/check-tts.mjs && node scripts/controlla-ripetizioni.mjs",
     "voce": "python3 scripts/gen-tts.py",
     "smoke": "node scripts/smoke-puzzle.mjs",
     "a11y": "node scripts/a11y-audit.mjs",
