@@ -48,6 +48,9 @@ import { pick, inchiostroSu } from "./util.js";
 // checkout (Stripe sul web / Play Billing su Android) a unlockPremium().
 const MONETIZATION_ENABLED = false;
 
+// millisecondi passati da un istante di performance.now() (msDa(0) = adesso)
+const msDa = (t) => performance.now() - t;
+
 // Elementi cliccabili che non sono <button> (carte, tessere, zone da colorare):
 // con role="button" e questi due attributi rispondono anche a Invio e Spazio,
 // quindi a tastiera, sensori a scansione e lettori di schermo.
@@ -313,11 +316,12 @@ function CompanionAvatar({ c, size = 64, anim = "", look = null, mood = "idle", 
   const auraCol  = auraId ? OGGETTI[auraId].colore : null;
   const reacting = mood === "excited" || mood === "celebrating";
   // "vita" del companion (PNG senza faccia): movimento espressivo per stato
+  // sfasa il blink d'attesa così più companion insieme (es. schermata scelta) non blinkano all'unisono.
+  // Il ritardo sta dentro la scorciatoia "animation": separato, React lo perdeva al cambio di stato.
+  const idleDelay = `${((c.id ? c.id.charCodeAt(0) : 0) % 5) * 0.7}s`;
   const lifeAnim = talking  ? "compTalk 0.44s ease-in-out infinite"
                  : reacting ? "compPop 0.7s ease-in-out infinite"
-                 :            "compIdle 4.6s ease-in-out infinite";
-  // sfasa il blink d'attesa così più companion insieme (es. schermata scelta) non blinkano all'unisono
-  const idleDelay = talking || reacting ? undefined : `${((c.id ? c.id.charCodeAt(0) : 0) % 5) * 0.7}s`;
+                 :            `compIdle 4.6s ease-in-out ${idleDelay} infinite`;
   // Restyling 3D: nei momenti di festa e dopo un errore il compagno cambia posa.
   const posa = reacting ? "festa" : mood === "sad" ? "incoraggia" : null;
   const src = companionCharSrc(c.id);
@@ -332,7 +336,7 @@ function CompanionAvatar({ c, size = 64, anim = "", look = null, mood = "idle", 
           animation:"wiggle 2.4s ease-in-out infinite",pointerEvents:"none",zIndex:0}} />
       )}
       <div style={{display:"inline-flex",transformOrigin:"50% 92%",zIndex:1,position:"relative",
-        animation:lifeAnim,animationDelay:idleDelay,willChange:"transform"}}>
+        animation:lifeAnim,willChange:"transform"}}>
         {src && <Accessori look={indossati} compagno={c.id} posa={posa || "base"} s={s} dietro />}
         {src ? (
           <picture style={{position:"relative",zIndex:1,display:"block",lineHeight:0}}>
@@ -1541,6 +1545,7 @@ export default function Magistella() {
   const nextRef       = useRef(null);
   const dailyShortcutRef = useRef(new URLSearchParams(window.location.search).get('action') === 'daily');
   const obTouchRef    = useRef(0);
+  const domandaArrivataRef = useRef(0);
   const [childName,    setChildName]    = useState("");
   const [childAge,     setChildAge]     = useState(null);
   const [companion,    setCompanion]    = useState(null);
@@ -1845,8 +1850,12 @@ export default function Magistella() {
   }
 
   // Answer handlers
+  // Doppio tocco su "Avanti →" (sta sopra la fila bassa delle risposte): il secondo
+  // tocco rispondeva da solo alla domanda nuova. Per 400 ms dall'arrivo si ignora.
+  const appenaArrivata = () => msDa(domandaArrivataRef.current) < 400;
+
   function answerMC(idx, evt) {
-    if (done) return;
+    if (done || appenaArrivata()) return;
     setSelected(idx);
     const ok  = idx === ch.correct;
     const pts = ch.isBoss ? 3 : young ? 1 : 2;
@@ -1879,7 +1888,7 @@ export default function Magistella() {
     setTimeout(() => setShowFeedback(true), 280);
   }
   function answerStory(choice) {
-    if (storyChoice) return;
+    if (storyChoice || appenaArrivata()) return;
     setStoryChoice(choice); setSelected(0);
     const nc = combo + 1;
     if (choice.correct) {
@@ -1903,7 +1912,7 @@ export default function Magistella() {
     setTimeout(() => setShowFeedback(true), 280);
   }
   function answerSeq(idx) {
-    if (seqError || done) return;
+    if (seqError || done || appenaArrivata()) return;
     if (seqTaps.includes(idx)) return; // A2: guard double-tap on already-tapped item
     if (idx !== ch.correctOrder[seqTaps.length]) {
       setSeqError(true); triggerBAD();
@@ -1935,7 +1944,7 @@ export default function Magistella() {
   }
 
   function answerDrag(zoneIdx, itemIdx) {
-    if (done) return;
+    if (done || appenaArrivata()) return;
     if (autoAdvancing) return; // O5: guard double-tap while advancing
     const pts = ch?.isBoss ? 3 : young ? 1 : 2;
     SFX.tap();
@@ -2446,6 +2455,27 @@ export default function Magistella() {
     return () => clearTimeout(t);
   }, [screen]);
 
+  // Ogni schermata nuova parte dall'alto: prima restava lo scroll di quella di
+  // prima (dalla scheda Look alla mappa si arrivava a metà mappa).
+  useLayoutEffect(() => { window.scrollTo(0, 0); }, [screen]);
+
+  // Mappa: se il mondo da giocare non è il primo, ci si scorre da soli. Prima il
+  // GIOCA fisso in basso a destra copriva l'isola sotto la Foresta (il Castello)
+  // e i bambini non la vedevano: ora il GIOCA sta sotto l'isola attuale.
+  useEffect(() => {
+    if (screen !== "map") return;
+    const t = setTimeout(() => {
+      const isola = document.querySelector(".mg-isola.attuale");
+      if (!isola) return;
+      if (isola !== document.querySelector(".mg-isola")) { isola.scrollIntoView({ block: "center", behavior: "smooth" }); return; }
+      // primo mondo: si scorre solo quanto basta perché il GIOCA resti sopra la barra in basso
+      const gioca = isola.querySelector(".mg-gioca")?.getBoundingClientRect();
+      const barra = document.querySelector(".mg-tabs")?.getBoundingClientRect().top ?? innerHeight;
+      if (gioca && gioca.bottom > barra - 12) window.scrollBy({ top: gioca.bottom - barra + 12, behavior: "smooth" });
+    }, 450);
+    return () => clearTimeout(t);
+  }, [screen]);
+
   // [C1] Sfida Fulmine — countdown timer
   useEffect(() => {
     if (screen !== "fulmine" || !fulminoRunning) return;
@@ -2571,6 +2601,9 @@ export default function Magistella() {
       setTimeout(() => setShowSessionAlert(false), 5000);
     }
   }, [nowTick, sessionStart, sessionAlertShown, screen]);
+
+  // ora d'arrivo della domanda (vedi appenaArrivata)
+  useLayoutEffect(() => { domandaArrivataRef.current = msDa(0); }, [ch]);
 
   // Solo in sviluppo: la sfida corrente per i test automatici (scripts/smoke-popup.mjs)
   useEffect(() => { if (import.meta.env.DEV) window.__mmSfida = ch; }, [ch]);
@@ -3292,7 +3325,9 @@ export default function Magistella() {
         // mappa a zig-zag dall'alto: il primo mondo in cima, così quello da giocare si vede subito
         const ROW = 150;
         const nodes = unlockedWorlds.map((w, i) => ({ w, i, x: i % 2 ? 74 : 26, y: 125 + i * ROW }));
-        const mapH = 75 + unlockedWorlds.length * ROW;
+        // +70: spazio per il GIOCA sotto l'ultima isola, se è quella attuale
+        const ultimaAttuale = current && current.id === unlockedWorlds[unlockedWorlds.length - 1].id;
+        const mapH = 75 + unlockedWorlds.length * ROW + (ultimaAttuale ? 70 : 0);
         const pathD = nodes.map((n, k) => {
           if (k === 0) return `M ${n.x} ${n.y}`;
           const p = nodes[k - 1]; const my = (p.y + n.y) / 2;
@@ -3388,6 +3423,7 @@ export default function Magistella() {
                     })()}
                     {locked && w.starsNeeded > 0 && <div className="mg-serve"><img src={premio3d("star")} alt="" />{w.starsNeeded}</div>}
                     {w.id === "laboratorio" && !has && !locked && <div className="mg-novita">NOVITÀ</div>}
+                    {isCur && <button className="mg-cta mg-gioca" onClick={() => startWorld(w)} aria-label={`Gioca: ${w.name}`}>GIOCA</button>}
                     {isCur && comp && <img className="mg-guida" src={posa3d(comp.id, "indica")} alt="" style={{[i % 2 ? "left" : "right"]:-78}} />}
                     {isSpot && <div className="mg-spot pop-in">Inizia da qui!</div>}
                   </div>
@@ -3399,8 +3435,7 @@ export default function Magistella() {
               <Icon name="lock" color={SG_GOLD} size={16} style={{verticalAlign:"-3px",marginRight:7}} />Area Genitori
             </button>
 
-            {/* GIOCA + barra in basso */}
-            {current && <button className="mg-cta mg-gioca" onClick={() => startWorld(current)} aria-label={`Gioca: ${current.name}`}>GIOCA</button>}
+            {/* barra in basso (il GIOCA sta sotto l'isola del mondo attuale) */}
             <BarraSezioni attiva="map" onVai={navigate} />
           </>
         );
@@ -3800,7 +3835,7 @@ export default function Magistella() {
           </div>
         )}
         {/* Top bar */}
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,position:"relative",zIndex:1}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:6,marginBottom:14,position:"relative",zIndex:1}}>
           <div style={{display:"flex",gap:6}}>
             <button onClick={() => setExitConfirm(true)}
               aria-label="Esci dalla sfida" style={MG_BTN_SQ}>
@@ -3816,18 +3851,19 @@ export default function Magistella() {
               <img src={ui3d("pause-button")} alt="" style={{width:26,height:26}} />
             </button>
           </div>
-          <div style={{display:"flex",alignItems:"center",gap:10,fontSize:14,position:"relative"}}>
-            {world && <span style={{fontFamily:FF,fontSize:12,background:`${worldColor}33`,border:`1px solid ${worldColor}55`,borderRadius:20,padding:"2px 10px",color:worldColor}}>{world.emoji} {world.name}</span>}
+          {/* minWidth 0: a 360px "Laboratorio Logico" + la combo spingevano fuori schermo il compagno */}
+          <div style={{display:"flex",alignItems:"center",justifyContent:"flex-end",gap:6,fontSize:14,position:"relative",flex:"1 1 auto",minWidth:0}}>
+            {world && <span className="mm-chip-mondo" style={{minWidth:0,lineHeight:1.15,fontFamily:FF,fontSize:12,background:`${worldColor}33`,border:`1px solid ${worldColor}55`,borderRadius:20,padding:"2px 10px",color:worldColor}}>{world.emoji}<span className="nome"> {world.name}</span></span>}
             {starPop
               ? <span className="star-pop" style={{fontSize:19,fontWeight:900,color:youngBg?"#C98A06":"#FFD95A",display:"inline-flex",alignItems:"center",gap:3}}><Icon name="star" color={youngBg?"#C98A06":"#FFD95A"} size={19} />+{pts}</span>
-              : <span style={{fontWeight:800,color:youngBg?"#1a1a2e":"white",display:"inline-flex",alignItems:"center",gap:5}}><Icon name="star" color={youngBg?"#C98A06":"#FFD95A"} size={17} />{sessionStars}</span>
+              : <span style={{flexShrink:0,fontWeight:800,color:youngBg?"#1a1a2e":"white",display:"inline-flex",alignItems:"center",gap:5}}><Icon name="star" color={youngBg?"#C98A06":"#FFD95A"} size={17} />{sessionStars}</span>
             }
             {coinPop && (
               <span className="coin-pop" style={{position:"absolute",top:-18,right:0,fontSize:17,color:"#38BDF8",fontWeight:900,pointerEvents:"none"}}>
                 <Icon name="coin" color="#38BDF8" size={16} style={{verticalAlign:"-3px",marginRight:2}} />+{coinPopAmt}
               </span>
             )}
-            {combo >= 2 && <span style={{fontSize:12,color:"#F97316",fontWeight:900,display:"inline-flex",alignItems:"center",gap:2}}><Icon name="flame" color="#F97316" size={14} />×{combo}</span>}
+            {combo >= 2 && <span style={{flexShrink:0,fontSize:12,color:"#F97316",fontWeight:900,display:"inline-flex",alignItems:"center",gap:2}}><Icon name="flame" color="#F97316" size={14} />×{combo}</span>}
           </div>
           {comp && <CompanionAvatar c={comp} size={56} anim={compAnim} talking={compTalking} mood={compMood} worldId={world?.id} look={equippedCosmetic[comp.id]} />}
         </div>
@@ -4274,6 +4310,7 @@ export default function Magistella() {
                 const bg = MG_TILE, border = MG_INK;
                 return (
                   <button key={`${ci}-qc-${idx}`} onClick={e => answerMC(idx, e)}
+                    aria-label={`Risposta ${idx + 1}: ${opt}`}
                     className={`ans-btn ans-btn-idle ans-enter`}
                     style={{
                       animationDelay:`${idx*80}ms`,
@@ -4497,7 +4534,9 @@ export default function Magistella() {
                       opacity: done && !correct && !wrong ? .55 : 1,
                       cursor:done?"default":"pointer",
                       height: (isVis||isWordPic) ? 148 : isAlpha ? 120 : (young ? 92 : 82),
-                      fontSize: isAlpha ? 52 : 18,
+                      // parole lunghe ("Personificazione") uscivano dal bottone a 360px
+                      fontSize: isAlpha ? 52 : (() => { const l = Math.max(...String(opt).split(/\s+/).map(p => p.length)); return l >= 15 ? 14 : l >= 12 ? 16 : 18; })(),
+                      overflowWrap: "break-word",
                       display:"flex", flexDirection:(isVis||isWordPic)?"column":"row",
                       alignItems:"center", justifyContent:"center",
                       padding: (isVis||isWordPic) ? "10px 4px 8px" : isAlpha ? 0 : "16px 12px",

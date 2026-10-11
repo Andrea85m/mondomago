@@ -23,6 +23,10 @@ import '@fontsource/opendyslexic/latin-400.css'
 import '@fontsource/opendyslexic/latin-700.css'
 import App from './App.jsx'
 
+// Un solo indirizzo per tutte le schermate: se il browser rimette lo scroll di
+// prima a ogni ricarica, la mappa si apre a metà. Lo scroll lo decide l'app.
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual'
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <App />
