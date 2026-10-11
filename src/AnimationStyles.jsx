@@ -319,6 +319,12 @@ export default function AnimationStyles() {
       .seal-ring     { animation: sealSpin    16s linear infinite; }
       .seal-ring-rev { animation: sealSpinRev 24s linear infinite; }
 
+      /* I raggi della festa (.mg-rays, 560px) uscivano dallo schermo e la pagina
+         scorreva di lato. clip (non hidden) non crea un contenitore di scorrimento. */
+      .mm-schermo { overflow-x: clip; }
+      /* barra in alto della sfida: sotto i 400px il nome del mondo non ci sta (resta l'emoji) */
+      @media (max-width: 400px) { .mm-chip-mondo .nome { display: none; } }
+
       /* ── TABLET ─────────────────────────────────────────────────────────────
          Da 700px in su lo sfondo resta a tutto schermo ma il contenuto sta in una
          colonna di 600px: prima card e scene si allungavano fino a 820px e oltre.
