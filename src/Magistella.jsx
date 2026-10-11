@@ -733,6 +733,46 @@ function generaNuovo(worldId, age, viste, usate) {
   return c;
 }
 
+// ── Risposte mescolate (11 Ott 2026) ─────────────────────────────────────────
+// Emilio: "la risposta giusta è spesso la prima". Nei dati lo era davvero (Indovina
+// chi è e Trova l'immagine sempre la prima, storie 70%, la quarta solo il 4%; negli
+// abbinamenti l'oggetto andava sempre nella zona di fronte) e l'app non mescolava.
+// Ogni domanda che entra in gioco ora ha le risposte in ordine casuale uniforme.
+// Non si toccano debug_find (le istruzioni sono un programma: l'ordine è la domanda)
+// né if_else_tap (due bottoni fissi SE VERO / SE FALSO).
+function _permuta(n) {
+  const p = Array.from({ length: n }, (_, i) => i);
+  for (let i = n - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [p[i], p[j]] = [p[j], p[i]]; }
+  return p;
+}
+/** Una permutazione che non lascia tutto com'era (se gli elementi sono almeno 2). */
+function _permutaDiversa(n, uguale) {
+  let p = _permuta(n);
+  for (let t = 0; t < 20 && n > 1 && uguale(p); t++) p = _permuta(n);
+  return p;
+}
+function mescolaRisposte(c) {
+  if (!c) return c;
+  if (Array.isArray(c.options) && typeof c.correct === "number" && c.format !== "debug_find" && c.format !== "if_else_tap") {
+    const p = _permuta(c.options.length);                      // p[nuovo] = vecchio
+    return { ...c, options: p.map(i => c.options[i]), correct: p.indexOf(c.correct) };
+  }
+  if (c.format === "story_choice" && Array.isArray(c.choices)) {
+    return { ...c, choices: _permuta(c.choices.length).map(i => c.choices[i]) };
+  }
+  if ((c.format === "sequence_tap" || c.format === "code_sequence") && Array.isArray(c.items) && Array.isArray(c.correctOrder)) {
+    // mai già in fila nell'ordine giusto (11 sequenze lo erano: bastava toccare in ordine)
+    const p = _permutaDiversa(c.items.length, q => c.correctOrder.every((v, k) => q.indexOf(v) === k));
+    return { ...c, items: p.map(i => c.items[i]), correctOrder: c.correctOrder.map(v => p.indexOf(v)) };
+  }
+  if (c.format === "drag_drop" && Array.isArray(c.items) && Array.isArray(c.correctMapping)) {
+    // mai ogni oggetto di fronte alla sua zona (lo era in tutti e 7 gli abbinamenti)
+    const p = _permutaDiversa(c.items.length, q => q.every((v, k) => c.correctMapping[v] === k));
+    return { ...c, items: p.map(i => c.items[i]), correctMapping: p.map(i => c.correctMapping[i]) };
+  }
+  return c;
+}
+
 function filterByAge(worldId, age, skills = null, visti = {}, conBoss = true) {
   const tutte = ALL_CHALLENGES[worldId] || [];
   const viste = firmeViste(visti);
@@ -771,8 +811,9 @@ function filterByAge(worldId, age, skills = null, visti = {}, conBoss = true) {
     scelte.push(vecchia ? prendi(vecchia) : gen);
   }
   // più 1 esercizio generato a ogni tappa
-  const mixed = [...scelte, generaNuovo(worldId, age, viste, usate)].sort(() => Math.random() - 0.5);
-  return boss ? [...mixed, boss] : mixed;
+  const extra = [...scelte, generaNuovo(worldId, age, viste, usate)];
+  const mixed = _permuta(extra.length).map(i => extra[i]);
+  return (boss ? [...mixed, boss] : mixed).map(mescolaRisposte);
 }
 function getDailyChallenges(age, profileId = '', visti = {}) {
   const d = new Date().toISOString().slice(0, 10);
@@ -785,7 +826,7 @@ function getDailyChallenges(age, profileId = '', visti = {}) {
   // viste tutte (dopo mesi di gioco): le nuove rimaste più esercizi generati, mai le vecchie
   if (nuove.length < 3) {
     const usate = new Set(nuove.map(firmaDi));
-    return [...nuove, ...Array.from({ length: 3 - nuove.length }, () => generaNuovo("daily", age, viste, usate))];
+    return [...nuove, ...Array.from({ length: 3 - nuove.length }, () => generaNuovo("daily", age, viste, usate))].map(mescolaRisposte);
   }
   const pool = nuove;
   const picks = []; const used = new Set(); const firme = new Set();
@@ -794,7 +835,7 @@ function getDailyChallenges(age, profileId = '', visti = {}) {
     let t = 0; while ((used.has(idx) || firme.has(firmaDi(pool[idx]))) && t++ < pool.length) idx = (idx + 1) % pool.length;
     used.add(idx); firme.add(firmaDi(pool[idx])); picks.push(pool[idx]);
   }
-  return picks;
+  return picks.map(mescolaRisposte);
 }
 function initSkills() { return { logica:1, numeri:1, creativita:1, empatia:1, parole:1, coding:1 }; }
 // C7: parse "YYYY-MM-DD" as local midnight to avoid UTC off-by-one in European timezones
@@ -3394,7 +3435,8 @@ export default function Magistella() {
             RAPID.has(c.format) && Array.isArray(c.options) && c.options.length >= 2 && breve(c) &&
             c.ageMin <= (childAge||5) && c.ageMax >= (childAge||5));
           const conta = (childAge || 5) <= 6 ? Array.from({ length: 24 }, () => genContaFulmine(childAge || 5)) : [];
-          const shuffled = [...pool, ...conta].sort(() => Math.random() - 0.5);
+          const tutte = [...pool, ...conta];
+          const shuffled = _permuta(tutte.length).map(i => mescolaRisposte(tutte[i]));
           setFulminoPool(shuffled); setFulminoCi(0); setFulminoScore(0); setFulminoTime(60); setFulminoRunning(false);
           setFulminoCombo(0); setFulminoEsito(null);
           try { setFulminoRecord(+localStorage.getItem(`mondomago_fulmine_${activeProfileId}`) || 0); } catch { setFulminoRecord(0); }
@@ -3623,7 +3665,7 @@ export default function Magistella() {
       if (starsWon > 0) setTotalStars(x => x + starsWon);
       if (nuovoRecord) { try { localStorage.setItem(`mondomago_fulmine_${activeProfileId}`, String(fulminoScore)); } catch { /* storage pieno o bloccato */ } setFulminoRecord(fulminoScore); }
       if (rigioca) {
-        const pool = [...fulminoPool].sort(() => Math.random() - 0.5);
+        const pool = _permuta(fulminoPool.length).map(i => mescolaRisposte(fulminoPool[i]));
         setFulminoPool(pool); setFulminoCi(0); setFulminoScore(0); setFulminoTime(DURATA); setFulminoRunning(false); setFulminoCombo(0);
       } else navigate("map");
     }
