@@ -1441,13 +1441,16 @@ function LetterTracer({ letter, onComplete, youngBg }) {
     return { x: ((s.clientX-r.left)/r.width)*100, y: ((s.clientY-r.top)/r.height)*100 };
   }
 
+  // Col dito lo scorrimento lo blocca touch-action:none; preventDefault sui tocchi React
+  // lo ignora (ascoltatori passivi) e riempiva la console di avvisi. Col mouse serve ancora.
+  const blocca = (e) => { if (e.cancelable && !e.type.startsWith("touch")) e.preventDefault(); };
   function onStart(e) {
-    e.preventDefault(); if (done) return;
+    blocca(e); if (done) return;
     const p = pt(e); if (!p) return;
     setAct(true); setPath([p]); setPct(0);
   }
   function onMove(e) {
-    e.preventDefault(); if (!active || done) return;
+    blocca(e); if (!active || done) return;
     const p = pt(e); if (!p) return;
     setPath(prev => {
       const last = prev[prev.length-1];
@@ -1456,7 +1459,8 @@ function LetterTracer({ letter, onComplete, youngBg }) {
     });
   }
   function onEnd(e) {
-    e.preventDefault(); if (!active) return;
+    if (e.cancelable) e.preventDefault(); // touchend: niente click emulati dopo il tratto
+    if (!active) return;
     setAct(false);
     const score = Math.round(
       (ld.refPts.filter(([rx,ry]) => path.some(p => Math.hypot(p.x-rx,p.y-ry)<HIT)).length
@@ -1655,6 +1659,9 @@ export default function Magistella() {
   const [sessionLog,        setSessionLog]        = useState([]); // [{date,stars,world,correct,total}]
   const [missed,            setMissed]            = useState([]); // SRS: [{id,world,s}] sfide sbagliate da ripassare
   const [visti,             setVisti]             = useState({}); // { idSfida: sessione } per non ripetere
+  // esercizi dei generatori fatti, per tipo ({ numeri: 12, parole: 3 }): l'area genitori li conta
+  // nelle materie. Prima i loro id usa e getta finivano in `visti` e non contavano da nessuna parte.
+  const [generati,          setGenerati]          = useState({});
   const [percorso,          setPercorso]          = useState({}); // { mondo: { tappa, livello } } — il sentiero
   const [fineTappa,         setFineTappa]         = useState(null); // esito dell'ultima tappa, per la schermata di fine
   const [fulminoTime,       setFulminoTime]       = useState(60);  // countdown seconds
@@ -1744,7 +1751,7 @@ export default function Magistella() {
     setMissionsDone([]); setDailyCompletedDate('');
     setWrongStreak(0); setShowFeedback(false);
     setAchievements([]); setDailyCount(0); setActiveProfileId(null);
-    setEquippedCosmetic({}); setSessionLog([]); setVisti({}); setPercorso({});
+    setEquippedCosmetic({}); setSessionLog([]); setVisti({}); setGenerati({}); setPercorso({});
     setCoins(0); setOwnedCosmetics([]);
     setSchoolMode(false); setSchoolCode(""); setSchoolAssigned([]);
     navigate(remaining.length > 0 ? 'profile_select' : 'name');
@@ -2127,7 +2134,9 @@ export default function Magistella() {
     stopMusic(); stopSong();
     preScaricaVoce([...list.map(consegnaDi), STORY_ARCS[w.id]?.intro_text, STORY_ARCS[w.id]?.outro]);
     // queste sfide ora sono "viste": la prossima volta escono per ultime
-    setVisti(v => { const n = { ...v }; for (const c of list) n[c.id] = sessionLog.length; return n; });
+    setVisti(v => { const n = { ...v }; for (const c of list) if (!c.id.startsWith("gen_")) n[c.id] = sessionLog.length; return n; });
+    const gen = list.filter(c => c.id.startsWith("gen_"));
+    if (gen.length) setGenerati(g => { const n = { ...g }; for (const c of gen) n[c.type] = (n[c.type] || 0) + 1; return n; });
     setWorld(w); setChallenges(list); setCi(0);
     setSelected(null); setStoryChoice(null); setSeqTaps([]); setSeqError(false); setDragPicked(null); setDragPlaced({}); setColorZoneColors({}); setColorZonePicked(null); setPuzzleGrid(null); setPuzzleMoves(0);
     setFeedbackMsg(""); setWrongStreak(0); setShowFeedback(false);
@@ -2171,7 +2180,10 @@ export default function Magistella() {
     if (p.equippedCosmetic)               setEquippedCosmetic(p.equippedCosmetic);
     if (p.sessionLog)                     setSessionLog(p.sessionLog);
     if (p.missed)                         setMissed(p.missed);
-    setVisti(p.visti || {});
+    // gli id usa e getta dei generati (versioni prima dell'11 Ott 2026) si tolgono: dall'id
+    // non si ricava la materia, e restavano in memoria per sempre
+    setVisti(Object.fromEntries(Object.entries(p.visti || {}).filter(([k]) => !k.startsWith("gen_"))));
+    setGenerati(p.generati || {});
     setPercorso(p.percorso || {});
     if (typeof p.coins === 'number')      setCoins(p.coins);
     if (p.ownedCosmetics)                 setOwnedCosmetics(p.ownedCosmetics);
@@ -2212,7 +2224,7 @@ export default function Magistella() {
     setCombo(0); setResults([]); setStreak(1);
     setMissionsDone([]); setDailyCompletedDate('');
     setAchievements([]); setDailyCount(0);
-    setEquippedCosmetic({}); setSessionLog([]); setVisti({}); setPercorso({});
+    setEquippedCosmetic({}); setSessionLog([]); setVisti({}); setGenerati({}); setPercorso({});
     setSchoolMode(false); setSchoolCode(""); setSchoolAssigned([]);
     setCoins(0); setOwnedCosmetics([]);
     setIsReturning(false);
@@ -2328,7 +2340,7 @@ export default function Magistella() {
       return;
     }
     const today = new Date().toISOString().slice(0,10);
-    const data = { id: activeProfileId, childName, childAge, companion, totalStars, skills, items, streak, missionsDone, dailyCompletedDate, lastDate: today, achievements, dailyCount, equippedCosmetic, sessionLog, missed, visti, percorso, schoolMode, schoolCode, schoolAssigned, coins, ownedCosmetics };
+    const data = { id: activeProfileId, childName, childAge, companion, totalStars, skills, items, streak, missionsDone, dailyCompletedDate, lastDate: today, achievements, dailyCount, equippedCosmetic, sessionLog, missed, visti, generati, percorso, schoolMode, schoolCode, schoolAssigned, coins, ownedCosmetics };
     setAllProfiles(prev => {
       const updated = prev.some(p => p.id === activeProfileId)
         ? prev.map(p => p.id === activeProfileId ? data : p)
@@ -2336,7 +2348,7 @@ export default function Magistella() {
       writeAllProfiles(updated);
       return updated;
     });
-  }, [activeProfileId, childName, childAge, companion, totalStars, skills, items, streak, missionsDone, dailyCompletedDate, achievements, dailyCount, equippedCosmetic, sessionLog, missed, visti, percorso, schoolMode, schoolCode, schoolAssigned, coins, ownedCosmetics]);
+  }, [activeProfileId, childName, childAge, companion, totalStars, skills, items, streak, missionsDone, dailyCompletedDate, achievements, dailyCount, equippedCosmetic, sessionLog, missed, visti, generati, percorso, schoolMode, schoolCode, schoolAssigned, coins, ownedCosmetics]);
 
   // Achievement check
   useEffect(() => {
@@ -3834,6 +3846,7 @@ export default function Magistella() {
             </div>
           </div>
         )}
+        <h1 className="sr-only">{world ? `${world.name}: domanda ${ci + 1} di ${challenges.length}` : `Domanda ${ci + 1} di ${challenges.length}`}</h1>
         {/* Top bar */}
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:6,marginBottom:14,position:"relative",zIndex:1}}>
           <div style={{display:"flex",gap:6}}>
@@ -4009,7 +4022,7 @@ export default function Magistella() {
               return (
                 <div onClick={() => { SFX.tap(); speak(ch.prompt); }}
                   role="button" aria-label="Ascolta la domanda" {...TASTIERA}
-                  style={{display:"flex",flexWrap:"wrap",gap:gruppi.length > 1 ? 18 : 0,justifyContent:"center",alignItems:"center",marginBottom:14,cursor:"pointer"}}>
+                  style={{display:"flex",flexWrap:"wrap",gap:gruppi.length > 1 ? 18 : 0,justifyContent:"center",alignItems:"center",marginBottom:14,cursor:"pointer",minHeight:44}}>
                   {gruppi.map((g, j) => (
                     <div key={j} style={{display:"flex",flexWrap:"wrap",gap:youngBg?8:6,justifyContent:"center",alignItems:"center",
                       ...(gruppi.length > 1 && g.length > 1 ? {background:youngBg?"rgba(0,0,0,.04)":"rgba(255,255,255,.06)",borderRadius:16,padding:"6px 8px"} : {})}}>
@@ -4467,7 +4480,7 @@ export default function Magistella() {
                       const isEmpty = itemIdx === -1;
                       return (
                         <div key={gridIdx} onClick={() => swapPuzzleTile(gridIdx)}
-                          role="button" {...TASTIERA} aria-label={isEmpty ? "Spazio vuoto" : `Tessera ${gridIdx + 1}`}
+                          role="button" {...TASTIERA} aria-label={isEmpty ? "Spazio vuoto" : `Tessera ${gridIdx + 1}: ${ch.emojis[itemIdx]}`}
                           className={isEmpty?"":"ans-btn"}
                           style={{
                             width:tileSize,height:tileSize,borderRadius:12,
@@ -5664,7 +5677,7 @@ export default function Magistella() {
           </div>
         </div>
 
-        <Programma childName={childName} childAge={childAge} percorso={percorso} visti={visti} missed={missed}
+        <Programma childName={childName} childAge={childAge} percorso={percorso} visti={visti} generati={generati} missed={missed}
           tappe={TAPPE} medaglie={MEDAGLIE} stile={{ P_CARD, P_TILE, P_BR, GOLD, PARCH }} />
 
         {/* Spotlight: coding (il differenziatore unico) */}

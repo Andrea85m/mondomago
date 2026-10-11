@@ -322,6 +322,8 @@ export default function AnimationStyles() {
       /* I raggi della festa (.mg-rays, 560px) uscivano dallo schermo e la pagina
          scorreva di lato. clip (non hidden) non crea un contenitore di scorrimento. */
       .mm-schermo { overflow-x: clip; }
+      /* testo solo per i lettori di schermo (era usata nel puzzle ma non definita: si vedeva) */
+      .sr-only { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
       /* barra in alto della sfida: sotto i 400px il nome del mondo non ci sta (resta l'emoji) */
       @media (max-width: 400px) { .mm-chip-mondo .nome { display: none; } }
 
