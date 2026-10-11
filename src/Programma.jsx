@@ -41,7 +41,7 @@ function areaDi(c) {
   return "mondo";
 }
 
-export default function Programma({ childName, childAge, percorso, visti, missed, tappe, medaglie, stile }) {
+export default function Programma({ childName, childAge, percorso, visti, generati, missed, tappe, medaglie, stile }) {
   const [aperta, setAperta] = useState(null);
   const { P_CARD, P_TILE, P_BR, GOLD, PARCH } = stile;
   const eta = childAge || 5;
@@ -61,7 +61,9 @@ export default function Programma({ childName, childAge, percorso, visti, missed
       obiettivi.set(id, o);
     }
     const lista = [...obiettivi.values()].sort((x, y) => (y.ripasso - x.ripasso) || (y.visto - x.visto) || x.testo.localeCompare(y.testo, "it"));
-    return { ...a, totale: qui.length, viste: qui.filter(c => visti?.[c.id] !== undefined).length, lista };
+    // esercizi creati dai generatori (somme, conteggi, lettere): non hanno un id fisso
+    const extra = Object.entries(generati || {}).filter(([type]) => areaDi({ type }) === a.id).reduce((t, [, n]) => t + n, 0);
+    return { ...a, totale: qui.length, viste: qui.filter(c => visti?.[c.id] !== undefined).length, extra, lista };
   }).filter(a => a.totale > 0);
 
   const titolo = (t) => <div style={{ fontSize: 11, fontWeight: 800, opacity: .5, marginBottom: 12, letterSpacing: 1 }}>{t}</div>;
@@ -116,6 +118,7 @@ export default function Programma({ childName, childAge, percorso, visti, missed
                   <span style={{ fontWeight: 700 }}>{a.nome}</span>
                   <span style={{ opacity: .7 }}>{a.viste}/{a.totale} attività {su ? "▴" : "▾"}</span>
                 </div>
+                {a.extra > 0 && <div style={{ fontSize: 10, opacity: .6, margin: "-2px 0 5px" }}>+ {a.extra} {a.extra === 1 ? "esercizio" : "esercizi"} a sorpresa (calcoli e lettere sempre nuovi)</div>}
                 <div style={{ background: "rgba(255,255,255,.08)", borderRadius: 4, height: 6 }}>
                   <div style={{ background: a.colore, height: "100%", borderRadius: 4, width: `${pct}%`, transition: "width .6s" }} />
                 </div>
