@@ -68,7 +68,8 @@ export const engine = (() => {
     }
     function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
     ${helpers}
-    return { _rnd, _opts, genMathChallenge, frasiGenerate, filterByAge, getDailyChallenges, getSkill, SKILL_MAP };
+    return { _rnd, _opts, genMathChallenge, frasiGenerate, filterByAge, getDailyChallenges, getSkill, SKILL_MAP,
+      firmaDi: typeof firmaDi === "function" ? firmaDi : null, chiaveVisto: typeof chiaveVisto === "function" ? chiaveVisto : null };
   `;
   return new Function(code)();
 })();
