@@ -1,5 +1,10 @@
 # Magistella — Scheda Google Play
 
+> **SUPERATO (2026-10-14)**: questo è il testo storico della versione 1.0.0 (368 sfide allora).
+> Oggi le sfide fisse sono 1926 e la voce è una voce narrante digitale (sintesi vocale pre-generata),
+> non registrata. Il testo valido da incollare in Play Console è in
+> `play-store/CORREZIONI-SCHEDA-2026-10-14.md` (cartella del progetto, fuori dal repo).
+
 > Aggiornata il 2026-09-13. **Ogni numero qui sotto è verificato sul codice** (368 sfide,
 > 15 tipi, 14 traguardi, 13 cosmetici, 10 missioni famiglia, 6 lettere): se cambia il gioco,
 > va ricontrollato. Google Play rifiuta affermazioni non dimostrabili ("il primo", "il migliore",
@@ -32,7 +37,7 @@ PUZZLE MAGICO
 Quattro giochi in più: ombre da abbinare, immagini da ricostruire, oggetti da indovinare scoprendo un pezzo alla volta e veri puzzle a incastro, da trascinare col dito o da piazzare con due tocchi.
 
 CINQUE COMPAGNI MAGICI
-Fiamma il drago, Luna l'unicorno, Onde il delfino, Foglia la volpe e Pixel il robot incoraggiano il bambino a ogni risposta, con una voce italiana registrata.
+Fiamma il drago, Luna l'unicorno, Onde il delfino, Foglia la volpe e Pixel il robot incoraggiano il bambino a ogni risposta, con una voce narrante digitale in italiano.
 
 PER I GENITORI
 - Area genitori protetta da PIN
@@ -61,7 +66,7 @@ Magistella is an Italian-language educational game for children aged 3 to 8. Wit
 - 8 worlds, 368 challenges, 15 ways to play, each world with its own story and boss challenges
 - Adapts to three age groups (3-4, 5-6, 7-8) and brings back the challenges a child found hard
 - Puzzle Magico: shadows, picture builder, guess-the-object and real jigsaw puzzles
-- 5 companions with recorded Italian voice
+- 5 companions with a digital Italian narrator voice (text-to-speech)
 - Parents: PIN-protected area, session time limit, progress report, 10 family missions, multiple profiles, school mode
 - Accessibility: larger text, high contrast, dyslexia-friendly font, reduced motion
 - No ads, no in-app purchases, no account, no personal data collected. Plays offline after the first launch
